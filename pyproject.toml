@@ -1,5 +1,5 @@
 [project]
-name = "list-scout"
+name = "reelrank"
 version = "0.1.0"
 description = "Rank movies across your liked Letterboxd lists"
 readme = "README.md"
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-list-scout = "list_scout:main"
+reelrank = "reelrank:main"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]

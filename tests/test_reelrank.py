@@ -1,4 +1,4 @@
-from list_scout import Movie, MovieResult, filter_unwatched, parse_list_page
+from reelrank import Movie, MovieResult, filter_unwatched, parse_list_page
 
 
 def test_parse_list_page_extracts_movies_and_next_page():
