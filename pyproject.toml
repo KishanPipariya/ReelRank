@@ -1,5 +1,5 @@
 [project]
-name = "letterboxd"
+name = "list-scout"
 version = "0.1.0"
 description = "Rank movies across your liked Letterboxd lists"
 readme = "README.md"
@@ -9,11 +9,12 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "beautifulsoup4>=4.13.0",
-    "httpx>=0.28.0",
+    "curl-cffi>=0.13.0",
+    "rich>=13.9.0",
 ]
 
 [project.scripts]
-letterboxd = "letterboxd:main"
+list-scout = "list_scout:main"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
