@@ -8,5 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+.env
+!.env.example
+.reelrank-cache/
 *.csv
 .DS_Store

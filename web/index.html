@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3f0e9" />
+    <meta name="description" content="A personal film watchlist, ranked by the Letterboxd lists you like." />
+    <title>Reelrank — intelkishan</title>
+    <link rel="preconnect" href="https://a.ltrbxd.com" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="topbar">
+        <a class="wordmark" href="/" aria-label="Reelrank home"><span class="wordmark-mark">R</span> reelrank</a>
+        <a class="profile-link" href="https://letterboxd.com/intelkishan/" target="_blank" rel="noreferrer">
+          <span class="profile-dot"></span> intelkishan <span aria-hidden="true">↗</span>
+        </a>
+      </header>
+
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-line"></span> Your liked lists, brought together</p>
+          <h1 id="hero-title">The films that<br />keep <em>showing up.</em></h1>
+          <p class="hero-description">A little signal from all the films you’ve saved across other people’s lists. The more lists a film appears in, the higher it rises.</p>
+          <div class="hero-meta">
+            <span class="live-indicator"><span></span> Daily snapshot</span>
+            <span class="meta-separator">·</span>
+            <span id="refreshed-label">Loading update time…</span>
+          </div>
+        </div>
+        <div class="hero-stamp" aria-hidden="true">
+          <span class="stamp-top">A personal</span>
+          <span class="stamp-main">watchlist<br />in orbit</span>
+          <span class="stamp-bottom">LB · EST. INTELKISHAN</span>
+          <span class="stamp-star">✳</span>
+        </div>
+        <div class="hero-grain" aria-hidden="true"></div>
+      </section>
+
+      <section class="summary" aria-label="Snapshot summary">
+        <div class="summary-item"><strong id="film-total">—</strong><span>films found</span></div>
+        <div class="summary-divider"></div>
+        <div class="summary-item"><strong id="list-total">—</strong><span>liked lists scanned</span></div>
+        <div class="summary-divider"></div>
+        <div class="summary-item"><strong id="unwatched-total">—</strong><span>still to watch</span></div>
+        <p class="summary-note">Ranked by list appearances <span>↗</span></p>
+      </section>
+
+      <section class="collection" aria-labelledby="collection-title">
+        <div class="collection-heading">
+          <div>
+            <p class="eyebrow section-eyebrow">Collected from your likes</p>
+            <h2 id="collection-title">The list <span id="heading-count">—</span></h2>
+          </div>
+          <div class="collection-tools">
+            <label class="search-box">
+              <span class="search-icon" aria-hidden="true">⌕</span>
+              <span class="sr-only">Search films</span>
+              <input id="search-input" type="search" placeholder="Find a film" autocomplete="off" />
+              <kbd>/</kbd>
+            </label>
+            <div class="filter-tabs" role="group" aria-label="Filter films">
+              <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
+              <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count">—</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div id="status-message" class="status-message" role="status">Loading your snapshot…</div>
+        <div id="film-grid" class="film-grid" aria-live="polite"></div>
+        <button id="load-more" class="load-more" type="button" hidden>Show more films</button>
+        <p id="collection-footnote" class="collection-footnote">Film and poster details link back to Letterboxd. This page reflects public profile data.</p>
+      </section>
+
+      <footer class="footer">
+        <a class="wordmark footer-wordmark" href="/" aria-label="Reelrank home"><span class="wordmark-mark">R</span> reelrank</a>
+        <span>Made for the films you haven’t met yet.</span>
+        <a href="https://letterboxd.com/intelkishan/" target="_blank" rel="noreferrer">Find me on Letterboxd ↗</a>
+      </footer>
+      <section class="tmdb-credit" aria-label="TMDB attribution">
+        <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" aria-label="The Movie Database">
+          <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="TMDB" />
+        </a>
+        <div><strong>Film data and poster credits</strong><p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p></div>
+      </section>
+    </main>
+  </body>
+</html>
