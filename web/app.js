@@ -4,8 +4,11 @@ const topBilledGrid = document.querySelector('#top-billed-grid');
 const statusMessage = document.querySelector('#status-message');
 const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
+const sortSelect = document.querySelector('#sort-select');
+const backToFiltersButton = document.querySelector('#back-to-filters');
 let films = [];
 let activeFilter = 'all';
+let activeSort = 'rank';
 let rankedTotal = 0;
 let visibleLimit = 40;
 
@@ -33,6 +36,34 @@ function formatDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Refresh date unavailable';
   return `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
+}
+
+function searchPriority(film, query) {
+  const title = (film.title || '').toLocaleLowerCase();
+  const year = String(film.year || '').toLocaleLowerCase();
+  return title.includes(query) || year.includes(query) ? 0 : 1;
+}
+
+function compareFilms(left, right, sort = activeSort) {
+  const leftRank = films.indexOf(left);
+  const rightRank = films.indexOf(right);
+  if (sort === 'title') {
+    return (left.title || '').localeCompare(right.title || '') || leftRank - rightRank;
+  }
+  if (sort === 'year-newest' || sort === 'year-oldest') {
+    const leftYear = Number.parseInt(left.year, 10);
+    const rightYear = Number.parseInt(right.year, 10);
+    const leftHasYear = Number.isFinite(leftYear);
+    const rightHasYear = Number.isFinite(rightYear);
+    if (leftHasYear !== rightHasYear) return leftHasYear ? -1 : 1;
+    const yearDifference = sort === 'year-newest' ? rightYear - leftYear : leftYear - rightYear;
+    return yearDifference || leftRank - rightRank;
+  }
+  return leftRank - rightRank;
+}
+
+function updateBackToFiltersVisibility() {
+  backToFiltersButton.hidden = visibleLimit <= 40 || window.scrollY < 600;
 }
 
 function makeLink(label, href, className = '') {
@@ -68,7 +99,7 @@ function cardFor(film, index) {
     image.className = 'poster-image';
     image.src = posterUrl;
     image.alt = `${film.title} poster from TMDB`;
-    image.loading = 'lazy';
+    image.loading = activeFilter === 'watched' ? 'eager' : 'lazy';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
       const fallback = document.createElement('div');
@@ -115,7 +146,11 @@ function cardFor(film, index) {
 
   const count = document.createElement('p');
   count.className = 'film-count';
-  count.textContent = `${film.liked_in} ${film.liked_in === 1 ? 'list' : 'lists'}`;
+  const countValue = document.createElement('strong');
+  countValue.textContent = Number(film.liked_in).toLocaleString();
+  const countLabel = document.createElement('span');
+  countLabel.textContent = film.liked_in === 1 ? 'list' : 'lists';
+  count.append(countValue, countLabel);
   info.append(count);
 
   if (film.overview) {
@@ -152,10 +187,15 @@ function render() {
   const matching = films.filter((film) => {
     if (activeFilter === 'unwatched' && film.watched) return false;
     if (activeFilter === 'watched' && !film.watched) return false;
-    return !query || `${film.title} ${film.year}`.toLocaleLowerCase().includes(query);
+    if (!query) return true;
+    const titleAndYear = `${film.title || ''} ${film.year || ''}`.toLocaleLowerCase();
+    const overview = (film.overview || '').toLocaleLowerCase();
+    const sourceLists = (film.lists || []).map(listLabel).join(' ').toLocaleLowerCase();
+    return titleAndYear.includes(query) || overview.includes(query) || sourceLists.includes(query);
   });
+  matching.sort((left, right) => (query ? searchPriority(left, query) - searchPriority(right, query) : 0) || compareFilms(left, right));
   const shown = matching.slice(0, visibleLimit);
-  const highlighted = activeFilter === 'all' && !query ? matching.slice(0, 3) : [];
+  const highlighted = activeFilter === 'all' && activeSort === 'rank' && !query ? matching.slice(0, 3) : [];
   topBilled.hidden = highlighted.length === 0;
   topBilledGrid.replaceChildren(...highlighted.map(cardFor));
   grid.replaceChildren(...shown.slice(highlighted.length).map((film, index) => cardFor(film, index)));
@@ -171,9 +211,11 @@ function render() {
     const remaining = matching.length - shown.length;
     loadMoreButton.textContent = `Show ${Math.min(40, remaining)} more films · ${remaining} left`;
   }
+  updateBackToFiltersVisibility();
   const resultAnnouncement = document.querySelector('#results-announcement');
   const filterDescription = activeFilter === 'all' ? '' : `, ${activeFilter} only`;
-  resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
+  const sortDescription = activeSort === 'rank' ? '' : `, sorted by ${sortSelect.options[sortSelect.selectedIndex].text}`;
+  resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
 }
 
 async function loadSnapshot() {
@@ -201,6 +243,7 @@ async function loadSnapshot() {
     progress.setAttribute('aria-label', `${watchedCount.toLocaleString()} of ${rankedTotal.toLocaleString()} films watched (${progressPercent} percent)`);
     document.querySelector('#refreshed-label').textContent = formatDate(snapshot.refreshed_at);
     const displayed = snapshot.displayed_film_count ?? films.length;
+    document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
     document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Film and poster details link back to Letterboxd; this page reflects public profile data.`;
     render();
   } catch (error) {
@@ -214,6 +257,7 @@ async function loadSnapshot() {
 document.querySelectorAll('.filter-button').forEach((button) => {
   button.addEventListener('click', () => {
     activeFilter = button.dataset.filter;
+    visibleLimit = 40;
     document.querySelectorAll('.filter-button').forEach((item) => {
       const selected = item === button;
       item.classList.toggle('is-active', selected);
@@ -223,11 +267,24 @@ document.querySelectorAll('.filter-button').forEach((button) => {
   });
 });
 
-searchInput.addEventListener('input', render);
+searchInput.addEventListener('input', () => {
+  visibleLimit = 40;
+  render();
+});
+sortSelect.addEventListener('change', () => {
+  activeSort = sortSelect.value;
+  visibleLimit = 40;
+  render();
+});
 loadMoreButton.addEventListener('click', () => {
   visibleLimit += 40;
   render();
 });
+backToFiltersButton.addEventListener('click', () => {
+  searchInput.focus({ preventScroll: true });
+  document.querySelector('#collection-controls').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+window.addEventListener('scroll', updateBackToFiltersVisibility, { passive: true });
 document.addEventListener('keydown', (event) => {
   if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
     event.preventDefault();

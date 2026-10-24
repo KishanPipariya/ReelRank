@@ -53,11 +53,12 @@
           <div class="watch-progress">
             <div class="watch-progress-heading" id="watch-progress-copy"><span id="watch-progress-label">Films watched</span><span><strong id="watched-total">—</strong> of <span id="progress-film-total">—</span> · <span id="watch-progress-percent">—</span></span></div>
             <progress id="watch-progress" max="1" value="0" aria-labelledby="watch-progress-copy"></progress>
+            <span class="watch-progress-scope" id="watch-progress-scope">Progress covers all ranked films; catalog shows the top 500.</span>
           </div>
         </section>
 
         <section id="collection" class="collection" aria-labelledby="collection-title">
-          <div class="collection-heading">
+          <div class="collection-heading" id="collection-controls">
             <div>
               <p class="eyebrow section-eyebrow">Collected from your likes</p>
               <h2 id="collection-title">The list <span id="heading-count">—</span></h2>
@@ -65,16 +66,25 @@
             <div class="collection-tools">
               <label class="search-box">
                 <span class="search-icon" aria-hidden="true">⌕</span>
-                <span class="sr-only">Search films</span>
-                <input id="search-input" type="search" placeholder="Find a film" autocomplete="off" aria-keyshortcuts="/" aria-describedby="search-help" />
+                <span class="sr-only">Search film titles, years, synopses, and source lists</span>
+                <input id="search-input" type="search" placeholder="Find films or lists" autocomplete="off" aria-keyshortcuts="/" aria-describedby="search-help" />
                 <kbd>/</kbd>
               </label>
-              <span id="search-help" class="sr-only">Press slash to focus search. Press Escape to clear it.</span>
+              <span id="search-help" class="sr-only">Search film titles, years, synopses, and source lists. Press slash to focus search. Press Escape to clear it.</span>
               <div class="filter-tabs" role="group" aria-label="Filter films">
                 <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
                 <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count">—</span></button>
                 <button class="filter-button" type="button" data-filter="watched" aria-pressed="false">Watched <span id="watched-tab-count">—</span></button>
               </div>
+              <label class="sort-control">
+                <span class="sr-only">Sort films</span>
+                <select id="sort-select" aria-label="Sort films">
+                  <option value="rank">Rank</option>
+                  <option value="title">Title A–Z</option>
+                  <option value="year-newest">Year: newest</option>
+                  <option value="year-oldest">Year: oldest</option>
+                </select>
+              </label>
             </div>
           </div>
 
@@ -90,6 +100,7 @@
           <p id="results-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
           <div id="film-grid" class="film-grid"></div>
           <button id="load-more" class="load-more" type="button" hidden>Show more films</button>
+          <button id="back-to-filters" class="back-to-filters" type="button" hidden>Back to filters ↑</button>
           <p id="collection-footnote" class="collection-footnote">Film and poster details link back to Letterboxd. This page reflects public profile data.</p>
         </section>
       </main>
