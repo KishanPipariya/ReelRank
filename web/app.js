@@ -15,6 +15,8 @@ let activeSort = readUrlState().sort;
 let rankedTotal = 0;
 let visibleLimit = 40;
 let searchUrlTimer;
+let currentShownCount = 0;
+let currentMatchCount = 0;
 
 function readUrlState() {
   const params = new URLSearchParams(window.location.search);
@@ -118,6 +120,9 @@ function compareFilms(left, right, sort = activeSort) {
 
 function updateBackToFiltersVisibility() {
   backToFiltersButton.hidden = visibleLimit <= 40 || window.scrollY < 600;
+  const filterLabel = activeFilter === 'all' ? 'All films' : `${activeFilter[0].toLocaleUpperCase()}${activeFilter.slice(1)}`;
+  backToFiltersButton.textContent = `${currentShownCount} / ${currentMatchCount} · ${filterLabel} · ↑ Filters`;
+  backToFiltersButton.setAttribute('aria-label', `Showing ${currentShownCount} of ${currentMatchCount} matching films, ${filterLabel} filter. Return to search and filters.`);
 }
 
 function makeLink(label, href, className = '') {
@@ -272,6 +277,8 @@ function render() {
   matching.sort((left, right) => (query ? searchPriority(left, query) - searchPriority(right, query) : 0) || compareFilms(left, right));
   const highlighted = activeFilter === 'all' && activeSort === 'rank' && !query ? matching.slice(0, 3) : [];
   const shown = matching.slice(0, visibleLimit + highlighted.length);
+  currentShownCount = shown.length;
+  currentMatchCount = matching.length;
   topBilled.hidden = highlighted.length === 0;
   topBilledGrid.replaceChildren(...highlighted.map(cardFor));
   grid.replaceChildren(...shown.slice(highlighted.length).map((film, index) => cardFor(film, index)));
