@@ -57,7 +57,7 @@ function cardFor(film, index) {
     poster.href = filmUrl;
     poster.target = '_blank';
     poster.rel = 'noreferrer';
-    poster.setAttribute('aria-label', `Open ${film.title} on Letterboxd, opens in a new tab`);
+    poster.setAttribute('aria-label', `Open poster for ${film.title}, ranked ${index + 1}, ${film.watched ? 'watched' : 'unwatched'}, on Letterboxd, opens in a new tab`);
   }
 
   if (posterUrl) {
@@ -95,7 +95,7 @@ function cardFor(film, index) {
 
   const info = document.createElement('div');
   info.className = 'film-info';
-  const titleRow = document.createElement('div');
+  const titleRow = document.createElement('h3');
   titleRow.className = 'film-title-row';
   if (filmUrl) titleRow.append(makeLink(film.title, filmUrl, 'film-title'));
   else {
