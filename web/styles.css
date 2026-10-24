@@ -40,6 +40,8 @@ button, input { font: inherit; }
 h1 { margin: 0; font-size: clamp(48px, 7vw, 78px); line-height: .99; letter-spacing: -.065em; font-weight: 500; }
 h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter-spacing: -.06em; }
 .hero-description { max-width: 450px; margin: 20px 0 24px; color: #d2d7cc; font-size: 14px; line-height: 1.7; }
+.hero-story-link { display: inline-block; margin: -10px 0 21px; color: #f0a07b; font-family: var(--mono); font-size: 10px; text-decoration-color: #f0a07b99; text-underline-offset: 4px; }
+.hero-story-link:hover { color: #ffc19e; text-decoration-thickness: 2px; }
 .hero-meta { display: flex; align-items: center; gap: 12px; color: #bbc5b7; font-family: var(--mono); font-size: 10px; }
 .live-indicator { display: inline-flex; align-items: center; gap: 8px; color: #e3ebdb; }
 .live-indicator > span { background: var(--green); box-shadow: none; }
@@ -138,7 +140,7 @@ h2 span { margin-left: 5px; vertical-align: top; color: #62685e; font-family: va
 .footer { min-height: 84px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); color: #62685e; font-size: 11px; }
 .footer-wordmark { color: var(--ink); font-size: 16px; }
 .footer-wordmark .wordmark-mark { width: 22px; height: 22px; font-size: 14px; }
-.footer > a:last-child { color: var(--forest); text-decoration: underline; text-underline-offset: 3px; }
+.footer-repo-link, .footer > a:last-child { color: var(--forest); text-decoration: underline; text-underline-offset: 3px; }
 .tmdb-credit { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 20px 0 30px; border-top: 1px solid var(--line); }
 .tmdb-credit a { display: inline-flex; }
 .tmdb-credit img { width: 42px; height: 42px; }
@@ -179,6 +181,7 @@ h2 span { margin-left: 5px; vertical-align: top; color: #62685e; font-family: va
   .stamp-star { top: 8px; right: 13px; font-size: 12px; }
   .hero-copy { max-width: 100%; }
   .hero-description { max-width: 355px; padding-right: 30px; font-size: 12px; }
+  .hero-story-link { margin-bottom: 18px; font-size: 9px; }
   .hero-meta { flex-wrap: wrap; font-size: 10px; }
   .summary { min-height: 92px; gap: 12px 13px; padding: 14px 0; }
   .summary-item { display: flex; flex-direction: column; gap: 1px; }
@@ -265,7 +268,7 @@ h2 span { margin-left: 5px; vertical-align: top; color: #62685e; font-family: va
   .collection-footnote { color: #a4aa9d; }
   .footer { color: #aeb4a8; }
   .footer-wordmark { color: var(--ink); }
-  .footer > a:last-child { color: #c4d8a2; }
+  .footer-repo-link, .footer > a:last-child { color: #c4d8a2; }
   .tmdb-credit strong { color: #b7c1ad; }
   .tmdb-credit p { color: #b2b8ac; }
   .tmdb-film-link { color: #b7bdaf; text-decoration-color: #8e9c80; }
