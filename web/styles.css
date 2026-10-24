@@ -105,6 +105,12 @@ h2 span { margin-left: 5px; vertical-align: top; color: #62685e; font-family: va
 .film-count::before { width: 2px; height: 18px; align-self: center; background: var(--orange); content: ''; }
 .film-count strong { color: var(--forest); font-family: var(--serif); font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
 .film-overview { display: -webkit-box; overflow: hidden; margin: 8px 0 0; color: #62685e; font-size: 11px; line-height: 1.5; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.overview-details { margin-top: 3px; }
+.overview-details summary { min-height: 24px; display: flex; align-items: center; color: #60665d; cursor: pointer; font-size: 10px; list-style: none; }
+.overview-details summary::-webkit-details-marker { display: none; }
+.overview-details summary::before { display: inline-block; width: 11px; color: var(--orange); content: '+'; }
+.overview-details[open] summary::before { content: '−'; }
+.film-full-overview { margin: 4px 0 8px; color: #62685e; font-size: 11px; line-height: 1.55; }
 .list-details { margin-top: 7px; padding-top: 5px; border-top: 1px dotted var(--line); }
 .list-details summary { min-height: 24px; display: flex; align-items: center; color: #60665d; cursor: pointer; font-size: 10px; list-style: none; }
 .list-details summary::-webkit-details-marker { display: none; }
@@ -117,6 +123,9 @@ h2 span { margin-left: 5px; vertical-align: top; color: #62685e; font-family: va
 .tmdb-film-link:hover { color: var(--forest); }
 .status-message { display: none; padding: 42px 20px; border: 1px dashed #cfcdc2; color: #62685e; font-size: 13px; text-align: center; }
 .status-message.is-visible { display: block; }
+.clear-search-state { display: block; margin: -28px auto 28px; padding: 9px 13px; border: 1px solid #c9c9bc; background: transparent; color: var(--forest); cursor: pointer; font-family: var(--mono); font-size: 10px; }
+.clear-search-state[hidden] { display: none; }
+.clear-search-state:hover { border-color: var(--forest); background: #e9e8dd; }
 .load-more { display: block; margin: 35px auto 0; padding: 12px 17px; border: 1px solid #c9c9bc; background: transparent; color: var(--forest); cursor: pointer; font-family: var(--mono); font-size: 10px; }
 .load-more[hidden] { display: none; }
 .load-more:hover { border-color: var(--forest); background: #e9e8dd; }
@@ -136,7 +145,7 @@ h2 span { margin-left: 5px; vertical-align: top; color: #62685e; font-family: va
 .sr-only { width: 1px; height: 1px; position: absolute; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 
 @media (forced-colors: active) {
-  .search-box, .filter-tabs, .sort-control select, .load-more, .back-to-filters, .poster-link { border: 1px solid ButtonText; }
+  .search-box, .filter-tabs, .sort-control select, .load-more, .clear-search-state, .back-to-filters, .poster-link { border: 1px solid ButtonText; }
   :focus-visible, .search-box:focus-within { outline-color: Highlight; }
   a { text-decoration: underline; }
 }
@@ -234,12 +243,15 @@ h2 span { margin-left: 5px; vertical-align: top; color: #62685e; font-family: va
   .film-count strong { color: #c7e58f; }
   .film-year { color: #a4aa9e; }
   .film-overview { color: #bbc0b5; }
-  .list-details summary { color: #c0c5b9; }
+  .overview-details summary, .list-details summary { color: #c0c5b9; }
+  .film-full-overview { color: #bbc0b5; }
   .list-links a { color: #b7bdaf; text-decoration-color: #4e574b; }
   .rank-chip, .watched-chip { background: #171c18ed; color: #e2e8d9; }
   .poster-link { background: #30372f; }
   .poster-fallback { background: linear-gradient(145deg, #535943, #394a3b 52%, #775344); color: #f1f0df; }
   .status-message { border-color: #465044; color: #c1c7b9; }
+  .clear-search-state { border-color: #566251; color: #d6e6c2; }
+  .clear-search-state:hover { border-color: #9bb977; background: #222a22; }
   .load-more { border-color: #566251; color: #d6e6c2; }
   .load-more:hover { border-color: #9bb977; background: #222a22; }
   .sort-control select { border-color: #424a40; background: #1e241f; color: var(--ink); }
