@@ -1,4 +1,6 @@
 const grid = document.querySelector('#film-grid');
+const topBilled = document.querySelector('#top-billed');
+const topBilledGrid = document.querySelector('#top-billed-grid');
 const statusMessage = document.querySelector('#status-message');
 const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
@@ -45,6 +47,7 @@ function makeLink(label, href, className = '') {
 }
 
 function cardFor(film, index) {
+  const rankNumber = films.indexOf(film) + 1;
   const card = document.createElement('article');
   card.className = 'film-card';
   card.style.animationDelay = `${Math.min(index * 22, 220)}ms`;
@@ -57,7 +60,7 @@ function cardFor(film, index) {
     poster.href = filmUrl;
     poster.target = '_blank';
     poster.rel = 'noreferrer';
-    poster.setAttribute('aria-label', `Open poster for ${film.title}, ranked ${index + 1}, ${film.watched ? 'watched' : 'unwatched'}, on Letterboxd, opens in a new tab`);
+    poster.setAttribute('aria-label', `Open poster for ${film.title}, ranked ${rankNumber}, ${film.watched ? 'watched' : 'unwatched'}, on Letterboxd, opens in a new tab`);
   }
 
   if (posterUrl) {
@@ -83,7 +86,7 @@ function cardFor(film, index) {
 
   const rank = document.createElement('span');
   rank.className = 'rank-chip';
-  rank.textContent = String(index + 1).padStart(2, '0');
+  rank.textContent = String(rankNumber).padStart(2, '0');
   poster.append(rank);
   if (film.watched) {
     const watched = document.createElement('span');
@@ -126,7 +129,7 @@ function cardFor(film, index) {
   const listDetails = document.createElement('details');
   listDetails.className = 'list-details';
   const listSummary = document.createElement('summary');
-  listSummary.textContent = `Appears in ${lists.length} ${lists.length === 1 ? 'list' : 'lists'}`;
+  listSummary.textContent = 'Browse source lists';
   listDetails.append(listSummary);
   const listLinks = document.createElement('div');
   listLinks.className = 'list-links';
@@ -148,14 +151,20 @@ function render() {
   const query = searchInput.value.trim().toLocaleLowerCase();
   const matching = films.filter((film) => {
     if (activeFilter === 'unwatched' && film.watched) return false;
+    if (activeFilter === 'watched' && !film.watched) return false;
     return !query || `${film.title} ${film.year}`.toLocaleLowerCase().includes(query);
   });
   const shown = matching.slice(0, visibleLimit);
-  grid.replaceChildren(...shown.map(cardFor));
+  const highlighted = activeFilter === 'all' && !query ? matching.slice(0, 3) : [];
+  topBilled.hidden = highlighted.length === 0;
+  topBilledGrid.replaceChildren(...highlighted.map(cardFor));
+  grid.replaceChildren(...shown.slice(highlighted.length).map((film, index) => cardFor(film, index)));
   document.querySelector('#heading-count').textContent = String(matching.length).padStart(2, '0');
   statusMessage.classList.toggle('is-visible', matching.length === 0);
   if (films.length === 0) statusMessage.textContent = 'No films are available in this snapshot yet.';
   else if (matching.length === 0 && query) statusMessage.textContent = 'No films match that search. Try another title.';
+  else if (matching.length === 0 && activeFilter === 'unwatched') statusMessage.textContent = 'No unwatched films in this snapshot.';
+  else if (matching.length === 0 && activeFilter === 'watched') statusMessage.textContent = 'No watched films in this snapshot.';
   else if (matching.length === 0) statusMessage.textContent = 'Everything in this snapshot is marked watched.';
   loadMoreButton.hidden = matching.length <= shown.length;
   if (!loadMoreButton.hidden) {
@@ -163,7 +172,8 @@ function render() {
     loadMoreButton.textContent = `Show ${Math.min(40, remaining)} more films · ${remaining} left`;
   }
   const resultAnnouncement = document.querySelector('#results-announcement');
-  resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${activeFilter === 'unwatched' ? ', unwatched only' : ''}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
+  const filterDescription = activeFilter === 'all' ? '' : `, ${activeFilter} only`;
+  resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
 }
 
 async function loadSnapshot() {
@@ -177,8 +187,18 @@ async function loadSnapshot() {
     document.querySelector('#film-total').textContent = rankedTotal.toLocaleString();
     document.querySelector('#list-total').textContent = snapshot.list_count ?? '—';
     const unwatchedCount = snapshot.unwatched_count ?? films.filter((film) => !film.watched).length;
+    const watchedCount = Math.max(0, rankedTotal - unwatchedCount);
     document.querySelector('#unwatched-total').textContent = unwatchedCount.toLocaleString();
     document.querySelector('#unwatched-tab-count').textContent = (snapshot.displayed_unwatched_count ?? films.filter((film) => !film.watched).length).toLocaleString();
+    document.querySelector('#watched-tab-count').textContent = (films.length - (snapshot.displayed_unwatched_count ?? films.filter((film) => !film.watched).length)).toLocaleString();
+    document.querySelector('#watched-total').textContent = watchedCount.toLocaleString();
+    document.querySelector('#progress-film-total').textContent = rankedTotal.toLocaleString();
+    const progress = document.querySelector('#watch-progress');
+    progress.max = rankedTotal || 1;
+    progress.value = watchedCount;
+    const progressPercent = rankedTotal ? Math.round((watchedCount / rankedTotal) * 100) : 0;
+    document.querySelector('#watch-progress-percent').textContent = `${progressPercent}% watched`;
+    progress.setAttribute('aria-label', `${watchedCount.toLocaleString()} of ${rankedTotal.toLocaleString()} films watched (${progressPercent} percent)`);
     document.querySelector('#refreshed-label').textContent = formatDate(snapshot.refreshed_at);
     const displayed = snapshot.displayed_film_count ?? films.length;
     document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Film and poster details link back to Letterboxd; this page reflects public profile data.`;

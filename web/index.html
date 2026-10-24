@@ -50,6 +50,10 @@
           <div class="summary-divider"></div>
           <div class="summary-item"><strong id="unwatched-total">—</strong><span>still to watch</span></div>
           <p class="summary-note">Ranked by list appearances <span>↗</span></p>
+          <div class="watch-progress">
+            <div class="watch-progress-heading" id="watch-progress-copy"><span id="watch-progress-label">Films watched</span><span><strong id="watched-total">—</strong> of <span id="progress-film-total">—</span> · <span id="watch-progress-percent">—</span></span></div>
+            <progress id="watch-progress" max="1" value="0" aria-labelledby="watch-progress-copy"></progress>
+          </div>
         </section>
 
         <section id="collection" class="collection" aria-labelledby="collection-title">
@@ -69,9 +73,18 @@
               <div class="filter-tabs" role="group" aria-label="Filter films">
                 <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
                 <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count">—</span></button>
+                <button class="filter-button" type="button" data-filter="watched" aria-pressed="false">Watched <span id="watched-tab-count">—</span></button>
               </div>
             </div>
           </div>
+
+          <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>
+            <div class="top-billed-heading">
+              <p class="eyebrow section-eyebrow">Opening credits</p>
+              <h3 id="top-billed-title">Top billed</h3>
+            </div>
+            <div id="top-billed-grid" class="top-billed-grid"></div>
+          </section>
 
           <div id="status-message" class="status-message" role="status">Loading your snapshot…</div>
           <p id="results-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
