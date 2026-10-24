@@ -13,8 +13,23 @@
     <script src="/app.js" defer></script>
   </head>
   <body>
-    <div class="page-shell">
+    <main id="setup-state" class="setup-state" aria-labelledby="setup-title">
+      <div class="setup-card">
+        <a class="wordmark" href="/" aria-label="Reelrank home"><span class="wordmark-mark">R</span> reelrank</a>
+        <p class="eyebrow section-eyebrow">Site setup</p>
+        <h1 id="setup-title">Preparing your Reelrank</h1>
+        <p id="setup-copy" role="status" aria-live="polite">Checking the configured Letterboxd profile and snapshot…</p>
+        <p class="setup-public-note">Your site uses public liked lists, list membership, watched status, and source-list links.</p>
+        <a id="demo-preview-link" class="setup-demo-link" href="?demo=1" hidden>Preview clearly labelled sample data</a>
+      </div>
+    </main>
+
+    <div id="site-shell" class="page-shell" hidden>
       <a class="skip-link" href="#main-content">Skip to main content</a>
+      <div id="demo-banner" class="demo-banner" role="status" aria-live="polite" hidden>
+        <span id="demo-banner-copy"></span>
+        <a id="exit-demo-link" href="/">Return to your site</a>
+      </div>
       <header class="topbar">
         <a class="wordmark" href="/" aria-label="Reelrank home"><span class="wordmark-mark">R</span> reelrank</a>
         <a id="profile-link" class="profile-link" href="https://letterboxd.com/" target="_blank" rel="noreferrer" aria-label="Letterboxd profile, opens in a new tab">

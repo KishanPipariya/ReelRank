@@ -7,6 +7,12 @@ const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
 const backToFiltersButton = document.querySelector('#back-to-filters');
 const clearSearchStateButton = document.querySelector('#clear-search-state');
+const setupState = document.querySelector('#setup-state');
+const setupTitle = document.querySelector('#setup-title');
+const setupCopy = document.querySelector('#setup-copy');
+const demoPreviewLink = document.querySelector('#demo-preview-link');
+const siteShell = document.querySelector('#site-shell');
+const demoBanner = document.querySelector('#demo-banner');
 const validFilters = new Set(['all', 'unwatched', 'watched']);
 const validSorts = new Set(['rank', 'title', 'year-newest', 'year-oldest']);
 let films = [];
@@ -304,12 +310,45 @@ function render() {
 
 async function loadSnapshot() {
   try {
+    const configResponse = await fetch('/site-config.json', { cache: 'no-store' });
+    if (!configResponse.ok) throw new Error(`Site configuration request failed: ${configResponse.status}`);
+    const config = await configResponse.json();
+    const configuredUsername = typeof config.letterboxd_username === 'string' ? config.letterboxd_username.trim() : '';
+    if (!configuredUsername) throw new Error('Site configuration does not include a Letterboxd username');
+    setupTitle.textContent = `Preparing @${configuredUsername}'s Reelrank`;
+    setupCopy.textContent = 'Checking the latest snapshot. The first refresh can take a few minutes while public lists and watched films are gathered.';
+
     const response = await fetch('/data/snapshot.json', { cache: 'no-store' });
     if (!response.ok) throw new Error(`Snapshot request failed: ${response.status}`);
     const snapshot = await response.json();
     if (typeof snapshot.username !== 'string' || !snapshot.username.trim() || !Array.isArray(snapshot.films)) throw new Error('Snapshot format is invalid');
+    const snapshotUsername = snapshot.username.trim();
+    const snapshotMatchesConfig = snapshotUsername.toLocaleLowerCase() === configuredUsername.toLocaleLowerCase();
+    const demoRequested = new URLSearchParams(window.location.search).get('demo') === '1';
+    if (!snapshotMatchesConfig) {
+      const demoUrl = new URL(window.location.href);
+      demoUrl.searchParams.set('demo', '1');
+      demoPreviewLink.href = demoUrl.href;
+      demoPreviewLink.textContent = `Preview sample data from @${snapshotUsername}`;
+      demoPreviewLink.hidden = false;
+      setupCopy.textContent = `The snapshot for @${configuredUsername} is still being prepared. Your site will appear here when its username matches the generated snapshot.`;
+      if (!demoRequested) return;
+      document.querySelector('#demo-banner-copy').textContent = `Demo preview: showing @${snapshotUsername}'s public data. @${configuredUsername}'s site is still being prepared.`;
+      demoBanner.hidden = false;
+      const exitDemoUrl = new URL(window.location.href);
+      exitDemoUrl.searchParams.delete('demo');
+      document.querySelector('#exit-demo-link').href = exitDemoUrl.href;
+    } else if (demoRequested) {
+      document.querySelector('#demo-banner-copy').textContent = `Demo preview of @${snapshotUsername}'s public snapshot.`;
+      demoBanner.hidden = false;
+      const exitDemoUrl = new URL(window.location.href);
+      exitDemoUrl.searchParams.delete('demo');
+      document.querySelector('#exit-demo-link').href = exitDemoUrl.href;
+    }
+    setupState.hidden = true;
+    siteShell.hidden = false;
     films = snapshot.films;
-    const username = snapshot.username.trim();
+    const username = snapshotUsername;
     const profileUrl = safeUrl(snapshot.profile_url, ['letterboxd.com']) || `https://letterboxd.com/${encodeURIComponent(username)}/`;
     const profileLink = document.querySelector('#profile-link');
     profileLink.href = profileUrl;
@@ -341,12 +380,11 @@ async function loadSnapshot() {
     document.querySelector('#refreshed-label').textContent = formatDate(snapshot.refreshed_at);
     const displayed = snapshot.displayed_film_count ?? films.length;
     document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
-    document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Film and poster details link back to Letterboxd; this page reflects public profile data.`;
+    document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
     render();
   } catch (error) {
-    statusMessage.textContent = 'The snapshot could not be loaded. Please try again later.';
-    statusMessage.classList.add('is-visible');
-    document.querySelector('#refreshed-label').textContent = 'Snapshot unavailable';
+    setupTitle.textContent = 'This site is still being prepared';
+    setupCopy.textContent = 'The username configuration or film snapshot could not be loaded. Check that the initial refresh has completed, then try again.';
     console.error(error);
   }
 }

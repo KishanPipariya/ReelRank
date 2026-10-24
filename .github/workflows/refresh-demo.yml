@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'site-config.json'
+      - 'web/site-config.json'
       - '.github/workflows/refresh-demo.yml'
   schedule:
     - cron: '23 6 * * 0'
@@ -43,9 +43,9 @@ jobs:
       - name: Load site username
         id: site-config
         run: |
-          username="$(jq -r '.letterboxd_username // empty' site-config.json)"
+          username="$(jq -r '.letterboxd_username // empty' web/site-config.json)"
           if [ -z "$username" ]; then
-            echo "Set letterboxd_username in site-config.json."
+            echo "Set letterboxd_username in web/site-config.json."
             exit 1
           fi
           printf 'username=%s\n' "$username" >> "$GITHUB_OUTPUT"
