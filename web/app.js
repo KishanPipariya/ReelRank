@@ -215,18 +215,25 @@ function cardFor(film, index) {
     overview.textContent = film.overview;
     info.append(overview);
 
-    const overviewDetails = document.createElement('details');
-    overviewDetails.className = 'overview-details';
-    const overviewSummary = document.createElement('summary');
-    overviewSummary.textContent = 'Full synopsis';
     const fullOverview = document.createElement('p');
     fullOverview.className = 'film-full-overview';
     fullOverview.textContent = film.overview;
-    overviewDetails.append(overviewSummary, fullOverview);
-    overviewDetails.addEventListener('toggle', () => {
-      overview.hidden = overviewDetails.open;
+    fullOverview.hidden = true;
+    info.append(fullOverview);
+
+    const overviewToggle = document.createElement('button');
+    overviewToggle.className = 'overview-toggle';
+    overviewToggle.type = 'button';
+    overviewToggle.textContent = 'Full synopsis';
+    overviewToggle.setAttribute('aria-expanded', 'false');
+    overviewToggle.addEventListener('click', () => {
+      const expanded = fullOverview.hidden;
+      fullOverview.hidden = !expanded;
+      overview.hidden = expanded;
+      overviewToggle.textContent = expanded ? 'Show less' : 'Full synopsis';
+      overviewToggle.setAttribute('aria-expanded', String(expanded));
     });
-    info.append(overviewDetails);
+    info.append(overviewToggle);
   }
 
   const lists = film.lists || [];

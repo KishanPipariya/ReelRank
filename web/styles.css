@@ -105,12 +105,11 @@ h2 span { margin-left: 5px; vertical-align: top; color: #62685e; font-family: va
 .film-count::before { width: 2px; height: 18px; align-self: center; background: var(--orange); content: ''; }
 .film-count strong { color: var(--forest); font-family: var(--serif); font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
 .film-overview { display: -webkit-box; overflow: hidden; margin: 8px 0 0; color: #62685e; font-size: 11px; line-height: 1.5; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-.overview-details { margin-top: 3px; }
-.overview-details summary { min-height: 24px; display: flex; align-items: center; color: #60665d; cursor: pointer; font-size: 10px; list-style: none; }
-.overview-details summary::-webkit-details-marker { display: none; }
-.overview-details summary::before { display: inline-block; width: 11px; color: var(--orange); content: '+'; }
-.overview-details[open] summary::before { content: '−'; }
-.film-full-overview { margin: 4px 0 8px; color: #62685e; font-size: 11px; line-height: 1.55; }
+.film-overview[hidden], .film-full-overview[hidden] { display: none; }
+.overview-toggle { min-height: 24px; display: flex; align-items: center; margin-top: 3px; padding: 0; border: 0; background: transparent; color: #60665d; cursor: pointer; font-size: 10px; text-align: left; }
+.overview-toggle::before { width: 11px; color: var(--orange); content: '+'; }
+.overview-toggle[aria-expanded='true']::before { content: '−'; }
+.film-full-overview { margin: 8px 0 0; color: #62685e; font-size: 11px; line-height: 1.55; }
 .list-details { margin-top: 7px; padding-top: 5px; border-top: 1px dotted var(--line); }
 .list-details summary { min-height: 24px; display: flex; align-items: center; color: #60665d; cursor: pointer; font-size: 10px; list-style: none; }
 .list-details summary::-webkit-details-marker { display: none; }
@@ -243,7 +242,7 @@ h2 span { margin-left: 5px; vertical-align: top; color: #62685e; font-family: va
   .film-count strong { color: #c7e58f; }
   .film-year { color: #a4aa9e; }
   .film-overview { color: #bbc0b5; }
-  .overview-details summary, .list-details summary { color: #c0c5b9; }
+  .overview-toggle, .list-details summary { color: #c0c5b9; }
   .film-full-overview { color: #bbc0b5; }
   .list-links a { color: #b7bdaf; text-decoration-color: #4e574b; }
   .rank-chip, .watched-chip { background: #171c18ed; color: #e2e8d9; }
