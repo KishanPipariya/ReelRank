@@ -331,7 +331,7 @@ async function loadSnapshot() {
     document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Film and poster details link back to Letterboxd; this page reflects public profile data.`;
     render();
   } catch (error) {
-    statusMessage.textContent = 'The daily snapshot could not be loaded. Please try again later.';
+    statusMessage.textContent = 'The snapshot could not be loaded. Please try again later.';
     statusMessage.classList.add('is-visible');
     document.querySelector('#refreshed-label').textContent = 'Snapshot unavailable';
     console.error(error);

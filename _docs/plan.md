@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build and deploy a public Reelrank demo for the Letterboxd profile `intelkishan`. The page will show a daily-refreshed snapshot of films ranked by how often they appear across the profile's liked public lists.
+Build and deploy a public Reelrank demo for the Letterboxd profile `intelkishan`. The page will show a weekly-refreshed snapshot of films ranked by how often they appear across the profile's liked public lists.
 
 ## Scope
 
@@ -19,7 +19,7 @@ Build and deploy a public Reelrank demo for the Letterboxd profile `intelkishan`
 - **Ranking and data refresh:** Keep the existing Python 3.13 code and dependencies. Refactor the ranking flow into reusable functions and add JSON output for the web snapshot. Use Letterboxd for public liked lists and watched status, and TMDB for film metadata, posters, and summaries. Retain the CLI.
 - **Frontend:** A static HTML, CSS, and JavaScript page that reads the generated JSON. This is enough for the single-profile demo and avoids adding an API framework or database.
 - **Hosting:** Vercel, connected to the Git repository. Vercel creates deployments when repository changes are pushed.
-- **Daily schedule:** GitHub Actions runs the Python refresh job once a day, updates the snapshot in the repository, and pushes the change. That push triggers a Vercel deployment.
+- **Weekly schedule:** GitHub Actions runs the Python refresh job once a week, updates the snapshot in the repository, and pushes the change. That push triggers a Vercel deployment. Manual runs remain available when the data needs an earlier refresh.
 
 This keeps the existing Python stack. Vercel supports Python and `pyproject.toml` if a server-side API is needed later, but this demo does not need one. A static snapshot avoids putting scraping work in a visitor's request and avoids provisioning persistent storage for cached results.
 
@@ -28,7 +28,7 @@ This keeps the existing Python stack. Vercel supports Python and `pyproject.toml
 1. **Refactor the ranking flow** so the existing scraping and ranking logic can be called by both the CLI and a scheduled refresh job.
 2. **Add snapshot generation** that writes JSON containing total counts and the top 500 films, including watched status, TMDB metadata and poster URLs, list counts, list URLs, and a refresh timestamp. Resolve TMDB metadata for this bounded set.
 3. **Build the static page** with the ranked film list, poster artwork, Letterboxd links, list links, incremental loading, and an all/unwatched filter. Include loading, empty, and stale-snapshot states.
-4. **Add the daily GitHub Actions workflow** to install the project, refresh the snapshot, and commit changes only when the snapshot has changed. A failed refresh must not overwrite the last good snapshot.
+4. **Add the weekly GitHub Actions workflow** to install the project, refresh the snapshot, and commit changes only when the snapshot has changed. A failed refresh must not overwrite the last good snapshot.
 5. **Create the Vercel project** from the Git repository and configure its static output/build settings.
 6. **Verify the deployed demo** against `intelkishan`: check ranking, poster display, list and film links, watched filtering, the timestamp, and behavior when a refresh fails.
 

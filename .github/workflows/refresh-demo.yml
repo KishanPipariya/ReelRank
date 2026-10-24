@@ -2,7 +2,7 @@ name: Refresh Reelrank demo snapshot
 
 on:
   schedule:
-    - cron: '23 6 * * *'
+    - cron: '23 6 * * 0'
   workflow_dispatch:
 
 permissions:
@@ -26,6 +26,14 @@ jobs:
 
       - name: Install Reelrank
         run: python -m pip install .
+
+      - name: Restore TMDB film metadata cache
+        uses: actions/cache@v4
+        with:
+          path: .reelrank-cache
+          key: ${{ runner.os }}-tmdb-film-metadata-v1-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-tmdb-film-metadata-v1-
 
       - name: Refresh snapshot
         env:

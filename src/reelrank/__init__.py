@@ -266,6 +266,32 @@ def filter_unwatched(results: list[MovieResult], watched: set[tuple[str, str]]) 
     ]
 
 
+def _tmdb_metadata_key(movie: Movie) -> str:
+    normalized_title = re.sub(r"[^a-z0-9]+", " ", movie.title.casefold()).strip()
+    return f"{normalized_title}|{movie.year}"
+
+
+def _load_tmdb_metadata_cache(cache_path: Path) -> dict[str, dict | None]:
+    try:
+        payload = json.loads(cache_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    return {
+        key: value
+        for key, value in payload.items()
+        if isinstance(key, str) and (value is None or isinstance(value, dict))
+    }
+
+
+def _write_tmdb_metadata_cache(cache_path: Path, cache: dict[str, dict | None]) -> None:
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = cache_path.with_name(f".{cache_path.name}.tmp")
+    temporary.write_text(json.dumps(cache, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+    temporary.replace(cache_path)
+
+
 def create_snapshot(username: str) -> dict:
     """Fetch and serialize one user's ranked liked-list films for the web demo."""
     username = username.strip().strip("/")
@@ -282,9 +308,19 @@ def create_snapshot(username: str) -> dict:
 
         # Resolve movie metadata for the highest-ranked films through TMDB.
         featured_results = results[:500]
+        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v1.json"
+        tmdb_cache = _load_tmdb_metadata_cache(tmdb_cache_path)
+        metadata: dict[int, dict | None] = {}
+        missing_metadata: list[tuple[int, MovieResult, str]] = []
+        for index, result in enumerate(featured_results):
+            cache_key = _tmdb_metadata_key(result.movie)
+            if cache_key in tmdb_cache:
+                metadata[index] = tmdb_cache[cache_key]
+            else:
+                missing_metadata.append((index, result, cache_key))
 
-        def fetch_tmdb_metadata(entry: tuple[int, MovieResult]) -> tuple[int, dict | None]:
-            index, result = entry
+        def fetch_tmdb_metadata(entry: tuple[int, MovieResult, str]) -> tuple[int, str, dict | None, bool]:
+            index, result, cache_key = entry
             try:
                 response = client.get(
                     "https://api.themoviedb.org/3/search/movie",
@@ -299,7 +335,7 @@ def create_snapshot(username: str) -> dict:
                 response.raise_for_status()
                 candidates = response.json().get("results", [])
                 if not candidates:
-                    return index, None
+                    return index, cache_key, None, False
 
                 def title_score(candidate: dict) -> tuple[float, int]:
                     target = re.sub(r"[^a-z0-9]+", "", result.movie.title.casefold())
@@ -319,10 +355,10 @@ def create_snapshot(username: str) -> dict:
                 best = max(candidates, key=title_score)
                 year_match, score = title_score(best)
                 if score < 0.55 or not year_match:
-                    return index, None
+                    return index, cache_key, None, False
                 poster_path = best.get("poster_path") or ""
                 backdrop_path = best.get("backdrop_path") or ""
-                return index, {
+                return index, cache_key, {
                     "tmdb_id": best.get("id"),
                     "tmdb_url": f"https://www.themoviedb.org/movie/{best['id']}" if best.get("id") else "",
                     "title": best.get("title") or result.movie.title,
@@ -331,12 +367,17 @@ def create_snapshot(username: str) -> dict:
                     "poster_url": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "",
                     "backdrop_url": f"https://image.tmdb.org/t/p/w780{backdrop_path}" if backdrop_path else "",
                     "tmdb_rating": best.get("vote_average"),
-                }
+                }, True
             except RequestsError:
-                return index, None
+                return index, cache_key, None, False
 
-        with ThreadPoolExecutor(max_workers=6) as executor:
-            metadata = dict(executor.map(fetch_tmdb_metadata, enumerate(featured_results)))
+        if missing_metadata:
+            with ThreadPoolExecutor(max_workers=6) as executor:
+                for index, cache_key, value, cacheable in executor.map(fetch_tmdb_metadata, missing_metadata):
+                    metadata[index] = value
+                    if cacheable and value is not None:
+                        tmdb_cache[cache_key] = value
+            _write_tmdb_metadata_cache(tmdb_cache_path, tmdb_cache)
         tmdb_match_count = sum(value is not None for value in metadata.values())
         if not tmdb_match_count:
             raise ValueError("TMDB did not match any ranked films; the previous demo snapshot was left unchanged")

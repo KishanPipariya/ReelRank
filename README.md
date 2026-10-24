@@ -62,6 +62,6 @@ uv sync
 uv run reelrank-snapshot
 ```
 
-The GitHub Actions workflow in `.github/workflows/refresh-demo.yml` refreshes the snapshot daily and can also be started manually from the Actions tab. It commits changed data, which triggers a Vercel deployment. Connect the repository to Vercel and set the project root directory to `web` to deploy the static site. A failed refresh leaves the previous snapshot in place.
+The GitHub Actions workflow in `.github/workflows/refresh-demo.yml` refreshes the snapshot weekly and can also be started manually from the Actions tab. It reads Letterboxd only to discover liked lists, their film membership, and watched status; TMDB supplies film metadata and posters. TMDB metadata is cached between workflow runs to avoid repeating searches for films already resolved. The workflow commits changed data, which triggers a Vercel deployment. Connect the repository to Vercel and set the project root directory to `web` to deploy the static site. A failed refresh leaves the previous snapshot in place.
 
 The refresh workflow reads `TMDB_API_KEY` from a GitHub Actions repository secret. Add it under **Settings → Secrets and variables → Actions** before running the workflow. The demo includes TMDB's required attribution and approved logo.
