@@ -39,6 +39,7 @@ function makeLink(label, href, className = '') {
   link.href = href;
   link.target = '_blank';
   link.rel = 'noreferrer';
+  link.setAttribute('aria-label', `${label}, opens in a new tab`);
   if (className) link.className = className;
   return link;
 }
@@ -56,7 +57,7 @@ function cardFor(film, index) {
     poster.href = filmUrl;
     poster.target = '_blank';
     poster.rel = 'noreferrer';
-    poster.setAttribute('aria-label', `Open ${film.title} on Letterboxd`);
+    poster.setAttribute('aria-label', `Open ${film.title} on Letterboxd, opens in a new tab`);
   }
 
   if (posterUrl) {
@@ -161,6 +162,8 @@ function render() {
     const remaining = matching.length - shown.length;
     loadMoreButton.textContent = `Show ${Math.min(40, remaining)} more films · ${remaining} left`;
   }
+  const resultAnnouncement = document.querySelector('#results-announcement');
+  resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${activeFilter === 'unwatched' ? ', unwatched only' : ''}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
 }
 
 async function loadSnapshot() {
