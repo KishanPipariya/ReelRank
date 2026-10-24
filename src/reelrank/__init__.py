@@ -39,6 +39,7 @@ class Movie:
     title: str
     year: str
     uri: str
+    poster_url: str = ""
 
 
 @dataclass
@@ -88,6 +89,7 @@ def _movie_from_item(item, base_url: str) -> Movie | None:
 
     title = ""
     year = ""
+    poster_url = ""
     for key in ("data-film-name", "data-item-name", "data-name"):
         if source.get(key):
             title = source[key]
@@ -105,6 +107,16 @@ def _movie_from_item(item, base_url: str) -> Movie | None:
         if year_match:
             year = year_match.group(1)
             title = title[: year_match.start()]
+    if image:
+        poster_url = image.get("data-src") or image.get("data-original") or ""
+        if not poster_url:
+            srcset = image.get("srcset") or image.get("data-srcset") or ""
+            poster_url = srcset.split(",", 1)[0].strip().split(" ", 1)[0]
+        if not poster_url:
+            image_src = image.get("src") or ""
+            poster_url = "" if image_src.startswith("data:") else image_src
+        if poster_url:
+            poster_url = urljoin(base_url, poster_url)
     title = _clean_title(title)
     if not title and not uri:
         return None
@@ -112,6 +124,7 @@ def _movie_from_item(item, base_url: str) -> Movie | None:
         title=title or uri.rstrip("/").rsplit("/", 1)[-1],
         year=str(year),
         uri=uri,
+        poster_url=poster_url,
     )
 
 
@@ -296,8 +309,6 @@ def create_snapshot(username: str) -> dict:
     """Fetch and serialize one user's ranked liked-list films for the web demo."""
     username = username.strip().strip("/")
     tmdb_api_key = _load_tmdb_api_key()
-    if not tmdb_api_key:
-        raise ValueError("Set TMDB_API_KEY in your environment or .env file to refresh the web demo snapshot")
 
     with curl_requests.Session(impersonate="chrome", allow_redirects=True, timeout=30.0) as client:
         list_urls = fetch_user_list_urls(client, username)
@@ -308,9 +319,10 @@ def create_snapshot(username: str) -> dict:
 
         # Resolve movie metadata for the highest-ranked films through TMDB.
         featured_results = results[:500]
+        metadata: dict[int, dict | None] = {}
+        tmdb_match_count = 0
         tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v1.json"
         tmdb_cache = _load_tmdb_metadata_cache(tmdb_cache_path)
-        metadata: dict[int, dict | None] = {}
         missing_metadata: list[tuple[int, MovieResult, str]] = []
         for index, result in enumerate(featured_results):
             cache_key = _tmdb_metadata_key(result.movie)
@@ -319,67 +331,68 @@ def create_snapshot(username: str) -> dict:
             else:
                 missing_metadata.append((index, result, cache_key))
 
-        def fetch_tmdb_metadata(entry: tuple[int, MovieResult, str]) -> tuple[int, str, dict | None, bool]:
-            index, result, cache_key = entry
-            try:
-                response = client.get(
-                    "https://api.themoviedb.org/3/search/movie",
-                    params={
-                        "api_key": tmdb_api_key,
-                        "query": result.movie.title,
-                        **({"year": result.movie.year} if result.movie.year.isdigit() else {}),
-                    },
-                )
-                if response.status_code == 401:
-                    raise ValueError("TMDB rejected TMDB_API_KEY; check the API key configured for this job")
-                response.raise_for_status()
-                candidates = response.json().get("results", [])
-                if not candidates:
-                    return index, cache_key, None, False
-
-                def title_score(candidate: dict) -> tuple[float, int]:
-                    target = re.sub(r"[^a-z0-9]+", "", result.movie.title.casefold())
-                    names = (candidate.get("title", ""), candidate.get("original_title", ""))
-                    score = max(
-                        difflib.SequenceMatcher(
-                            None,
-                            target,
-                            re.sub(r"[^a-z0-9]+", "", name.casefold()),
-                        ).ratio()
-                        for name in names
+        if tmdb_api_key:
+            def fetch_tmdb_metadata(entry: tuple[int, MovieResult, str]) -> tuple[int, str, dict | None, bool]:
+                index, result, cache_key = entry
+                try:
+                    response = client.get(
+                        "https://api.themoviedb.org/3/search/movie",
+                        params={
+                            "api_key": tmdb_api_key,
+                            "query": result.movie.title,
+                            **({"year": result.movie.year} if result.movie.year.isdigit() else {}),
+                        },
                     )
-                    candidate_year = (candidate.get("release_date") or "")[:4]
-                    year_match = int(not result.movie.year or not candidate_year or candidate_year == result.movie.year)
-                    return year_match, score
+                    if response.status_code == 401:
+                        raise ValueError("TMDB rejected TMDB_API_KEY; check the API key configured for this job")
+                    response.raise_for_status()
+                    candidates = response.json().get("results", [])
+                    if not candidates:
+                        return index, cache_key, None, False
 
-                best = max(candidates, key=title_score)
-                year_match, score = title_score(best)
-                if score < 0.55 or not year_match:
+                    def title_score(candidate: dict) -> tuple[float, int]:
+                        target = re.sub(r"[^a-z0-9]+", "", result.movie.title.casefold())
+                        names = (candidate.get("title", ""), candidate.get("original_title", ""))
+                        score = max(
+                            difflib.SequenceMatcher(
+                                None,
+                                target,
+                                re.sub(r"[^a-z0-9]+", "", name.casefold()),
+                            ).ratio()
+                            for name in names
+                        )
+                        candidate_year = (candidate.get("release_date") or "")[:4]
+                        year_match = int(not result.movie.year or not candidate_year or candidate_year == result.movie.year)
+                        return year_match, score
+
+                    best = max(candidates, key=title_score)
+                    year_match, score = title_score(best)
+                    if score < 0.55 or not year_match:
+                        return index, cache_key, None, False
+                    poster_path = best.get("poster_path") or ""
+                    backdrop_path = best.get("backdrop_path") or ""
+                    return index, cache_key, {
+                        "tmdb_id": best.get("id"),
+                        "tmdb_url": f"https://www.themoviedb.org/movie/{best['id']}" if best.get("id") else "",
+                        "title": best.get("title") or result.movie.title,
+                        "year": (best.get("release_date") or "")[:4] or result.movie.year,
+                        "overview": best.get("overview") or "",
+                        "poster_url": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "",
+                        "backdrop_url": f"https://image.tmdb.org/t/p/w780{backdrop_path}" if backdrop_path else "",
+                        "tmdb_rating": best.get("vote_average"),
+                    }, True
+                except RequestsError:
                     return index, cache_key, None, False
-                poster_path = best.get("poster_path") or ""
-                backdrop_path = best.get("backdrop_path") or ""
-                return index, cache_key, {
-                    "tmdb_id": best.get("id"),
-                    "tmdb_url": f"https://www.themoviedb.org/movie/{best['id']}" if best.get("id") else "",
-                    "title": best.get("title") or result.movie.title,
-                    "year": (best.get("release_date") or "")[:4] or result.movie.year,
-                    "overview": best.get("overview") or "",
-                    "poster_url": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "",
-                    "backdrop_url": f"https://image.tmdb.org/t/p/w780{backdrop_path}" if backdrop_path else "",
-                    "tmdb_rating": best.get("vote_average"),
-                }, True
-            except RequestsError:
-                return index, cache_key, None, False
 
-        if missing_metadata:
-            with ThreadPoolExecutor(max_workers=6) as executor:
-                for index, cache_key, value, cacheable in executor.map(fetch_tmdb_metadata, missing_metadata):
-                    metadata[index] = value
-                    if cacheable and value is not None:
-                        tmdb_cache[cache_key] = value
-            _write_tmdb_metadata_cache(tmdb_cache_path, tmdb_cache)
+            if missing_metadata:
+                with ThreadPoolExecutor(max_workers=6) as executor:
+                    for index, cache_key, value, cacheable in executor.map(fetch_tmdb_metadata, missing_metadata):
+                        metadata[index] = value
+                        if cacheable and value is not None:
+                            tmdb_cache[cache_key] = value
+                _write_tmdb_metadata_cache(tmdb_cache_path, tmdb_cache)
         tmdb_match_count = sum(value is not None for value in metadata.values())
-        if not tmdb_match_count:
+        if tmdb_api_key and not tmdb_match_count:
             raise ValueError("TMDB did not match any ranked films; the previous demo snapshot was left unchanged")
 
     films = []
@@ -394,7 +407,7 @@ def create_snapshot(username: str) -> dict:
                 "letterboxd_title": movie.title,
                 "letterboxd_year": movie.year,
                 "letterboxd_url": movie.uri,
-                "poster_url": tmdb.get("poster_url", ""),
+                "poster_url": tmdb.get("poster_url") or movie.poster_url,
                 "backdrop_url": tmdb.get("backdrop_url", ""),
                 "overview": tmdb.get("overview", ""),
                 "tmdb_id": tmdb.get("tmdb_id"),
@@ -446,9 +459,14 @@ def refresh_snapshot_cli() -> None:
     args = parser.parse_args()
     snapshot = create_snapshot(args.username)
     write_snapshot(snapshot, args.output)
+    metadata_summary = (
+        f"TMDB matched {snapshot['tmdb_match_count']} of {snapshot['displayed_film_count']} displayed films."
+        if snapshot["tmdb_match_count"]
+        else "TMDB metadata unavailable; using Letterboxd titles and available posters."
+    )
     print(
         f"Updated {args.output}: {snapshot['film_count']} films across {snapshot['list_count']} lists; "
-        f"TMDB matched {snapshot['tmdb_match_count']} of {snapshot['displayed_film_count']} displayed films."
+        f"{metadata_summary}"
     )
 
 

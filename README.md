@@ -47,21 +47,16 @@ The metadata file should use TMDB’s `movies_metadata.csv` columns, including `
 
 Results are saved to `liked-list-movies.csv`. Choose a different path with `--output`, for example `--output ranked.csv`. Liked lists must be publicly accessible; `--unwatched` also requires your Films page to be public.
 
-## Reelrank web demo
+## Make your own site
 
-The `web/` directory contains a static demo for the `intelkishan` profile. It displays the top 500 ranked films, posters, liked-list links, watched status, and an unwatched filter, alongside totals for the full ranking. The site reads `web/data/snapshot.json`; it does not scrape Letterboxd when someone visits.
+The web demo is a static site backed by a weekly snapshot. Visitors only download that snapshot; the scheduled GitHub Action reads Letterboxd to find the public liked lists, list membership, and watched status.
 
-Add the key to `.env` before refreshing the snapshot locally:
+1. Fork this repository.
+2. In `site-config.json`, replace `intelkishan` with your Letterboxd username.
+3. Connect your fork to Vercel and set the project root directory to `web`.
 
-```env
-TMDB_API_KEY=your_tmdb_v3_api_key
-```
+Pushing the username change starts the first refresh. The workflow commits the generated snapshot, which triggers the site deployment. Later refreshes run weekly; you can also start one from the Actions tab. Your liked lists and Films page must be public.
 
-```sh
-uv sync
-uv run reelrank-snapshot
-```
+The username is the only required site setting. TMDB is optional: when `TMDB_API_KEY` is configured, TMDB provides film titles, years, posters, and synopses; without it, the site uses titles and poster image URLs already present in the fetched Letterboxd list pages. No additional Letterboxd requests are made for posters. To enable TMDB metadata, add a TMDB API key as the `TMDB_API_KEY` repository secret. Its metadata cache is reused between refreshes.
 
-The GitHub Actions workflow in `.github/workflows/refresh-demo.yml` refreshes the snapshot weekly and can also be started manually from the Actions tab. It reads Letterboxd only to discover liked lists, their film membership, and watched status; TMDB supplies film metadata and posters. TMDB metadata is cached between workflow runs to avoid repeating searches for films already resolved. The workflow commits changed data, which triggers a Vercel deployment. Connect the repository to Vercel and set the project root directory to `web` to deploy the static site. A failed refresh leaves the previous snapshot in place.
-
-The refresh workflow reads `TMDB_API_KEY` from a GitHub Actions repository secret. Add it under **Settings → Secrets and variables → Actions** before running the workflow. The demo includes TMDB's required attribution and approved logo.
+To generate a snapshot locally, run `uv sync` and then `uv run reelrank-snapshot --username YOUR_USERNAME`. Add `TMDB_API_KEY` to `.env` if you want TMDB metadata locally. A failed refresh leaves the previous snapshot in place.

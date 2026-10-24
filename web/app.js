@@ -143,7 +143,7 @@ function cardFor(film, index) {
   card.style.animationDelay = `${Math.min(index * 22, 220)}ms`;
 
   const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
-  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org']);
+  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
   const poster = document.createElement(filmUrl ? 'a' : 'div');
   poster.className = 'poster-link';
   if (filmUrl) {
@@ -157,7 +157,7 @@ function cardFor(film, index) {
     const image = document.createElement('img');
     image.className = 'poster-image';
     image.src = posterUrl;
-    image.alt = `${film.title} poster from TMDB`;
+    image.alt = `Poster for ${film.title}`;
     image.loading = activeFilter === 'watched' ? 'eager' : 'lazy';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
@@ -307,8 +307,21 @@ async function loadSnapshot() {
     const response = await fetch('/data/snapshot.json', { cache: 'no-store' });
     if (!response.ok) throw new Error(`Snapshot request failed: ${response.status}`);
     const snapshot = await response.json();
-    if (snapshot.username !== 'intelkishan' || !Array.isArray(snapshot.films)) throw new Error('Snapshot format is invalid');
+    if (typeof snapshot.username !== 'string' || !snapshot.username.trim() || !Array.isArray(snapshot.films)) throw new Error('Snapshot format is invalid');
     films = snapshot.films;
+    const username = snapshot.username.trim();
+    const profileUrl = safeUrl(snapshot.profile_url, ['letterboxd.com']) || `https://letterboxd.com/${encodeURIComponent(username)}/`;
+    const profileLink = document.querySelector('#profile-link');
+    profileLink.href = profileUrl;
+    profileLink.setAttribute('aria-label', `Letterboxd profile for ${username}, opens in a new tab`);
+    document.querySelector('#profile-username').textContent = username;
+    document.querySelector('#profile-stamp').textContent = username;
+    const footerProfileLink = document.querySelector('#footer-profile-link');
+    footerProfileLink.href = profileUrl;
+    footerProfileLink.textContent = `${username} on Letterboxd ↗`;
+    footerProfileLink.setAttribute('aria-label', `Letterboxd profile for ${username}, opens in a new tab`);
+    document.title = `Reelrank — ${username}`;
+    document.querySelector('#tmdb-credit').hidden = !(snapshot.tmdb_match_count > 0);
     rankedTotal = snapshot.film_count ?? films.length;
     document.querySelector('#film-total').textContent = rankedTotal.toLocaleString();
     document.querySelector('#list-total').textContent = snapshot.list_count ?? '—';
