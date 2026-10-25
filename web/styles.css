@@ -207,8 +207,8 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .list-links { display: flex; flex-wrap: wrap; gap: 5px 8px; margin-top: 7px; }
 .list-links a { max-width: 100%; overflow: hidden; color: #60665d; font-size: 10px; text-decoration-color: #838a79; text-overflow: ellipsis; white-space: nowrap; }
 .list-links a:hover { color: var(--forest); }
-.list-links-toggle { min-height: 24px; padding: 0; border: 0; background: transparent; color: var(--forest); cursor: pointer; font-size: 10px; text-align: left; text-decoration: underline; text-decoration-color: #838a79; text-underline-offset: 2px; }
-.tmdb-film-link { display: inline-block; margin-top: 8px; color: #62685e; font-family: var(--mono); font-size: 10px; text-decoration-color: #838a79; text-underline-offset: 2px; }
+.list-links-toggle { min-height: 24px; display: block; margin-top: 6px; padding: 0; border: 0; background: transparent; color: var(--forest); cursor: pointer; font-size: 10px; text-align: left; text-decoration: underline; text-decoration-color: #838a79; text-underline-offset: 2px; }
+.tmdb-film-link { width: fit-content; display: block; margin-top: 10px; color: #62685e; font-family: var(--mono); font-size: 10px; text-decoration-color: #838a79; text-underline-offset: 2px; }
 .tmdb-film-link:hover { color: var(--forest); }
 .status-message { display: none; padding: 42px 20px; border: 1px dashed #cfcdc2; color: #62685e; font-size: 13px; text-align: center; }
 .status-message.is-visible { display: block; }
@@ -381,7 +381,8 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .filter-tabs { border-color: #424a40; background: #222922; }
   .filter-button { color: #c0c5b9; }
   .filter-button span { color: #a2aa98; }
-  .clear-genres, .close-genres { color: #c4d8a2; }
+  .clear-genres, .close-genres, .list-links-toggle { color: #c4d8a2; }
+  .list-links-toggle { text-decoration-color: #8e9c80; }
   .genre-option input { accent-color: #b5d67a; }
   .top-billed { background: linear-gradient(135deg, #1e241f 0%, transparent 72%); }
   .rank-chip { border-color: #d18b6d; color: #f0a07b; }
