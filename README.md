@@ -62,7 +62,9 @@ The public site displays ranked films, how many liked lists each film appears in
 
 The username is the only required site setting. Snapshot generation reads each featured film’s TMDB ID from its Letterboxd film page and records it, then uses that ID to fetch metadata when `TMDB_API_KEY` is configured. If a page has no TMDB link, title/year matching is used as a fallback. Without an API key, linked IDs are still recorded, while titles and poster image URLs come from fetched Letterboxd list pages and genre arrays are empty. The GitHub Actions workflow does not need a TMDB secret because it does not refresh snapshots.
 
-If you are authorized to use the snapshot command, run `uv sync` and then `uv run reelrank-snapshot --username YOUR_USERNAME`. Add `TMDB_API_KEY` to `.env` if you want TMDB metadata. A failed refresh leaves the previous snapshot in place.
+If you are authorized to use the snapshot command, run `uv sync` and then `uv run reelrank-snapshot`. It reads the username from `web/site-config.json`; pass `--username YOUR_USERNAME` to override it. Add `TMDB_API_KEY` to `.env` if you want TMDB metadata. A failed refresh leaves the previous snapshot in place. Snapshot files carry a schema version and are validated before they replace the current file.
+
+Pagination stops with an explicit error if a Letterboxd collection exceeds its safety limit or stops advancing, rather than returning partial data as if it were complete.
 
 Pull requests and pushes to `main` run parser/snapshot checks and browser accessibility checks. The Playwright scan runs axe across desktop, mobile, dark mode, expanded synopsis, empty results, setup, and demo-preview states. It also checks keyboard navigation and focus, accessible names, result announcements, and reflow at 200% and 400% zoom-equivalent viewport widths. These automated checks do not replace testing with a real screen reader.
 

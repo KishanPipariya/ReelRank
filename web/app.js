@@ -482,6 +482,41 @@ function cardFor(film, index) {
   return card;
 }
 
+function validateSnapshot(snapshot) {
+  const isRecord = (value) => value && typeof value === 'object' && !Array.isArray(value);
+  const isCount = (value) => Number.isSafeInteger(value) && value >= 0;
+  const isStringList = (value) => Array.isArray(value) && value.every((item) => typeof item === 'string');
+  const requiredCounts = ['list_count', 'film_count', 'displayed_film_count', 'unwatched_count', 'displayed_unwatched_count', 'tmdb_match_count'];
+  const requiredFilmStrings = ['title', 'year', 'letterboxd_title', 'letterboxd_year', 'letterboxd_url', 'poster_url', 'backdrop_url', 'overview', 'tmdb_url'];
+  const validFilm = (film) => isRecord(film)
+    && requiredFilmStrings.every((field) => typeof film[field] === 'string')
+    && film.title.trim().length > 0
+    && typeof film.watched === 'boolean'
+    && isCount(film.liked_in)
+    && isStringList(film.genres)
+    && isStringList(film.lists)
+    && (film.tmdb_id === null || isCount(film.tmdb_id))
+    && (film.tmdb_rating === null || (typeof film.tmdb_rating === 'number' && Number.isFinite(film.tmdb_rating)));
+
+  if (!isRecord(snapshot) || snapshot.schema_version !== 1) {
+    throw new Error(`Unsupported snapshot schema version: ${snapshot?.schema_version ?? 'missing'}`);
+  }
+  if (typeof snapshot.username !== 'string' || !snapshot.username.trim()
+      || typeof snapshot.profile_url !== 'string' || !snapshot.profile_url.trim()
+      || typeof snapshot.refreshed_at !== 'string' || !snapshot.refreshed_at.trim()
+      || requiredCounts.some((field) => !isCount(snapshot[field]))
+      || !Array.isArray(snapshot.films) || !snapshot.films.every(validFilm)
+      || snapshot.displayed_film_count !== snapshot.films.length
+      || snapshot.displayed_film_count > snapshot.film_count
+      || snapshot.unwatched_count > snapshot.film_count
+      || snapshot.displayed_unwatched_count > snapshot.displayed_film_count
+      || snapshot.tmdb_match_count > snapshot.displayed_film_count
+      || snapshot.displayed_unwatched_count !== snapshot.films.filter((film) => !film.watched).length) {
+    throw new Error('Snapshot does not match schema version 1');
+  }
+  return snapshot;
+}
+
 function render() {
   const query = searchInput.value.trim().toLocaleLowerCase();
   renderActiveViewFilters();
@@ -535,8 +570,7 @@ async function loadSnapshot() {
 
     const response = await fetch('/data/snapshot.json', { cache: 'no-store' });
     if (!response.ok) throw new Error(`Snapshot request failed: ${response.status}`);
-    const snapshot = await response.json();
-    if (typeof snapshot.username !== 'string' || !snapshot.username.trim() || !Array.isArray(snapshot.films)) throw new Error('Snapshot format is invalid');
+    const snapshot = validateSnapshot(await response.json());
     const snapshotUsername = snapshot.username.trim();
     const snapshotMatchesConfig = snapshotUsername.toLocaleLowerCase() === configuredUsername.toLocaleLowerCase();
     const demoRequested = new URLSearchParams(window.location.search).get('demo') === '1';
