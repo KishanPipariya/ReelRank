@@ -14,6 +14,12 @@ const genreEmptyState = document.querySelector('#genre-empty-state');
 const clearGenresButton = document.querySelector('#clear-genres');
 const closeGenresButton = document.querySelector('#close-genres');
 const selectedGenres = document.querySelector('#selected-genres');
+const activeViewTools = document.querySelector('#active-view-tools');
+const activeViewLabel = document.querySelector('#active-view-label');
+const activeGenreFilters = document.querySelector('#active-genre-filters');
+const collectionScope = document.querySelector('#collection-scope');
+const topBilledEyebrow = document.querySelector('#top-billed-eyebrow');
+const topBilledTitle = document.querySelector('#top-billed-title');
 const backToFiltersButton = document.querySelector('#back-to-filters');
 const clearSearchStateButton = document.querySelector('#clear-search-state');
 const setupState = document.querySelector('#setup-state');
@@ -32,6 +38,7 @@ let availableGenres = [];
 let rankedTotal = 0;
 let visibleLimit = 40;
 let searchUrlTimer;
+let searchEditing = false;
 let currentShownCount = 0;
 let currentMatchCount = 0;
 
@@ -62,6 +69,7 @@ function syncControls() {
     : 'Any';
   clearGenresButton.hidden = activeGenres.length === 0;
   renderSelectedGenres();
+  renderActiveViewFilters();
 }
 
 function renderSelectedGenres() {
@@ -81,6 +89,27 @@ function renderSelectedGenres() {
     chip.setAttribute('aria-label', `Remove ${genre} genre filter`);
     chip.addEventListener('click', () => toggleGenre(genre));
     selectedGenres.append(chip);
+  });
+}
+
+function renderActiveViewFilters() {
+  const query = searchInput.value.trim();
+  const labels = [];
+  if (query) labels.push(`Search: ${query}`);
+  if (activeFilter !== 'all') labels.push(activeFilter[0].toLocaleUpperCase() + activeFilter.slice(1));
+  if (activeSort !== 'rank') labels.push(sortSelect.options[sortSelect.selectedIndex].text);
+  activeViewTools.hidden = labels.length === 0 && activeGenres.length === 0;
+  activeViewLabel.textContent = labels.join(' · ');
+  activeGenreFilters.replaceChildren();
+  activeGenreFilters.hidden = activeGenres.length === 0;
+  activeGenres.forEach((genre) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'active-genre-chip';
+    chip.textContent = `${genre} ×`;
+    chip.setAttribute('aria-label', `Remove ${genre} genre filter`);
+    chip.addEventListener('click', () => toggleGenre(genre));
+    activeGenreFilters.append(chip);
   });
 }
 
@@ -154,11 +183,27 @@ function updateUrlState({ replace = false } = {}) {
 
 function queueSearchUrlUpdate() {
   window.clearTimeout(searchUrlTimer);
-  searchUrlTimer = window.setTimeout(() => updateUrlState(), 500);
+  searchUrlTimer = window.setTimeout(() => updateUrlState({ replace: true }), 500);
+}
+
+function beginSearchEdit() {
+  if (searchEditing) return;
+  searchEditing = true;
+  // Keep the previous committed view in history while the live query replaces
+  // the current entry, so Back returns to the prior view instead of each pause.
+  window.history.pushState({}, '', window.location.href);
+}
+
+function commitSearchEdit() {
+  window.clearTimeout(searchUrlTimer);
+  if (!searchEditing) return;
+  updateUrlState({ replace: true });
+  searchEditing = false;
 }
 
 function restoreUrlState() {
   window.clearTimeout(searchUrlTimer);
+  searchEditing = false;
   const state = readUrlState();
   searchInput.value = state.query;
   activeFilter = state.filter;
@@ -434,6 +479,7 @@ function cardFor(film, index) {
 
 function render() {
   const query = searchInput.value.trim().toLocaleLowerCase();
+  renderActiveViewFilters();
   updateWatchFilterCounts(query);
   updateGenreOptionCounts(query);
   const matching = films.filter((film) => {
@@ -442,11 +488,14 @@ function render() {
     return matchesSearchAndGenres(film, query);
   });
   matching.sort((left, right) => (query ? searchPriority(left, query) - searchPriority(right, query) : 0) || compareFilms(left, right));
-  const highlighted = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0 ? matching.slice(0, 3) : [];
+  const highlighted = matching.slice(0, 3);
   const shown = matching.slice(0, visibleLimit + highlighted.length);
   currentShownCount = shown.length;
   currentMatchCount = matching.length;
   topBilled.hidden = highlighted.length === 0;
+  const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0;
+  topBilledEyebrow.textContent = defaultRankedView ? 'Opening credits' : 'Filtered view';
+  topBilledTitle.textContent = defaultRankedView ? 'Top billed' : 'Top results';
   topBilledGrid.replaceChildren(...highlighted.map(cardFor));
   grid.replaceChildren(...shown.slice(highlighted.length).map((film, index) => cardFor(film, index)));
   document.querySelector('#heading-count').textContent = String(matching.length).padStart(2, '0');
@@ -457,7 +506,6 @@ function render() {
   else if (matching.length === 0 && activeFilter === 'unwatched') statusMessage.textContent = 'No unwatched films in this snapshot.';
   else if (matching.length === 0 && activeFilter === 'watched') statusMessage.textContent = 'No watched films in this snapshot.';
   else if (matching.length === 0) statusMessage.textContent = 'Everything in this snapshot is marked watched.';
-  clearSearchStateButton.hidden = matching.length > 0 || (activeFilter === 'all' && activeSort === 'rank' && !searchInput.value.trim() && activeGenres.length === 0);
   loadMoreButton.hidden = matching.length <= shown.length;
   if (!loadMoreButton.hidden) {
     const remaining = matching.length - shown.length;
@@ -540,6 +588,7 @@ async function loadSnapshot() {
     progress.setAttribute('aria-label', `${watchedCount.toLocaleString()} of ${rankedTotal.toLocaleString()} films watched (${progressPercent} percent)`);
     document.querySelector('#refreshed-label').textContent = formatDate(snapshot.refreshed_at);
     const displayed = snapshot.displayed_film_count ?? films.length;
+    collectionScope.textContent = `Search covers the displayed top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films by title, year, genre, synopsis, and source list.`;
     document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
     document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
     render();
@@ -562,10 +611,12 @@ document.querySelectorAll('.filter-button').forEach((button) => {
 });
 
 searchInput.addEventListener('input', () => {
+  beginSearchEdit();
   visibleLimit = 40;
   render();
   queueSearchUrlUpdate();
 });
+searchInput.addEventListener('blur', commitSearchEdit);
 sortSelect.addEventListener('change', () => {
   window.clearTimeout(searchUrlTimer);
   activeSort = sortSelect.value;
@@ -576,6 +627,7 @@ sortSelect.addEventListener('change', () => {
 genreSearchInput.addEventListener('input', updateGenreOptionVisibility);
 clearSearchStateButton.addEventListener('click', () => {
   window.clearTimeout(searchUrlTimer);
+  searchEditing = false;
   searchInput.value = '';
   activeFilter = 'all';
   activeSort = 'rank';
@@ -622,10 +674,20 @@ document.addEventListener('keydown', (event) => {
   }
   if (event.key === 'Escape' && document.activeElement === searchInput) {
     window.clearTimeout(searchUrlTimer);
+    if (!searchEditing && !searchInput.value.trim()) {
+      searchInput.blur();
+      return;
+    }
+    if (!searchEditing) beginSearchEdit();
     searchInput.value = '';
+    updateUrlState({ replace: true });
+    searchEditing = false;
     searchInput.blur();
-    updateUrlState();
     render();
+  }
+  if (event.key === 'Enter' && document.activeElement === searchInput) {
+    commitSearchEdit();
+    searchInput.blur();
   }
 });
 

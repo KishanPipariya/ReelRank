@@ -83,7 +83,7 @@
               <label class="search-box">
                 <span class="search-icon" aria-hidden="true">⌕</span>
                 <span class="sr-only">Search film titles, years, genres, synopses, and source lists</span>
-                <input id="search-input" type="search" placeholder="Find films or lists" autocomplete="off" aria-keyshortcuts="/" aria-describedby="search-help" />
+                <input id="search-input" type="search" placeholder="Search titles, genres, or lists" autocomplete="off" aria-keyshortcuts="/" aria-describedby="search-help" />
                 <kbd>/</kbd>
               </label>
               <span id="search-help" class="sr-only">Search film titles, years, genres, synopses, and source lists. Press slash to focus search. Press Escape to clear it.</span>
@@ -126,16 +126,21 @@
               </label>
             </div>
           </div>
+          <p id="collection-scope" class="collection-scope">Search covers the displayed top films by title, year, genre, synopsis, and source list.</p>
+          <div id="active-view-tools" class="active-view-tools" hidden>
+            <span id="active-view-label" class="active-view-label"></span>
+            <div id="active-genre-filters" class="active-genre-filters" aria-label="Active genre filters" hidden></div>
+            <button id="clear-search-state" class="clear-search-state" type="button">Reset filters</button>
+          </div>
           <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>
             <div class="top-billed-heading">
-              <p class="eyebrow section-eyebrow">Opening credits</p>
+              <p id="top-billed-eyebrow" class="eyebrow section-eyebrow">Opening credits</p>
               <h3 id="top-billed-title">Top billed</h3>
             </div>
             <div id="top-billed-grid" class="top-billed-grid"></div>
           </section>
 
           <div id="status-message" class="status-message" role="status">Loading your snapshot…</div>
-          <button id="clear-search-state" class="clear-search-state" type="button" hidden>Clear search and filters</button>
           <p id="results-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
           <div id="film-grid" class="film-grid"></div>
           <button id="load-more" class="load-more" type="button" hidden>Show more films</button>
