@@ -6,6 +6,8 @@ const statusMessage = document.querySelector('#status-message');
 const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
+const countrySelect = document.querySelector('#country-select');
+const decadeSelect = document.querySelector('#decade-select');
 const genreFilter = document.querySelector('#genre-filter');
 const genreFilterTrigger = document.querySelector('#genre-filter > summary');
 const genreFilterSummary = document.querySelector('#genre-filter-summary');
@@ -18,6 +20,7 @@ const selectedGenres = document.querySelector('#selected-genres');
 const activeViewTools = document.querySelector('#active-view-tools');
 const activeViewLabel = document.querySelector('#active-view-label');
 const activeGenreFilters = document.querySelector('#active-genre-filters');
+const activeDirectorFilters = document.querySelector('#active-director-filters');
 const collectionScope = document.querySelector('#collection-scope');
 const topBilledEyebrow = document.querySelector('#top-billed-eyebrow');
 const topBilledTitle = document.querySelector('#top-billed-title');
@@ -35,7 +38,11 @@ let films = [];
 let activeFilter = readUrlState().filter;
 let activeSort = readUrlState().sort;
 let activeGenres = readUrlState().genres;
+let activeDirectors = readUrlState().directors;
+let activeCountry = readUrlState().country;
+let activeDecade = readUrlState().decade;
 let availableGenres = [];
+let availableDirectors = [];
 let rankedTotal = 0;
 let visibleLimit = 40;
 let searchUrlTimer;
@@ -52,11 +59,16 @@ function readUrlState() {
     filter: validFilters.has(filter) ? filter : 'all',
     sort: validSorts.has(sort) ? sort : 'rank',
     genres: [...new Set(params.getAll('genre'))],
+    directors: [...new Set(params.getAll('director'))],
+    country: params.get('country') || '',
+    decade: /^\d{4}$/.test(params.get('decade') || '') ? Number(params.get('decade')) : '',
   };
 }
 
 function syncControls() {
   sortSelect.value = activeSort;
+  countrySelect.value = activeCountry;
+  decadeSelect.value = activeDecade === '' ? '' : String(activeDecade);
   document.querySelectorAll('.filter-button').forEach((button) => {
     const selected = button.dataset.filter === activeFilter;
     button.classList.toggle('is-active', selected);
@@ -99,7 +111,9 @@ function renderActiveViewFilters() {
   if (query) labels.push(`Search: ${query}`);
   if (activeFilter !== 'all') labels.push(activeFilter[0].toLocaleUpperCase() + activeFilter.slice(1));
   if (activeSort !== 'rank') labels.push(sortSelect.options[sortSelect.selectedIndex].text);
-  activeViewTools.hidden = labels.length === 0 && activeGenres.length === 0;
+  if (activeCountry) labels.push(`Country: ${activeCountry}`);
+  if (activeDecade !== '') labels.push(`${activeDecade}s`);
+  activeViewTools.hidden = labels.length === 0 && activeGenres.length === 0 && activeDirectors.length === 0 && !activeCountry && activeDecade === '';
   activeViewLabel.textContent = labels.join(' · ');
   activeGenreFilters.replaceChildren();
   activeGenreFilters.hidden = activeGenres.length === 0;
@@ -112,6 +126,30 @@ function renderActiveViewFilters() {
     chip.addEventListener('click', () => toggleGenre(genre));
     activeGenreFilters.append(chip);
   });
+  activeDirectorFilters.replaceChildren();
+  activeDirectorFilters.hidden = activeDirectors.length === 0;
+  activeDirectors.forEach((director) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'active-genre-chip';
+    chip.textContent = `Director: ${director} ×`;
+    chip.setAttribute('aria-label', `Remove ${director} director filter`);
+    chip.addEventListener('click', () => toggleDirector(director));
+    activeDirectorFilters.append(chip);
+  });
+  if (activeCountry) appendFacetChip(activeGenreFilters, `Country: ${activeCountry}`, 'Remove production country filter', () => setCountry(''));
+  if (activeDecade !== '') appendFacetChip(activeGenreFilters, `${activeDecade}s`, 'Remove decade filter', () => setDecade(''));
+}
+
+function appendFacetChip(container, label, ariaLabel, onRemove) {
+  container.hidden = false;
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = 'active-genre-chip';
+  chip.textContent = `${label} ×`;
+  chip.setAttribute('aria-label', ariaLabel);
+  chip.addEventListener('click', onRemove);
+  container.append(chip);
 }
 
 function buildGenreFilter() {
@@ -141,7 +179,28 @@ function buildGenreFilter() {
     genreOptions.append(label);
   });
   updateGenreOptionVisibility();
+  buildCatalogFilters();
   syncControls();
+}
+
+function buildCatalogFilters() {
+  const countries = [...new Set(films.flatMap((film) => Array.isArray(film.countries) ? film.countries : []))]
+    .filter((country) => typeof country === 'string' && country.trim())
+    .sort((left, right) => left.localeCompare(right));
+  const decades = [...new Set(films.map((film) => filmDecade(film)).filter((decade) => decade !== null))].sort((a, b) => a - b);
+  countrySelect.replaceChildren(new Option('Any country', ''), ...countries.map((country) => new Option(country, country)));
+  decadeSelect.replaceChildren(new Option('Any decade', ''), ...decades.map((decade) => new Option(`${decade}s`, String(decade))));
+  activeCountry = countries.includes(activeCountry) ? activeCountry : '';
+  activeDecade = decades.includes(Number(activeDecade)) ? Number(activeDecade) : '';
+  availableDirectors = [...new Set(films.flatMap((film) => Array.isArray(film.directors) ? film.directors : []))]
+    .filter((director) => typeof director === 'string' && director.trim())
+    .sort((left, right) => left.localeCompare(right));
+  activeDirectors = activeDirectors.filter((director) => availableDirectors.includes(director));
+}
+
+function filmDecade(film) {
+  const year = Number.parseInt(film.year, 10);
+  return Number.isFinite(year) && year >= 1000 ? Math.floor(year / 10) * 10 : null;
 }
 
 function updateGenreOptionVisibility() {
@@ -166,6 +225,36 @@ function toggleGenre(genre) {
   render();
 }
 
+function toggleDirector(director) {
+  activeDirectors = activeDirectors.includes(director)
+    ? activeDirectors.filter((selected) => selected !== director)
+    : [...activeDirectors, director].sort((left, right) => left.localeCompare(right));
+  visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
+  const collectionTitle = document.querySelector('#collection-title');
+  collectionTitle.focus({ preventScroll: true });
+  const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  collectionTitle.scrollIntoView({ behavior, block: 'start' });
+}
+
+function setCountry(country) {
+  activeCountry = country;
+  visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
+}
+
+function setDecade(decade) {
+  activeDecade = decade === '' ? '' : Number(decade);
+  visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
+}
+
 function updateUrlState({ replace = false } = {}) {
   const url = new URL(window.location.href);
   const query = searchInput.value.trim();
@@ -177,6 +266,12 @@ function updateUrlState({ replace = false } = {}) {
   else url.searchParams.set('sort', activeSort);
   url.searchParams.delete('genre');
   activeGenres.forEach((genre) => url.searchParams.append('genre', genre));
+  url.searchParams.delete('director');
+  activeDirectors.forEach((director) => url.searchParams.append('director', director));
+  if (activeCountry) url.searchParams.set('country', activeCountry);
+  else url.searchParams.delete('country');
+  if (activeDecade !== '') url.searchParams.set('decade', String(activeDecade));
+  else url.searchParams.delete('decade');
   if (url.href === window.location.href) return;
   const method = replace ? 'replaceState' : 'pushState';
   window.history[method]({}, '', url);
@@ -210,6 +305,9 @@ function restoreUrlState() {
   activeFilter = state.filter;
   activeSort = state.sort;
   activeGenres = state.genres.filter((genre) => availableGenres.includes(genre));
+  activeDirectors = state.directors.filter((director) => availableDirectors.includes(director));
+  activeCountry = state.country;
+  activeDecade = state.decade;
   visibleLimit = 40;
   syncControls();
   render();
@@ -260,12 +358,18 @@ function formatDate(value) {
 function matchesSearchAndGenres(film, query, selectedGenreList = activeGenres) {
   const filmGenres = Array.isArray(film.genres) ? film.genres : [];
   if (selectedGenreList.length && !selectedGenreList.some((genre) => filmGenres.includes(genre))) return false;
+  const directors = Array.isArray(film.directors) ? film.directors : [];
+  if (activeDirectors.length && !activeDirectors.some((director) => directors.includes(director))) return false;
+  if (activeCountry && !(Array.isArray(film.countries) && film.countries.includes(activeCountry))) return false;
+  if (activeDecade !== '' && filmDecade(film) !== activeDecade) return false;
   if (!query) return true;
   const titleAndYear = `${film.title || ''} ${film.year || ''}`.toLocaleLowerCase();
   const overview = (film.overview || '').toLocaleLowerCase();
   const sourceLists = (film.lists || []).map(listLabel).join(' ').toLocaleLowerCase();
   const genres = filmGenres.join(' ').toLocaleLowerCase();
-  return titleAndYear.includes(query) || overview.includes(query) || sourceLists.includes(query) || genres.includes(query);
+  const directorNames = directors.join(' ').toLocaleLowerCase();
+  return titleAndYear.includes(query) || (film.original_title || '').toLocaleLowerCase().includes(query)
+    || overview.includes(query) || sourceLists.includes(query) || genres.includes(query) || directorNames.includes(query);
 }
 
 function updateWatchFilterCounts(query) {
@@ -313,6 +417,9 @@ function updateBackToFiltersVisibility() {
   const activeView = [
     `${filterLabel} filter`,
     activeGenres.length ? `genres ${activeGenres.join(' or ')}` : '',
+    activeDirectors.length ? `directors ${activeDirectors.join(' or ')}` : '',
+    activeCountry ? `country ${activeCountry}` : '',
+    activeDecade !== '' ? `decade ${activeDecade}s` : '',
     searchInput.value.trim() ? `search ${searchInput.value.trim()}` : '',
     activeSort !== 'rank' ? `sorted by ${sortSelect.options[sortSelect.selectedIndex].text}` : '',
   ].filter(Boolean).join(', ');
@@ -346,6 +453,65 @@ function genreChipFor(genre) {
     collectionTitle.scrollIntoView({ behavior, block: 'start' });
   });
   return tag;
+}
+
+function directorCreditFor(directors, className) {
+  if (!directors.length) return null;
+  const credit = document.createElement('p');
+  credit.className = className;
+  credit.append(document.createTextNode('Directed by '));
+  directors.forEach((director, index) => {
+    if (index) credit.append(document.createTextNode(', '));
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'director-filter';
+    button.textContent = director;
+    button.setAttribute('aria-pressed', String(activeDirectors.includes(director)));
+    button.setAttribute('aria-label', `Filter by director ${director}`);
+    button.addEventListener('click', () => toggleDirector(director));
+    credit.append(button);
+  });
+  return credit;
+}
+
+function originalDetailsFor(film) {
+  const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
+  const languageCode = typeof film.original_language === 'string' ? film.original_language.trim() : '';
+  const hasDistinctTitle = originalTitle && originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0;
+  if (!hasDistinctTitle && !languageCode) return null;
+
+  const languageName = (() => {
+    if (!languageCode) return '';
+    try {
+      return new Intl.DisplayNames(undefined, { type: 'language' }).of(languageCode) || languageCode;
+    } catch {
+      return languageCode;
+    }
+  })();
+  const details = document.createElement('details');
+  details.className = 'film-original-details';
+  const summary = document.createElement('summary');
+  summary.textContent = 'Original title & language';
+  details.append(summary);
+  const facts = document.createElement('dl');
+  facts.className = 'original-film-facts';
+  if (hasDistinctTitle) {
+    const titleLabel = document.createElement('dt');
+    titleLabel.textContent = 'Original title';
+    const titleValue = document.createElement('dd');
+    titleValue.lang = languageCode || '';
+    titleValue.textContent = originalTitle;
+    facts.append(titleLabel, titleValue);
+  }
+  if (languageCode) {
+    const languageLabel = document.createElement('dt');
+    languageLabel.textContent = 'Original language';
+    const languageValue = document.createElement('dd');
+    languageValue.textContent = `${languageName} (${languageCode.toUpperCase()})`;
+    facts.append(languageLabel, languageValue);
+  }
+  details.append(facts);
+  return details;
 }
 
 function countryRuntimeMetaFor(film, className) {
@@ -468,12 +634,8 @@ function cardFor(film, index) {
   info.append(titleRow);
 
   const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  if (directors.length) {
-    const director = document.createElement('p');
-    director.className = 'director-credit';
-    director.textContent = `Directed by ${directors.join(', ')}`;
-    info.append(director);
-  }
+  const directorCredit = directorCreditFor(directors, 'director-credit');
+  if (directorCredit) info.append(directorCredit);
 
   const cinephileMeta = countryRuntimeMetaFor(film, 'cinephile-meta');
   if (cinephileMeta) info.append(cinephileMeta);
@@ -541,6 +703,9 @@ function cardFor(film, index) {
     });
     info.append(overviewToggle);
   }
+
+  const originalDetails = originalDetailsFor(film);
+  if (originalDetails) info.append(originalDetails);
 
   const lists = film.lists || [];
   const listDetails = document.createElement('details');
@@ -664,12 +829,8 @@ function featuredFilmFor(film) {
   copy.append(title);
 
   const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  if (directors.length) {
-    const director = document.createElement('p');
-    director.className = 'featured-film-director';
-    director.textContent = `Directed by ${directors.join(', ')}`;
-    copy.append(director);
-  }
+  const directorCredit = directorCreditFor(directors, 'featured-film-director');
+  if (directorCredit) copy.append(directorCredit);
   const featuredFacts = countryRuntimeMetaFor(film, 'featured-film-facts');
   if (featuredFacts) copy.append(featuredFacts);
   const count = document.createElement('p');
@@ -680,6 +841,8 @@ function featuredFilmFor(film) {
   count.append(countValue, ` ${likedListCount === 1 ? 'liked list' : 'liked lists'}`);
   count.setAttribute('aria-label', `Appears in ${likedListCount.toLocaleString()} ${likedListCount === 1 ? 'liked list' : 'liked lists'}`);
   copy.append(count);
+  const originalDetails = originalDetailsFor(film);
+  if (originalDetails) copy.append(originalDetails);
   feature.append(copy);
   return feature;
 }
@@ -699,6 +862,8 @@ function validateSnapshot(snapshot) {
     && isStringList(film.lists)
     && (film.directors === undefined || isStringList(film.directors))
     && (film.countries === undefined || isStringList(film.countries))
+    && (film.original_title === undefined || typeof film.original_title === 'string')
+    && (film.original_language === undefined || typeof film.original_language === 'string')
     && (film.runtime_minutes === undefined || film.runtime_minutes === null || (isCount(film.runtime_minutes) && film.runtime_minutes > 0))
     && (film.tmdb_id === null || isCount(film.tmdb_id))
     && (film.tmdb_rating === null || (typeof film.tmdb_rating === 'number' && Number.isFinite(film.tmdb_rating)));
@@ -738,7 +903,7 @@ function render() {
   currentShownCount = shown.length;
   currentMatchCount = matching.length;
   topBilled.hidden = highlighted.length === 0;
-  const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0;
+  const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0 && activeDirectors.length === 0 && !activeCountry && activeDecade === '';
   topBilledEyebrow.textContent = defaultRankedView ? 'Opening credits' : 'Filtered view';
   topBilledTitle.textContent = defaultRankedView ? 'Most listed' : 'Top results';
   topBilledFeature.replaceChildren(...(highlighted.length ? [featuredFilmFor(highlighted[0])] : []));
@@ -759,7 +924,7 @@ function render() {
   }
   updateBackToFiltersVisibility();
   const resultAnnouncement = document.querySelector('#results-announcement');
-  const filterDescription = [activeFilter === 'all' ? '' : `${activeFilter} only`, activeGenres.length ? `genres: ${activeGenres.join(' or ')}` : ''].filter(Boolean).join(', ');
+  const filterDescription = [activeFilter === 'all' ? '' : `${activeFilter} only`, activeGenres.length ? `genres: ${activeGenres.join(' or ')}` : '', activeDirectors.length ? `directors: ${activeDirectors.join(' or ')}` : '', activeCountry ? `country: ${activeCountry}` : '', activeDecade !== '' ? `decade: ${activeDecade}s` : ''].filter(Boolean).join(', ');
   const sortDescription = activeSort === 'rank' ? '' : `, sorted by ${sortSelect.options[sortSelect.selectedIndex].text}`;
   resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription ? `, ${filterDescription}` : ''}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
 }
@@ -833,7 +998,7 @@ async function loadSnapshot() {
     progress.setAttribute('aria-label', `${watchedCount.toLocaleString()} of ${rankedTotal.toLocaleString()} films watched (${progressPercent} percent)`);
     document.querySelector('#refreshed-label').textContent = formatDate(snapshot.refreshed_at);
     const displayed = snapshot.displayed_film_count ?? films.length;
-    collectionScope.textContent = `Search covers all ${displayed.toLocaleString()} films in this catalog by title, year, genre, synopsis, and source list.`;
+    collectionScope.textContent = `Search covers all ${displayed.toLocaleString()} films by title, original title, director, year, genre, synopsis, and source list. Refine by production country or decade.`;
     document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
     document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
     render();
@@ -877,6 +1042,9 @@ clearSearchStateButton.addEventListener('click', () => {
   activeFilter = 'all';
   activeSort = 'rank';
   activeGenres = [];
+  activeDirectors = [];
+  activeCountry = '';
+  activeDecade = '';
   visibleLimit = 40;
   syncControls();
   updateUrlState();
@@ -890,6 +1058,8 @@ clearGenresButton.addEventListener('click', () => {
   updateUrlState();
   render();
 });
+countrySelect.addEventListener('change', () => setCountry(countrySelect.value));
+decadeSelect.addEventListener('change', () => setDecade(decadeSelect.value));
 closeGenresButton.addEventListener('click', () => {
   genreFilter.open = false;
   genreFilterTrigger.focus();

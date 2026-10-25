@@ -192,6 +192,8 @@ def _tmdb_metadata_payload(movie: Movie, record: dict, genre_names: dict[int, st
         "tmdb_id": movie_id,
         "tmdb_url": f"https://www.themoviedb.org/movie/{movie_id}" if movie_id else "",
         "title": record.get("title") or movie.title,
+        "original_title": record.get("original_title") or record.get("title") or movie.title,
+        "original_language": record.get("original_language") or "",
         "year": (record.get("release_date") or "")[:4] or movie.year,
         "overview": record.get("overview") or "",
         "poster_url": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "",

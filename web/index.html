@@ -86,7 +86,7 @@
                 <input id="search-input" type="search" placeholder="Search titles, genres, or lists" autocomplete="off" aria-keyshortcuts="/" aria-describedby="search-help" />
                 <kbd>/</kbd>
               </label>
-              <span id="search-help" class="sr-only">Search film titles, years, genres, synopses, and source lists. Press slash to focus search. Press Escape to clear it.</span>
+              <span id="search-help" class="sr-only">Search titles, original titles, directors, years, genres, synopses, and source lists. Press slash to focus search. Press Escape to clear it.</span>
               <div class="filter-tabs" role="group" aria-label="Filter films">
                 <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
                 <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count">—</span></button>
@@ -115,6 +115,18 @@
                   <p id="genre-empty-state" class="genre-empty-state" hidden>No genres match that search.</p>
                 </div>
               </details>
+              <label class="facet-select">
+                <span class="sr-only">Filter by production country</span>
+                <select id="country-select" aria-label="Filter by production country">
+                  <option value="">Any country</option>
+                </select>
+              </label>
+              <label class="facet-select">
+                <span class="sr-only">Filter by decade</span>
+                <select id="decade-select" aria-label="Filter by decade">
+                  <option value="">Any decade</option>
+                </select>
+              </label>
               <label class="sort-control">
                 <span class="sr-only">Sort films</span>
                 <select id="sort-select" aria-label="Sort films">
@@ -126,10 +138,11 @@
               </label>
             </div>
           </div>
-          <p id="collection-scope" class="collection-scope">Search covers all films in this catalog by title, year, genre, synopsis, and source list.</p>
+          <p id="collection-scope" class="collection-scope">Search covers film titles, original titles, directors, years, genres, synopses, and source lists. Refine by production country and decade.</p>
           <div id="active-view-tools" class="active-view-tools" hidden>
             <span id="active-view-label" class="active-view-label"></span>
-            <div id="active-genre-filters" class="active-genre-filters" aria-label="Active genre filters" hidden></div>
+            <div id="active-genre-filters" class="active-genre-filters" aria-label="Active filters" hidden></div>
+            <div id="active-director-filters" class="active-genre-filters" aria-label="Active director filters" hidden></div>
             <button id="clear-search-state" class="clear-search-state" type="button">Clear search &amp; reset view</button>
           </div>
           <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>

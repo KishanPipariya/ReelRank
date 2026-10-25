@@ -89,6 +89,9 @@ def validate_snapshot(snapshot: object) -> dict:
             raise ValueError(f"Snapshot film {index} directors must be an array of strings")
         if "countries" in film and not _is_string_list(film["countries"]):
             raise ValueError(f"Snapshot film {index} countries must be an array of strings")
+        for field in ("original_title", "original_language"):
+            if field in film and not isinstance(film[field], str):
+                raise ValueError(f"Snapshot film {index} {field} must be a string")
         runtime = film.get("runtime_minutes")
         if runtime is not None and (not _is_nonnegative_integer(runtime) or runtime == 0):
             raise ValueError(f"Snapshot film {index} runtime_minutes must be a positive integer or null")
@@ -131,7 +134,7 @@ def create_snapshot(username: str) -> dict:
         featured_results = results[:500]
         metadata: dict[int, dict | None] = {}
         tmdb_match_count = 0
-        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v4.json"
+        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v5.json"
         tmdb_cache = _load_tmdb_metadata_cache(tmdb_cache_path)
         missing_metadata: list[tuple[int, MovieResult, str]] = []
         for index, result in enumerate(featured_results):
@@ -139,7 +142,7 @@ def create_snapshot(username: str) -> dict:
             if cache_key in tmdb_cache:
                 cached = tmdb_cache[cache_key]
                 if isinstance(cached, dict) and (
-                    (tmdb_api_key and all(field in cached for field in ("genres", "directors", "countries", "runtime_minutes")) and cached.get("metadata_details_loaded"))
+                    (tmdb_api_key and all(field in cached for field in ("genres", "directors", "countries", "runtime_minutes", "original_title", "original_language")) and cached.get("metadata_details_loaded"))
                     or (not tmdb_api_key and cached.get("tmdb_id"))
                 ):
                     metadata[index] = cached
@@ -251,6 +254,8 @@ def create_snapshot(username: str) -> dict:
         films.append(
             {
                 "title": tmdb.get("title") or movie.title,
+                "original_title": tmdb.get("original_title") or tmdb.get("title") or movie.title,
+                "original_language": tmdb.get("original_language", ""),
                 "year": tmdb.get("year") or movie.year,
                 "letterboxd_title": movie.title,
                 "letterboxd_year": movie.year,
