@@ -90,7 +90,6 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .collection-scope { margin: -14px 0 18px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .active-view-tools { min-height: 34px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: -2px 0 20px; }
 .active-view-tools[hidden] { display: none; }
-.active-view-label { max-width: 100%; overflow-wrap: anywhere; color: var(--muted); font-family: var(--mono); font-size: 10px; }
 .active-genre-filters { display: flex; flex-wrap: wrap; gap: 6px; }
 .active-genre-filters[hidden] { display: none; }
 .active-genre-chip { padding: 5px 9px; border: 1px solid var(--forest); border-radius: 999px; background: var(--filter-active); color: var(--filter-active-ink); cursor: pointer; font-size: 10px; }

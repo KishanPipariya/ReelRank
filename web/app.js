@@ -18,7 +18,6 @@ const clearGenresButton = document.querySelector('#clear-genres');
 const closeGenresButton = document.querySelector('#close-genres');
 const selectedGenres = document.querySelector('#selected-genres');
 const activeViewTools = document.querySelector('#active-view-tools');
-const activeViewLabel = document.querySelector('#active-view-label');
 const activeGenreFilters = document.querySelector('#active-genre-filters');
 const activeDirectorFilters = document.querySelector('#active-director-filters');
 const collectionScope = document.querySelector('#collection-scope');
@@ -106,15 +105,9 @@ function renderSelectedGenres() {
 }
 
 function renderActiveViewFilters() {
-  const query = searchInput.value.trim();
-  const labels = [];
-  if (query) labels.push(`Search: ${query}`);
-  if (activeFilter !== 'all') labels.push(activeFilter[0].toLocaleUpperCase() + activeFilter.slice(1));
-  if (activeSort !== 'rank') labels.push(sortSelect.options[sortSelect.selectedIndex].text);
-  if (activeCountry) labels.push(`Country: ${activeCountry}`);
-  if (activeDecade !== '') labels.push(`${activeDecade}s`);
-  activeViewTools.hidden = labels.length === 0 && activeGenres.length === 0 && activeDirectors.length === 0 && !activeCountry && activeDecade === '';
-  activeViewLabel.textContent = labels.join(' · ');
+  const hasActiveView = Boolean(searchInput.value.trim()) || activeFilter !== 'all' || activeSort !== 'rank'
+    || activeGenres.length > 0 || activeDirectors.length > 0 || Boolean(activeCountry) || activeDecade !== '';
+  activeViewTools.hidden = !hasActiveView;
   activeGenreFilters.replaceChildren();
   activeGenreFilters.hidden = activeGenres.length === 0;
   activeGenres.forEach((genre) => {
