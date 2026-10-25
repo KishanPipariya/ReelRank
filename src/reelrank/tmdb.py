@@ -31,15 +31,24 @@ def _tmdb_metadata_key(movie: Movie) -> str:
 def _load_tmdb_metadata_cache(cache_path: Path) -> dict[str, dict | None]:
     try:
         payload = json.loads(cache_path.read_text(encoding="utf-8"))
+        cache_written_at = datetime.fromtimestamp(cache_path.stat().st_mtime, timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     except (OSError, json.JSONDecodeError):
         return {}
     if not isinstance(payload, dict):
         return {}
-    return {
-        key: value
-        for key, value in payload.items()
-        if isinstance(key, str) and (value is None or isinstance(value, dict))
-    }
+    cache: dict[str, dict | None] = {}
+    for key, value in payload.items():
+        if not isinstance(key, str) or (value is not None and not isinstance(value, dict)):
+            continue
+        if isinstance(value, dict) and "metadata_fetched_at" not in value:
+            value = {
+                **value,
+                "metadata_source": value.get("metadata_source", "legacy"),
+                "metadata_fetched_at": cache_written_at,
+                "metadata_status": "complete" if value.get("metadata_details_loaded") else "id_only",
+            }
+        cache[key] = value
+    return cache
 
 def _write_tmdb_metadata_cache(cache_path: Path, cache: dict[str, dict | None]) -> None:
     cache_path.parent.mkdir(parents=True, exist_ok=True)

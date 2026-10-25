@@ -1,3 +1,10 @@
+import { buildSearchText, compareFilms as compareCatalogFilms, filmDecade, matchesFilm } from './catalog.js';
+import { validateSnapshot } from './snapshot.js';
+import { cardFor as createFilmCard, updateFilmCard } from './film-components.js';
+import { parseUrlState, urlForState } from './url-state.js';
+import { createFilterControls } from './filter-controls.js';
+import { createFilmViews } from './film-views.js';
+
 const grid = document.querySelector('#film-grid');
 const filmLedgerView = document.querySelector('#film-ledger-view');
 const filmLedgerRows = document.querySelector('#film-ledger-rows');
@@ -63,51 +70,29 @@ const setupCopy = document.querySelector('#setup-copy');
 const demoPreviewLink = document.querySelector('#demo-preview-link');
 const siteShell = document.querySelector('#site-shell');
 const demoBanner = document.querySelector('#demo-banner');
-const validFilters = new Set(['all', 'unwatched', 'watched']);
-const validSorts = new Set(['rank', 'title', 'year-newest', 'year-oldest']);
-const validViews = new Set(['posters', 'ledger']);
 let films = [];
-let activeFilter = readUrlState().filter;
-let activeSort = readUrlState().sort;
-let activeView = readUrlState().view;
-let activeGenres = readUrlState().genres;
-let activeDirectors = readUrlState().directors;
-let activeSourceLists = readUrlState().sourceLists;
-let activeCountry = readUrlState().country;
-let activeDecade = readUrlState().decade;
+const rankByFilm = new Map();
+const state = {
+  ...parseUrlState(window.location.search),
+  visibleLimit: 40,
+  searchEditing: false,
+};
 let availableGenres = [];
 let availableDirectors = [];
 let availableDecades = [];
 let availableCountries = [];
 let availableSourceLists = [];
 const sourceListUrlsByFilm = new WeakMap();
+const searchTextByFilm = new WeakMap();
+const filmCardByFilm = new WeakMap();
 let rankedTotal = 0;
-let visibleLimit = 40;
 let searchUrlTimer;
-let searchEditing = false;
 let currentShownCount = 0;
 let currentMatchCount = 0;
 let currentMatchingFilms = [];
 let currentHighestScore = 1;
 let countryAtlasSize = 0;
 let snapshotRefreshedAt = '';
-
-function readUrlState() {
-  const params = new URLSearchParams(window.location.search);
-  const filter = params.get('filter');
-  const sort = params.get('sort');
-  return {
-    query: params.get('q') || '',
-    filter: validFilters.has(filter) ? filter : 'all',
-    sort: validSorts.has(sort) ? sort : 'rank',
-    genres: [...new Set(params.getAll('genre'))],
-    directors: [...new Set(params.getAll('director'))],
-    sourceLists: [...new Set(params.getAll('list'))],
-    country: params.get('country') || '',
-    decade: /^\d{4}$/.test(params.get('decade') || '') ? Number(params.get('decade')) : '',
-    view: validViews.has(params.get('view')) ? params.get('view') : 'posters',
-  };
-}
 
 function setCountryIndexExpanded(expanded) {
   countryIndex.classList.toggle('is-expanded', expanded);
@@ -133,148 +118,20 @@ function updateCountryIndexVisibility() {
   countryIndexEmpty.hidden = !expanded || visibleCount > 0;
 }
 
-function syncControls() {
-  sortSelect.value = activeSort;
-  countryIndexOptions.querySelectorAll('[data-country]').forEach((button) => {
-    const selected = button.dataset.country === activeCountry;
-    button.setAttribute('aria-pressed', String(selected));
-    if (selected && button.hidden) {
-      countryIndexSearch.value = '';
-      setCountryIndexExpanded(true);
-    }
-  });
-  posterDisplayButton.classList.toggle('is-active', activeView === 'posters');
-  posterDisplayButton.setAttribute('aria-pressed', String(activeView === 'posters'));
-  ledgerDisplayButton.classList.toggle('is-active', activeView === 'ledger');
-  ledgerDisplayButton.setAttribute('aria-pressed', String(activeView === 'ledger'));
-  decadeOptions.querySelectorAll('[data-decade]').forEach((button) => {
-    const selected = button.dataset.decade === (activeDecade === '' ? '' : String(activeDecade));
-    button.setAttribute('aria-pressed', String(selected));
-  });
-  document.querySelectorAll('.filter-button').forEach((button) => {
-    const selected = button.dataset.filter === activeFilter;
-    button.classList.toggle('is-active', selected);
-    button.setAttribute('aria-pressed', String(selected));
-  });
-  genreOptions.querySelectorAll('input[type="checkbox"]').forEach((input) => {
-    input.checked = activeGenres.includes(input.value);
-  });
-  genreFilterSummary.textContent = activeGenres.length
-    ? `${activeGenres[0]}${activeGenres.length > 1 ? ` +${activeGenres.length - 1}` : ''}`
-    : 'Any';
-  clearGenresButton.hidden = activeGenres.length === 0;
-  renderSelectedGenres();
-  sourceListOptions.querySelectorAll('input[type="checkbox"]').forEach((input) => {
-    input.checked = activeSourceLists.includes(input.value);
-  });
-  const selectedSourceListLabels = activeSourceLists
-    .map((url) => availableSourceLists.find((sourceList) => sourceList.url === url)?.label)
-    .filter(Boolean);
-  sourceListFilterSummary.textContent = selectedSourceListLabels.length === 0
-    ? 'Any'
-    : selectedSourceListLabels.length === 1
-      ? selectedSourceListLabels[0]
-      : `${selectedSourceListLabels.length} selected`;
-  clearSourceListsButton.hidden = activeSourceLists.length === 0;
-  renderSelectedSourceLists();
-  renderActiveViewFilters();
-}
-
-function renderSelectedGenres() {
-  selectedGenres.replaceChildren();
-  if (activeGenres.length === 0) {
-    const empty = document.createElement('span');
-    empty.className = 'selected-genres-empty';
-    empty.textContent = 'No genres selected';
-    selectedGenres.append(empty);
-    return;
-  }
-  activeGenres.forEach((genre) => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'selected-genre-chip';
-    chip.textContent = `${genre} ×`;
-    chip.setAttribute('aria-label', `Remove ${genre} genre filter`);
-    chip.addEventListener('click', () => toggleGenre(genre));
-    selectedGenres.append(chip);
-  });
-}
-
-function renderSelectedSourceLists() {
-  selectedSourceLists.replaceChildren();
-  if (activeSourceLists.length === 0) {
-    const empty = document.createElement('span');
-    empty.className = 'selected-genres-empty';
-    empty.textContent = 'No source lists selected';
-    selectedSourceLists.append(empty);
-    return;
-  }
-  activeSourceLists.forEach((url) => {
-    const sourceList = availableSourceLists.find((item) => item.url === url);
-    if (!sourceList) return;
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'selected-genre-chip';
-    chip.textContent = `${sourceList.label} ×`;
-    chip.setAttribute('aria-label', `Remove ${sourceList.label} source list filter`);
-    chip.addEventListener('click', () => toggleSourceList(url));
-    selectedSourceLists.append(chip);
-  });
-}
-
-function renderActiveViewFilters() {
-  const hasActiveView = Boolean(searchInput.value.trim()) || activeFilter !== 'all' || activeSort !== 'rank'
-    || activeGenres.length > 0 || activeDirectors.length > 0 || activeSourceLists.length > 0 || Boolean(activeCountry) || activeDecade !== '';
-  activeViewTools.hidden = !hasActiveView;
-  activeGenreFilters.replaceChildren();
-  activeGenreFilters.hidden = activeGenres.length === 0;
-  activeGenres.forEach((genre) => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'active-genre-chip';
-    chip.textContent = `${genre} ×`;
-    chip.setAttribute('aria-label', `Remove ${genre} genre filter`);
-    chip.addEventListener('click', () => toggleGenre(genre));
-    activeGenreFilters.append(chip);
-  });
-  activeDirectorFilters.replaceChildren();
-  activeDirectorFilters.hidden = activeDirectors.length === 0;
-  activeDirectors.forEach((director) => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'active-genre-chip';
-    chip.textContent = `Director: ${director} ×`;
-    chip.setAttribute('aria-label', `Remove ${director} director filter`);
-    chip.addEventListener('click', () => toggleDirector(director));
-    activeDirectorFilters.append(chip);
-  });
-  activeSourceListFilters.replaceChildren();
-  activeSourceListFilters.hidden = activeSourceLists.length === 0;
-  activeSourceLists.forEach((url) => {
-    const sourceList = availableSourceLists.find((item) => item.url === url);
-    if (!sourceList) return;
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'active-genre-chip active-source-list-chip';
-    chip.textContent = `List: ${sourceList.label} ×`;
-    chip.setAttribute('aria-label', `Remove ${sourceList.label} source list filter`);
-    chip.addEventListener('click', () => toggleSourceList(url));
-    activeSourceListFilters.append(chip);
-  });
-  if (activeCountry) appendFacetChip(activeGenreFilters, `Country: ${activeCountry}`, 'Remove production country filter', () => setCountry(''));
-  if (activeDecade !== '') appendFacetChip(activeGenreFilters, `${activeDecade}s`, 'Remove decade filter', () => setDecade(''));
-}
-
-function appendFacetChip(container, label, ariaLabel, onRemove) {
-  container.hidden = false;
-  const chip = document.createElement('button');
-  chip.type = 'button';
-  chip.className = 'active-genre-chip';
-  chip.textContent = `${label} ×`;
-  chip.setAttribute('aria-label', ariaLabel);
-  chip.addEventListener('click', onRemove);
-  container.append(chip);
-}
+const filterControls = createFilterControls({
+  state,
+  sources: () => availableSourceLists,
+  elements: {
+    sortSelect, countryIndexOptions, countryIndexSearch, posterDisplayButton, ledgerDisplayButton,
+    decadeOptions, genreOptions, genreFilterSummary, clearGenresButton, selectedGenres,
+    sourceListOptions, sourceListFilterSummary, clearSourceListsButton, selectedSourceLists,
+    activeViewTools, activeGenreFilters, activeDirectorFilters, activeSourceListFilters, searchInput,
+  },
+  actions: {
+    toggleGenre, toggleDirector, toggleSourceList, setCountry, setDecade, setCountryIndexExpanded,
+  },
+});
+const { syncControls } = filterControls;
 
 function buildGenreFilter() {
   const counts = new Map();
@@ -284,7 +141,7 @@ function buildGenreFilter() {
     });
   });
   availableGenres = [...counts.keys()].sort((left, right) => left.localeCompare(right));
-  activeGenres = activeGenres.filter((genre) => availableGenres.includes(genre));
+  state.genres = state.genres.filter((genre) => availableGenres.includes(genre));
   genreFilter.hidden = availableGenres.length === 0;
   genreOptions.replaceChildren();
   availableGenres.forEach((genre) => {
@@ -319,7 +176,7 @@ function buildCatalogFilters() {
   availableSourceLists = [...sourceListCounts]
     .map(([url, count]) => ({ url, count, label: listLabel(url) }))
     .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label));
-  activeSourceLists = [...new Set(activeSourceLists.map(sourceListUrl).filter((url) => sourceListCounts.has(url)))];
+  state.sourceLists = [...new Set(state.sourceLists.map(sourceListUrl).filter((url) => sourceListCounts.has(url)))];
   sourceListFilter.hidden = availableSourceLists.length === 0;
   sourceListOptions.replaceChildren(...availableSourceLists.map((sourceList) => {
     const option = document.createElement('label');
@@ -390,14 +247,14 @@ function buildCatalogFilters() {
     button.append(decadeOptionLabel(`${decade}s`, decadeCounts.get(decade)));
     return button;
   }));
-  activeCountry = countries.includes(activeCountry) ? activeCountry : '';
-  activeDecade = decades.includes(Number(activeDecade)) ? Number(activeDecade) : '';
-  const selectedCountryIndex = countryAtlas.findIndex(([country]) => country === activeCountry);
+  state.country = countries.includes(state.country) ? state.country : '';
+  state.decade = decades.includes(Number(state.decade)) ? Number(state.decade) : '';
+  const selectedCountryIndex = countryAtlas.findIndex(([country]) => country === state.country);
   setCountryIndexExpanded(selectedCountryIndex >= 6);
   availableDirectors = [...new Set(films.flatMap((film) => Array.isArray(film.directors) ? film.directors : []))]
     .filter((director) => typeof director === 'string' && director.trim())
     .sort((left, right) => left.localeCompare(right));
-  activeDirectors = activeDirectors.filter((director) => availableDirectors.includes(director));
+  state.directors = state.directors.filter((director) => availableDirectors.includes(director));
   updateUrlState({ replace: true });
 }
 
@@ -411,11 +268,6 @@ function decadeOptionLabel(label, count) {
   const fragment = document.createDocumentFragment();
   fragment.append(name, total);
   return fragment;
-}
-
-function filmDecade(film) {
-  const year = Number.parseInt(film.year, 10);
-  return Number.isFinite(year) && year >= 1000 ? Math.floor(year / 10) * 10 : null;
 }
 
 function scoreMeterFor(film, className) {
@@ -441,20 +293,20 @@ function updateGenreOptionVisibility() {
 }
 
 function toggleGenre(genre) {
-  activeGenres = activeGenres.includes(genre)
-    ? activeGenres.filter((selected) => selected !== genre)
-    : [...activeGenres, genre].sort((left, right) => left.localeCompare(right));
-  visibleLimit = 40;
+  state.genres = state.genres.includes(genre)
+    ? state.genres.filter((selected) => selected !== genre)
+    : [...state.genres, genre].sort((left, right) => left.localeCompare(right));
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
 }
 
 function toggleSourceList(url) {
-  activeSourceLists = activeSourceLists.includes(url)
-    ? activeSourceLists.filter((selected) => selected !== url)
-    : [...activeSourceLists, url].sort((left, right) => left.localeCompare(right));
-  visibleLimit = 40;
+  state.sourceLists = state.sourceLists.includes(url)
+    ? state.sourceLists.filter((selected) => selected !== url)
+    : [...state.sourceLists, url].sort((left, right) => left.localeCompare(right));
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
@@ -472,10 +324,10 @@ function updateSourceListOptionVisibility() {
 }
 
 function toggleDirector(director) {
-  activeDirectors = activeDirectors.includes(director)
-    ? activeDirectors.filter((selected) => selected !== director)
-    : [...activeDirectors, director].sort((left, right) => left.localeCompare(right));
-  visibleLimit = 40;
+  state.directors = state.directors.includes(director)
+    ? state.directors.filter((selected) => selected !== director)
+    : [...state.directors, director].sort((left, right) => left.localeCompare(right));
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
@@ -486,16 +338,16 @@ function toggleDirector(director) {
 }
 
 function setCountry(country) {
-  activeCountry = country;
-  visibleLimit = 40;
+  state.country = country;
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
 }
 
 function toggleCountry(country) {
-  activeCountry = activeCountry === country ? '' : country;
-  visibleLimit = 40;
+  state.country = state.country === country ? '' : country;
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
@@ -506,42 +358,28 @@ function toggleCountry(country) {
 }
 
 function setDecade(decade) {
-  activeDecade = decade === '' ? '' : Number(decade);
-  visibleLimit = 40;
+  state.decade = decade === '' ? '' : Number(decade);
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
 }
 
 function setView(view) {
-  activeView = validViews.has(view) ? view : 'posters';
-  visibleLimit = 40;
+  state.view = view === 'ledger' ? 'ledger' : 'posters';
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
 }
 
 function updateUrlState({ replace = false } = {}) {
-  const url = new URL(window.location.href);
   const query = searchInput.value.trim();
-  if (query) url.searchParams.set('q', query);
-  else url.searchParams.delete('q');
-  if (activeFilter === 'all') url.searchParams.delete('filter');
-  else url.searchParams.set('filter', activeFilter);
-  if (activeSort === 'rank') url.searchParams.delete('sort');
-  else url.searchParams.set('sort', activeSort);
-  url.searchParams.delete('genre');
-  activeGenres.forEach((genre) => url.searchParams.append('genre', genre));
-  url.searchParams.delete('director');
-  activeDirectors.forEach((director) => url.searchParams.append('director', director));
-  url.searchParams.delete('list');
-  activeSourceLists.forEach((listUrl) => url.searchParams.append('list', listUrl));
-  if (activeCountry) url.searchParams.set('country', activeCountry);
-  else url.searchParams.delete('country');
-  if (activeDecade !== '') url.searchParams.set('decade', String(activeDecade));
-  else url.searchParams.delete('decade');
-  if (activeView === 'ledger') url.searchParams.set('view', activeView);
-  else url.searchParams.delete('view');
+  state.query = query;
+  const url = urlForState(window.location.href, {
+    filter: state.filter, sort: state.sort, genres: state.genres, directors: state.directors,
+    sourceLists: state.sourceLists, country: state.country, decade: state.decade, view: state.view,
+  }, query);
   if (url.href === window.location.href) return;
   const method = replace ? 'replaceState' : 'pushState';
   window.history[method]({}, '', url);
@@ -553,8 +391,8 @@ function queueSearchUrlUpdate() {
 }
 
 function beginSearchEdit() {
-  if (searchEditing) return;
-  searchEditing = true;
+  if (state.searchEditing) return;
+  state.searchEditing = true;
   // Keep the previous committed view in history while the live query replaces
   // the current entry, so Back returns to the prior view instead of each pause.
   window.history.pushState({}, '', window.location.href);
@@ -562,30 +400,27 @@ function beginSearchEdit() {
 
 function commitSearchEdit() {
   window.clearTimeout(searchUrlTimer);
-  if (!searchEditing) return;
+  if (!state.searchEditing) return;
   updateUrlState({ replace: true });
-  searchEditing = false;
+  state.searchEditing = false;
 }
 
 function restoreUrlState() {
   window.clearTimeout(searchUrlTimer);
-  searchEditing = false;
-  const state = readUrlState();
+  state.searchEditing = false;
+  Object.assign(state, parseUrlState(window.location.search));
   searchInput.value = state.query;
-  activeFilter = state.filter;
-  activeSort = state.sort;
-  activeView = state.view;
-  activeGenres = state.genres.filter((genre) => availableGenres.includes(genre));
-  activeDirectors = state.directors.filter((director) => availableDirectors.includes(director));
-  activeSourceLists = state.sourceLists.map(sourceListUrl).filter((url) => availableSourceLists.some((sourceList) => sourceList.url === url));
-  activeCountry = availableCountries.includes(state.country)
+  state.genres = state.genres.filter((genre) => availableGenres.includes(genre));
+  state.directors = state.directors.filter((director) => availableDirectors.includes(director));
+  state.sourceLists = state.sourceLists.map(sourceListUrl).filter((url) => availableSourceLists.some((sourceList) => sourceList.url === url));
+  state.country = availableCountries.includes(state.country)
     ? state.country
     : '';
   const decadeValue = state.decade === '' ? '' : String(state.decade);
-  activeDecade = decadeValue && availableDecades.includes(Number(decadeValue))
+  state.decade = decadeValue && availableDecades.includes(Number(decadeValue))
     ? Number(decadeValue)
     : '';
-  visibleLimit = 40;
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState({ replace: true });
   render();
@@ -697,22 +532,20 @@ function programmeNoteFor(catalogue) {
   return `${catalogue.length.toLocaleString()} ${catalogue.length === 1 ? 'film' : 'films'}${details.length ? ` · ${details.join(' · ')}` : ''}`;
 }
 
-function matchesSearchAndGenres(film, query, selectedGenreList = activeGenres, selectedSourceListUrls = activeSourceLists) {
-  const filmGenres = Array.isArray(film.genres) ? film.genres : [];
-  if (selectedGenreList.length && !selectedGenreList.some((genre) => filmGenres.includes(genre))) return false;
-  const directors = Array.isArray(film.directors) ? film.directors : [];
-  if (activeDirectors.length && !activeDirectors.some((director) => directors.includes(director))) return false;
-  if (selectedSourceListUrls.length && !selectedSourceListUrls.some((url) => filmSourceListUrls(film).includes(url))) return false;
-  if (activeCountry && !(Array.isArray(film.countries) && film.countries.includes(activeCountry))) return false;
-  if (activeDecade !== '' && filmDecade(film) !== activeDecade) return false;
-  if (!query) return true;
-  const titleAndYear = `${film.title || ''} ${film.year || ''}`.toLocaleLowerCase();
-  const overview = (film.overview || '').toLocaleLowerCase();
-  const sourceLists = (film.lists || []).map(listLabel).join(' ').toLocaleLowerCase();
-  const genres = filmGenres.join(' ').toLocaleLowerCase();
-  const directorNames = directors.join(' ').toLocaleLowerCase();
-  return titleAndYear.includes(query) || (film.original_title || '').toLocaleLowerCase().includes(query)
-    || overview.includes(query) || sourceLists.includes(query) || genres.includes(query) || directorNames.includes(query);
+function matchesSearchAndGenres(film, query, selectedGenreList = state.genres, selectedSourceListUrls = state.sourceLists) {
+  let searchText = searchTextByFilm.get(film);
+  if (!searchText) {
+    searchText = buildSearchText(film, (film.lists || []).map(listLabel));
+    searchTextByFilm.set(film, searchText);
+  }
+  return matchesFilm(film, {
+    query,
+    genres: selectedGenreList,
+    directors: state.directors,
+    sourceLists: selectedSourceListUrls,
+    country: state.country,
+    decade: state.decade,
+  }, filmSourceListUrls(film), [], searchText);
 }
 
 function updateWatchFilterCounts(query) {
@@ -725,8 +558,8 @@ function updateWatchFilterCounts(query) {
 
 function updateGenreOptionCounts(query) {
   const contextFilms = films.filter((film) => {
-    if (activeFilter === 'unwatched' && film.watched) return false;
-    if (activeFilter === 'watched' && !film.watched) return false;
+    if (state.filter === 'unwatched' && film.watched) return false;
+    if (state.filter === 'watched' && !film.watched) return false;
     return matchesSearchAndGenres(film, query, []);
   });
   genreOptions.querySelectorAll('.genre-option').forEach((option) => {
@@ -738,9 +571,9 @@ function updateGenreOptionCounts(query) {
 
 function updateSourceListOptionCounts(query) {
   const contextFilms = films.filter((film) => {
-    if (activeFilter === 'unwatched' && film.watched) return false;
-    if (activeFilter === 'watched' && !film.watched) return false;
-    return matchesSearchAndGenres(film, query, activeGenres, []);
+    if (state.filter === 'unwatched' && film.watched) return false;
+    if (state.filter === 'watched' && !film.watched) return false;
+    return matchesSearchAndGenres(film, query, state.genres, []);
   });
   const counts = new Map();
   contextFilms.forEach((film) => {
@@ -752,39 +585,38 @@ function updateSourceListOptionCounts(query) {
   });
 }
 
-function compareFilms(left, right, sort = activeSort) {
-  const leftRank = films.indexOf(left);
-  const rightRank = films.indexOf(right);
-  if (sort === 'title') {
-    return (left.title || '').localeCompare(right.title || '') || leftRank - rightRank;
+function cardFor(film, index) {
+  let card = filmCardByFilm.get(film);
+  if (!card) {
+    card = createFilmCard(film, index, {
+      films, state, safeUrl, makeLink, directorCreditFor, countryRuntimeMetaFor,
+      scoreMeterFor, genreChipFor, filmDetailButtonFor,
+    });
+    filmCardByFilm.set(film, card);
   }
-  if (sort === 'year-newest' || sort === 'year-oldest') {
-    const leftYear = Number.parseInt(left.year, 10);
-    const rightYear = Number.parseInt(right.year, 10);
-    const leftHasYear = Number.isFinite(leftYear);
-    const rightHasYear = Number.isFinite(rightYear);
-    if (leftHasYear !== rightHasYear) return leftHasYear ? -1 : 1;
-    const yearDifference = sort === 'year-newest' ? rightYear - leftYear : leftYear - rightYear;
-    return yearDifference || leftRank - rightRank;
-  }
-  return leftRank - rightRank;
+  updateFilmCard(card, film, index, state, rankByFilm.get(film) + 1, currentHighestScore);
+  return card;
+}
+
+function compareFilms(left, right, sort = state.sort) {
+  return compareCatalogFilms(left, right, sort, rankByFilm);
 }
 
 function updateBackToFiltersVisibility() {
-  backToFiltersButton.hidden = visibleLimit <= 40 || window.scrollY < 600;
-  const filterLabel = activeFilter === 'all' ? 'All films' : `${activeFilter[0].toLocaleUpperCase()}${activeFilter.slice(1)}`;
-  const activeView = [
+  backToFiltersButton.hidden = state.visibleLimit <= 40 || window.scrollY < 600;
+  const filterLabel = state.filter === 'all' ? 'All films' : `${state.filter[0].toLocaleUpperCase()}${state.filter.slice(1)}`;
+  const viewDescription = [
     `${filterLabel} filter`,
-    activeGenres.length ? `genres ${activeGenres.join(' or ')}` : '',
-    activeDirectors.length ? `directors ${activeDirectors.join(' or ')}` : '',
-    activeSourceLists.length ? `source lists ${activeSourceLists.map((url) => availableSourceLists.find((item) => item.url === url)?.label).filter(Boolean).join(' or ')}` : '',
-    activeCountry ? `country ${activeCountry}` : '',
-    activeDecade !== '' ? `decade ${activeDecade}s` : '',
+    state.genres.length ? `genres ${state.genres.join(' or ')}` : '',
+    state.directors.length ? `directors ${state.directors.join(' or ')}` : '',
+    state.sourceLists.length ? `source lists ${state.sourceLists.map((url) => availableSourceLists.find((item) => item.url === url)?.label).filter(Boolean).join(' or ')}` : '',
+    state.country ? `country ${state.country}` : '',
+    state.decade !== '' ? `decade ${state.decade}s` : '',
     searchInput.value.trim() ? `search ${searchInput.value.trim()}` : '',
-    activeSort !== 'rank' ? `sorted by ${sortSelect.options[sortSelect.selectedIndex].text}` : '',
+    state.sort !== 'rank' ? `sorted by ${sortSelect.options[sortSelect.selectedIndex].text}` : '',
   ].filter(Boolean).join(', ');
   backToFiltersButton.textContent = `${currentShownCount} of ${currentMatchCount} · Filters ↑`;
-  backToFiltersButton.setAttribute('aria-label', `Showing ${currentShownCount} of ${currentMatchCount} matching films. ${activeView}. Return to search and filters.`);
+  backToFiltersButton.setAttribute('aria-label', `Showing ${currentShownCount} of ${currentMatchCount} matching films. ${viewDescription}. Return to search and filters.`);
 }
 
 function makeLink(label, href, className = '') {
@@ -802,9 +634,10 @@ function genreChipFor(genre) {
   const tag = document.createElement('button');
   tag.type = 'button';
   tag.className = 'genre-tag';
+  tag.dataset.genre = genre;
   tag.textContent = genre;
   tag.setAttribute('aria-label', `Filter by ${genre}`);
-  tag.setAttribute('aria-pressed', String(activeGenres.includes(genre)));
+  tag.setAttribute('aria-pressed', String(state.genres.includes(genre)));
   tag.addEventListener('click', () => {
     toggleGenre(genre);
     const collectionTitle = document.querySelector('#collection-title');
@@ -825,8 +658,9 @@ function directorCreditFor(directors, className) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'director-filter';
+    button.dataset.director = director;
     button.textContent = director;
-    button.setAttribute('aria-pressed', String(activeDirectors.includes(director)));
+    button.setAttribute('aria-pressed', String(state.directors.includes(director)));
     button.setAttribute('aria-label', `Filter by director ${director}`);
     button.addEventListener('click', () => toggleDirector(director));
     credit.append(button);
@@ -887,9 +721,10 @@ function countryRuntimeMetaFor(film, className) {
       button.className = className;
       button.type = 'button';
       button.textContent = country;
+      button.dataset.country = country;
       button.tabIndex = tabIndex;
       button.setAttribute('aria-label', `Filter by production country ${country}`);
-      button.setAttribute('aria-pressed', String(activeCountry === country));
+      button.setAttribute('aria-pressed', String(state.country === country));
       button.addEventListener('click', () => toggleCountry(country));
       return button;
     };
@@ -1015,319 +850,37 @@ function filmProgrammeNotesFor(film) {
   return notes;
 }
 
+const filmViews = createFilmViews({
+  getFilms: () => films,
+  state,
+  safeUrl,
+  makeLink,
+  directorCreditFor,
+  countryRuntimeMetaFor,
+  scoreMeterFor,
+  genreChipFor,
+  filmDetailButtonFor,
+  toggleDirector,
+  originalFilmFactsFor,
+  sourceListNotesFor,
+  filmProgrammeNotesFor,
+  filmDetailContent,
+  filmDetailDialog,
+});
+
 function filmDetailButtonFor(film) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'film-detail-trigger';
   button.textContent = 'Read programme notes';
   button.setAttribute('aria-label', `Read programme notes for ${film.title}`);
-  button.addEventListener('click', () => openFilmDetails(film));
+  button.addEventListener('click', () => filmViews.openFilmDetails(film));
   return button;
-}
-
-function openFilmDetails(film) {
-  filmDetailContent.replaceChildren();
-  const layout = document.createElement('div');
-  layout.className = 'film-detail-layout';
-  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
-  const poster = document.createElement('div');
-  poster.className = 'film-detail-poster';
-  if (posterUrl) {
-    const image = document.createElement('img');
-    image.src = posterUrl;
-    image.alt = `Poster for ${film.title}`;
-    image.referrerPolicy = 'no-referrer';
-    poster.append(image);
-  } else {
-    poster.textContent = film.title;
-  }
-  const copy = document.createElement('div');
-  copy.className = 'film-detail-copy';
-  const rank = films.indexOf(film) + 1;
-  const kicker = document.createElement('p');
-  kicker.className = 'film-detail-kicker';
-  kicker.textContent = `Catalogue no. ${String(rank).padStart(3, '0')} · ${film.watched ? 'Watched' : 'Unwatched'}`;
-  const title = document.createElement('h2');
-  title.id = 'film-detail-title';
-  title.textContent = film.title;
-  const year = document.createElement('span');
-  year.className = 'film-detail-year';
-  year.textContent = film.year || 'Year unknown';
-  const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  const director = document.createElement('p');
-  director.className = 'film-detail-director';
-  director.textContent = directors.length ? `Directed by ${directors.join(', ')}` : 'Director not listed';
-  const facts = document.createElement('p');
-  facts.className = 'film-detail-facts';
-  const countries = [...new Set(Array.isArray(film.countries) ? film.countries.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  const runtime = Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0 ? `${film.runtime_minutes} min` : '';
-  facts.textContent = [countries.join(', '), runtime].filter(Boolean).join(' · ');
-  const score = document.createElement('p');
-  score.className = 'film-detail-score';
-  const scoreValue = document.createElement('strong');
-  scoreValue.textContent = (Number(film.liked_in) || 0).toLocaleString();
-  score.append(scoreValue, ` ${Number(film.liked_in) === 1 ? 'list appearance' : 'list appearances'}`);
-  copy.append(kicker, title, year, director);
-  if (facts.textContent) copy.append(facts);
-  copy.append(score);
-  const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];
-  if (genres.length) {
-    const genreList = document.createElement('p');
-    genreList.className = 'film-detail-genres';
-    genreList.textContent = genres.join(' · ');
-    genreList.setAttribute('aria-label', `Genres: ${genres.join(', ')}`);
-    copy.append(genreList);
-  }
-  const notes = filmProgrammeNotesFor(film);
-  if (notes) copy.append(notes);
-  const links = document.createElement('div');
-  links.className = 'film-detail-links';
-  const tmdbUrl = safeUrl(film.tmdb_url, ['themoviedb.org']);
-  if (tmdbUrl) links.append(makeLink('Film data on TMDB ↗', tmdbUrl, 'film-detail-external-link'));
-  const letterboxdUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
-  if (letterboxdUrl) links.append(makeLink('Open on Letterboxd ↗', letterboxdUrl, 'film-detail-external-link'));
-  copy.append(links);
-  layout.append(poster, copy);
-  filmDetailContent.append(layout);
-  filmDetailDialog.showModal();
-}
-
-function cardFor(film, index) {
-  const rankNumber = films.indexOf(film) + 1;
-  const card = document.createElement('article');
-  card.className = 'film-card';
-  card.style.animationDelay = `${Math.min(index * 22, 220)}ms`;
-
-  const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
-  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
-  const poster = document.createElement(filmUrl ? 'a' : 'div');
-  poster.className = 'poster-link';
-  if (filmUrl) {
-    poster.href = filmUrl;
-    poster.target = '_blank';
-    poster.rel = 'noreferrer';
-    poster.setAttribute('aria-label', `Open poster for ${film.title}, overall rank ${rankNumber}, ${film.watched ? 'watched' : 'unwatched'}, on Letterboxd, opens in a new tab`);
-  }
-
-  if (posterUrl) {
-    const image = document.createElement('img');
-    image.className = 'poster-image';
-    image.src = posterUrl;
-    image.alt = `Poster for ${film.title}`;
-    image.loading = activeFilter === 'watched' ? 'eager' : 'lazy';
-    image.referrerPolicy = 'no-referrer';
-    image.addEventListener('error', () => {
-      const fallback = document.createElement('div');
-      fallback.className = 'poster-fallback';
-      fallback.textContent = film.title;
-      image.replaceWith(fallback);
-    }, { once: true });
-    poster.append(image);
-  } else {
-    const fallback = document.createElement('div');
-    fallback.className = 'poster-fallback';
-    fallback.textContent = film.title;
-    poster.append(fallback);
-  }
-
-  const rank = document.createElement('span');
-  rank.className = 'rank-chip';
-  rank.textContent = activeSort === 'rank' ? `No. ${rankNumber}` : `Overall ${rankNumber}`;
-  rank.setAttribute('aria-label', activeSort === 'rank' ? `Catalogue number ${rankNumber}` : `Overall rank ${rankNumber}`);
-  poster.append(rank);
-  if (film.watched) {
-    const watched = document.createElement('span');
-    watched.className = 'watched-chip';
-    watched.textContent = 'Watched';
-    poster.append(watched);
-  }
-  card.append(poster);
-
-  const info = document.createElement('div');
-  info.className = 'film-info';
-  const titleRow = document.createElement('h3');
-  titleRow.className = 'film-title-row';
-  if (filmUrl) titleRow.append(makeLink(film.title, filmUrl, 'film-title'));
-  else {
-    const title = document.createElement('span');
-    title.className = 'film-title';
-    title.textContent = film.title;
-    titleRow.append(title);
-  }
-  const year = document.createElement('span');
-  year.className = 'film-year';
-  year.textContent = film.year || '';
-  titleRow.append(year);
-  info.append(titleRow);
-
-  const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  const directorCredit = directorCreditFor(directors, 'director-credit');
-  if (directorCredit) info.append(directorCredit);
-
-  const cinephileMeta = countryRuntimeMetaFor(film, 'cinephile-meta');
-  if (cinephileMeta) info.append(cinephileMeta);
-
-  const count = document.createElement('p');
-  count.className = 'film-count';
-  const countValue = document.createElement('strong');
-  const likedListCount = Number(film.liked_in) || 0;
-  countValue.textContent = likedListCount.toLocaleString();
-  const countLabel = document.createElement('span');
-  countLabel.textContent = likedListCount === 1 ? 'list appearance' : 'list appearances';
-  count.append(countValue, countLabel, scoreMeterFor(film, 'film-score-meter'));
-  count.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
-  info.append(count);
-
-  const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre) : [])];
-  if (genres.length) {
-    const genreTags = document.createElement('div');
-    genreTags.className = 'genre-tags';
-    genreTags.setAttribute('role', 'group');
-    genreTags.setAttribute('aria-label', `Genres: ${genres.join(', ')}`);
-    genres.slice(0, 2).forEach((genre) => genreTags.append(genreChipFor(genre)));
-    if (genres.length > 2) {
-      const hiddenGenres = genres.slice(2);
-      const hiddenTags = hiddenGenres.map((genre) => {
-        const tag = genreChipFor(genre);
-        tag.classList.add('genre-extra-tag');
-        return tag;
-      });
-      const more = document.createElement('button');
-      more.type = 'button';
-      more.className = 'genre-tag genre-tag-more';
-      more.textContent = `+${hiddenGenres.length}`;
-      more.setAttribute('aria-expanded', 'false');
-      more.setAttribute('aria-label', `Show ${hiddenGenres.length} more ${hiddenGenres.length === 1 ? 'genre' : 'genres'}`);
-      more.addEventListener('click', () => {
-        const expanded = genreTags.classList.toggle('is-expanded');
-        more.textContent = expanded ? '−' : `+${hiddenGenres.length}`;
-        more.setAttribute('aria-expanded', String(expanded));
-        more.setAttribute('aria-label', expanded ? 'Hide additional genres' : `Show ${hiddenGenres.length} more ${hiddenGenres.length === 1 ? 'genre' : 'genres'}`);
-      });
-      genreTags.append(more);
-      hiddenTags.forEach((tag) => genreTags.append(tag));
-    }
-    info.append(genreTags);
-  }
-
-  info.append(filmDetailButtonFor(film));
-  card.append(info);
-  return card;
-}
-
-function ledgerRowFor(film) {
-  const rankNumber = films.indexOf(film) + 1;
-  const row = document.createElement('tr');
-
-  const catalogueCell = document.createElement('th');
-  catalogueCell.scope = 'row';
-  catalogueCell.className = 'ledger-catalogue-number';
-  catalogueCell.textContent = `No. ${String(rankNumber).padStart(3, '0')}`;
-
-  const filmCell = document.createElement('td');
-  filmCell.className = 'ledger-film-cell';
-  const filmLayout = document.createElement('div');
-  filmLayout.className = 'ledger-film-layout';
-  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
-  const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
-  if (posterUrl) {
-    const poster = document.createElement(filmUrl ? 'a' : 'span');
-    poster.className = 'ledger-poster';
-    if (filmUrl) {
-      poster.href = filmUrl;
-      poster.target = '_blank';
-      poster.rel = 'noreferrer';
-      poster.setAttribute('aria-label', `Open ${film.title} on Letterboxd, opens in a new tab`);
-    }
-    const image = document.createElement('img');
-    image.src = posterUrl;
-    image.alt = '';
-    image.loading = 'lazy';
-    image.referrerPolicy = 'no-referrer';
-    poster.append(image);
-    filmLayout.append(poster);
-  }
-  const titleBlock = document.createElement('div');
-  titleBlock.className = 'ledger-film-copy';
-  const title = document.createElement('h3');
-  if (filmUrl) title.append(makeLink(film.title, filmUrl, 'ledger-film-title'));
-  else {
-    const titleText = document.createElement('span');
-    titleText.className = 'ledger-film-title';
-    titleText.textContent = film.title;
-    title.append(titleText);
-  }
-  const year = document.createElement('span');
-  year.className = 'ledger-film-year';
-  year.textContent = film.year || 'Year unknown';
-  title.append(year);
-  titleBlock.append(title);
-  titleBlock.append(filmDetailButtonFor(film));
-  filmLayout.append(titleBlock);
-  filmCell.append(filmLayout);
-
-  const directorCell = document.createElement('td');
-  directorCell.className = 'ledger-director-cell';
-  const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  if (directors.length) {
-    directors.forEach((director, index) => {
-      if (index) directorCell.append(document.createTextNode(', '));
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'director-filter';
-      button.textContent = director;
-      button.setAttribute('aria-pressed', String(activeDirectors.includes(director)));
-      button.setAttribute('aria-label', `Filter by director ${director}`);
-      button.addEventListener('click', () => toggleDirector(director));
-      directorCell.append(button);
-    });
-  } else directorCell.textContent = '—';
-
-  const productionCell = document.createElement('td');
-  productionCell.className = 'ledger-production-cell';
-  const production = countryRuntimeMetaFor(film, 'ledger-production');
-  if (production) productionCell.append(production);
-  else productionCell.textContent = '—';
-
-  const countCell = document.createElement('td');
-  countCell.className = 'ledger-appearance-cell';
-  const count = document.createElement('strong');
-  const likedListCount = Number(film.liked_in) || 0;
-  count.textContent = likedListCount.toLocaleString();
-  const countLabel = document.createElement('span');
-  countLabel.textContent = likedListCount === 1 ? 'list' : 'lists';
-  countCell.append(count, countLabel);
-  countCell.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
-
-  row.append(catalogueCell, filmCell, directorCell, productionCell, countCell);
-  return row;
-}
-
-function ledgerRowsFor(shownFilms) {
-  const rows = [];
-  const groupByYear = activeSort === 'year-newest' || activeSort === 'year-oldest';
-  let previousYear = null;
-  shownFilms.forEach((film) => {
-    const year = film.year?.trim() || 'Year unknown';
-    if (groupByYear && year !== previousYear) {
-      const divider = document.createElement('tr');
-      divider.className = 'ledger-year-divider';
-      const heading = document.createElement('th');
-      heading.scope = 'row';
-      heading.colSpan = 5;
-      heading.textContent = year;
-      divider.append(heading);
-      rows.push(divider);
-      previousYear = year;
-    }
-    rows.push(ledgerRowFor(film));
-  });
-  return rows;
 }
 
 function posterGridItemsFor(shownFilms) {
   const items = [];
-  const groupByYear = activeSort === 'year-newest' || activeSort === 'year-oldest';
+  const groupByYear = state.sort === 'year-newest' || state.sort === 'year-oldest';
   let previousYear = null;
   shownFilms.forEach((film, index) => {
     const year = film.year?.trim() || 'Year unknown';
@@ -1349,31 +902,31 @@ function posterGridItemsFor(shownFilms) {
 
 function programmeHeadingFor(query, defaultRankedView, matching) {
   if (defaultRankedView) return { eyebrow: 'Opening credits', title: 'Most listed' };
-  if (activeDirectors.length === 1) return { eyebrow: 'Filmography in this edition', title: activeDirectors[0] };
-  if (activeDirectors.length > 1) return { eyebrow: 'Director programme', title: `${activeDirectors.length} selected directors` };
-  if (activeSourceLists.length === 1) {
-    const sourceList = availableSourceLists.find((item) => item.url === activeSourceLists[0]);
+  if (state.directors.length === 1) return { eyebrow: 'Filmography in this edition', title: state.directors[0] };
+  if (state.directors.length > 1) return { eyebrow: 'Director programme', title: `${state.directors.length} selected directors` };
+  if (state.sourceLists.length === 1) {
+    const sourceList = availableSourceLists.find((item) => item.url === state.sourceLists[0]);
     if (sourceList) return { eyebrow: 'From a liked list', title: sourceList.label };
   }
-  if (activeSourceLists.length > 1) return { eyebrow: 'Liked-list programme', title: `${activeSourceLists.length} selected lists` };
-  if (activeCountry && activeDecade !== '') {
-    return { eyebrow: 'National cinema retrospective', title: `${activeCountry} · ${activeDecade}s` };
+  if (state.sourceLists.length > 1) return { eyebrow: 'Liked-list programme', title: `${state.sourceLists.length} selected lists` };
+  if (state.country && state.decade !== '') {
+    return { eyebrow: 'National cinema retrospective', title: `${state.country} · ${state.decade}s` };
   }
-  if (activeCountry) return { eyebrow: 'National cinema', title: activeCountry };
-  if (activeDecade !== '') return { eyebrow: 'Decade retrospective', title: `${activeDecade}s` };
-  if (activeGenres.length) {
-    const title = activeGenres.slice(0, 2).join(' · ');
-    return { eyebrow: 'Genre programme', title: activeGenres.length > 2 ? `${title} +${activeGenres.length - 2}` : title };
+  if (state.country) return { eyebrow: 'National cinema', title: state.country };
+  if (state.decade !== '') return { eyebrow: 'Decade retrospective', title: `${state.decade}s` };
+  if (state.genres.length) {
+    const title = state.genres.slice(0, 2).join(' · ');
+    return { eyebrow: 'Genre programme', title: state.genres.length > 2 ? `${title} +${state.genres.length - 2}` : title };
   }
   if (query) {
     const phrase = searchInput.value.trim();
     return { eyebrow: 'Search results', title: phrase.length > 38 ? `${phrase.slice(0, 35)}…` : phrase };
   }
-  if (activeFilter === 'watched') return { eyebrow: 'Watched collection', title: 'Films seen' };
-  if (activeFilter === 'unwatched') return { eyebrow: 'Watchlist programme', title: 'Films to discover' };
-  if (activeSort === 'year-newest') return { eyebrow: 'Chronological programme', title: 'Newest first' };
-  if (activeSort === 'year-oldest') return { eyebrow: 'Chronological programme', title: 'Oldest first' };
-  if (activeSort === 'title') return { eyebrow: 'Alphabetical programme', title: 'A–Z' };
+  if (state.filter === 'watched') return { eyebrow: 'Watched collection', title: 'Films seen' };
+  if (state.filter === 'unwatched') return { eyebrow: 'Watchlist programme', title: 'Films to discover' };
+  if (state.sort === 'year-newest') return { eyebrow: 'Chronological programme', title: 'Newest first' };
+  if (state.sort === 'year-oldest') return { eyebrow: 'Chronological programme', title: 'Oldest first' };
+  if (state.sort === 'title') return { eyebrow: 'Alphabetical programme', title: 'A–Z' };
   return { eyebrow: 'Your current programme', title: `${matching.length} films` };
 }
 
@@ -1384,12 +937,12 @@ function buildPrintProgramme() {
   printProgrammeDate.textContent = formatEditionDate(snapshotRefreshedAt);
   printProgrammeDate.dateTime = snapshotRefreshedAt;
   const activeFilters = [
-    activeFilter === 'all' ? '' : `${activeFilter} films`,
-    activeDirectors.length ? `directors: ${activeDirectors.join(' / ')}` : '',
-    activeSourceLists.length ? `liked lists: ${activeSourceLists.map((url) => availableSourceLists.find((item) => item.url === url)?.label).filter(Boolean).join(' / ')}` : '',
-    activeCountry ? `country: ${activeCountry}` : '',
-    activeDecade !== '' ? `decade: ${activeDecade}s` : '',
-    activeGenres.length ? `genres: ${activeGenres.join(' / ')}` : '',
+    state.filter === 'all' ? '' : `${state.filter} films`,
+    state.directors.length ? `directors: ${state.directors.join(' / ')}` : '',
+    state.sourceLists.length ? `liked lists: ${state.sourceLists.map((url) => availableSourceLists.find((item) => item.url === url)?.label).filter(Boolean).join(' / ')}` : '',
+    state.country ? `country: ${state.country}` : '',
+    state.decade !== '' ? `decade: ${state.decade}s` : '',
+    state.genres.length ? `genres: ${state.genres.join(' / ')}` : '',
     searchInput.value.trim() ? `search: ${searchInput.value.trim()}` : '',
   ].filter(Boolean);
   const selectedView = activeFilters.length ? `Selected view: ${activeFilters.join(' · ')}` : 'Full catalogue';
@@ -1462,164 +1015,12 @@ function printProgramme() {
   window.print();
 }
 
-function featuredFilmFor(film) {
-  const rankNumber = films.indexOf(film) + 1;
-  const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
-  const backdropUrl = safeUrl(film.backdrop_url, ['image.tmdb.org']);
-  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
-  const feature = document.createElement('article');
-  feature.className = 'featured-film';
-
-  if (backdropUrl) {
-    const backdrop = document.createElement('img');
-    backdrop.className = 'featured-film-backdrop';
-    backdrop.src = backdropUrl;
-    backdrop.alt = '';
-    backdrop.setAttribute('aria-hidden', 'true');
-    backdrop.loading = 'eager';
-    backdrop.referrerPolicy = 'no-referrer';
-    feature.append(backdrop);
-  }
-
-  const poster = document.createElement(filmUrl ? 'a' : 'div');
-  poster.className = 'featured-film-poster';
-  if (filmUrl) {
-    poster.href = filmUrl;
-    poster.target = '_blank';
-    poster.rel = 'noreferrer';
-    poster.setAttribute('aria-label', `Open poster for ${film.title}, overall rank ${rankNumber}, ${film.watched ? 'watched' : 'unwatched'}, on Letterboxd, opens in a new tab`);
-  }
-  if (posterUrl) {
-    const image = document.createElement('img');
-    image.src = posterUrl;
-    image.alt = `Poster for ${film.title}`;
-    image.loading = 'eager';
-    image.referrerPolicy = 'no-referrer';
-    image.addEventListener('error', () => {
-      const fallback = document.createElement('span');
-      fallback.className = 'poster-fallback';
-      fallback.textContent = film.title;
-      image.replaceWith(fallback);
-    }, { once: true });
-    poster.append(image);
-  } else {
-    const fallback = document.createElement('span');
-    fallback.className = 'poster-fallback';
-    fallback.textContent = film.title;
-    poster.append(fallback);
-  }
-  const rank = document.createElement('span');
-  rank.className = 'rank-chip';
-  rank.textContent = activeSort === 'rank' ? `No. ${rankNumber}` : `Overall ${rankNumber}`;
-  rank.setAttribute('aria-label', activeSort === 'rank' ? `Catalogue number ${rankNumber}` : `Overall rank ${rankNumber}`);
-  poster.append(rank);
-  if (film.watched) {
-    const watched = document.createElement('span');
-    watched.className = 'watched-chip';
-    watched.textContent = 'Watched';
-    poster.append(watched);
-  }
-  feature.append(poster);
-
-  const copy = document.createElement('div');
-  copy.className = 'featured-film-copy';
-  const label = document.createElement('p');
-  label.className = 'featured-film-label';
-  label.textContent = `Program selection · Overall rank ${rankNumber}`;
-  copy.append(label);
-  const title = document.createElement('h4');
-  if (filmUrl) title.append(makeLink(film.title, filmUrl, 'featured-film-title'));
-  else {
-    const titleText = document.createElement('span');
-    titleText.className = 'featured-film-title';
-    titleText.textContent = film.title;
-    title.append(titleText);
-  }
-  const year = document.createElement('span');
-  year.className = 'featured-film-year';
-  year.textContent = film.year || '';
-  title.append(year);
-  copy.append(title);
-
-  const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  const directorCredit = directorCreditFor(directors, 'featured-film-director');
-  if (directorCredit) copy.append(directorCredit);
-  const featuredFacts = countryRuntimeMetaFor(film, 'featured-film-facts');
-  if (featuredFacts) copy.append(featuredFacts);
-  if (film.overview) {
-    const synopsis = document.createElement('p');
-    synopsis.className = 'featured-film-overview';
-    synopsis.textContent = film.overview;
-    copy.append(synopsis);
-  }
-  const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];
-  if (genres.length) {
-    const genreTags = document.createElement('div');
-    genreTags.className = 'genre-tags featured-film-genres';
-    genreTags.setAttribute('role', 'group');
-    genreTags.setAttribute('aria-label', `Genres for ${film.title}`);
-    genres.forEach((genre) => genreTags.append(genreChipFor(genre)));
-    copy.append(genreTags);
-  }
-  const count = document.createElement('p');
-  count.className = 'featured-film-count';
-  const countValue = document.createElement('strong');
-  const likedListCount = Number(film.liked_in) || 0;
-  countValue.textContent = likedListCount.toLocaleString();
-  count.append(countValue, ` ${likedListCount === 1 ? 'list appearance' : 'list appearances'}`, scoreMeterFor(film, 'featured-score-meter'));
-  count.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
-  copy.append(count);
-  copy.append(filmDetailButtonFor(film));
-  feature.append(copy);
-  return feature;
-}
-
-function validateSnapshot(snapshot) {
-  const isRecord = (value) => value && typeof value === 'object' && !Array.isArray(value);
-  const isCount = (value) => Number.isSafeInteger(value) && value >= 0;
-  const isStringList = (value) => Array.isArray(value) && value.every((item) => typeof item === 'string');
-  const requiredCounts = ['list_count', 'film_count', 'displayed_film_count', 'unwatched_count', 'displayed_unwatched_count', 'tmdb_match_count'];
-  const requiredFilmStrings = ['title', 'year', 'letterboxd_title', 'letterboxd_year', 'letterboxd_url', 'poster_url', 'backdrop_url', 'overview', 'tmdb_url'];
-  const validFilm = (film) => isRecord(film)
-    && requiredFilmStrings.every((field) => typeof film[field] === 'string')
-    && film.title.trim().length > 0
-    && typeof film.watched === 'boolean'
-    && isCount(film.liked_in)
-    && isStringList(film.genres)
-    && isStringList(film.lists)
-    && (film.directors === undefined || isStringList(film.directors))
-    && (film.countries === undefined || isStringList(film.countries))
-    && (film.original_title === undefined || typeof film.original_title === 'string')
-    && (film.original_language === undefined || typeof film.original_language === 'string')
-    && (film.runtime_minutes === undefined || film.runtime_minutes === null || (isCount(film.runtime_minutes) && film.runtime_minutes > 0))
-    && (film.tmdb_id === null || isCount(film.tmdb_id))
-    && (film.tmdb_rating === null || (typeof film.tmdb_rating === 'number' && Number.isFinite(film.tmdb_rating)));
-
-  if (!isRecord(snapshot) || snapshot.schema_version !== 1) {
-    throw new Error(`Unsupported snapshot schema version: ${snapshot?.schema_version ?? 'missing'}`);
-  }
-  if (typeof snapshot.username !== 'string' || !snapshot.username.trim()
-      || typeof snapshot.profile_url !== 'string' || !snapshot.profile_url.trim()
-      || typeof snapshot.refreshed_at !== 'string' || !snapshot.refreshed_at.trim()
-      || requiredCounts.some((field) => !isCount(snapshot[field]))
-      || !Array.isArray(snapshot.films) || !snapshot.films.every(validFilm)
-      || snapshot.displayed_film_count !== snapshot.films.length
-      || snapshot.displayed_film_count > snapshot.film_count
-      || snapshot.unwatched_count > snapshot.film_count
-      || snapshot.displayed_unwatched_count > snapshot.displayed_film_count
-      || snapshot.tmdb_match_count > snapshot.displayed_film_count
-      || snapshot.displayed_unwatched_count !== snapshot.films.filter((film) => !film.watched).length) {
-    throw new Error('Snapshot does not match schema version 1');
-  }
-  return snapshot;
-}
-
 function renderDirectorFilmography() {
   directorFilmography.replaceChildren();
-  directorFilmography.hidden = activeDirectors.length !== 1;
-  if (activeDirectors.length !== 1) return;
+  directorFilmography.hidden = state.directors.length !== 1;
+  if (state.directors.length !== 1) return;
 
-  const director = activeDirectors[0];
+  const director = state.directors[0];
   const titles = films.filter((film) => Array.isArray(film.directors) && film.directors.includes(director));
   const years = titles.map((film) => Number.parseInt(film.year, 10)).filter(Number.isFinite).sort((a, b) => a - b);
   const label = document.createElement('span');
@@ -1660,14 +1061,14 @@ function renderDirectorFilmography() {
 
 function render() {
   const query = searchInput.value.trim().toLocaleLowerCase();
-  renderActiveViewFilters();
+  filterControls.renderActiveViewFilters();
   renderDirectorFilmography();
   updateWatchFilterCounts(query);
   updateGenreOptionCounts(query);
   updateSourceListOptionCounts(query);
   const matching = films.filter((film) => {
-    if (activeFilter === 'unwatched' && film.watched) return false;
-    if (activeFilter === 'watched' && !film.watched) return false;
+    if (state.filter === 'unwatched' && film.watched) return false;
+    if (state.filter === 'watched' && !film.watched) return false;
     return matchesSearchAndGenres(film, query);
   });
   matching.sort((left, right) => compareFilms(left, right));
@@ -1675,23 +1076,23 @@ function render() {
   programmeNote.hidden = matching.length === 0;
   programmeNoteCopy.textContent = programmeNoteFor(matching);
   currentHighestScore = Math.max(1, ...matching.map((film) => Number(film.liked_in) || 0));
-  const ledgerView = activeView === 'ledger';
-  const rankedPosterView = !ledgerView && activeSort === 'rank';
+  const ledgerView = state.view === 'ledger';
+  const rankedPosterView = !ledgerView && state.sort === 'rank';
   const highlighted = rankedPosterView ? matching.slice(0, 3) : [];
-  const shown = matching.slice(0, visibleLimit + highlighted.length);
+  const shown = matching.slice(0, state.visibleLimit + highlighted.length);
   currentShownCount = shown.length;
   currentMatchCount = matching.length;
   topBilled.hidden = !rankedPosterView || highlighted.length === 0;
   grid.hidden = ledgerView;
   filmLedgerView.hidden = !ledgerView;
-  const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0 && activeDirectors.length === 0 && activeSourceLists.length === 0 && !activeCountry && activeDecade === '';
+  const defaultRankedView = state.filter === 'all' && state.sort === 'rank' && !query && state.genres.length === 0 && state.directors.length === 0 && state.sourceLists.length === 0 && !state.country && state.decade === '';
   const programmeHeading = programmeHeadingFor(query, defaultRankedView, matching);
   topBilledEyebrow.textContent = programmeHeading.eyebrow;
   topBilledTitle.textContent = programmeHeading.title;
   if (ledgerView) {
-    filmLedgerRows.replaceChildren(...ledgerRowsFor(shown));
+    filmLedgerRows.replaceChildren(...filmViews.ledgerRowsFor(shown));
   } else if (rankedPosterView) {
-    topBilledFeature.replaceChildren(...(highlighted.length ? [featuredFilmFor(highlighted[0])] : []));
+    topBilledFeature.replaceChildren(...(highlighted.length ? [filmViews.featuredFilmFor(highlighted[0])] : []));
     topBilledGrid.replaceChildren(...highlighted.slice(1).map((film, index) => cardFor(film, index)));
     grid.replaceChildren(...posterGridItemsFor(shown.slice(highlighted.length)));
   } else {
@@ -1699,16 +1100,16 @@ function render() {
   }
   document.querySelector('#heading-count').textContent = String(matching.length).padStart(2, '0');
   statusMessage.classList.toggle('is-visible', matching.length === 0);
-  const hasFacetFilters = activeGenres.length > 0 || activeDirectors.length > 0 || activeSourceLists.length > 0 || Boolean(activeCountry) || activeDecade !== '';
+  const hasFacetFilters = state.genres.length > 0 || state.directors.length > 0 || state.sourceLists.length > 0 || Boolean(state.country) || state.decade !== '';
   const emptyContext = query && hasFacetFilters
     ? 'this search and the selected filters'
     : query ? 'this search' : 'the selected filters';
   if (films.length === 0) statusMessageCopy.textContent = 'No films are available in this snapshot yet.';
-  else if (matching.length === 0 && activeFilter === 'unwatched') {
+  else if (matching.length === 0 && state.filter === 'unwatched') {
     statusMessageCopy.textContent = query || hasFacetFilters
       ? `No unwatched films match ${emptyContext}.`
       : 'No unwatched films in this snapshot.';
-  } else if (matching.length === 0 && activeFilter === 'watched') {
+  } else if (matching.length === 0 && state.filter === 'watched') {
     statusMessageCopy.textContent = query || hasFacetFilters
       ? `No watched films match ${emptyContext}.`
       : 'No watched films in this snapshot.';
@@ -1728,8 +1129,8 @@ function render() {
   }
   updateBackToFiltersVisibility();
   const resultAnnouncement = document.querySelector('#results-announcement');
-  const filterDescription = [activeFilter === 'all' ? '' : `${activeFilter} only`, activeGenres.length ? `genres: ${activeGenres.join(' or ')}` : '', activeDirectors.length ? `directors: ${activeDirectors.join(' or ')}` : '', activeSourceLists.length ? `source lists: ${activeSourceLists.map((url) => availableSourceLists.find((sourceList) => sourceList.url === url)?.label).filter(Boolean).join(' or ')}` : '', activeCountry ? `country: ${activeCountry}` : '', activeDecade !== '' ? `decade: ${activeDecade}s` : ''].filter(Boolean).join(', ');
-  const sortDescription = activeSort === 'rank' ? '' : `, sorted by ${sortSelect.options[sortSelect.selectedIndex].text}`;
+  const filterDescription = [state.filter === 'all' ? '' : `${state.filter} only`, state.genres.length ? `genres: ${state.genres.join(' or ')}` : '', state.directors.length ? `directors: ${state.directors.join(' or ')}` : '', state.sourceLists.length ? `source lists: ${state.sourceLists.map((url) => availableSourceLists.find((sourceList) => sourceList.url === url)?.label).filter(Boolean).join(' or ')}` : '', state.country ? `country: ${state.country}` : '', state.decade !== '' ? `decade: ${state.decade}s` : ''].filter(Boolean).join(', ');
+  const sortDescription = state.sort === 'rank' ? '' : `, sorted by ${sortSelect.options[sortSelect.selectedIndex].text}`;
   resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription ? `, ${filterDescription}` : ''}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
 }
 
@@ -1772,6 +1173,8 @@ async function loadSnapshot() {
     setupState.hidden = true;
     siteShell.hidden = false;
     films = snapshot.films;
+    rankByFilm.clear();
+    films.forEach((film, index) => rankByFilm.set(film, index));
     snapshotRefreshedAt = snapshot.refreshed_at;
     const colophon = editionColophonFor(films);
     document.querySelector('#edition-leading-decade').textContent = colophon.decade;
@@ -1822,8 +1225,8 @@ async function loadSnapshot() {
 document.querySelectorAll('.filter-button').forEach((button) => {
   button.addEventListener('click', () => {
     window.clearTimeout(searchUrlTimer);
-    activeFilter = button.dataset.filter;
-    visibleLimit = 40;
+    state.filter = button.dataset.filter;
+    state.visibleLimit = 40;
     syncControls();
     updateUrlState();
     render();
@@ -1832,52 +1235,52 @@ document.querySelectorAll('.filter-button').forEach((button) => {
 
 searchInput.addEventListener('input', () => {
   beginSearchEdit();
-  visibleLimit = 40;
+  state.visibleLimit = 40;
   render();
   queueSearchUrlUpdate();
 });
 searchInput.addEventListener('blur', commitSearchEdit);
 sortSelect.addEventListener('change', () => {
   window.clearTimeout(searchUrlTimer);
-  activeSort = sortSelect.value;
-  visibleLimit = 40;
+  state.sort = sortSelect.value;
+  state.visibleLimit = 40;
   updateUrlState();
   render();
 });
 genreSearchInput.addEventListener('input', updateGenreOptionVisibility);
 clearSearchStateButton.addEventListener('click', () => {
   window.clearTimeout(searchUrlTimer);
-  searchEditing = false;
+  state.searchEditing = false;
   searchInput.value = '';
   genreSearchInput.value = '';
   sourceListSearch.value = '';
   updateSourceListOptionVisibility();
   updateGenreOptionVisibility();
-  activeFilter = 'all';
-  activeSort = 'rank';
-  activeGenres = [];
-  activeDirectors = [];
-  activeSourceLists = [];
-  activeCountry = '';
-  activeDecade = '';
-  activeView = 'posters';
-  visibleLimit = 40;
+  state.filter = 'all';
+  state.sort = 'rank';
+  state.genres = [];
+  state.directors = [];
+  state.sourceLists = [];
+  state.country = '';
+  state.decade = '';
+  state.view = 'posters';
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
   searchInput.focus();
 });
 clearGenresButton.addEventListener('click', () => {
-  activeGenres = [];
-  visibleLimit = 40;
+  state.genres = [];
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
 });
 sourceListSearch.addEventListener('input', updateSourceListOptionVisibility);
 clearSourceListsButton.addEventListener('click', () => {
-  activeSourceLists = [];
-  visibleLimit = 40;
+  state.sourceLists = [];
+  state.visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
@@ -1910,7 +1313,7 @@ document.addEventListener('pointerdown', (event) => {
   if (sourceListFilter.open && !sourceListFilter.contains(event.target)) sourceListFilter.open = false;
 });
 loadMoreButton.addEventListener('click', () => {
-  visibleLimit += 40;
+  state.visibleLimit += 40;
   render();
 });
 backToFiltersButton.addEventListener('click', () => {
@@ -1937,14 +1340,14 @@ document.addEventListener('keydown', (event) => {
   }
   if (event.key === 'Escape' && document.activeElement === searchInput) {
     window.clearTimeout(searchUrlTimer);
-    if (!searchEditing && !searchInput.value.trim()) {
+    if (!state.searchEditing && !searchInput.value.trim()) {
       searchInput.blur();
       return;
     }
-    if (!searchEditing) beginSearchEdit();
+    if (!state.searchEditing) beginSearchEdit();
     searchInput.value = '';
     updateUrlState({ replace: true });
-    searchEditing = false;
+    state.searchEditing = false;
     searchInput.blur();
     render();
   }
@@ -1955,6 +1358,6 @@ document.addEventListener('keydown', (event) => {
 });
 
 window.addEventListener('popstate', restoreUrlState);
-searchInput.value = readUrlState().query;
+searchInput.value = state.query;
 syncControls();
 loadSnapshot();

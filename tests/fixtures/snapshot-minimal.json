@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "username": "viewer",
+  "profile_url": "https://letterboxd.com/viewer/",
+  "refreshed_at": "2026-10-25T00:00:00Z",
+  "list_count": 1,
+  "film_count": 1,
+  "displayed_film_count": 1,
+  "unwatched_count": 0,
+  "displayed_unwatched_count": 0,
+  "tmdb_match_count": 0,
+  "films": [
+    {
+      "title": "Arrival",
+      "year": "2016",
+      "letterboxd_title": "Arrival",
+      "letterboxd_year": "2016",
+      "letterboxd_url": "https://letterboxd.com/film/arrival/",
+      "poster_url": "",
+      "backdrop_url": "",
+      "overview": "A linguist studies an arrival.",
+      "tmdb_url": "",
+      "watched": true,
+      "liked_in": 3,
+      "genres": ["Drama", "Science Fiction"],
+      "lists": ["https://letterboxd.com/viewer/list/favorites/"]
+    }
+  ]
+}

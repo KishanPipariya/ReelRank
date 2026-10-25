@@ -1,11 +1,13 @@
 import json
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from threading import Barrier
 
 import pytest
 
 from reelrank import Movie, MovieResult, create_snapshot, filter_unwatched, parse_list_page
 from reelrank import letterboxd, snapshot, tmdb
+from reelrank import metadata as movie_metadata
 from reelrank.cli import _configured_site_username
 from reelrank.errors import PaginationLimitReached, PaginationStalled
 from reelrank.http import ThreadLocalSessionPool
@@ -78,7 +80,7 @@ def test_snapshot_without_tmdb_uses_letterboxd_poster(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(snapshot, "_load_tmdb_api_key", lambda: None)
     monkeypatch.setattr(snapshot, "create_http_session", EmptySession)
-    monkeypatch.setattr(snapshot, "_fetch_letterboxd_tmdb_id", lambda *_: None)
+    monkeypatch.setattr(snapshot, "resolve_movie_metadata", lambda *_: (None, False, ""))
     monkeypatch.setattr(snapshot, "fetch_user_list_urls", lambda *_: result.lists)
     monkeypatch.setattr(snapshot, "rank_movies", lambda *_: [result])
     monkeypatch.setattr(snapshot, "fetch_user_watched_movies", lambda *_: set())
@@ -214,11 +216,117 @@ def test_snapshot_schema_rejects_inconsistent_display_counts():
         })
 
 
+def test_snapshot_schema_accepts_shared_fixture_without_optional_tmdb_fields():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    assert snapshot.validate_snapshot(fixture) == fixture
+
+
+def test_python_and_browser_snapshot_schemas_are_identical():
+    package_schema = json.loads((Path(snapshot.__file__).parent / "snapshot.schema.json").read_text())
+    browser_schema = json.loads((Path(__file__).parent.parent / "web" / "snapshot.schema.json").read_text())
+    assert package_schema == browser_schema
+
+
+def test_snapshot_schema_rejects_shared_invalid_tmdb_id_fixture():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["films"][0]["tmdb_id"] = True
+    with pytest.raises(ValueError, match="tmdb_id.*schema"):
+        snapshot.validate_snapshot(fixture)
+
+
+def test_snapshot_schema_rejects_invalid_metadata_type_and_unsafe_counts():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["films"][0]["metadata_source"] = []
+    with pytest.raises(ValueError, match="metadata_source"):
+        snapshot.validate_snapshot(fixture)
+    fixture["films"][0].pop("metadata_source")
+    fixture["film_count"] = 9007199254740992
+    with pytest.raises(ValueError, match="film_count"):
+        snapshot.validate_snapshot(fixture)
+
+
+def test_snapshot_schema_rejects_boolean_schema_version():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["schema_version"] = True
+    with pytest.raises(ValueError, match="schema_version"):
+        snapshot.validate_snapshot(fixture)
+
+
+def test_snapshot_schema_accepts_json_integer_valued_float():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["film_count"] = 1.0
+    assert snapshot.validate_snapshot(fixture) == fixture
+
+
 def test_snapshot_cli_uses_site_config_username_by_default(tmp_path):
     config = tmp_path / "site-config.json"
     config.write_text(json.dumps({"letterboxd_username": "  filmfan  "}), encoding="utf-8")
 
     assert _configured_site_username(config) == "filmfan"
+
+
+def test_metadata_resolver_prefers_authoritative_letterboxd_id(monkeypatch):
+    movie = Movie("Arrival", "2016", "https://letterboxd.com/film/arrival/")
+    monkeypatch.setattr(movie_metadata, "_fetch_letterboxd_tmdb_id", lambda *_: 329865)
+    payload, cacheable, source = movie_metadata.resolve_movie_metadata(object(), movie, None, {})
+    assert cacheable is True
+    assert source == "letterboxd"
+    assert payload["tmdb_id"] == 329865
+    assert payload["tmdb_url"] == "https://www.themoviedb.org/movie/329865"
+
+
+def test_metadata_resolver_uses_confident_title_match_as_fallback(monkeypatch):
+    movie = Movie("Arrival", "2016", "https://letterboxd.com/film/arrival/")
+    monkeypatch.setattr(movie_metadata, "_fetch_letterboxd_tmdb_id", lambda *_: None)
+
+    class Response:
+        status_code = 200
+
+        def __init__(self, payload):
+            self.payload = payload
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self.payload
+
+    class Client:
+        def __init__(self):
+            self.responses = [
+                Response({"results": [{"id": 329865, "title": "Arrival", "original_title": "Arrival", "release_date": "2016-11-10"}]}),
+                Response({"id": 329865, "title": "Arrival", "original_title": "Arrival", "release_date": "2016-11-10", "genres": [{"name": "Drama"}], "credits": {"crew": []}}),
+            ]
+
+        def get(self, *_args, **_kwargs):
+            return self.responses.pop(0)
+
+    payload, cacheable, source = movie_metadata.resolve_movie_metadata(Client(), movie, "key", {})
+    assert cacheable is True
+    assert source == "title_match"
+    assert payload["tmdb_id"] == 329865
+    assert payload["genres"] == ["Drama"]
+
+
+def test_metadata_cache_requires_a_recent_enrichment_timestamp():
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc)
+    entry = {"tmdb_id": 329865, "metadata_details_loaded": True, "metadata_fetched_at": now.isoformat()}
+    assert snapshot._metadata_cache_is_fresh(entry, now, needs_details=True)
+    entry["metadata_fetched_at"] = (now - timedelta(days=31)).isoformat()
+    assert not snapshot._metadata_cache_is_fresh(entry, now, needs_details=True)
+    entry["metadata_fetched_at"] = (now + timedelta(days=365)).isoformat()
+    assert not snapshot._metadata_cache_is_fresh(entry, now, needs_details=True)
+
+
+def test_old_metadata_cache_uses_file_time_as_migration_timestamp(tmp_path):
+    cache_path = tmp_path / "metadata.json"
+    cache_path.write_text(json.dumps({"arrival": {"tmdb_id": 329865}}), encoding="utf-8")
+    migrated = tmdb._load_tmdb_metadata_cache(cache_path)["arrival"]
+    assert migrated["metadata_source"] == "legacy"
+    assert migrated["metadata_status"] == "id_only"
+    assert migrated["metadata_fetched_at"]
 
 
 def test_thread_local_session_pool_reuses_and_closes_one_session_per_worker():

@@ -1,0 +1,14 @@
+{
+  "desktop": {
+    "gridColumns": 4,
+    "featuredColumns": 2,
+    "posterAspectRatio": 0.6667,
+    "posterRatioTolerance": 0.015
+  },
+  "mobile": {
+    "gridColumns": 2,
+    "featuredColumns": 2,
+    "posterAspectRatio": 0.6667,
+    "posterRatioTolerance": 0.02
+  }
+}

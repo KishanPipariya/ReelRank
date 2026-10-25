@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "username": "fixture-viewer",
+  "profile_url": "https://letterboxd.com/fixture-viewer/",
+  "refreshed_at": "2026-10-25T00:00:00Z",
+  "list_count": 2,
+  "film_count": 8,
+  "displayed_film_count": 8,
+  "unwatched_count": 5,
+  "displayed_unwatched_count": 5,
+  "tmdb_match_count": 1,
+  "films": [
+    {
+      "title": "The Third Man",
+      "year": "1949",
+      "letterboxd_title": "The Third Man",
+      "letterboxd_year": "1949",
+      "letterboxd_url": "https://letterboxd.com/film/the-third-man/",
+      "poster_url": "",
+      "backdrop_url": "",
+      "overview": "The Third Man appears in this fixed browser regression fixture. A synopsis long enough to exercise the programme notes and responsive text layout.",
+      "tmdb_url": "",
+      "watched": true,
+      "liked_in": 5,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "Mystery"
+      ],
+      "lists": [
+          "https://letterboxd.com/fixture/list/halliwells-top-1000-the-ultimate-movie-countdown-and-criterion-watchlist/"
+      ],
+      "directors": [
+        "Carol Reed"
+      ],
+      "countries": [
+        "United Kingdom"
+      ],
+      "original_title": "The Third Man",
+      "original_language": "en",
+      "runtime_minutes": null,
+      "tmdb_id": null,
+      "tmdb_rating": null,
+      "metadata_source": "",
+      "metadata_fetched_at": "",
+      "metadata_status": "unavailable"
+    },
+    {
+      "title": "Arrival",
+      "year": "2016",
+      "letterboxd_title": "Arrival",
+      "letterboxd_year": "2016",
+      "letterboxd_url": "https://letterboxd.com/film/arrival/",
+      "poster_url": "",
+      "backdrop_url": "",
+      "overview": "Arrival appears in this fixed browser regression fixture. A synopsis long enough to exercise the programme notes and responsive text layout.",
+      "tmdb_url": "https://www.themoviedb.org/movie/329865",
+      "watched": false,
+      "liked_in": 5,
+      "genres": [
+        "Drama",
+        "Science Fiction"
+      ],
+      "lists": [
+        "https://letterboxd.com/fixture/list/halliwells-top-1000-the-ultimate-movie-countdown-and-criterion-watchlist/",
+        "https://letterboxd.com/fixture/list/first-contact/"
+      ],
+      "directors": [
+        "Denis Villeneuve"
+      ],
+      "countries": [
+        "United States of America",
+        "Canada"
+      ],
+      "original_title": "Arrival",
+      "original_language": "en",
+      "runtime_minutes": null,
+      "tmdb_id": 329865,
+      "tmdb_rating": null,
+      "metadata_source": "letterboxd",
+      "metadata_fetched_at": "2026-10-25T00:00:00Z",
+      "metadata_status": "id_only"
+    },
+    {
+      "title": "Rashomon",
+      "year": "1950",
+      "letterboxd_title": "Rashomon",
+      "letterboxd_year": "1950",
+      "letterboxd_url": "https://letterboxd.com/film/rashomon/",
+      "poster_url": "",
+      "backdrop_url": "",
+      "overview": "Rashomon appears in this fixed browser regression fixture. A synopsis long enough to exercise the programme notes and responsive text layout.",
+      "tmdb_url": "",
+      "watched": true,
+      "liked_in": 4,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Mystery"
+      ],
+      "lists": [
+        "https://letterboxd.com/fixture/list/first-contact/"
+      ],
+      "directors": [
+        "Akira Kurosawa"
+      ],
+      "countries": [
+        "Japan"
+      ],
+      "original_title": "Rashomon",
+      "original_language": "en",
+      "runtime_minutes": null,
+      "tmdb_id": null,
+      "tmdb_rating": null,
+      "metadata_source": "",
+      "metadata_fetched_at": "",
+      "metadata_status": "unavailable"
+    },
+    {
+      "title": "Roma",
+      "year": "2018",
+      "letterboxd_title": "Roma",
+      "letterboxd_year": "2018",
+      "letterboxd_url": "https://letterboxd.com/film/roma/",
+      "poster_url": "",
+      "backdrop_url": "",
+      "overview": "Roma appears in this fixed browser regression fixture. A synopsis long enough to exercise the programme notes and responsive text layout.",
+      "tmdb_url": "",
+      "watched": false,
+      "liked_in": 4,
+      "genres": [
+        "Drama"
+      ],
+      "lists": [
+          "https://letterboxd.com/fixture/list/halliwells-top-1000-the-ultimate-movie-countdown-and-criterion-watchlist/"
+      ],
+      "directors": [
+        "Alfonso Cuarón"
+      ],
+      "countries": [
+        "Mexico"
+      ],
+      "original_title": "Roma",
+      "original_language": "en",
+      "runtime_minutes": null,
+      "tmdb_id": null,
+      "tmdb_rating": null,
+      "metadata_source": "",
+      "metadata_fetched_at": "",
+      "metadata_status": "unavailable"
+    },
+    {
+      "title": "A Very Long International Film Title for Narrow Screens",
+      "year": "2020",
+      "letterboxd_title": "A Very Long International Film Title for Narrow Screens",
+      "letterboxd_year": "2020",
+      "letterboxd_url": "https://letterboxd.com/film/a-very-long-international-film-title-for-narrow-screens/",
+      "poster_url": "",
+      "backdrop_url": "",
+      "overview": "A Very Long International Film Title for Narrow Screens appears in this fixed browser regression fixture. A synopsis long enough to exercise the programme notes and responsive text layout.",
+      "tmdb_url": "",
+      "watched": false,
+      "liked_in": 3,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
+      "lists": [
+        "https://letterboxd.com/fixture/list/first-contact/"
+      ],
+      "directors": [
+        "Isabel Coixet"
+      ],
+      "countries": [
+        "Spain"
+      ],
+      "original_title": "Un título para una vida",
+      "original_language": "es",
+      "runtime_minutes": null,
+      "tmdb_id": null,
+      "tmdb_rating": null,
+      "metadata_source": "",
+      "metadata_fetched_at": "",
+      "metadata_status": "unavailable"
+    },
+    {
+      "title": "Z",
+      "year": "1969",
+      "letterboxd_title": "Z",
+      "letterboxd_year": "1969",
+      "letterboxd_url": "https://letterboxd.com/film/z/",
+      "poster_url": "",
+      "backdrop_url": "",
+      "overview": "Z appears in this fixed browser regression fixture. A synopsis long enough to exercise the programme notes and responsive text layout.",
+      "tmdb_url": "",
+      "watched": true,
+      "liked_in": 3,
+      "genres": [
+        "Crime",
+        "Thriller"
+      ],
+      "lists": [
+          "https://letterboxd.com/fixture/list/halliwells-top-1000-the-ultimate-movie-countdown-and-criterion-watchlist/"
+      ],
+      "directors": [
+        "Costa-Gavras"
+      ],
+      "countries": [
+        "Greece"
+      ],
+      "original_title": "Z",
+      "original_language": "en",
+      "runtime_minutes": null,
+      "tmdb_id": null,
+      "tmdb_rating": null,
+      "metadata_source": "",
+      "metadata_fetched_at": "",
+      "metadata_status": "unavailable"
+    },
+    {
+      "title": "Portrait of a Lady on Fire",
+      "year": "2019",
+      "letterboxd_title": "Portrait of a Lady on Fire",
+      "letterboxd_year": "2019",
+      "letterboxd_url": "https://letterboxd.com/film/portrait-of-a-lady-on-fire/",
+      "poster_url": "",
+      "backdrop_url": "",
+      "overview": "Portrait of a Lady on Fire appears in this fixed browser regression fixture. A synopsis long enough to exercise the programme notes and responsive text layout.",
+      "tmdb_url": "",
+      "watched": false,
+      "liked_in": 2,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
+      "lists": [
+        "https://letterboxd.com/fixture/list/first-contact/"
+      ],
+      "directors": [
+        "Céline Sciamma"
+      ],
+      "countries": [
+        "France"
+      ],
+      "original_title": "Portrait of a Lady on Fire",
+      "original_language": "en",
+      "runtime_minutes": null,
+      "tmdb_id": null,
+      "tmdb_rating": null,
+      "metadata_source": "",
+      "metadata_fetched_at": "",
+      "metadata_status": "unavailable"
+    },
+    {
+      "title": "The Lunchbox",
+      "year": "2013",
+      "letterboxd_title": "The Lunchbox",
+      "letterboxd_year": "2013",
+      "letterboxd_url": "https://letterboxd.com/film/the-lunchbox/",
+      "poster_url": "",
+      "backdrop_url": "",
+      "overview": "The Lunchbox appears in this fixed browser regression fixture. A synopsis long enough to exercise the programme notes and responsive text layout.",
+      "tmdb_url": "",
+      "watched": false,
+      "liked_in": 2,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
+      "lists": [
+        "https://letterboxd.com/fixture/list/halliwells-top-1000-the-ultimate-movie-countdown-and-criterion-watchlist/"
+      ],
+      "directors": [
+        "Ritesh Batra"
+      ],
+      "countries": [
+        "India"
+      ],
+      "original_title": "The Lunchbox",
+      "original_language": "en",
+      "runtime_minutes": null,
+      "tmdb_id": null,
+      "tmdb_rating": null,
+      "metadata_source": "",
+      "metadata_fetched_at": "",
+      "metadata_status": "unavailable"
+    }
+  ]
+}

@@ -9,44 +9,73 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  python:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.13'
+          enable-cache: true
 
       - name: Install project and test tools
-        run: python -m pip install . pytest
+        run: uv sync --locked --group dev
 
       - name: Validate site username configuration
-        run: python -c "import json; u=json.load(open('web/site-config.json'))['letterboxd_username']; assert isinstance(u, str) and u.strip(), 'Set a Letterboxd username in web/site-config.json'"
+        run: uv run --locked python -c "import json; u=json.load(open('web/site-config.json'))['letterboxd_username']; assert isinstance(u, str) and u.strip(), 'Set a Letterboxd username in web/site-config.json'"
 
-      - name: Run snapshot and parser checks
-        run: pytest
+      - name: Run parser and snapshot checks
+        run: uv run --locked pytest
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
 
-      - name: Install accessibility scanner
-        run: npm install --no-save --package-lock=false playwright@1.62.1 axe-core@4.13.0
+      - name: Install browser dependencies
+        run: npm ci
+
+      - name: Run browser logic tests
+        run: npm test
 
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright-core install --with-deps chromium
 
       - name: Run browser accessibility checks
         run: |
-          python -m http.server 4173 --directory web >/tmp/reelrank-site.log 2>&1 &
+          python3 -m http.server 4173 --directory web >/tmp/reelrank-site.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 30); do
             if curl --silent --fail http://127.0.0.1:4173/site-config.json >/dev/null; then break; fi
             sleep 1
           done
-          node scripts/a11y-scan.mjs
+          npm run check:browser
+
+      - name: Upload desktop and mobile visual review screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-visual-review
+          path: /tmp/reelrank-visual-*.png
+          if-no-files-found: ignore
+
+      - name: Upload browser diagnostics after failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure-diagnostics
+          path: |
+            /tmp/reelrank-*.png
+            /tmp/reelrank-*.zip
+            /tmp/reelrank-site.log
+          if-no-files-found: ignore
