@@ -206,6 +206,7 @@ def _tmdb_metadata_payload(movie: Movie, record: dict, genre_names: dict[int, st
         "year": (record.get("release_date") or "")[:4] or movie.year,
         "overview": record.get("overview") or "",
         "poster_url": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "",
+        "poster_gallery": record.get("poster_gallery", []),
         "backdrop_url": f"https://image.tmdb.org/t/p/w780{backdrop_path}" if backdrop_path else "",
         "tmdb_rating": record.get("vote_average"),
         "genres": genres,

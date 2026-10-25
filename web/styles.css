@@ -410,6 +410,8 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .film-detail-poster { min-width: 0; overflow: hidden; border: 1px solid var(--line); background: var(--surface-soft); color: var(--muted); aspect-ratio: 2 / 3; font-family: var(--serif); font-size: 18px; }
 .film-detail-poster-trigger { display: block; width: 100%; padding: 0; cursor: zoom-in; }
 .film-detail-poster-trigger:hover { border-color: var(--rust-ink); }
+.film-detail-gallery-button { min-height: 36px; margin-top: 12px; padding: 6px 9px; border: 1px solid var(--line); background: var(--surface); color: var(--forest); cursor: pointer; font-family: var(--mono); font-size: 9px; text-decoration: underline; text-underline-offset: 2px; }
+.film-detail-gallery-button:hover { border-color: var(--forest); background: var(--surface-soft); }
 .film-detail-poster-fallback { font-size: 14px; }
 .film-detail-poster img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .poster-viewer-dialog:not([open]) { display: none; }
@@ -421,6 +423,13 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .poster-viewer-image { width: auto; max-width: 100%; max-height: 82vh; display: block; object-fit: contain; }
 .poster-viewer-image.is-zoomed { max-width: none; max-height: none; }
 .poster-viewer-caption { color: var(--muted); font-family: var(--serif); font-size: 15px; text-align: center; }
+.poster-viewer-status { max-width: min(680px, 100%); margin: 0; color: var(--muted); font-family: var(--mono); font-size: 9px; text-align: center; }
+.poster-viewer-status:empty, .poster-viewer-gallery[hidden] { display: none; }
+.poster-viewer-gallery { width: min(680px, 100%); display: flex; justify-content: flex-start; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: thin; }
+.poster-viewer-option { min-width: 82px; flex: 0 0 82px; display: grid; grid-template-rows: 108px auto; justify-items: center; gap: 5px; padding: 5px; border: 1px solid var(--line); background: var(--surface-soft); color: var(--control-ink); cursor: pointer; font-family: var(--mono); font-size: 8px; }
+.poster-viewer-option img { width: 100%; height: 108px; display: block; background: var(--surface); object-fit: contain; }
+.poster-viewer-option span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.poster-viewer-option[aria-pressed='true'] { border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); }
 .poster-viewer-zoom { min-height: 38px; padding: 6px 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font-family: var(--mono); font-size: 9px; }
 .poster-viewer-zoom[aria-pressed='true'] { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); }
 .film-detail-copy { min-width: 0; padding-top: 5px; }
@@ -487,7 +496,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .sr-only { width: 1px; height: 1px; position: absolute; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 
 @media (forced-colors: active) {
-  .search-box, .filter-tabs, .sort-control select, .country-index-search-control input, .genre-filter-toggle, .genre-filter-menu, .genre-search-box, .genre-tag, .selected-genre-chip, .load-more, .clear-search-state, .back-to-filters, .poster-link, .featured-film, .film-detail-dialog, .film-detail-close, .film-detail-step, .film-detail-poster-trigger, .poster-viewer-dialog, .poster-viewer-close, .poster-viewer-zoom { border: 1px solid ButtonText; }
+  .search-box, .filter-tabs, .sort-control select, .country-index-search-control input, .genre-filter-toggle, .genre-filter-menu, .genre-search-box, .genre-tag, .selected-genre-chip, .load-more, .clear-search-state, .back-to-filters, .poster-link, .featured-film, .film-detail-dialog, .film-detail-close, .film-detail-step, .film-detail-poster-trigger, .film-detail-gallery-button, .poster-viewer-dialog, .poster-viewer-close, .poster-viewer-option, .poster-viewer-zoom { border: 1px solid ButtonText; }
   .genre-option input { forced-color-adjust: auto; }
   .featured-film { background: Canvas; color: CanvasText; }
   .featured-film::before { display: none; }

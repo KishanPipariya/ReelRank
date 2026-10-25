@@ -57,6 +57,8 @@ const posterViewerTitle = document.querySelector('#poster-viewer-title');
 const posterViewerCaption = document.querySelector('#poster-viewer-caption');
 const posterViewerZoom = document.querySelector('#poster-viewer-zoom');
 const posterViewerClose = document.querySelector('#poster-viewer-close');
+const posterViewerStatus = document.querySelector('#poster-viewer-status');
+const posterViewerGallery = document.querySelector('#poster-viewer-gallery');
 const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
@@ -959,6 +961,9 @@ const filmViews = createFilmViews({
   posterViewerCaption,
   posterViewerZoom,
   posterViewerClose,
+  posterViewerStatus,
+  posterViewerGallery,
+  getSnapshotRefreshedAt: () => snapshotRefreshedAt,
   getCurrentMatchingFilms: () => currentMatchingFilms,
 });
 

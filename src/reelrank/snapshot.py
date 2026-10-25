@@ -154,8 +154,9 @@ def create_snapshot(username: str) -> dict:
         # Resolve movie metadata for the highest-ranked films through TMDB.
         featured_results = results[:500]
         metadata: dict[int, dict | None] = {}
+        poster_galleries: dict[str, list[dict[str, str]]] = {}
         tmdb_match_count = 0
-        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v5.json"
+        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v6.json"
         tmdb_cache = _load_tmdb_metadata_cache(tmdb_cache_path)
         missing_metadata: list[tuple[int, MovieResult, str]] = []
         for index, result in enumerate(featured_results):
@@ -200,6 +201,17 @@ def create_snapshot(username: str) -> dict:
         movie = result.movie
         is_watched = (movie.title.casefold(), movie.year) in watched
         tmdb = metadata.get(index) or {}
+        tmdb_id = tmdb.get("tmdb_id")
+        poster_gallery = tmdb.get("poster_gallery")
+        if isinstance(tmdb_id, int) and not isinstance(tmdb_id, bool) and isinstance(poster_gallery, list):
+            valid_posters = [
+                poster for poster in poster_gallery
+                if isinstance(poster, dict)
+                and isinstance(poster.get("path"), str)
+                and poster["path"].startswith("/")
+            ]
+            if valid_posters:
+                poster_galleries[str(tmdb_id)] = valid_posters
         films.append(
             {
                 "title": tmdb.get("title") or movie.title,
@@ -242,16 +254,32 @@ def create_snapshot(username: str) -> dict:
         "displayed_unwatched_count": sum(not film["watched"] for film in films),
         "tmdb_match_count": tmdb_match_count,
         "films": films,
+        "_poster_galleries": {
+            "schema_version": 1,
+            "snapshot_refreshed_at": generated_at_text,
+            "galleries": poster_galleries,
+        },
     }
     return validate_snapshot(snapshot)
 
 def write_snapshot(snapshot: dict, output: Path) -> None:
-    """Atomically replace a JSON snapshot, preserving the previous file on failure."""
+    """Write the snapshot and poster gallery sidecar using atomic file replacements."""
     validate_snapshot(snapshot)
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_name(f".{output.name}.tmp")
+    gallery_output = output.parent / "poster-galleries.json"
+    gallery_temporary = gallery_output.with_name(f".{gallery_output.name}.tmp")
+    public_snapshot = {key: value for key, value in snapshot.items() if key != "_poster_galleries"}
+    gallery_payload = snapshot.get("_poster_galleries") or {
+        "schema_version": 1,
+        "snapshot_refreshed_at": snapshot["refreshed_at"],
+        "galleries": {},
+    }
     try:
-        temporary.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        gallery_temporary.write_text(json.dumps(gallery_payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+        temporary.write_text(json.dumps(public_snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        gallery_temporary.replace(gallery_output)
         temporary.replace(output)
     finally:
         temporary.unlink(missing_ok=True)
+        gallery_temporary.unlink(missing_ok=True)
