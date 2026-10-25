@@ -609,30 +609,35 @@ function hasInlineOriginalTitle(film) {
   const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
   const languageCode = typeof film.original_language === 'string' ? film.original_language.trim() : '';
   const isNonEnglish = languageCode && languageCode.toLocaleLowerCase().split('-')[0] !== 'en';
-  return Boolean(isNonEnglish && originalTitle
-    && originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0);
+  return Boolean(isNonEnglish && originalTitle);
 }
 
 function originalTitleCreditFor(film, className) {
   if (!hasInlineOriginalTitle(film)) return null;
   const languageCode = film.original_language.trim();
+  const languageName = languageNameFor(languageCode);
+  const originalTitle = film.original_title.trim();
+  const hasDistinctTitle = originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0;
   const credit = document.createElement('p');
   credit.className = className;
   credit.setAttribute('role', 'group');
-  credit.setAttribute('aria-label', `Original title in ${languageNameFor(languageCode)}`);
+  credit.setAttribute('aria-label', hasDistinctTitle ? `Original title in ${languageName}` : `Original language: ${languageName}`);
   const label = document.createElement('span');
   label.className = 'original-title-credit-label';
   label.textContent = languageCode.toLocaleUpperCase();
   label.setAttribute('aria-hidden', 'true');
-  const divider = document.createElement('span');
-  divider.className = 'original-title-credit-divider';
-  divider.textContent = '·';
-  divider.setAttribute('aria-hidden', 'true');
-  const title = document.createElement('span');
-  title.className = 'original-title-credit-title';
-  title.lang = languageCode;
-  title.textContent = film.original_title.trim();
-  credit.append(label, divider, title);
+  credit.append(label);
+  if (hasDistinctTitle) {
+    const divider = document.createElement('span');
+    divider.className = 'original-title-credit-divider';
+    divider.textContent = '·';
+    divider.setAttribute('aria-hidden', 'true');
+    const title = document.createElement('span');
+    title.className = 'original-title-credit-title';
+    title.lang = languageCode;
+    title.textContent = originalTitle;
+    credit.append(divider, title);
+  }
   return credit;
 }
 
@@ -1322,12 +1327,13 @@ function render() {
     return matchesSearchAndGenres(film, query);
   });
   matching.sort((left, right) => compareFilms(left, right));
-  const highlighted = matching.slice(0, 3);
   const ledgerView = activeView === 'ledger';
-  const shown = matching.slice(0, visibleLimit + (ledgerView ? 0 : highlighted.length));
+  const rankedPosterView = !ledgerView && activeSort === 'rank';
+  const highlighted = rankedPosterView ? matching.slice(0, 3) : [];
+  const shown = matching.slice(0, visibleLimit + highlighted.length);
   currentShownCount = shown.length;
   currentMatchCount = matching.length;
-  topBilled.hidden = ledgerView || highlighted.length === 0;
+  topBilled.hidden = !rankedPosterView || highlighted.length === 0;
   grid.hidden = ledgerView;
   filmLedgerView.hidden = !ledgerView;
   const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0 && activeDirectors.length === 0 && !activeCountry && activeDecade === '';
@@ -1336,10 +1342,12 @@ function render() {
   topBilledTitle.textContent = programmeHeading.title;
   if (ledgerView) {
     filmLedgerRows.replaceChildren(...ledgerRowsFor(shown));
-  } else {
+  } else if (rankedPosterView) {
     topBilledFeature.replaceChildren(...(highlighted.length ? [featuredFilmFor(highlighted[0])] : []));
     topBilledGrid.replaceChildren(...highlighted.slice(1).map((film, index) => cardFor(film, index)));
     grid.replaceChildren(...posterGridItemsFor(shown.slice(highlighted.length)));
+  } else {
+    grid.replaceChildren(...posterGridItemsFor(shown));
   }
   document.querySelector('#heading-count').textContent = String(matching.length).padStart(2, '0');
   statusMessage.classList.toggle('is-visible', matching.length === 0);
