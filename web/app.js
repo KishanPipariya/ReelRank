@@ -293,9 +293,14 @@ function compareFilms(left, right, sort = activeSort) {
 function updateBackToFiltersVisibility() {
   backToFiltersButton.hidden = visibleLimit <= 40 || window.scrollY < 600;
   const filterLabel = activeFilter === 'all' ? 'All films' : `${activeFilter[0].toLocaleUpperCase()}${activeFilter.slice(1)}`;
-  const genreLabel = activeGenres.length ? ` · ${activeGenres.join(' or ')}` : '';
-  backToFiltersButton.textContent = `${currentShownCount} / ${currentMatchCount} · ${filterLabel}${genreLabel} · ↑ Filters`;
-  backToFiltersButton.setAttribute('aria-label', `Showing ${currentShownCount} of ${currentMatchCount} matching films, ${filterLabel} filter${activeGenres.length ? `, genres ${activeGenres.join(' or ')}` : ''}. Return to search and filters.`);
+  const activeView = [
+    `${filterLabel} filter`,
+    activeGenres.length ? `genres ${activeGenres.join(' or ')}` : '',
+    searchInput.value.trim() ? `search ${searchInput.value.trim()}` : '',
+    activeSort !== 'rank' ? `sorted by ${sortSelect.options[sortSelect.selectedIndex].text}` : '',
+  ].filter(Boolean).join(', ');
+  backToFiltersButton.textContent = `${currentShownCount} of ${currentMatchCount} · Filters ↑`;
+  backToFiltersButton.setAttribute('aria-label', `Showing ${currentShownCount} of ${currentMatchCount} matching films. ${activeView}. Return to search and filters.`);
 }
 
 function makeLink(label, href, className = '') {
@@ -334,7 +339,7 @@ function cardFor(film, index) {
     poster.href = filmUrl;
     poster.target = '_blank';
     poster.rel = 'noreferrer';
-    poster.setAttribute('aria-label', `Open poster for ${film.title}, ranked ${rankNumber}, ${film.watched ? 'watched' : 'unwatched'}, on Letterboxd, opens in a new tab`);
+    poster.setAttribute('aria-label', `Open poster for ${film.title}, overall rank ${rankNumber}, ${film.watched ? 'watched' : 'unwatched'}, on Letterboxd, opens in a new tab`);
   }
 
   if (posterUrl) {
@@ -360,7 +365,7 @@ function cardFor(film, index) {
 
   const rank = document.createElement('span');
   rank.className = 'rank-chip';
-  rank.textContent = String(rankNumber).padStart(2, '0');
+  rank.textContent = activeSort === 'rank' ? String(rankNumber).padStart(2, '0') : `Overall ${rankNumber}`;
   poster.append(rank);
   if (film.watched) {
     const watched = document.createElement('span');

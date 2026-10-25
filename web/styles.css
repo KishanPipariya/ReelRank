@@ -158,7 +158,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .poster-link:hover, .poster-link:focus-visible { transform: translateY(-3px); box-shadow: 0 5px 10px #24251d1c, 0 16px 28px #24251d17; }
 .poster-link:hover .poster-image { transform: scale(1.035); }
 .poster-fallback { width: 100%; height: 100%; display: grid; place-items: center; padding: 20px; background: linear-gradient(145deg, #d7d8bf, #b7c5a8 52%, #e1b798); color: var(--forest); font-family: var(--serif); font-size: 18px; text-align: center; }
-.rank-chip { position: absolute; z-index: 1; top: 9px; left: 9px; width: 30px; height: 34px; display: grid; place-items: center; border: 1px solid var(--rust-ink); border-radius: 2px; background: #f5f1e9f2; color: var(--rust-ink); font-family: var(--mono); font-size: 10px; box-shadow: 0 2px 8px #16181026; }
+.rank-chip { position: absolute; z-index: 1; top: 9px; left: 9px; min-width: 30px; height: 34px; display: grid; place-items: center; padding: 0 7px; border: 1px solid var(--rust-ink); border-radius: 2px; background: #f5f1e9f2; color: var(--rust-ink); font-family: var(--mono); font-size: 10px; white-space: nowrap; box-shadow: 0 2px 8px #16181026; }
 .watched-chip { position: absolute; z-index: 1; top: 9px; right: 9px; padding: 6px 8px; border: 1px solid #b5d67a77; background: #243d31ed; color: #e7f0dd; font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
 .film-info { position: relative; margin-top: 0; padding: 11px 10px 10px; border: 1px solid var(--line); border-top: 0; background: var(--surface); }
 .film-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin: 0; font: inherit; }
