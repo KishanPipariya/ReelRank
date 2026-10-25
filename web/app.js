@@ -474,20 +474,46 @@ function directorCreditFor(directors, className) {
   return credit;
 }
 
+function languageNameFor(languageCode) {
+  if (!languageCode) return '';
+  try {
+    return new Intl.DisplayNames(undefined, { type: 'language' }).of(languageCode) || languageCode;
+  } catch {
+    return languageCode;
+  }
+}
+
+function hasInlineOriginalTitle(film) {
+  const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
+  const languageCode = typeof film.original_language === 'string' ? film.original_language.trim() : '';
+  const isNonEnglish = languageCode && languageCode.toLocaleLowerCase().split('-')[0] !== 'en';
+  return Boolean(isNonEnglish && originalTitle
+    && originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0);
+}
+
+function originalTitleCreditFor(film, className) {
+  if (!hasInlineOriginalTitle(film)) return null;
+  const languageCode = film.original_language.trim();
+  const credit = document.createElement('p');
+  credit.className = className;
+  const label = document.createElement('span');
+  label.className = 'original-title-credit-label';
+  label.textContent = `${languageNameFor(languageCode)} original title`;
+  const title = document.createElement('span');
+  title.className = 'original-title-credit-title';
+  title.lang = languageCode;
+  title.textContent = film.original_title.trim();
+  credit.append(label, title);
+  return credit;
+}
+
 function originalDetailsFor(film) {
   const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
   const languageCode = typeof film.original_language === 'string' ? film.original_language.trim() : '';
   const hasDistinctTitle = originalTitle && originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0;
+  if (hasInlineOriginalTitle(film)) return null;
   if (!hasDistinctTitle && !languageCode) return null;
-
-  const languageName = (() => {
-    if (!languageCode) return '';
-    try {
-      return new Intl.DisplayNames(undefined, { type: 'language' }).of(languageCode) || languageCode;
-    } catch {
-      return languageCode;
-    }
-  })();
+  const languageName = languageNameFor(languageCode);
   const details = document.createElement('details');
   details.className = 'film-original-details';
   const summary = document.createElement('summary');
@@ -633,6 +659,9 @@ function cardFor(film, index) {
   titleRow.append(year);
   info.append(titleRow);
 
+  const originalTitleCredit = originalTitleCreditFor(film, 'original-title-credit');
+  if (originalTitleCredit) info.append(originalTitleCredit);
+
   const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
   const directorCredit = directorCreditFor(directors, 'director-credit');
   if (directorCredit) info.append(directorCredit);
@@ -646,9 +675,9 @@ function cardFor(film, index) {
   const likedListCount = Number(film.liked_in) || 0;
   countValue.textContent = likedListCount.toLocaleString();
   const countLabel = document.createElement('span');
-  countLabel.textContent = likedListCount === 1 ? 'liked list' : 'liked lists';
+  countLabel.textContent = likedListCount === 1 ? 'list appearance' : 'list appearances';
   count.append(countValue, countLabel);
-  count.setAttribute('aria-label', `Appears in ${likedListCount.toLocaleString()} ${likedListCount === 1 ? 'liked list' : 'liked lists'}`);
+  count.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
   info.append(count);
 
   const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre) : [])];
@@ -725,7 +754,7 @@ function cardFor(film, index) {
     listLinks.append(link);
   });
   listSummary.textContent = listLinks.childElementCount
-    ? `Appears on ${listLinks.childElementCount.toLocaleString()} liked ${listLinks.childElementCount === 1 ? 'list' : 'lists'}`
+    ? `Seen on ${listLinks.childElementCount.toLocaleString()} liked ${listLinks.childElementCount === 1 ? 'list' : 'lists'}`
     : 'Film details';
   listDetails.append(listSummary);
   if (listLinks.childElementCount) listDetails.append(listLinks);
@@ -828,18 +857,27 @@ function featuredFilmFor(film) {
   title.append(year);
   copy.append(title);
 
+  const originalTitleCredit = originalTitleCreditFor(film, 'original-title-credit featured-original-title-credit');
+  if (originalTitleCredit) copy.append(originalTitleCredit);
+
   const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
   const directorCredit = directorCreditFor(directors, 'featured-film-director');
   if (directorCredit) copy.append(directorCredit);
   const featuredFacts = countryRuntimeMetaFor(film, 'featured-film-facts');
   if (featuredFacts) copy.append(featuredFacts);
+  if (film.overview) {
+    const overview = document.createElement('p');
+    overview.className = 'featured-film-overview';
+    overview.textContent = film.overview;
+    copy.append(overview);
+  }
   const count = document.createElement('p');
   count.className = 'featured-film-count';
   const countValue = document.createElement('strong');
   const likedListCount = Number(film.liked_in) || 0;
   countValue.textContent = likedListCount.toLocaleString();
-  count.append(countValue, ` ${likedListCount === 1 ? 'liked list' : 'liked lists'}`);
-  count.setAttribute('aria-label', `Appears in ${likedListCount.toLocaleString()} ${likedListCount === 1 ? 'liked list' : 'liked lists'}`);
+  count.append(countValue, ` ${likedListCount === 1 ? 'list appearance' : 'list appearances'}`);
+  count.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
   copy.append(count);
   const originalDetails = originalDetailsFor(film);
   if (originalDetails) copy.append(originalDetails);
