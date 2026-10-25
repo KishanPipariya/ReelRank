@@ -196,6 +196,7 @@ function buildCatalogFilters() {
     .filter((director) => typeof director === 'string' && director.trim())
     .sort((left, right) => left.localeCompare(right));
   activeDirectors = activeDirectors.filter((director) => availableDirectors.includes(director));
+  updateUrlState({ replace: true });
 }
 
 function filmDecade(film) {
@@ -306,10 +307,16 @@ function restoreUrlState() {
   activeSort = state.sort;
   activeGenres = state.genres.filter((genre) => availableGenres.includes(genre));
   activeDirectors = state.directors.filter((director) => availableDirectors.includes(director));
-  activeCountry = state.country;
-  activeDecade = state.decade;
+  activeCountry = state.country && [...countrySelect.options].some((option) => option.value === state.country)
+    ? state.country
+    : '';
+  const decadeValue = state.decade === '' ? '' : String(state.decade);
+  activeDecade = decadeValue && [...decadeSelect.options].some((option) => option.value === decadeValue)
+    ? Number(decadeValue)
+    : '';
   visibleLimit = 40;
   syncControls();
+  updateUrlState({ replace: true });
   render();
 }
 
