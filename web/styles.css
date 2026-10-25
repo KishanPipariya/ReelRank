@@ -288,9 +288,11 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .footer { min-height: 75px; flex-wrap: wrap; padding: 16px 0; }
   .footer > span { display: none; }
 }
-@media (max-width: 380px) {
+@media (max-width: 430px) {
   .film-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px 15px; }
   .top-billed-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px 15px; }
+}
+@media (max-width: 380px) {
   .hero { padding-inline: 21px; }
   .hero-description { max-width: none; }
   .collection-tools { gap: 7px; }

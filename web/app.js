@@ -645,7 +645,7 @@ async function loadSnapshot() {
     progress.setAttribute('aria-label', `${watchedCount.toLocaleString()} of ${rankedTotal.toLocaleString()} films watched (${progressPercent} percent)`);
     document.querySelector('#refreshed-label').textContent = formatDate(snapshot.refreshed_at);
     const displayed = snapshot.displayed_film_count ?? films.length;
-    collectionScope.textContent = `Search covers the displayed top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films by title, year, genre, synopsis, and source list.`;
+    collectionScope.textContent = `Search covers all ${displayed.toLocaleString()} films in this catalog by title, year, genre, synopsis, and source list.`;
     document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
     document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
     render();
