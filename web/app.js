@@ -241,6 +241,18 @@ function setCountry(country) {
   render();
 }
 
+function toggleCountry(country) {
+  activeCountry = activeCountry === country ? '' : country;
+  visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
+  const collectionTitle = document.querySelector('#collection-title');
+  collectionTitle.focus({ preventScroll: true });
+  const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  collectionTitle.scrollIntoView({ behavior, block: 'start' });
+}
+
 function setDecade(decade) {
   activeDecade = decade === '' ? '' : Number(decade);
   visibleLimit = 40;
@@ -558,17 +570,32 @@ function countryRuntimeMetaFor(film, className) {
   if (countries.length) {
     const countryGroup = document.createElement('span');
     countryGroup.className = 'cinephile-country-group';
-    const primaryCountry = document.createElement('span');
-    primaryCountry.className = 'cinephile-country-primary';
-    primaryCountry.textContent = countries[0];
+    countryGroup.setAttribute('role', 'group');
+    countryGroup.setAttribute('aria-label', `Production countries for ${film.title}`);
+    const countryButtonFor = (country, className, tabIndex = 0) => {
+      const button = document.createElement('button');
+      button.className = className;
+      button.type = 'button';
+      button.textContent = country;
+      button.tabIndex = tabIndex;
+      button.setAttribute('aria-label', `Filter by production country ${country}`);
+      button.setAttribute('aria-pressed', String(activeCountry === country));
+      button.addEventListener('click', () => toggleCountry(country));
+      return button;
+    };
+    const primaryCountry = countryButtonFor(countries[0], 'cinephile-country-primary country-filter-button');
     countryGroup.append(primaryCountry);
 
     if (countries.length > 1) {
       countryGroup.classList.add('has-more');
       const extraCountries = document.createElement('span');
       extraCountries.className = 'cinephile-country-extra';
-      extraCountries.textContent = countries.slice(1).join(', ');
       extraCountries.setAttribute('aria-hidden', 'true');
+      extraCountries.inert = true;
+      countries.slice(1).forEach((country, index) => {
+        if (index) extraCountries.append(document.createTextNode(', '));
+        extraCountries.append(countryButtonFor(country, 'country-filter-button', -1));
+      });
       const toggle = document.createElement('button');
       toggle.className = 'country-more-button';
       toggle.type = 'button';
@@ -578,6 +605,10 @@ function countryRuntimeMetaFor(film, className) {
       toggle.addEventListener('click', () => {
         const expanded = toggle.getAttribute('aria-expanded') !== 'true';
         extraCountries.setAttribute('aria-hidden', String(!expanded));
+        extraCountries.inert = !expanded;
+        extraCountries.querySelectorAll('.country-filter-button').forEach((button) => {
+          button.tabIndex = expanded ? 0 : -1;
+        });
         meta.classList.toggle('is-expanded', expanded);
         countryGroup.classList.toggle('is-expanded', expanded);
         toggle.setAttribute('aria-expanded', String(expanded));
