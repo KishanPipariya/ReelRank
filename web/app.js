@@ -224,24 +224,18 @@ function cardFor(film, index) {
     const overview = document.createElement('p');
     overview.className = 'film-overview';
     overview.textContent = film.overview;
+    overview.hidden = true;
     info.append(overview);
-
-    const fullOverview = document.createElement('p');
-    fullOverview.className = 'film-full-overview';
-    fullOverview.textContent = film.overview;
-    fullOverview.hidden = true;
-    info.append(fullOverview);
 
     const overviewToggle = document.createElement('button');
     overviewToggle.className = 'overview-toggle';
     overviewToggle.type = 'button';
-    overviewToggle.textContent = 'Full synopsis';
+    overviewToggle.textContent = 'Show synopsis';
     overviewToggle.setAttribute('aria-expanded', 'false');
     overviewToggle.addEventListener('click', () => {
-      const expanded = fullOverview.hidden;
-      fullOverview.hidden = !expanded;
-      overview.hidden = expanded;
-      overviewToggle.textContent = expanded ? 'Show less' : 'Full synopsis';
+      const expanded = overview.hidden;
+      overview.hidden = !expanded;
+      overviewToggle.textContent = expanded ? 'Hide synopsis' : 'Show synopsis';
       overviewToggle.setAttribute('aria-expanded', String(expanded));
     });
     info.append(overviewToggle);
@@ -251,7 +245,7 @@ function cardFor(film, index) {
   const listDetails = document.createElement('details');
   listDetails.className = 'list-details';
   const listSummary = document.createElement('summary');
-  listSummary.textContent = 'Browse source lists';
+  listSummary.textContent = 'Film and source details';
   listDetails.append(listSummary);
   const listLinks = document.createElement('div');
   listLinks.className = 'list-links';
@@ -259,12 +253,10 @@ function cardFor(film, index) {
     const safeListUrl = safeUrl(url, ['letterboxd.com']);
     if (safeListUrl) listLinks.append(makeLink(listLabel(safeListUrl), safeListUrl));
   });
-  if (listLinks.childElementCount) {
-    listDetails.append(listLinks);
-    info.append(listDetails);
-  }
+  if (listLinks.childElementCount) listDetails.append(listLinks);
   const tmdbUrl = safeUrl(film.tmdb_url, ['themoviedb.org']);
-  if (tmdbUrl) info.append(makeLink('TMDB ↗', tmdbUrl, 'tmdb-film-link'));
+  if (tmdbUrl) listDetails.append(makeLink('Film data on TMDB ↗', tmdbUrl, 'tmdb-film-link'));
+  if (listDetails.childElementCount > 1) info.append(listDetails);
   card.append(info);
   return card;
 }
