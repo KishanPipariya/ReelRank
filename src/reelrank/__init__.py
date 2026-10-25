@@ -281,6 +281,8 @@ def filter_unwatched(results: list[MovieResult], watched: set[tuple[str, str]]) 
 
 
 def _tmdb_metadata_key(movie: Movie) -> str:
+    if movie.uri:
+        return f"letterboxd:{movie.uri.rstrip('/')}"
     normalized_title = _normalize_tmdb_title(movie.title) or movie.title.casefold().strip()
     return f"{normalized_title}|{movie.year}"
 
@@ -383,7 +385,9 @@ def _select_tmdb_candidate(
     if not scored:
         return None
 
-    scored.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
+    # Prefer a strong title identity first; year should distinguish close title
+    # matches, not make a different film beat an exact title one year away.
+    scored.sort(key=lambda item: (item[1], item[0], item[2]), reverse=True)
     best_tier, best_score, _, best = scored[0]
     tied = [
         candidate
@@ -400,6 +404,50 @@ def _select_tmdb_candidate(
         for candidate in tied
     }
     return best if len(distinct) == 1 else None
+
+
+def _fetch_letterboxd_tmdb_id(client: Session, movie_uri: str) -> int | None:
+    """Read the authoritative TMDB movie ID linked from a Letterboxd film page."""
+    if not movie_uri:
+        return None
+    try:
+        response = client.get(movie_uri)
+        response.raise_for_status()
+    except RequestsError:
+        return None
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    for link in soup.select('a[href*="themoviedb.org/movie/"]'):
+        parsed = urlparse(link.get("href", ""))
+        if parsed.netloc.lower() not in {"themoviedb.org", "www.themoviedb.org"}:
+            continue
+        match = re.match(r"^/movie/(\d+)(?:[-/]|$)", parsed.path)
+        if match:
+            return int(match.group(1))
+    return None
+
+
+def _tmdb_metadata_payload(movie: Movie, record: dict, genre_names: dict[int, str] | None = None) -> dict:
+    movie_id = record.get("id")
+    genre_records = record.get("genres", [])
+    if isinstance(genre_records, list) and genre_records and all(isinstance(item, dict) for item in genre_records):
+        genres = [item["name"] for item in genre_records if isinstance(item.get("name"), str)]
+    else:
+        genre_names = genre_names or {}
+        genres = [genre_names[genre_id] for genre_id in record.get("genre_ids", []) if genre_id in genre_names]
+    poster_path = record.get("poster_path") or ""
+    backdrop_path = record.get("backdrop_path") or ""
+    return {
+        "tmdb_id": movie_id,
+        "tmdb_url": f"https://www.themoviedb.org/movie/{movie_id}" if movie_id else "",
+        "title": record.get("title") or movie.title,
+        "year": (record.get("release_date") or "")[:4] or movie.year,
+        "overview": record.get("overview") or "",
+        "poster_url": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "",
+        "backdrop_url": f"https://image.tmdb.org/t/p/w780{backdrop_path}" if backdrop_path else "",
+        "tmdb_rating": record.get("vote_average"),
+        "genres": genres,
+    }
 
 
 def _fetch_tmdb_movie_genres(client: curl_requests.Session, api_key: str) -> dict[int, str]:
@@ -443,32 +491,61 @@ def create_snapshot(username: str) -> dict:
         featured_results = results[:500]
         metadata: dict[int, dict | None] = {}
         tmdb_match_count = 0
-        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v2.json"
+        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v3.json"
         tmdb_cache = _load_tmdb_metadata_cache(tmdb_cache_path)
         missing_metadata: list[tuple[int, MovieResult, str]] = []
         for index, result in enumerate(featured_results):
             cache_key = _tmdb_metadata_key(result.movie)
             if cache_key in tmdb_cache:
                 cached = tmdb_cache[cache_key]
-                if not tmdb_api_key or (isinstance(cached, dict) and "genres" in cached):
+                if isinstance(cached, dict) and (
+                    (tmdb_api_key and "genres" in cached)
+                    or (not tmdb_api_key and cached.get("tmdb_id"))
+                ):
                     metadata[index] = cached
                 else:
                     missing_metadata.append((index, result, cache_key))
             else:
                 missing_metadata.append((index, result, cache_key))
 
-        if tmdb_api_key:
-            genre_names = _fetch_tmdb_movie_genres(client, tmdb_api_key) if missing_metadata else {}
+        if missing_metadata:
+            genre_names = _fetch_tmdb_movie_genres(client, tmdb_api_key) if tmdb_api_key else {}
 
             def fetch_tmdb_metadata(entry: tuple[int, MovieResult, str]) -> tuple[int, str, dict | None, bool]:
                 index, result, cache_key = entry
+                movie = result.movie
+                letterboxd_tmdb_id = _fetch_letterboxd_tmdb_id(client, movie.uri)
+                if letterboxd_tmdb_id is not None:
+                    record = {"id": letterboxd_tmdb_id}
+                    cacheable = True
+                    if tmdb_api_key:
+                        try:
+                            response = client.get(
+                                f"https://api.themoviedb.org/3/movie/{letterboxd_tmdb_id}",
+                                params={"api_key": tmdb_api_key, "language": "en-US"},
+                            )
+                            if response.status_code == 401:
+                                raise ValueError("TMDB rejected TMDB_API_KEY; check the API key configured for this job")
+                            response.raise_for_status()
+                            details = response.json()
+                            if details.get("id") == letterboxd_tmdb_id:
+                                record = details
+                            else:
+                                cacheable = False
+                        except RequestsError:
+                            cacheable = False
+                    return index, cache_key, _tmdb_metadata_payload(movie, record), cacheable
+
+                if not tmdb_api_key:
+                    return index, cache_key, None, False
+
                 try:
                     response = client.get(
                         "https://api.themoviedb.org/3/search/movie",
                         params={
                             "api_key": tmdb_api_key,
-                            "query": result.movie.title,
-                            **({"year": result.movie.year} if result.movie.year.isdigit() else {}),
+                            "query": movie.title,
+                            **({"year": movie.year} if movie.year.isdigit() else {}),
                         },
                     )
                     if response.status_code == 401:
@@ -476,8 +553,8 @@ def create_snapshot(username: str) -> dict:
                     response.raise_for_status()
                     candidates = response.json().get("results", [])
                     fallback_title = None
-                    if not candidates and "," in result.movie.title:
-                        short_title = result.movie.title.split(",", 1)[0].strip()
+                    if not candidates and "," in movie.title:
+                        short_title = movie.title.split(",", 1)[0].strip()
                         if short_title:
                             fallback_title = short_title
                             response = client.get(
@@ -495,36 +572,19 @@ def create_snapshot(username: str) -> dict:
                     if not candidates:
                         return index, cache_key, None, False
 
-                    best = _select_tmdb_candidate(result.movie, candidates, fallback_title)
+                    best = _select_tmdb_candidate(movie, candidates, fallback_title)
                     if best is None:
                         return index, cache_key, None, False
-                    poster_path = best.get("poster_path") or ""
-                    backdrop_path = best.get("backdrop_path") or ""
-                    return index, cache_key, {
-                        "tmdb_id": best.get("id"),
-                        "tmdb_url": f"https://www.themoviedb.org/movie/{best['id']}" if best.get("id") else "",
-                        "title": best.get("title") or result.movie.title,
-                        "year": (best.get("release_date") or "")[:4] or result.movie.year,
-                        "overview": best.get("overview") or "",
-                        "poster_url": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "",
-                        "backdrop_url": f"https://image.tmdb.org/t/p/w780{backdrop_path}" if backdrop_path else "",
-                        "tmdb_rating": best.get("vote_average"),
-                        "genres": [
-                            genre_names[genre_id]
-                            for genre_id in best.get("genre_ids", [])
-                            if genre_id in genre_names
-                        ],
-                    }, True
+                    return index, cache_key, _tmdb_metadata_payload(movie, best, genre_names), True
                 except RequestsError:
                     return index, cache_key, None, False
 
-            if missing_metadata:
-                with ThreadPoolExecutor(max_workers=6) as executor:
-                    for index, cache_key, value, cacheable in executor.map(fetch_tmdb_metadata, missing_metadata):
-                        metadata[index] = value
-                        if cacheable and value is not None:
-                            tmdb_cache[cache_key] = value
-                _write_tmdb_metadata_cache(tmdb_cache_path, tmdb_cache)
+            with ThreadPoolExecutor(max_workers=6) as executor:
+                for index, cache_key, value, cacheable in executor.map(fetch_tmdb_metadata, missing_metadata):
+                    metadata[index] = value
+                    if cacheable and value is not None:
+                        tmdb_cache[cache_key] = value
+            _write_tmdb_metadata_cache(tmdb_cache_path, tmdb_cache)
         tmdb_match_count = sum(value is not None for value in metadata.values())
         if tmdb_api_key and not tmdb_match_count:
             raise ValueError("TMDB did not match any ranked films; the previous demo snapshot was left unchanged")
