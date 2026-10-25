@@ -97,6 +97,7 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .decade-retrospective { margin: 0 0 23px; padding: 13px 15px 11px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: linear-gradient(90deg, var(--surface-soft), transparent 86%); }
 .decade-retrospective-heading { display: flex; align-items: baseline; gap: 12px; margin-bottom: 9px; }
 .decade-retrospective-heading .eyebrow { margin: 0; color: var(--rust-ink); font-size: 8px; letter-spacing: .12em; }
+.decade-retrospective-heading .eyebrow::before { margin-right: 6px; color: var(--orange); content: '✳'; }
 .decade-retrospective-heading h3 { margin: 0; color: var(--muted); font-family: var(--serif); font-size: 14px; font-weight: 500; font-style: italic; }
 .decade-options { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 5px; scrollbar-width: thin; }
 .decade-option { min-width: 79px; min-height: 39px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface); color: var(--control-ink); cursor: pointer; text-align: left; transition: border-color .16s ease, background .16s ease, color .16s ease; }
@@ -130,6 +131,8 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .country-index-toggle[hidden] { display: none; }
 .film-year-divider { min-width: 0; grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; margin: 5px 0 -17px; color: var(--rust-ink); }
 .film-year-divider span { color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .12em; text-transform: uppercase; }
+.film-year-divider span::before { margin-right: 6px; color: var(--orange); content: '✳'; }
+.ledger-year-divider th::before { margin-right: 7px; color: var(--orange); content: '✳'; font-family: var(--sans); font-size: 10px; }
 .film-year-divider strong { font-family: var(--serif); font-size: 16px; font-style: italic; font-weight: 500; }
 .film-year-divider::after { height: 1px; flex: 1 1 auto; background: var(--line); content: ''; }
 .active-view-tools { min-height: 34px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: -2px 0 20px; }
@@ -271,7 +274,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .featured-original-title-credit .original-title-credit-label { border-color: #d4e6c755; color: #d2dfc6; }
 .featured-original-title-credit .original-title-credit-divider { color: #f0a07b; }
 .featured-original-title-credit .original-title-credit-title { color: #fffdf5; font-size: 11px; }
-.featured-film-count { display: flex; align-items: baseline; gap: 7px; margin: 17px 0 0; color: #e0e3da; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.featured-film-count { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; margin: 17px 0 0; color: #e0e3da; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
 .featured-film-count strong { color: #d2e69f; font-family: var(--serif); font-size: 24px; font-weight: 600; line-height: 1; }
 .featured-film-sources { margin-top: 16px; padding-top: 10px; border-top: 1px solid #d4e6c733; }
 .featured-film-sources-label { margin: 0 0 6px; color: #c6cec0; font-family: var(--mono); font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
@@ -301,7 +304,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .director-credit { margin: 5px 0 0; overflow: hidden; color: var(--forest); display: -webkit-box; font-size: 10px; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .director-filter { padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; text-decoration: underline; text-decoration-color: #879182; text-underline-offset: 2px; }
 .director-filter:hover, .director-filter[aria-pressed='true'] { color: var(--rust-ink); text-decoration-thickness: 2px; }
-.cinephile-meta { display: flex; align-items: baseline; margin: 4px 0 0; overflow: visible; color: #62685e; font-family: var(--mono); font-size: 9px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+.cinephile-meta { display: flex; align-items: baseline; gap: 4px; margin: 6px 0 0; padding-top: 4px; overflow: visible; border-top: 1px dotted var(--line); color: #62685e; font-family: var(--mono); font-size: 9px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
 .cinephile-country-group { min-width: 0; max-width: 100%; position: relative; display: inline-flex; align-items: baseline; gap: 4px; }
 .cinephile-country-group.has-more:not(.is-expanded) { padding-right: 28px; }
 .cinephile-country-primary { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -320,9 +323,14 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .featured-film-facts.is-expanded { overflow: visible; white-space: normal; }
 .featured-film-facts .country-more-button { color: #d2e69f; }
 .film-year { flex: 0 0 auto; padding-left: 8px; border-left: 1px solid var(--line); color: #62685e; font-family: var(--mono); font-size: 10px; }
-.film-count { display: flex; align-items: baseline; gap: 7px; margin: 8px 0 0; color: #62685e; font-family: var(--mono); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.film-count { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; margin: 8px 0 0; color: #62685e; font-family: var(--mono); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
 .film-count::before { width: 3px; height: 18px; align-self: center; background: var(--rust-ink); content: ''; }
-.film-count strong { color: var(--forest); font-family: var(--serif); font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
+.film-count strong { color: var(--forest); font-family: var(--serif); font-size: 22px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
+.film-score-meter, .featured-score-meter { height: 3px; display: block; overflow: hidden; background: var(--surface-soft); }
+.film-score-meter { flex: 0 0 calc(100% - 20px); margin-inline: 10px; }
+.film-score-meter > span, .featured-score-meter > span { width: var(--score-share); height: 100%; display: block; background: var(--rust-ink); }
+.featured-score-meter { flex: 0 0 calc(100% - 14px); margin: 1px 7px 0; background: #ffffff36; }
+.featured-score-meter > span { background: #d2e69f; }
 .genre-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
 .genre-tag { min-height: 24px; max-width: 100%; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-soft); color: var(--control-ink); cursor: pointer; font-size: 9px; line-height: 1.25; }
 .genre-tag:hover, .genre-tag[aria-pressed='true'] { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); }
@@ -354,8 +362,10 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .list-links-toggle { min-height: 24px; display: block; margin-top: 6px; padding: 0; border: 0; background: transparent; color: var(--forest); cursor: pointer; font-size: 10px; text-align: left; text-decoration: underline; text-decoration-color: #838a79; text-underline-offset: 2px; }
 .tmdb-film-link { width: fit-content; display: block; margin-top: 10px; color: #62685e; font-family: var(--mono); font-size: 10px; text-decoration-color: #838a79; text-underline-offset: 2px; }
 .tmdb-film-link:hover { color: var(--forest); }
-.status-message { display: none; padding: 42px 20px; border: 1px dashed #cfcdc2; color: #62685e; font-size: 13px; text-align: center; }
+.status-message { display: none; padding: 35px 20px; border: 1px dashed #cfcdc2; color: #62685e; font-size: 13px; text-align: center; }
 .status-message.is-visible { display: block; }
+.status-message-kicker { display: inline-block; margin-bottom: 9px; padding: 4px 7px; border: 1px solid var(--line); color: var(--rust-ink); font-family: var(--mono); font-size: 8px; letter-spacing: .12em; text-transform: uppercase; }
+.status-message > p { margin: 0; }
 .clear-search-state { margin-left: auto; padding: 7px 10px; border: 1px solid #c9c9bc; border-radius: 2px; background: transparent; color: var(--forest); cursor: pointer; font-family: var(--mono); font-size: 10px; transition: background .18s ease, border-color .18s ease; }
 .clear-search-state[hidden] { display: none; }
 .clear-search-state:hover { border-color: var(--forest); background: #e9e8dd; }
@@ -557,6 +567,9 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .watch-progress progress::-moz-progress-bar { background: #b5d67a; }
   .film-count { color: #b5bbad; }
   .film-count strong { color: #c7e58f; }
+  .film-score-meter { background: #343c33; }
+  .film-score-meter > span { background: #c7e58f; }
+  .status-message-kicker { border-color: #465044; color: #d18b6d; }
   .director-credit, .cinephile-meta { color: #bec6b7; }
   .film-year { color: #a4aa9e; }
   .film-overview { color: #bbc0b5; }
@@ -615,8 +628,10 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .print-programme-edition { margin: 7px 0 0; color: #454c44; font-family: 'DM Mono', monospace; font-size: 8pt; }
   .print-programme-context { margin: 11px 0 0; color: #293a30; font-family: 'DM Mono', monospace; font-size: 9pt; }
   .print-programme-method { margin: 5px 0 0; color: #5c625b; font-family: 'DM Sans', sans-serif; font-size: 8pt; }
-  .print-year-chapter { margin: 15px 0 0; }
+  #print-programme-films { counter-reset: print-chapter; }
+  .print-year-chapter { margin: 15px 0 0; counter-increment: print-chapter; }
   .print-year-chapter > h2 { margin: 0 0 5px; padding-bottom: 3px; border-bottom: 1px solid #bbc0b7; color: #8b5038; font-family: Georgia, 'Times New Roman', serif; font-size: 13pt; font-style: italic; font-weight: 500; break-after: avoid; }
+  .print-year-chapter > h2::before { margin-right: 7px; color: #5c625b; content: 'REEL ' counter(print-chapter, decimal-leading-zero) ' /'; font-family: 'DM Mono', monospace; font-size: 7pt; font-style: normal; letter-spacing: .08em; }
   .print-year-films { margin: 0; padding: 0; list-style: none; }
   .print-film-entry { display: grid; grid-template-columns: 49px minmax(0, 1fr) 118px; align-items: baseline; gap: 7px; padding: 5px 0; border-bottom: 1px solid #e0e2dc; break-inside: avoid; }
   .print-film-number { color: #8b5038; font-family: 'DM Mono', monospace; font-size: 7pt; }

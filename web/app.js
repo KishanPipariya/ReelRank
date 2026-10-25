@@ -5,6 +5,7 @@ const topBilled = document.querySelector('#top-billed');
 const topBilledFeature = document.querySelector('#top-billed-feature');
 const topBilledGrid = document.querySelector('#top-billed-grid');
 const statusMessage = document.querySelector('#status-message');
+const statusMessageCopy = document.querySelector('#status-message-copy');
 const posterDisplayButton = document.querySelector('#poster-display-button');
 const ledgerDisplayButton = document.querySelector('#ledger-display-button');
 const printProgrammeButton = document.querySelector('#print-programme-button');
@@ -70,6 +71,7 @@ let searchEditing = false;
 let currentShownCount = 0;
 let currentMatchCount = 0;
 let currentMatchingFilms = [];
+let currentHighestScore = 1;
 let countryAtlasSize = 0;
 let snapshotRefreshedAt = '';
 
@@ -317,6 +319,16 @@ function decadeOptionLabel(label, count) {
 function filmDecade(film) {
   const year = Number.parseInt(film.year, 10);
   return Number.isFinite(year) && year >= 1000 ? Math.floor(year / 10) * 10 : null;
+}
+
+function scoreMeterFor(film, className) {
+  const score = Number(film.liked_in) || 0;
+  const meter = document.createElement('span');
+  meter.className = className;
+  meter.setAttribute('aria-hidden', 'true');
+  meter.style.setProperty('--score-share', `${Math.max(0, Math.min(100, (score / currentHighestScore) * 100))}%`);
+  meter.append(document.createElement('span'));
+  return meter;
 }
 
 function updateGenreOptionVisibility() {
@@ -878,7 +890,7 @@ function cardFor(film, index) {
   countValue.textContent = likedListCount.toLocaleString();
   const countLabel = document.createElement('span');
   countLabel.textContent = likedListCount === 1 ? 'list appearance' : 'list appearances';
-  count.append(countValue, countLabel);
+  count.append(countValue, countLabel, scoreMeterFor(film, 'film-score-meter'));
   count.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
   info.append(count);
 
@@ -1362,7 +1374,7 @@ function featuredFilmFor(film) {
   const countValue = document.createElement('strong');
   const likedListCount = Number(film.liked_in) || 0;
   countValue.textContent = likedListCount.toLocaleString();
-  count.append(countValue, ` ${likedListCount === 1 ? 'list appearance' : 'list appearances'}`);
+  count.append(countValue, ` ${likedListCount === 1 ? 'list appearance' : 'list appearances'}`, scoreMeterFor(film, 'featured-score-meter'));
   count.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
   copy.append(count);
   const sourceLists = (Array.isArray(film.lists) ? film.lists : []).map((url) => safeUrl(url, ['letterboxd.com'])).filter(Boolean);
@@ -1481,6 +1493,7 @@ function render() {
   });
   matching.sort((left, right) => compareFilms(left, right));
   currentMatchingFilms = matching;
+  currentHighestScore = Math.max(1, ...matching.map((film) => Number(film.liked_in) || 0));
   const ledgerView = activeView === 'ledger';
   const rankedPosterView = !ledgerView && activeSort === 'rank';
   const highlighted = rankedPosterView ? matching.slice(0, 3) : [];
@@ -1509,23 +1522,23 @@ function render() {
   const emptyContext = query && hasFacetFilters
     ? 'this search and the selected filters'
     : query ? 'this search' : 'the selected filters';
-  if (films.length === 0) statusMessage.textContent = 'No films are available in this snapshot yet.';
+  if (films.length === 0) statusMessageCopy.textContent = 'No films are available in this snapshot yet.';
   else if (matching.length === 0 && activeFilter === 'unwatched') {
-    statusMessage.textContent = query || hasFacetFilters
+    statusMessageCopy.textContent = query || hasFacetFilters
       ? `No unwatched films match ${emptyContext}.`
       : 'No unwatched films in this snapshot.';
   } else if (matching.length === 0 && activeFilter === 'watched') {
-    statusMessage.textContent = query || hasFacetFilters
+    statusMessageCopy.textContent = query || hasFacetFilters
       ? `No watched films match ${emptyContext}.`
       : 'No watched films in this snapshot.';
   } else if (matching.length === 0 && query && hasFacetFilters) {
-    statusMessage.textContent = 'No films match this search and the selected filters.';
+    statusMessageCopy.textContent = 'No films match this search and the selected filters.';
   } else if (matching.length === 0 && query) {
-    statusMessage.textContent = 'No films match that search. Try another title.';
+    statusMessageCopy.textContent = 'No films match that search. Try another title.';
   } else if (matching.length === 0 && hasFacetFilters) {
-    statusMessage.textContent = 'No films match the selected filters.';
+    statusMessageCopy.textContent = 'No films match the selected filters.';
   } else if (matching.length === 0) {
-    statusMessage.textContent = 'No films match the current view.';
+    statusMessageCopy.textContent = 'No films match the current view.';
   }
   loadMoreButton.hidden = matching.length <= shown.length;
   if (!loadMoreButton.hidden) {
