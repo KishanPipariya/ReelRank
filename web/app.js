@@ -547,7 +547,13 @@ function programmeNoteFor(catalogue) {
   return `${catalogue.length.toLocaleString()} ${catalogue.length === 1 ? 'film' : 'films'}${details.length ? ` · ${details.join(' · ')}` : ''}`;
 }
 
-function matchesSearchAndGenres(film, query, selectedGenreList = state.genres, selectedSourceListUrls = state.sourceLists) {
+function matchesSearchAndGenres(
+  film,
+  query,
+  selectedGenreList = state.genres,
+  selectedSourceListUrls = state.sourceLists,
+  { country = state.country, decade = state.decade } = {},
+) {
   let searchText = searchTextByFilm.get(film);
   if (!searchText) {
     searchText = buildSearchText(film, (film.lists || []).map(listLabel));
@@ -558,10 +564,14 @@ function matchesSearchAndGenres(film, query, selectedGenreList = state.genres, s
     genres: selectedGenreList,
     directors: state.directors,
     sourceLists: selectedSourceListUrls,
-    country: state.country,
-    decade: state.decade,
+    country,
+    decade,
     runtime: state.runtime,
   }, filmSourceListUrls(film), [], searchText);
+}
+
+function matchesWatchFilter(film) {
+  return state.filter === 'all' || (state.filter === 'watched' ? film.watched : !film.watched);
 }
 
 function updateWatchFilterCounts(query) {
@@ -572,10 +582,39 @@ function updateWatchFilterCounts(query) {
   document.querySelector('#watched-tab-count').textContent = watchedCount.toLocaleString();
 }
 
+function updateCountryAndDecadeCounts(query) {
+  const filmsForCountries = films.filter((film) => matchesWatchFilter(film)
+    && matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { country: '' }));
+  const countryCounts = new Map();
+  filmsForCountries.forEach((film) => {
+    [...new Set(Array.isArray(film.countries) ? film.countries : [])].forEach((country) => {
+      if (typeof country === 'string' && country.trim()) countryCounts.set(country, (countryCounts.get(country) || 0) + 1);
+    });
+  });
+  countryIndexOptions.querySelectorAll('[data-country]').forEach((button) => {
+    const count = countryCounts.get(button.dataset.country) || 0;
+    button.querySelector('small').textContent = count.toLocaleString();
+    button.setAttribute('aria-label', `Filter by production country ${button.dataset.country}, ${count} ${count === 1 ? 'film' : 'films'}`);
+  });
+
+  const filmsForDecades = films.filter((film) => matchesWatchFilter(film)
+    && matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { decade: '' }));
+  const decadeCounts = new Map();
+  filmsForDecades.forEach((film) => {
+    const decade = filmDecade(film);
+    if (decade !== null) decadeCounts.set(decade, (decadeCounts.get(decade) || 0) + 1);
+  });
+  decadeOptions.querySelectorAll('[data-decade]').forEach((button) => {
+    const count = button.dataset.decade === ''
+      ? filmsForDecades.length
+      : decadeCounts.get(Number(button.dataset.decade)) || 0;
+    button.querySelector('.decade-option-count').textContent = count.toLocaleString();
+  });
+}
+
 function updateGenreOptionCounts(query) {
   const contextFilms = films.filter((film) => {
-    if (state.filter === 'unwatched' && film.watched) return false;
-    if (state.filter === 'watched' && !film.watched) return false;
+    if (!matchesWatchFilter(film)) return false;
     return matchesSearchAndGenres(film, query, []);
   });
   genreOptions.querySelectorAll('.genre-option').forEach((option) => {
@@ -587,8 +626,7 @@ function updateGenreOptionCounts(query) {
 
 function updateSourceListOptionCounts(query) {
   const contextFilms = films.filter((film) => {
-    if (state.filter === 'unwatched' && film.watched) return false;
-    if (state.filter === 'watched' && !film.watched) return false;
+    if (!matchesWatchFilter(film)) return false;
     return matchesSearchAndGenres(film, query, state.genres, []);
   });
   const counts = new Map();
@@ -1111,11 +1149,11 @@ function render() {
   filterControls.renderActiveViewFilters();
   renderDirectorFilmography();
   updateWatchFilterCounts(query);
+  updateCountryAndDecadeCounts(query);
   updateGenreOptionCounts(query);
   updateSourceListOptionCounts(query);
   const matching = films.filter((film) => {
-    if (state.filter === 'unwatched' && film.watched) return false;
-    if (state.filter === 'watched' && !film.watched) return false;
+    if (!matchesWatchFilter(film)) return false;
     return matchesSearchAndGenres(film, query);
   });
   matching.sort((left, right) => compareFilms(left, right));
