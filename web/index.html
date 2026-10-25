@@ -204,7 +204,14 @@
                 <summary>Score key</summary>
                 <p class="score-key-copy">The score counts liked lists that include a film. In Poster Wall, the bar compares it with the highest score in the current results.</p>
               </details>
-              <button id="print-programme-button" class="print-programme-button" type="button">Print programme</button>
+              <div class="print-programme-control">
+                <label class="sr-only" for="print-format-select">Printed programme format</label>
+                <select id="print-format-select" class="print-format-select">
+                  <option value="compact">Compact catalogue</option>
+                  <option value="reader">Reader’s edition</option>
+                </select>
+                <button id="print-programme-button" class="print-programme-button" type="button">Print programme</button>
+              </div>
             </div>
           </div>
           <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>
@@ -258,7 +265,7 @@
     </dialog>
     <main id="print-programme" class="print-programme" hidden aria-label="Printable ReelRank programme">
       <header class="print-programme-header">
-        <p class="print-programme-kicker">ReelRank · Catalogue edition</p>
+        <p id="print-programme-kicker" class="print-programme-kicker">ReelRank · Catalogue edition</p>
         <h1 id="print-programme-title">Film programme</h1>
         <p class="print-programme-edition"><span id="print-programme-username"></span><span aria-hidden="true"> · </span><time id="print-programme-date"></time></p>
         <p id="print-programme-context" class="print-programme-context"></p>

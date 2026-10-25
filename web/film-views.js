@@ -3,10 +3,59 @@ import { posterFallbackFor } from './film-components.js';
 export function createFilmViews(dependencies) {
   const {
     getFilms, state, safeUrl, makeLink, directorCreditFor, countryRuntimeMetaFor,
-    scoreMeterFor, genreChipFor, filmDetailButtonFor, toggleDirector,
+    scoreMeterFor, genreChipFor, filmDetailButtonFor, toggleDirector, toggleGenre,
     originalFilmFactsFor, sourceListNotesFor, filmProgrammeNotesFor,
     filmDetailContent, filmDetailDialog, getCurrentMatchingFilms,
   } = dependencies;
+let posterAccentRequest = 0;
+
+function samplePosterAccent(posterUrl, request) {
+  if (!posterUrl) return;
+  const sampler = new Image();
+  sampler.crossOrigin = 'anonymous';
+  sampler.onload = () => {
+    if (request !== posterAccentRequest) return;
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 8;
+      canvas.height = 8;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context.drawImage(sampler, 0, 0, canvas.width, canvas.height);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let red = 0;
+      let green = 0;
+      let blue = 0;
+      for (let index = 0; index < pixels.length; index += 4) {
+        red += pixels[index];
+        green += pixels[index + 1];
+        blue += pixels[index + 2];
+      }
+      const total = pixels.length / 4;
+      const rgb = [red, green, blue].map((channel) => channel / total / 255);
+      const max = Math.max(...rgb);
+      const min = Math.min(...rgb);
+      const delta = max - min;
+      let hue = 0;
+      if (delta) {
+        if (max === rgb[0]) hue = ((rgb[1] - rgb[2]) / delta) % 6;
+        else if (max === rgb[1]) hue = (rgb[2] - rgb[0]) / delta + 2;
+        else hue = (rgb[0] - rgb[1]) / delta + 4;
+        hue = (hue * 60 + 360) % 360;
+      }
+      const saturation = max ? delta / max : 0;
+      const lightness = (max + min) / 2;
+      const darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const mutedLightness = darkMode
+        ? Math.min(.76, Math.max(.62, lightness))
+        : Math.min(.46, Math.max(.31, lightness));
+      const mutedSaturation = Math.min(.48, saturation * .58);
+      filmDetailDialog.style.setProperty('--poster-accent', `hsl(${hue.toFixed(0)} ${Math.round(mutedSaturation * 100)}% ${Math.round(mutedLightness * 100)}%)`);
+    } catch {
+      filmDetailDialog.style.removeProperty('--poster-accent');
+    }
+  };
+  sampler.src = posterUrl;
+}
 
 function openFilmDetails(film) {
   renderFilmDetails(film);
@@ -78,28 +127,44 @@ function renderFilmDetails(film, retainFocus = false) {
   year.className = 'film-detail-year';
   year.textContent = film.year || 'Year unknown';
   const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  const director = document.createElement('p');
-  director.className = 'film-detail-director';
-  director.textContent = directors.length ? `Directed by ${directors.join(', ')}` : 'Director not listed';
-  const facts = document.createElement('p');
-  facts.className = 'film-detail-facts';
-  const countries = [...new Set(Array.isArray(film.countries) ? film.countries.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  const runtime = Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0 ? `${film.runtime_minutes} min` : '';
-  facts.textContent = [countries.join(', '), runtime].filter(Boolean).join(' · ');
+  const director = directors.length
+    ? directorCreditFor(directors, 'film-detail-director', () => filmDetailDialog.close())
+    : document.createElement('p');
+  director.classList.add('film-detail-director');
+  if (!directors.length) director.textContent = 'Director not listed';
+  const facts = countryRuntimeMetaFor(film, 'film-detail-facts', { beforeFilter: () => filmDetailDialog.close() });
   const score = document.createElement('p');
   score.className = 'film-detail-score';
   const scoreValue = document.createElement('strong');
   scoreValue.textContent = (Number(film.liked_in) || 0).toLocaleString();
   score.append(scoreValue, ` ${Number(film.liked_in) === 1 ? 'list appearance' : 'list appearances'}`);
   copy.append(kicker, title, year, director);
-  if (facts.textContent) copy.append(facts);
+  if (facts) copy.append(facts);
   copy.append(score);
   const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];
   if (genres.length) {
-    const genreList = document.createElement('p');
+    const genreList = document.createElement('div');
     genreList.className = 'film-detail-genres';
-    genreList.textContent = genres.join(' · ');
-    genreList.setAttribute('aria-label', `Genres: ${genres.join(', ')}`);
+    genreList.setAttribute('role', 'group');
+    genreList.setAttribute('aria-label', `Filter by genres for ${film.title}`);
+    genres.forEach((genre) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'genre-tag';
+      button.dataset.genre = genre;
+      button.textContent = genre;
+      button.setAttribute('aria-label', `Filter by ${genre}`);
+      button.setAttribute('aria-pressed', String(state.genres.includes(genre)));
+      button.addEventListener('click', () => {
+        filmDetailDialog.close();
+        toggleGenre(genre);
+        const collectionTitle = document.querySelector('#collection-title');
+        collectionTitle.focus({ preventScroll: true });
+        const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+        collectionTitle.scrollIntoView({ behavior, block: 'start' });
+      });
+      genreList.append(button);
+    });
     copy.append(genreList);
   }
   const notes = filmProgrammeNotesFor(film);
@@ -113,6 +178,9 @@ function renderFilmDetails(film, retainFocus = false) {
   copy.append(links);
   layout.append(poster, copy);
   filmDetailContent.append(layout);
+  const accentRequest = ++posterAccentRequest;
+  filmDetailDialog.style.removeProperty('--poster-accent');
+  samplePosterAccent(posterUrl, accentRequest);
   if (retainFocus) {
     filmDetailDialog.scrollTop = 0;
     const preferredFocus = filmDetailContent.querySelector(`#film-detail-${retainFocus}`);

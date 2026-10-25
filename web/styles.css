@@ -168,7 +168,7 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .director-career-year { min-width: 42px; position: relative; flex: 0 0 auto; display: grid; place-items: center; padding: 7px 7px 2px; border-right: 1px dotted var(--line); color: var(--control-ink); font-family: var(--mono); font-size: 8px; text-decoration: none; }
 .director-career-year::before { width: 5px; height: 5px; position: absolute; top: -3px; left: calc(50% - 2px); border-radius: 50%; background: var(--orange); content: ''; }
 .director-career-year:hover { color: var(--rust-ink); text-decoration: underline; text-underline-offset: 3px; }
-.collection-display-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; }
+.collection-display-actions { display: flex; flex: 0 0 auto; align-items: center; flex-wrap: wrap; gap: 8px; }
 .score-key { position: relative; }
 .score-key summary { min-height: 30px; display: flex; align-items: center; color: var(--muted); cursor: pointer; font-family: var(--mono); font-size: 8px; list-style: none; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
 .score-key summary::-webkit-details-marker { display: none; }
@@ -181,6 +181,8 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .collection-view-button:focus-visible { outline-offset: 1px; }
 .print-programme-button { min-height: 35px; padding: 0 10px; border: 1px solid var(--line); background: var(--surface); color: var(--forest); cursor: pointer; font-family: var(--mono); font-size: 9px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
 .print-programme-button:hover { border-color: var(--forest); background: var(--surface-soft); }
+.print-programme-control { display: inline-flex; align-items: center; gap: 5px; }
+.print-format-select { width: 135px; min-height: 35px; padding: 0 7px; border: 1px solid var(--line); background: var(--surface); color: var(--control-ink); font-family: var(--mono); font-size: 8px; }
 .print-programme { display: none; }
 .film-grid[hidden], .film-ledger-view[hidden] { display: none; }
 .film-ledger-scroll { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); background: var(--surface); scrollbar-width: thin; }
@@ -371,7 +373,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .film-detail-trigger:hover { color: var(--rust-ink); }
 .featured-film .film-detail-trigger { color: #f0a07b; }
 .featured-film .film-detail-trigger:hover { color: #ffc19e; }
-.film-detail-dialog { width: min(820px, calc(100vw - 32px)); max-width: none; max-height: min(90vh, 780px); padding: 0; overflow: auto; border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: 0 24px 90px #10140f66; }
+.film-detail-dialog { width: min(820px, calc(100vw - 32px)); max-width: none; max-height: min(90vh, 780px); padding: 0; overflow: auto; border: 1px solid var(--line); border-top: 3px solid var(--poster-accent, var(--orange)); background: var(--surface); color: var(--ink); box-shadow: 0 24px 90px #10140f66; }
 .film-detail-dialog::backdrop { background: #151915b8; backdrop-filter: blur(3px); }
 .film-detail-close { position: sticky; z-index: 2; top: 10px; float: right; width: 36px; height: 36px; margin: 10px 10px -46px 0; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; font-size: 23px; line-height: 1; }
 .film-detail-navigation { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin: 0 42px 16px 0; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
@@ -389,11 +391,19 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .film-detail-copy h2 { margin: 0; font-family: var(--serif); font-size: clamp(28px, 4vw, 42px); font-weight: 500; letter-spacing: -.035em; line-height: 1.08; overflow-wrap: anywhere; }
 .film-detail-year { display: block; margin-top: 7px; color: var(--muted); font-family: var(--mono); font-size: 11px; }
 .film-detail-director, .film-detail-facts { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.film-detail-director { color: var(--ink); font-family: var(--serif); font-size: 16px; line-height: 1.45; }
+.film-detail-director .director-filter { color: var(--forest); font: inherit; text-underline-offset: 3px; }
+.film-detail-facts .cinephile-country-group { flex-wrap: wrap; }
 .film-detail-score { display: flex; align-items: baseline; gap: 5px; margin: 15px 0 0; color: var(--muted); font-family: var(--mono); font-size: 10px; }
 .film-detail-score strong { color: var(--rust-ink); font-family: var(--serif); font-size: 26px; font-weight: 500; }
-.film-detail-genres { margin: 10px 0 0; color: var(--forest); font-family: var(--mono); font-size: 9px; line-height: 1.6; }
+.film-detail-genres { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.film-detail-genres .genre-tag { min-height: 26px; font-size: 9px; }
 .film-detail-copy .film-notes { margin-top: 16px; }
 .film-detail-copy .film-notes-heading { font-size: 10px; }
+.film-detail-copy .film-note-synopsis { max-width: 68ch; color: var(--ink); font-family: var(--serif); font-size: 15px; line-height: 1.75; }
+.film-detail-copy .film-note-section h4 { margin-top: 12px; color: var(--muted); font-size: 8px; }
+.film-detail-copy .film-note-sources .film-note-section h4 { color: var(--muted); }
+.film-detail-copy .film-note-sources .list-links a { color: var(--muted); font-size: 9px; }
 .film-detail-links { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 16px; padding-top: 11px; border-top: 1px solid var(--line); }
 .film-detail-external-link { color: var(--forest); font-family: var(--mono); font-size: 9px; text-underline-offset: 3px; }
 .original-film-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 8px; margin: 4px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
@@ -603,6 +613,8 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 
   .profile-link { color: #c1c8bb; }
   .film-detail-trigger, .film-detail-external-link { color: #d6e6c2; }
+  .film-detail-director .director-filter { color: #c3d89c; }
+  .film-detail-director .director-filter:hover { color: #f0a07b; }
   .film-detail-step:not(:disabled):hover { color: #182219; }
   .film-detail-genres { color: #c3d89c; }
   .setup-card { border-color: #424a40; background: #1e241f; }
@@ -669,6 +681,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .sort-control select { border-color: #424a40; background: #1e241f; color: var(--ink); }
   .print-programme-button { border-color: #53624e; background: #222922; color: #d6e6c2; }
   .print-programme-button:hover { border-color: #a3bd85; background: #29352b; color: #f0f3e9; }
+  .print-format-select { border-color: #424a40; background: #1e241f; color: #c0c5b9; }
   .back-to-filters { border-color: #a3b78e; background: #1e241f; color: #d6e6c2; }
   .back-to-filters:hover { background: #222a22; }
   .collection-footnote { color: #a4aa9d; }
@@ -704,4 +717,17 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .print-film-score strong { color: #293a30; font-family: Georgia, 'Times New Roman', serif; font-size: 12pt; }
   .print-programme-empty { padding: 20px 0; color: #555; font-family: 'DM Sans', sans-serif; font-size: 10pt; }
   .print-programme-footer { margin-top: 18px; padding-top: 7px; border-top: 1px solid #bbc0b7; color: #5c625b; font-family: 'DM Mono', monospace; font-size: 7pt; }
+  .print-programme-reader .print-programme-header { min-height: 92pt; display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 24px; padding-bottom: 15px; border-bottom-width: 3px; }
+  .print-programme-reader .print-programme-kicker { font-size: 9pt; }
+  .print-programme-reader .print-programme-header h1 { font-size: 35pt; }
+  .print-programme-reader .print-programme-edition { margin-top: 10px; }
+  .print-programme-reader .print-programme-context { margin-top: 15px; }
+  .print-programme-reader .print-year-chapter { margin-top: 22px; }
+  .print-programme-reader .print-year-chapter > h2 { margin-bottom: 9px; padding-bottom: 5px; font-size: 16pt; }
+  .print-programme-reader .print-film-entry { align-items: start; gap: 5px 10px; padding: 10px 0 12px; }
+  .print-programme-reader .print-film-number { padding-top: 3px; }
+  .print-programme-reader .print-film-details h3 { display: block; font-size: 15pt; font-weight: 500; line-height: 1.2; }
+  .print-programme-reader .print-film-credits { display: block; margin: 4px 0 0; font-size: 8pt; }
+  .print-programme-reader .print-film-score { padding-top: 3px; }
+  .print-programme-reader .print-film-synopsis { grid-column: 2 / 4; max-width: 80ch; margin: 3px 0 0; color: #424940; font-family: Georgia, 'Times New Roman', serif; font-size: 9pt; line-height: 1.45; }
 }

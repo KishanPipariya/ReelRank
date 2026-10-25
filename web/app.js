@@ -18,6 +18,7 @@ const programmeNoteCopy = document.querySelector('#programme-note-copy');
 const posterDisplayButton = document.querySelector('#poster-display-button');
 const ledgerDisplayButton = document.querySelector('#ledger-display-button');
 const printProgrammeButton = document.querySelector('#print-programme-button');
+const printFormatSelect = document.querySelector('#print-format-select');
 const countryIndexToggle = document.querySelector('#country-index-toggle');
 const countryIndex = document.querySelector('.country-index');
 const countryIndexHeading = document.querySelector('.country-index-heading');
@@ -28,6 +29,7 @@ const directorFilmography = document.querySelector('#director-filmography');
 const printProgrammeTitle = document.querySelector('#print-programme-title');
 const printProgrammeUsername = document.querySelector('#print-programme-username');
 const printProgrammeDate = document.querySelector('#print-programme-date');
+const printProgrammeContainer = document.querySelector('#print-programme');
 const printProgrammeContext = document.querySelector('#print-programme-context');
 const printProgrammeFilms = document.querySelector('#print-programme-films');
 const filmDetailDialog = document.querySelector('#film-detail-dialog');
@@ -663,7 +665,7 @@ function genreChipFor(genre) {
   return tag;
 }
 
-function directorCreditFor(directors, className) {
+function directorCreditFor(directors, className, beforeFilter) {
   if (!directors.length) return null;
   const credit = document.createElement('p');
   credit.className = className;
@@ -677,7 +679,10 @@ function directorCreditFor(directors, className) {
     button.textContent = director;
     button.setAttribute('aria-pressed', String(state.directors.includes(director)));
     button.setAttribute('aria-label', `Filter by director ${director}`);
-    button.addEventListener('click', () => toggleDirector(director));
+    button.addEventListener('click', () => {
+      beforeFilter?.();
+      toggleDirector(director);
+    });
     credit.append(button);
   });
   return credit;
@@ -719,7 +724,7 @@ function originalFilmFactsFor(film) {
   return facts;
 }
 
-function countryRuntimeMetaFor(film, className) {
+function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
   const countries = [...new Set(Array.isArray(film.countries) ? film.countries.filter((name) => typeof name === 'string' && name.trim()) : [])];
   const runtime = Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0 ? film.runtime_minutes : null;
   if (!countries.length && !runtime) return null;
@@ -740,7 +745,10 @@ function countryRuntimeMetaFor(film, className) {
       button.tabIndex = tabIndex;
       button.setAttribute('aria-label', `Filter by production country ${country}`);
       button.setAttribute('aria-pressed', String(state.country === country));
-      button.addEventListener('click', () => toggleCountry(country));
+      button.addEventListener('click', () => {
+        beforeFilter?.();
+        toggleCountry(country);
+      });
       return button;
     };
     const primaryCountry = countryButtonFor(countries[0], 'cinephile-country-primary country-filter-button');
@@ -876,6 +884,7 @@ const filmViews = createFilmViews({
   genreChipFor,
   filmDetailButtonFor,
   toggleDirector,
+  toggleGenre,
   originalFilmFactsFor,
   sourceListNotesFor,
   filmProgrammeNotesFor,
@@ -951,6 +960,11 @@ function programmeHeadingFor(query, defaultRankedView, matching) {
 }
 
 function buildPrintProgramme() {
+  const readerEdition = printFormatSelect.value === 'reader';
+  printProgrammeContainer.classList.toggle('print-programme-reader', readerEdition);
+  document.querySelector('#print-programme-kicker').textContent = readerEdition
+    ? 'ReelRank · Reader’s edition'
+    : 'ReelRank · Catalogue edition';
   const filmsForProgramme = [...currentMatchingFilms].sort((left, right) => compareFilms(left, right, 'year-oldest'));
   printProgrammeTitle.textContent = topBilledTitle.textContent || 'ReelRank programme';
   printProgrammeUsername.textContent = document.querySelector('#profile-username').textContent;
@@ -1027,6 +1041,18 @@ function buildPrintProgramme() {
     scoreValue.textContent = likedIn.toLocaleString();
     score.append(scoreValue, ` ${likedIn === 1 ? 'list appearance' : 'list appearances'}`);
     entry.append(catalogueNumber, details, score);
+    if (readerEdition && typeof film.overview === 'string' && film.overview.trim()) {
+      const synopsis = document.createElement('p');
+      synopsis.className = 'print-film-synopsis';
+      const overview = film.overview.trim();
+      if (overview.length <= 260) synopsis.textContent = overview;
+      else {
+        const excerpt = overview.slice(0, 260);
+        const lastSpace = excerpt.lastIndexOf(' ');
+        synopsis.textContent = `${excerpt.slice(0, lastSpace > 180 ? lastSpace : 260).replace(/[.,;:!?]$/, '')}…`;
+      }
+      entry.append(synopsis);
+    }
     yearList.append(entry);
   });
 }
