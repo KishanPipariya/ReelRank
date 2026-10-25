@@ -7,7 +7,7 @@
   "displayed_film_count": 500,
   "unwatched_count": 26459,
   "displayed_unwatched_count": 392,
-  "tmdb_match_count": 493,
+  "tmdb_match_count": 500,
   "films": [
     {
       "title": "The Silence of the Lambs",
@@ -21,6 +21,11 @@
       "tmdb_id": 274,
       "tmdb_url": "https://www.themoviedb.org/movie/274",
       "tmdb_rating": 8.345,
+      "genres": [
+        "Crime",
+        "Thriller",
+        "Drama"
+      ],
       "liked_in": 63,
       "watched": true,
       "lists": [
@@ -101,6 +106,11 @@
       "tmdb_id": 11,
       "tmdb_url": "https://www.themoviedb.org/movie/11",
       "tmdb_rating": 8.207,
+      "genres": [
+        "Adventure",
+        "Action",
+        "Science Fiction"
+      ],
       "liked_in": 60,
       "watched": true,
       "lists": [
@@ -178,6 +188,10 @@
       "tmdb_id": 694,
       "tmdb_url": "https://www.themoviedb.org/movie/694",
       "tmdb_rating": 8.2,
+      "genres": [
+        "Horror",
+        "Thriller"
+      ],
       "liked_in": 60,
       "watched": true,
       "lists": [
@@ -255,6 +269,10 @@
       "tmdb_id": 238,
       "tmdb_url": "https://www.themoviedb.org/movie/238",
       "tmdb_rating": 8.689,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 59,
       "watched": true,
       "lists": [
@@ -331,6 +349,11 @@
       "tmdb_id": 62,
       "tmdb_url": "https://www.themoviedb.org/movie/62",
       "tmdb_rating": 8.04,
+      "genres": [
+        "Science Fiction",
+        "Mystery",
+        "Adventure"
+      ],
       "liked_in": 58,
       "watched": false,
       "lists": [
@@ -406,6 +429,10 @@
       "tmdb_id": 240,
       "tmdb_url": "https://www.themoviedb.org/movie/240",
       "tmdb_rating": 8.572,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 58,
       "watched": false,
       "lists": [
@@ -481,6 +508,11 @@
       "tmdb_id": 539,
       "tmdb_url": "https://www.themoviedb.org/movie/539",
       "tmdb_rating": 8.405,
+      "genres": [
+        "Horror",
+        "Thriller",
+        "Mystery"
+      ],
       "liked_in": 57,
       "watched": true,
       "lists": [
@@ -555,6 +587,10 @@
       "tmdb_id": 348,
       "tmdb_url": "https://www.themoviedb.org/movie/348",
       "tmdb_rating": 8.2,
+      "genres": [
+        "Horror",
+        "Science Fiction"
+      ],
       "liked_in": 56,
       "watched": true,
       "lists": [
@@ -628,6 +664,11 @@
       "tmdb_id": 680,
       "tmdb_url": "https://www.themoviedb.org/movie/680",
       "tmdb_rating": 8.481,
+      "genres": [
+        "Thriller",
+        "Crime",
+        "Comedy"
+      ],
       "liked_in": 56,
       "watched": true,
       "lists": [
@@ -701,6 +742,10 @@
       "tmdb_id": 28,
       "tmdb_url": "https://www.themoviedb.org/movie/28",
       "tmdb_rating": 8.258,
+      "genres": [
+        "Drama",
+        "War"
+      ],
       "liked_in": 55,
       "watched": false,
       "lists": [
@@ -773,6 +818,11 @@
       "tmdb_id": 578,
       "tmdb_url": "https://www.themoviedb.org/movie/578",
       "tmdb_rating": 7.687,
+      "genres": [
+        "Horror",
+        "Thriller",
+        "Adventure"
+      ],
       "liked_in": 55,
       "watched": true,
       "lists": [
@@ -845,6 +895,10 @@
       "tmdb_id": 103,
       "tmdb_url": "https://www.themoviedb.org/movie/103",
       "tmdb_rating": 8.118,
+      "genres": [
+        "Crime",
+        "Drama"
+      ],
       "liked_in": 55,
       "watched": false,
       "lists": [
@@ -917,6 +971,11 @@
       "tmdb_id": 120,
       "tmdb_url": "https://www.themoviedb.org/movie/120",
       "tmdb_rating": 8.448,
+      "genres": [
+        "Adventure",
+        "Fantasy",
+        "Action"
+      ],
       "liked_in": 55,
       "watched": true,
       "lists": [
@@ -989,6 +1048,11 @@
       "tmdb_id": 13,
       "tmdb_url": "https://www.themoviedb.org/movie/13",
       "tmdb_rating": 8.462,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 54,
       "watched": true,
       "lists": [
@@ -1060,6 +1124,11 @@
       "tmdb_id": 947,
       "tmdb_url": "https://www.themoviedb.org/movie/947",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Adventure",
+        "History",
+        "War"
+      ],
       "liked_in": 54,
       "watched": false,
       "lists": [
@@ -1131,6 +1200,11 @@
       "tmdb_id": 78,
       "tmdb_url": "https://www.themoviedb.org/movie/78",
       "tmdb_rating": 7.936,
+      "genres": [
+        "Science Fiction",
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 53,
       "watched": false,
       "lists": [
@@ -1201,6 +1275,10 @@
       "tmdb_id": 769,
       "tmdb_url": "https://www.themoviedb.org/movie/769",
       "tmdb_rating": 8.451,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 53,
       "watched": false,
       "lists": [
@@ -1271,6 +1349,11 @@
       "tmdb_id": 279,
       "tmdb_url": "https://www.themoviedb.org/movie/279",
       "tmdb_rating": 8.026,
+      "genres": [
+        "Drama",
+        "History",
+        "Music"
+      ],
       "liked_in": 52,
       "watched": false,
       "lists": [
@@ -1340,6 +1423,9 @@
       "tmdb_id": 510,
       "tmdb_url": "https://www.themoviedb.org/movie/510",
       "tmdb_rating": 8.404,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 52,
       "watched": false,
       "lists": [
@@ -1409,6 +1495,11 @@
       "tmdb_id": 122,
       "tmdb_url": "https://www.themoviedb.org/movie/122",
       "tmdb_rating": 8.505,
+      "genres": [
+        "Adventure",
+        "Fantasy",
+        "Action"
+      ],
       "liked_in": 52,
       "watched": true,
       "lists": [
@@ -1478,6 +1569,10 @@
       "tmdb_id": 603,
       "tmdb_url": "https://www.themoviedb.org/movie/603",
       "tmdb_rating": 8.261,
+      "genres": [
+        "Action",
+        "Science Fiction"
+      ],
       "liked_in": 52,
       "watched": true,
       "lists": [
@@ -1547,6 +1642,9 @@
       "tmdb_id": 389,
       "tmdb_url": "https://www.themoviedb.org/movie/389",
       "tmdb_rating": 8.576,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 51,
       "watched": false,
       "lists": [
@@ -1615,6 +1713,10 @@
       "tmdb_id": 185,
       "tmdb_url": "https://www.themoviedb.org/movie/185",
       "tmdb_rating": 8.168,
+      "genres": [
+        "Science Fiction",
+        "Crime"
+      ],
       "liked_in": 51,
       "watched": false,
       "lists": [
@@ -1683,6 +1785,11 @@
       "tmdb_id": 1585,
       "tmdb_url": "https://www.themoviedb.org/movie/1585",
       "tmdb_rating": 8.277,
+      "genres": [
+        "Drama",
+        "Family",
+        "Fantasy"
+      ],
       "liked_in": 51,
       "watched": false,
       "lists": [
@@ -1751,6 +1858,11 @@
       "tmdb_id": 129,
       "tmdb_url": "https://www.themoviedb.org/movie/129",
       "tmdb_rating": 8.536,
+      "genres": [
+        "Animation",
+        "Family",
+        "Fantasy"
+      ],
       "liked_in": 51,
       "watched": false,
       "lists": [
@@ -1819,6 +1931,11 @@
       "tmdb_id": 155,
       "tmdb_url": "https://www.themoviedb.org/movie/155",
       "tmdb_rating": 8.538,
+      "genres": [
+        "Action",
+        "Thriller",
+        "Crime"
+      ],
       "liked_in": 51,
       "watched": true,
       "lists": [
@@ -1887,6 +2004,11 @@
       "tmdb_id": 426,
       "tmdb_url": "https://www.themoviedb.org/movie/426",
       "tmdb_rating": 8.131,
+      "genres": [
+        "Mystery",
+        "Romance",
+        "Thriller"
+      ],
       "liked_in": 51,
       "watched": false,
       "lists": [
@@ -1955,6 +2077,10 @@
       "tmdb_id": 15,
       "tmdb_url": "https://www.themoviedb.org/movie/15",
       "tmdb_rating": 7.964,
+      "genres": [
+        "Mystery",
+        "Drama"
+      ],
       "liked_in": 50,
       "watched": false,
       "lists": [
@@ -2022,6 +2148,10 @@
       "tmdb_id": 85,
       "tmdb_url": "https://www.themoviedb.org/movie/85",
       "tmdb_rating": 7.927,
+      "genres": [
+        "Adventure",
+        "Action"
+      ],
       "liked_in": 50,
       "watched": true,
       "lists": [
@@ -2089,6 +2219,11 @@
       "tmdb_id": 567,
       "tmdb_url": "https://www.themoviedb.org/movie/567",
       "tmdb_rating": 8.334,
+      "genres": [
+        "Thriller",
+        "Mystery",
+        "Drama"
+      ],
       "liked_in": 50,
       "watched": false,
       "lists": [
@@ -2156,6 +2291,11 @@
       "tmdb_id": 424,
       "tmdb_url": "https://www.themoviedb.org/movie/424",
       "tmdb_rating": 8.57,
+      "genres": [
+        "Drama",
+        "History",
+        "War"
+      ],
       "liked_in": 50,
       "watched": false,
       "lists": [
@@ -2223,6 +2363,10 @@
       "tmdb_id": 872,
       "tmdb_url": "https://www.themoviedb.org/movie/872",
       "tmdb_rating": 8.125,
+      "genres": [
+        "Comedy",
+        "Romance"
+      ],
       "liked_in": 50,
       "watched": true,
       "lists": [
@@ -2290,6 +2434,11 @@
       "tmdb_id": 1091,
       "tmdb_url": "https://www.themoviedb.org/movie/1091",
       "tmdb_rating": 8.075,
+      "genres": [
+        "Horror",
+        "Mystery",
+        "Science Fiction"
+      ],
       "liked_in": 50,
       "watched": false,
       "lists": [
@@ -2357,6 +2506,11 @@
       "tmdb_id": 105,
       "tmdb_url": "https://www.themoviedb.org/movie/105",
       "tmdb_rating": 8.3,
+      "genres": [
+        "Adventure",
+        "Comedy",
+        "Science Fiction"
+      ],
       "liked_in": 49,
       "watched": false,
       "lists": [
@@ -2413,16 +2567,20 @@
     },
     {
       "title": "Casablanca",
-      "year": "1942",
+      "year": "1943",
       "letterboxd_title": "Casablanca",
       "letterboxd_year": "1942",
       "letterboxd_url": "https://letterboxd.com/film/casablanca/",
-      "poster_url": "",
-      "backdrop_url": "",
-      "overview": "",
-      "tmdb_id": null,
-      "tmdb_url": "",
-      "tmdb_rating": null,
+      "poster_url": "https://image.tmdb.org/t/p/w500/lGCEKlJo2CnWydQj7aamY7s1S7Q.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w780/87wqeMeUeMRLjsE1IWNKJcPlpuC.jpg",
+      "overview": "In Casablanca, Morocco in December 1941, a cynical American expatriate meets a former lover, with unforeseen complications.",
+      "tmdb_id": 289,
+      "tmdb_url": "https://www.themoviedb.org/movie/289",
+      "tmdb_rating": 8.141,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 49,
       "watched": false,
       "lists": [
@@ -2489,6 +2647,10 @@
       "tmdb_id": 329,
       "tmdb_url": "https://www.themoviedb.org/movie/329",
       "tmdb_rating": 7.977,
+      "genres": [
+        "Adventure",
+        "Science Fiction"
+      ],
       "liked_in": 49,
       "watched": true,
       "lists": [
@@ -2555,6 +2717,11 @@
       "tmdb_id": 496243,
       "tmdb_url": "https://www.themoviedb.org/movie/496243",
       "tmdb_rating": 8.5,
+      "genres": [
+        "Comedy",
+        "Thriller",
+        "Drama"
+      ],
       "liked_in": 49,
       "watched": false,
       "lists": [
@@ -2621,6 +2788,11 @@
       "tmdb_id": 807,
       "tmdb_url": "https://www.themoviedb.org/movie/807",
       "tmdb_rating": 8.383,
+      "genres": [
+        "Crime",
+        "Mystery",
+        "Thriller"
+      ],
       "liked_in": 49,
       "watched": true,
       "lists": [
@@ -2687,6 +2859,11 @@
       "tmdb_id": 3112,
       "tmdb_url": "https://www.themoviedb.org/movie/3112",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 49,
       "watched": false,
       "lists": [
@@ -2753,6 +2930,9 @@
       "tmdb_id": 5156,
       "tmdb_url": "https://www.themoviedb.org/movie/5156",
       "tmdb_rating": 8.164,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 48,
       "watched": false,
       "lists": [
@@ -2818,6 +2998,11 @@
       "tmdb_id": 38,
       "tmdb_url": "https://www.themoviedb.org/movie/38",
       "tmdb_rating": 8.091,
+      "genres": [
+        "Science Fiction",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 48,
       "watched": true,
       "lists": [
@@ -2883,6 +3068,11 @@
       "tmdb_id": 419430,
       "tmdb_url": "https://www.themoviedb.org/movie/419430",
       "tmdb_rating": 7.625,
+      "genres": [
+        "Mystery",
+        "Thriller",
+        "Horror"
+      ],
       "liked_in": 48,
       "watched": true,
       "lists": [
@@ -2948,6 +3138,11 @@
       "tmdb_id": 284,
       "tmdb_url": "https://www.themoviedb.org/movie/284",
       "tmdb_rating": 8.187,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 48,
       "watched": false,
       "lists": [
@@ -3013,6 +3208,9 @@
       "tmdb_id": 9552,
       "tmdb_url": "https://www.themoviedb.org/movie/9552",
       "tmdb_rating": 7.749,
+      "genres": [
+        "Horror"
+      ],
       "liked_in": 48,
       "watched": false,
       "lists": [
@@ -3078,6 +3276,10 @@
       "tmdb_id": 278,
       "tmdb_url": "https://www.themoviedb.org/movie/278",
       "tmdb_rating": 8.733,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 48,
       "watched": true,
       "lists": [
@@ -3143,6 +3345,10 @@
       "tmdb_id": 1092,
       "tmdb_url": "https://www.themoviedb.org/movie/1092",
       "tmdb_rating": 7.886,
+      "genres": [
+        "Thriller",
+        "Mystery"
+      ],
       "liked_in": 48,
       "watched": false,
       "lists": [
@@ -3208,6 +3414,10 @@
       "tmdb_id": 3175,
       "tmdb_url": "https://www.themoviedb.org/movie/3175",
       "tmdb_rating": 8.001,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 47,
       "watched": false,
       "lists": [
@@ -3272,6 +3482,10 @@
       "tmdb_id": 935,
       "tmdb_url": "https://www.themoviedb.org/movie/935",
       "tmdb_rating": 8.118,
+      "genres": [
+        "Comedy",
+        "War"
+      ],
       "liked_in": 47,
       "watched": false,
       "lists": [
@@ -3336,6 +3550,11 @@
       "tmdb_id": 27205,
       "tmdb_url": "https://www.themoviedb.org/movie/27205",
       "tmdb_rating": 8.373,
+      "genres": [
+        "Action",
+        "Science Fiction",
+        "Crime"
+      ],
       "liked_in": 47,
       "watched": true,
       "lists": [
@@ -3400,6 +3619,10 @@
       "tmdb_id": 19,
       "tmdb_url": "https://www.themoviedb.org/movie/19",
       "tmdb_rating": 8.084,
+      "genres": [
+        "Drama",
+        "Science Fiction"
+      ],
       "liked_in": 47,
       "watched": false,
       "lists": [
@@ -3464,6 +3687,11 @@
       "tmdb_id": 8587,
       "tmdb_url": "https://www.themoviedb.org/movie/8587",
       "tmdb_rating": 8.251,
+      "genres": [
+        "Animation",
+        "Family",
+        "Drama"
+      ],
       "liked_in": 47,
       "watched": true,
       "lists": [
@@ -3528,6 +3756,10 @@
       "tmdb_id": 490,
       "tmdb_url": "https://www.themoviedb.org/movie/490",
       "tmdb_rating": 8.135,
+      "genres": [
+        "Fantasy",
+        "Drama"
+      ],
       "liked_in": 47,
       "watched": false,
       "lists": [
@@ -3592,6 +3824,10 @@
       "tmdb_id": 37165,
       "tmdb_url": "https://www.themoviedb.org/movie/37165",
       "tmdb_rating": 8.161,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 47,
       "watched": true,
       "lists": [
@@ -3656,6 +3892,12 @@
       "tmdb_id": 862,
       "tmdb_url": "https://www.themoviedb.org/movie/862",
       "tmdb_rating": 7.99,
+      "genres": [
+        "Family",
+        "Comedy",
+        "Animation",
+        "Adventure"
+      ],
       "liked_in": 47,
       "watched": true,
       "lists": [
@@ -3720,6 +3962,9 @@
       "tmdb_id": 422,
       "tmdb_url": "https://www.themoviedb.org/movie/422",
       "tmdb_rating": 8.074,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 46,
       "watched": false,
       "lists": [
@@ -3783,6 +4028,9 @@
       "tmdb_id": 705,
       "tmdb_url": "https://www.themoviedb.org/movie/705",
       "tmdb_rating": 8.074,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 46,
       "watched": false,
       "lists": [
@@ -3846,6 +4094,11 @@
       "tmdb_id": 901,
       "tmdb_url": "https://www.themoviedb.org/movie/901",
       "tmdb_rating": 8.246,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 46,
       "watched": false,
       "lists": [
@@ -3909,6 +4162,10 @@
       "tmdb_id": 996,
       "tmdb_url": "https://www.themoviedb.org/movie/996",
       "tmdb_rating": 8.09,
+      "genres": [
+        "Crime",
+        "Thriller"
+      ],
       "liked_in": 46,
       "watched": false,
       "lists": [
@@ -3972,6 +4229,11 @@
       "tmdb_id": 275,
       "tmdb_url": "https://www.themoviedb.org/movie/275",
       "tmdb_rating": 7.848,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 46,
       "watched": false,
       "lists": [
@@ -4035,6 +4297,10 @@
       "tmdb_id": 550,
       "tmdb_url": "https://www.themoviedb.org/movie/550",
       "tmdb_rating": 8.438,
+      "genres": [
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 46,
       "watched": true,
       "lists": [
@@ -4098,6 +4364,11 @@
       "tmdb_id": 313369,
       "tmdb_url": "https://www.themoviedb.org/movie/313369",
       "tmdb_rating": 7.895,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 46,
       "watched": true,
       "lists": [
@@ -4161,6 +4432,11 @@
       "tmdb_id": 76341,
       "tmdb_url": "https://www.themoviedb.org/movie/76341",
       "tmdb_rating": 7.642,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Science Fiction"
+      ],
       "liked_in": 46,
       "watched": true,
       "lists": [
@@ -4224,6 +4500,9 @@
       "tmdb_id": 797,
       "tmdb_url": "https://www.themoviedb.org/movie/797",
       "tmdb_rating": 8.121,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 46,
       "watched": false,
       "lists": [
@@ -4287,6 +4566,11 @@
       "tmdb_id": 239,
       "tmdb_url": "https://www.themoviedb.org/movie/239",
       "tmdb_rating": 8.078,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Crime"
+      ],
       "liked_in": 46,
       "watched": false,
       "lists": [
@@ -4350,6 +4634,9 @@
       "tmdb_id": 599,
       "tmdb_url": "https://www.themoviedb.org/movie/599",
       "tmdb_rating": 8.277,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 46,
       "watched": false,
       "lists": [
@@ -4413,6 +4700,12 @@
       "tmdb_id": 234,
       "tmdb_url": "https://www.themoviedb.org/movie/234",
       "tmdb_rating": 7.93,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Thriller",
+        "Crime"
+      ],
       "liked_in": 46,
       "watched": true,
       "lists": [
@@ -4476,6 +4769,9 @@
       "tmdb_id": 429,
       "tmdb_url": "https://www.themoviedb.org/movie/429",
       "tmdb_rating": 8.469,
+      "genres": [
+        "Western"
+      ],
       "liked_in": 46,
       "watched": false,
       "lists": [
@@ -4539,6 +4835,10 @@
       "tmdb_id": 851,
       "tmdb_url": "https://www.themoviedb.org/movie/851",
       "tmdb_rating": 7.714,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -4601,6 +4901,11 @@
       "tmdb_id": 3082,
       "tmdb_url": "https://www.themoviedb.org/movie/3082",
       "tmdb_rating": 8.285,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 45,
       "watched": true,
       "lists": [
@@ -4663,6 +4968,11 @@
       "tmdb_id": 1018,
       "tmdb_url": "https://www.themoviedb.org/movie/1018",
       "tmdb_rating": 7.802,
+      "genres": [
+        "Thriller",
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -4725,6 +5035,11 @@
       "tmdb_id": 8392,
       "tmdb_url": "https://www.themoviedb.org/movie/8392",
       "tmdb_rating": 8.07,
+      "genres": [
+        "Fantasy",
+        "Animation",
+        "Family"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -4787,6 +5102,11 @@
       "tmdb_id": 6977,
       "tmdb_url": "https://www.themoviedb.org/movie/6977",
       "tmdb_rating": 7.951,
+      "genres": [
+        "Crime",
+        "Thriller",
+        "Western"
+      ],
       "liked_in": 45,
       "watched": true,
       "lists": [
@@ -4849,6 +5169,11 @@
       "tmdb_id": 1417,
       "tmdb_url": "https://www.themoviedb.org/movie/1417",
       "tmdb_rating": 7.77,
+      "genres": [
+        "Fantasy",
+        "Drama",
+        "War"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -4911,6 +5236,11 @@
       "tmdb_id": 548,
       "tmdb_url": "https://www.themoviedb.org/movie/548",
       "tmdb_rating": 8.025,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -4973,6 +5303,11 @@
       "tmdb_id": 805,
       "tmdb_url": "https://www.themoviedb.org/movie/805",
       "tmdb_rating": 7.8,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Thriller"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -5035,6 +5370,9 @@
       "tmdb_id": 147,
       "tmdb_url": "https://www.themoviedb.org/movie/147",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -5097,6 +5435,11 @@
       "tmdb_id": 961,
       "tmdb_url": "https://www.themoviedb.org/movie/961",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Comedy",
+        "War",
+        "Romance"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -5159,6 +5502,10 @@
       "tmdb_id": 120467,
       "tmdb_url": "https://www.themoviedb.org/movie/120467",
       "tmdb_rating": 8.027,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 45,
       "watched": true,
       "lists": [
@@ -5221,6 +5568,10 @@
       "tmdb_id": 780,
       "tmdb_url": "https://www.themoviedb.org/movie/780",
       "tmdb_rating": 7.97,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -5283,6 +5634,10 @@
       "tmdb_id": 19542,
       "tmdb_url": "https://www.themoviedb.org/movie/19542",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -5345,6 +5700,11 @@
       "tmdb_id": 630,
       "tmdb_url": "https://www.themoviedb.org/movie/630",
       "tmdb_rating": 7.6,
+      "genres": [
+        "Adventure",
+        "Fantasy",
+        "Family"
+      ],
       "liked_in": 45,
       "watched": false,
       "lists": [
@@ -5407,6 +5767,11 @@
       "tmdb_id": 703,
       "tmdb_url": "https://www.themoviedb.org/movie/703",
       "tmdb_rating": 7.71,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 44,
       "watched": false,
       "lists": [
@@ -5468,6 +5833,11 @@
       "tmdb_id": 44214,
       "tmdb_url": "https://www.themoviedb.org/movie/44214",
       "tmdb_rating": 7.683,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "Horror"
+      ],
       "liked_in": 44,
       "watched": false,
       "lists": [
@@ -5529,6 +5899,11 @@
       "tmdb_id": 12477,
       "tmdb_url": "https://www.themoviedb.org/movie/12477",
       "tmdb_rating": 8.452,
+      "genres": [
+        "Animation",
+        "Drama",
+        "War"
+      ],
       "liked_in": 44,
       "watched": false,
       "lists": [
@@ -5590,6 +5965,11 @@
       "tmdb_id": 872585,
       "tmdb_url": "https://www.themoviedb.org/movie/872585",
       "tmdb_rating": 8.023,
+      "genres": [
+        "Drama",
+        "History",
+        "War"
+      ],
       "liked_in": 44,
       "watched": true,
       "lists": [
@@ -5651,6 +6031,10 @@
       "tmdb_id": 1578,
       "tmdb_url": "https://www.themoviedb.org/movie/1578",
       "tmdb_rating": 7.891,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 44,
       "watched": false,
       "lists": [
@@ -5712,6 +6096,10 @@
       "tmdb_id": 631,
       "tmdb_url": "https://www.themoviedb.org/movie/631",
       "tmdb_rating": 7.812,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 44,
       "watched": false,
       "lists": [
@@ -5773,6 +6161,11 @@
       "tmdb_id": 826,
       "tmdb_url": "https://www.themoviedb.org/movie/826",
       "tmdb_rating": 7.818,
+      "genres": [
+        "Drama",
+        "History",
+        "War"
+      ],
       "liked_in": 44,
       "watched": false,
       "lists": [
@@ -5834,6 +6227,11 @@
       "tmdb_id": 1891,
       "tmdb_url": "https://www.themoviedb.org/movie/1891",
       "tmdb_rating": 8.393,
+      "genres": [
+        "Adventure",
+        "Action",
+        "Science Fiction"
+      ],
       "liked_in": 44,
       "watched": true,
       "lists": [
@@ -5895,6 +6293,11 @@
       "tmdb_id": 121,
       "tmdb_url": "https://www.themoviedb.org/movie/121",
       "tmdb_rating": 8.432,
+      "genres": [
+        "Adventure",
+        "Fantasy",
+        "Action"
+      ],
       "liked_in": 44,
       "watched": true,
       "lists": [
@@ -5956,6 +6359,9 @@
       "tmdb_id": 7345,
       "tmdb_url": "https://www.themoviedb.org/movie/7345",
       "tmdb_rating": 8.06,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 44,
       "watched": false,
       "lists": [
@@ -6017,6 +6423,11 @@
       "tmdb_id": 10681,
       "tmdb_url": "https://www.themoviedb.org/movie/10681",
       "tmdb_rating": 8.127,
+      "genres": [
+        "Animation",
+        "Family",
+        "Science Fiction"
+      ],
       "liked_in": 44,
       "watched": false,
       "lists": [
@@ -6078,6 +6489,11 @@
       "tmdb_id": 679,
       "tmdb_url": "https://www.themoviedb.org/movie/679",
       "tmdb_rating": 7.969,
+      "genres": [
+        "Action",
+        "Thriller",
+        "Science Fiction"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -6138,6 +6554,11 @@
       "tmdb_id": 545611,
       "tmdb_url": "https://www.themoviedb.org/movie/545611",
       "tmdb_rating": 7.715,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Science Fiction"
+      ],
       "liked_in": 43,
       "watched": true,
       "lists": [
@@ -6198,6 +6619,11 @@
       "tmdb_id": 770,
       "tmdb_url": "https://www.themoviedb.org/movie/770",
       "tmdb_rating": 7.903,
+      "genres": [
+        "Drama",
+        "War",
+        "Romance"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -6258,6 +6684,9 @@
       "tmdb_id": 489,
       "tmdb_url": "https://www.themoviedb.org/movie/489",
       "tmdb_rating": 8.167,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 43,
       "watched": true,
       "lists": [
@@ -6318,6 +6747,11 @@
       "tmdb_id": 949,
       "tmdb_url": "https://www.themoviedb.org/movie/949",
       "tmdb_rating": 7.945,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Action"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -6378,6 +6812,11 @@
       "tmdb_id": 157336,
       "tmdb_url": "https://www.themoviedb.org/movie/157336",
       "tmdb_rating": 8.491,
+      "genres": [
+        "Adventure",
+        "Drama",
+        "Science Fiction"
+      ],
       "liked_in": 43,
       "watched": true,
       "lists": [
@@ -6438,6 +6877,10 @@
       "tmdb_id": 3078,
       "tmdb_url": "https://www.themoviedb.org/movie/3078",
       "tmdb_rating": 7.825,
+      "genres": [
+        "Comedy",
+        "Romance"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -6498,6 +6941,10 @@
       "tmdb_id": 77,
       "tmdb_url": "https://www.themoviedb.org/movie/77",
       "tmdb_rating": 8.174,
+      "genres": [
+        "Mystery",
+        "Thriller"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -6558,6 +7005,10 @@
       "tmdb_id": 653,
       "tmdb_url": "https://www.themoviedb.org/movie/653",
       "tmdb_rating": 7.65,
+      "genres": [
+        "Horror",
+        "Fantasy"
+      ],
       "liked_in": 43,
       "watched": true,
       "lists": [
@@ -6618,6 +7069,11 @@
       "tmdb_id": 654,
       "tmdb_url": "https://www.themoviedb.org/movie/654",
       "tmdb_rating": 7.85,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -6678,6 +7134,11 @@
       "tmdb_id": 11645,
       "tmdb_url": "https://www.themoviedb.org/movie/11645",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Action",
+        "Drama",
+        "History"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -6738,6 +7199,10 @@
       "tmdb_id": 346,
       "tmdb_url": "https://www.themoviedb.org/movie/346",
       "tmdb_rating": 8.452,
+      "genres": [
+        "Action",
+        "Drama"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -6798,6 +7263,11 @@
       "tmdb_id": 992,
       "tmdb_url": "https://www.themoviedb.org/movie/992",
       "tmdb_rating": 8.04,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Mystery"
+      ],
       "liked_in": 43,
       "watched": true,
       "lists": [
@@ -6858,6 +7328,12 @@
       "tmdb_id": 324857,
       "tmdb_url": "https://www.themoviedb.org/movie/324857",
       "tmdb_rating": 8.403,
+      "genres": [
+        "Animation",
+        "Action",
+        "Adventure",
+        "Science Fiction"
+      ],
       "liked_in": 43,
       "watched": true,
       "lists": [
@@ -6918,6 +7394,11 @@
       "tmdb_id": 280,
       "tmdb_url": "https://www.themoviedb.org/movie/280",
       "tmdb_rating": 8.174,
+      "genres": [
+        "Action",
+        "Thriller",
+        "Science Fiction"
+      ],
       "liked_in": 43,
       "watched": true,
       "lists": [
@@ -6978,6 +7459,10 @@
       "tmdb_id": 423,
       "tmdb_url": "https://www.themoviedb.org/movie/423",
       "tmdb_rating": 8.369,
+      "genres": [
+        "Drama",
+        "War"
+      ],
       "liked_in": 43,
       "watched": true,
       "lists": [
@@ -7038,6 +7523,12 @@
       "tmdb_id": 15121,
       "tmdb_url": "https://www.themoviedb.org/movie/15121",
       "tmdb_rating": 7.73,
+      "genres": [
+        "Drama",
+        "Family",
+        "Music",
+        "Romance"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -7098,6 +7589,10 @@
       "tmdb_id": 5967,
       "tmdb_url": "https://www.themoviedb.org/movie/5967",
       "tmdb_rating": 7.4,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -7158,6 +7653,10 @@
       "tmdb_id": 597,
       "tmdb_url": "https://www.themoviedb.org/movie/597",
       "tmdb_rating": 7.901,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -7218,6 +7717,10 @@
       "tmdb_id": 627,
       "tmdb_url": "https://www.themoviedb.org/movie/627",
       "tmdb_rating": 7.958,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 43,
       "watched": false,
       "lists": [
@@ -7278,6 +7781,11 @@
       "tmdb_id": 665,
       "tmdb_url": "https://www.themoviedb.org/movie/665",
       "tmdb_rating": 7.89,
+      "genres": [
+        "History",
+        "Drama",
+        "Adventure"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -7337,6 +7845,11 @@
       "tmdb_id": 793,
       "tmdb_url": "https://www.themoviedb.org/movie/793",
       "tmdb_rating": 7.603,
+      "genres": [
+        "Mystery",
+        "Thriller",
+        "Crime"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -7396,6 +7909,11 @@
       "tmdb_id": 829,
       "tmdb_url": "https://www.themoviedb.org/movie/829",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Crime",
+        "Mystery",
+        "Thriller"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -7455,6 +7973,11 @@
       "tmdb_id": 16869,
       "tmdb_url": "https://www.themoviedb.org/movie/16869",
       "tmdb_rating": 8.217,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "War"
+      ],
       "liked_in": 42,
       "watched": true,
       "lists": [
@@ -7514,6 +8037,9 @@
       "tmdb_id": 655,
       "tmdb_url": "https://www.themoviedb.org/movie/655",
       "tmdb_rating": 8.075,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -7573,6 +8099,10 @@
       "tmdb_id": 975,
       "tmdb_url": "https://www.themoviedb.org/movie/975",
       "tmdb_rating": 8.251,
+      "genres": [
+        "War",
+        "Drama"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -7622,16 +8152,20 @@
     },
     {
       "title": "Perfect Blue",
-      "year": "1997",
+      "year": "1998",
       "letterboxd_title": "Perfect Blue",
       "letterboxd_year": "1997",
       "letterboxd_url": "https://letterboxd.com/film/perfect-blue/",
-      "poster_url": "",
-      "backdrop_url": "",
-      "overview": "",
-      "tmdb_id": null,
-      "tmdb_url": "",
-      "tmdb_rating": null,
+      "poster_url": "https://image.tmdb.org/t/p/w500/6WTiOCfDPP8XV4jqfloiVWf7KHq.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w780/mHG7dpLb0ZScSY3LpP443IHRmjy.jpg",
+      "overview": "Rising pop star Mima Kirigoe quits singing to pursue a career as an actress. After she takes up a role on a popular detective show, her handlers and collaborators begin turning up murdered. Harboring feelings of guilt and haunted by visions of her former self, Mima's reality and fantasy meld into a frenzied paranoia.",
+      "tmdb_id": 10494,
+      "tmdb_url": "https://www.themoviedb.org/movie/10494",
+      "tmdb_rating": 8.302,
+      "genres": [
+        "Animation",
+        "Thriller"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -7691,6 +8225,11 @@
       "tmdb_id": 857,
       "tmdb_url": "https://www.themoviedb.org/movie/857",
       "tmdb_rating": 8.234,
+      "genres": [
+        "War",
+        "Drama",
+        "History"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -7750,6 +8289,11 @@
       "tmdb_id": 111,
       "tmdb_url": "https://www.themoviedb.org/movie/111",
       "tmdb_rating": 8.155,
+      "genres": [
+        "Action",
+        "Crime",
+        "Drama"
+      ],
       "liked_in": 42,
       "watched": true,
       "lists": [
@@ -7809,6 +8353,10 @@
       "tmdb_id": 235,
       "tmdb_url": "https://www.themoviedb.org/movie/235",
       "tmdb_rating": 7.835,
+      "genres": [
+        "Drama",
+        "Adventure"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -7868,6 +8416,11 @@
       "tmdb_id": 592,
       "tmdb_url": "https://www.themoviedb.org/movie/592",
       "tmdb_rating": 7.49,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -7927,6 +8480,11 @@
       "tmdb_id": 37247,
       "tmdb_url": "https://www.themoviedb.org/movie/37247",
       "tmdb_rating": 7.628,
+      "genres": [
+        "Drama",
+        "Romance",
+        "Comedy"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -7986,6 +8544,11 @@
       "tmdb_id": 3090,
       "tmdb_url": "https://www.themoviedb.org/movie/3090",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Adventure",
+        "Drama",
+        "Western"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -8045,6 +8608,9 @@
       "tmdb_id": 18148,
       "tmdb_url": "https://www.themoviedb.org/movie/18148",
       "tmdb_rating": 8.2,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 42,
       "watched": false,
       "lists": [
@@ -8104,6 +8670,12 @@
       "tmdb_id": 25237,
       "tmdb_url": "https://www.themoviedb.org/movie/25237",
       "tmdb_rating": 8.186,
+      "genres": [
+        "Drama",
+        "War",
+        "Horror",
+        "History"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8162,6 +8734,9 @@
       "tmdb_id": 207,
       "tmdb_url": "https://www.themoviedb.org/movie/207",
       "tmdb_rating": 8.295,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 41,
       "watched": true,
       "lists": [
@@ -8220,6 +8795,9 @@
       "tmdb_id": 925,
       "tmdb_url": "https://www.themoviedb.org/movie/925",
       "tmdb_rating": 7.776,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8278,6 +8856,11 @@
       "tmdb_id": 601,
       "tmdb_url": "https://www.themoviedb.org/movie/601",
       "tmdb_rating": 7.519,
+      "genres": [
+        "Adventure",
+        "Science Fiction",
+        "Family"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8336,6 +8919,11 @@
       "tmdb_id": 5961,
       "tmdb_url": "https://www.themoviedb.org/movie/5961",
       "tmdb_rating": 7.756,
+      "genres": [
+        "Fantasy",
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8394,6 +8982,10 @@
       "tmdb_id": 843,
       "tmdb_url": "https://www.themoviedb.org/movie/843",
       "tmdb_rating": 8.086,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8452,6 +9044,9 @@
       "tmdb_id": 10774,
       "tmdb_url": "https://www.themoviedb.org/movie/10774",
       "tmdb_rating": 7.789,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8510,6 +9105,10 @@
       "tmdb_id": 11778,
       "tmdb_url": "https://www.themoviedb.org/movie/11778",
       "tmdb_rating": 7.956,
+      "genres": [
+        "Drama",
+        "War"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8568,6 +9167,10 @@
       "tmdb_id": 25188,
       "tmdb_url": "https://www.themoviedb.org/movie/25188",
       "tmdb_rating": 7.618,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8626,6 +9229,9 @@
       "tmdb_id": 33,
       "tmdb_url": "https://www.themoviedb.org/movie/33",
       "tmdb_rating": 7.913,
+      "genres": [
+        "Western"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8684,6 +9290,11 @@
       "tmdb_id": 244786,
       "tmdb_url": "https://www.themoviedb.org/movie/244786",
       "tmdb_rating": 8.377,
+      "genres": [
+        "Drama",
+        "Music",
+        "Thriller"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8742,6 +9353,9 @@
       "tmdb_id": 614,
       "tmdb_url": "https://www.themoviedb.org/movie/614",
       "tmdb_rating": 8.073,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 41,
       "watched": false,
       "lists": [
@@ -8800,6 +9414,10 @@
       "tmdb_id": 229,
       "tmdb_url": "https://www.themoviedb.org/movie/229",
       "tmdb_rating": 7.492,
+      "genres": [
+        "Horror",
+        "Science Fiction"
+      ],
       "liked_in": 40,
       "watched": false,
       "lists": [
@@ -8857,6 +9475,11 @@
       "tmdb_id": 10784,
       "tmdb_url": "https://www.themoviedb.org/movie/10784",
       "tmdb_rating": 7.418,
+      "genres": [
+        "Music",
+        "Romance",
+        "Drama"
+      ],
       "liked_in": 40,
       "watched": false,
       "lists": [
@@ -8914,6 +9537,10 @@
       "tmdb_id": 600,
       "tmdb_url": "https://www.themoviedb.org/movie/600",
       "tmdb_rating": 8.119,
+      "genres": [
+        "Drama",
+        "War"
+      ],
       "liked_in": 40,
       "watched": false,
       "lists": [
@@ -8971,6 +9598,11 @@
       "tmdb_id": 98,
       "tmdb_url": "https://www.themoviedb.org/movie/98",
       "tmdb_rating": 8.232,
+      "genres": [
+        "Action",
+        "Drama",
+        "Adventure"
+      ],
       "liked_in": 40,
       "watched": true,
       "lists": [
@@ -9028,6 +9660,9 @@
       "tmdb_id": 3782,
       "tmdb_url": "https://www.themoviedb.org/movie/3782",
       "tmdb_rating": 8.313,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 40,
       "watched": false,
       "lists": [
@@ -9085,6 +9720,11 @@
       "tmdb_id": 832,
       "tmdb_url": "https://www.themoviedb.org/movie/832",
       "tmdb_rating": 8.06,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "Crime"
+      ],
       "liked_in": 40,
       "watched": false,
       "lists": [
@@ -9142,6 +9782,9 @@
       "tmdb_id": 3116,
       "tmdb_url": "https://www.themoviedb.org/movie/3116",
       "tmdb_rating": 7.528,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 40,
       "watched": false,
       "lists": [
@@ -9199,6 +9842,11 @@
       "tmdb_id": 3121,
       "tmdb_url": "https://www.themoviedb.org/movie/3121",
       "tmdb_rating": 7.296,
+      "genres": [
+        "Drama",
+        "Comedy",
+        "Music"
+      ],
       "liked_in": 40,
       "watched": false,
       "lists": [
@@ -9256,6 +9904,11 @@
       "tmdb_id": 17295,
       "tmdb_url": "https://www.themoviedb.org/movie/17295",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Drama",
+        "War",
+        "History"
+      ],
       "liked_in": 40,
       "watched": false,
       "lists": [
@@ -9313,6 +9966,11 @@
       "tmdb_id": 745,
       "tmdb_url": "https://www.themoviedb.org/movie/745",
       "tmdb_rating": 7.957,
+      "genres": [
+        "Mystery",
+        "Thriller",
+        "Drama"
+      ],
       "liked_in": 40,
       "watched": false,
       "lists": [
@@ -9370,6 +10028,10 @@
       "tmdb_id": 702,
       "tmdb_url": "https://www.themoviedb.org/movie/702",
       "tmdb_rating": 7.621,
+      "genres": [
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -9426,6 +10088,10 @@
       "tmdb_id": 194,
       "tmdb_url": "https://www.themoviedb.org/movie/194",
       "tmdb_rating": 7.92,
+      "genres": [
+        "Comedy",
+        "Romance"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -9482,6 +10148,11 @@
       "tmdb_id": 11104,
       "tmdb_url": "https://www.themoviedb.org/movie/11104",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Drama",
+        "Comedy",
+        "Romance"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -9538,6 +10209,12 @@
       "tmdb_id": 14836,
       "tmdb_url": "https://www.themoviedb.org/movie/14836",
       "tmdb_rating": 7.946,
+      "genres": [
+        "Animation",
+        "Family",
+        "Fantasy",
+        "Horror"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -9594,6 +10271,10 @@
       "tmdb_id": 68718,
       "tmdb_url": "https://www.themoviedb.org/movie/68718",
       "tmdb_rating": 8.2,
+      "genres": [
+        "Drama",
+        "Western"
+      ],
       "liked_in": 39,
       "watched": true,
       "lists": [
@@ -9650,6 +10331,10 @@
       "tmdb_id": 948,
       "tmdb_url": "https://www.themoviedb.org/movie/948",
       "tmdb_rating": 7.559,
+      "genres": [
+        "Horror",
+        "Thriller"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -9706,6 +10391,10 @@
       "tmdb_id": 24,
       "tmdb_url": "https://www.themoviedb.org/movie/24",
       "tmdb_rating": 7.97,
+      "genres": [
+        "Action",
+        "Crime"
+      ],
       "liked_in": 39,
       "watched": true,
       "lists": [
@@ -9762,6 +10451,10 @@
       "tmdb_id": 439,
       "tmdb_url": "https://www.themoviedb.org/movie/439",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -9818,6 +10511,10 @@
       "tmdb_id": 213,
       "tmdb_url": "https://www.themoviedb.org/movie/213",
       "tmdb_rating": 7.962,
+      "genres": [
+        "Thriller",
+        "Adventure"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -9874,6 +10571,10 @@
       "tmdb_id": 670,
       "tmdb_url": "https://www.themoviedb.org/movie/670",
       "tmdb_rating": 8.2,
+      "genres": [
+        "Thriller",
+        "Mystery"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -9930,6 +10631,10 @@
       "tmdb_id": 335,
       "tmdb_url": "https://www.themoviedb.org/movie/335",
       "tmdb_rating": 8.261,
+      "genres": [
+        "Drama",
+        "Western"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -9986,6 +10691,9 @@
       "tmdb_id": 641,
       "tmdb_url": "https://www.themoviedb.org/movie/641",
       "tmdb_rating": 8.007,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -10042,6 +10750,9 @@
       "tmdb_id": 1366,
       "tmdb_url": "https://www.themoviedb.org/movie/1366",
       "tmdb_rating": 7.8,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 39,
       "watched": true,
       "lists": [
@@ -10098,6 +10809,12 @@
       "tmdb_id": 569094,
       "tmdb_url": "https://www.themoviedb.org/movie/569094",
       "tmdb_rating": 8.349,
+      "genres": [
+        "Animation",
+        "Action",
+        "Adventure",
+        "Science Fiction"
+      ],
       "liked_in": 39,
       "watched": true,
       "lists": [
@@ -10154,6 +10871,10 @@
       "tmdb_id": 1398,
       "tmdb_url": "https://www.themoviedb.org/movie/1398",
       "tmdb_rating": 8.1,
+      "genres": [
+        "Science Fiction",
+        "Drama"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -10210,6 +10931,11 @@
       "tmdb_id": 887,
       "tmdb_url": "https://www.themoviedb.org/movie/887",
       "tmdb_rating": 7.745,
+      "genres": [
+        "Drama",
+        "Romance",
+        "War"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -10266,6 +10992,11 @@
       "tmdb_id": 1051,
       "tmdb_url": "https://www.themoviedb.org/movie/1051",
       "tmdb_rating": 7.489,
+      "genres": [
+        "Action",
+        "Crime",
+        "Thriller"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -10322,6 +11053,11 @@
       "tmdb_id": 106646,
       "tmdb_url": "https://www.themoviedb.org/movie/106646",
       "tmdb_rating": 8.027,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Comedy"
+      ],
       "liked_in": 39,
       "watched": true,
       "lists": [
@@ -10378,6 +11114,11 @@
       "tmdb_id": 639,
       "tmdb_url": "https://www.themoviedb.org/movie/639",
       "tmdb_rating": 7.409,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Drama"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -10434,6 +11175,9 @@
       "tmdb_id": 396,
       "tmdb_url": "https://www.themoviedb.org/movie/396",
       "tmdb_rating": 7.704,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 39,
       "watched": false,
       "lists": [
@@ -10490,6 +11234,11 @@
       "tmdb_id": 891,
       "tmdb_url": "https://www.themoviedb.org/movie/891",
       "tmdb_rating": 7.66,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Thriller"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -10545,6 +11294,10 @@
       "tmdb_id": 895,
       "tmdb_url": "https://www.themoviedb.org/movie/895",
       "tmdb_rating": 7.942,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -10600,6 +11353,11 @@
       "tmdb_id": 329865,
       "tmdb_url": "https://www.themoviedb.org/movie/329865",
       "tmdb_rating": 7.638,
+      "genres": [
+        "Drama",
+        "Science Fiction",
+        "Mystery"
+      ],
       "liked_in": 38,
       "watched": true,
       "lists": [
@@ -10655,6 +11413,10 @@
       "tmdb_id": 68,
       "tmdb_url": "https://www.themoviedb.org/movie/68",
       "tmdb_rating": 7.654,
+      "genres": [
+        "Comedy",
+        "Science Fiction"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -10710,6 +11472,10 @@
       "tmdb_id": 142,
       "tmdb_url": "https://www.themoviedb.org/movie/142",
       "tmdb_rating": 7.783,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -10765,6 +11531,9 @@
       "tmdb_id": 499,
       "tmdb_url": "https://www.themoviedb.org/movie/499",
       "tmdb_rating": 7.663,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -10820,6 +11589,11 @@
       "tmdb_id": 968,
       "tmdb_url": "https://www.themoviedb.org/movie/968",
       "tmdb_rating": 7.855,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -10875,6 +11649,11 @@
       "tmdb_id": 5544,
       "tmdb_url": "https://www.themoviedb.org/movie/5544",
       "tmdb_rating": 7.667,
+      "genres": [
+        "Drama",
+        "History",
+        "Romance"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -10930,6 +11709,10 @@
       "tmdb_id": 311,
       "tmdb_url": "https://www.themoviedb.org/movie/311",
       "tmdb_rating": 8.365,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -10985,6 +11768,11 @@
       "tmdb_id": 128,
       "tmdb_url": "https://www.themoviedb.org/movie/128",
       "tmdb_rating": 8.321,
+      "genres": [
+        "Adventure",
+        "Fantasy",
+        "Animation"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -11040,6 +11828,11 @@
       "tmdb_id": 4232,
       "tmdb_url": "https://www.themoviedb.org/movie/4232",
       "tmdb_rating": 7.438,
+      "genres": [
+        "Crime",
+        "Horror",
+        "Mystery"
+      ],
       "liked_in": 38,
       "watched": true,
       "lists": [
@@ -11095,6 +11888,11 @@
       "tmdb_id": 1233413,
       "tmdb_url": "https://www.themoviedb.org/movie/1233413",
       "tmdb_rating": 7.514,
+      "genres": [
+        "Horror",
+        "Action",
+        "Thriller"
+      ],
       "liked_in": 38,
       "watched": true,
       "lists": [
@@ -11150,6 +11948,10 @@
       "tmdb_id": 115,
       "tmdb_url": "https://www.themoviedb.org/movie/115",
       "tmdb_rating": 7.852,
+      "genres": [
+        "Comedy",
+        "Crime"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -11205,6 +12007,11 @@
       "tmdb_id": 1422,
       "tmdb_url": "https://www.themoviedb.org/movie/1422",
       "tmdb_rating": 8.16,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "Crime"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -11260,6 +12067,11 @@
       "tmdb_id": 1480,
       "tmdb_url": "https://www.themoviedb.org/movie/1480",
       "tmdb_rating": 7.743,
+      "genres": [
+        "Crime",
+        "Thriller",
+        "Drama"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -11315,6 +12127,11 @@
       "tmdb_id": 1725,
       "tmdb_url": "https://www.themoviedb.org/movie/1725",
       "tmdb_rating": 7.22,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -11370,6 +12187,10 @@
       "tmdb_id": 10242,
       "tmdb_url": "https://www.themoviedb.org/movie/10242",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Horror",
+        "Thriller"
+      ],
       "liked_in": 38,
       "watched": false,
       "lists": [
@@ -11425,6 +12246,9 @@
       "tmdb_id": 14,
       "tmdb_url": "https://www.themoviedb.org/movie/14",
       "tmdb_rating": 7.999,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -11479,6 +12303,11 @@
       "tmdb_id": 3133,
       "tmdb_url": "https://www.themoviedb.org/movie/3133",
       "tmdb_rating": 7.451,
+      "genres": [
+        "Drama",
+        "Romance",
+        "Crime"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -11533,6 +12362,11 @@
       "tmdb_id": 643,
       "tmdb_url": "https://www.themoviedb.org/movie/643",
       "tmdb_rating": 7.569,
+      "genres": [
+        "Drama",
+        "History",
+        "War"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -11587,6 +12421,10 @@
       "tmdb_id": 76,
       "tmdb_url": "https://www.themoviedb.org/movie/76",
       "tmdb_rating": 7.968,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -11641,6 +12479,10 @@
       "tmdb_id": 80,
       "tmdb_url": "https://www.themoviedb.org/movie/80",
       "tmdb_rating": 7.809,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -11695,6 +12537,11 @@
       "tmdb_id": 269,
       "tmdb_url": "https://www.themoviedb.org/movie/269",
       "tmdb_rating": 7.478,
+      "genres": [
+        "Drama",
+        "Crime",
+        "Romance"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -11749,6 +12596,10 @@
       "tmdb_id": 900,
       "tmdb_url": "https://www.themoviedb.org/movie/900",
       "tmdb_rating": 7.501,
+      "genres": [
+        "Comedy",
+        "Romance"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -11803,6 +12654,11 @@
       "tmdb_id": 642,
       "tmdb_url": "https://www.themoviedb.org/movie/642",
       "tmdb_rating": 7.6,
+      "genres": [
+        "Western",
+        "Crime",
+        "Drama"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -11857,6 +12713,10 @@
       "tmdb_id": 598,
       "tmdb_url": "https://www.themoviedb.org/movie/598",
       "tmdb_rating": 8.424,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -11911,6 +12771,12 @@
       "tmdb_id": 354912,
       "tmdb_url": "https://www.themoviedb.org/movie/354912",
       "tmdb_rating": 8.201,
+      "genres": [
+        "Family",
+        "Animation",
+        "Music",
+        "Adventure"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -11965,6 +12831,10 @@
       "tmdb_id": 16642,
       "tmdb_url": "https://www.themoviedb.org/movie/16642",
       "tmdb_rating": 7.48,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -12019,6 +12889,10 @@
       "tmdb_id": 562,
       "tmdb_url": "https://www.themoviedb.org/movie/562",
       "tmdb_rating": 7.816,
+      "genres": [
+        "Action",
+        "Thriller"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -12073,6 +12947,10 @@
       "tmdb_id": 985,
       "tmdb_url": "https://www.themoviedb.org/movie/985",
       "tmdb_rating": 7.3,
+      "genres": [
+        "Horror",
+        "Science Fiction"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -12127,6 +13005,12 @@
       "tmdb_id": 10315,
       "tmdb_url": "https://www.themoviedb.org/movie/10315",
       "tmdb_rating": 7.8,
+      "genres": [
+        "Adventure",
+        "Animation",
+        "Comedy",
+        "Family"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -12181,6 +13065,12 @@
       "tmdb_id": 12493,
       "tmdb_url": "https://www.themoviedb.org/movie/12493",
       "tmdb_rating": 8.384,
+      "genres": [
+        "Drama",
+        "Crime",
+        "Thriller",
+        "Mystery"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -12235,6 +13125,11 @@
       "tmdb_id": 2118,
       "tmdb_url": "https://www.themoviedb.org/movie/2118",
       "tmdb_rating": 7.812,
+      "genres": [
+        "Crime",
+        "Mystery",
+        "Thriller"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -12289,6 +13184,10 @@
       "tmdb_id": 331482,
       "tmdb_url": "https://www.themoviedb.org/movie/331482",
       "tmdb_rating": 7.845,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -12343,6 +13242,11 @@
       "tmdb_id": 762,
       "tmdb_url": "https://www.themoviedb.org/movie/762",
       "tmdb_rating": 7.802,
+      "genres": [
+        "Adventure",
+        "Comedy",
+        "Fantasy"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -12397,6 +13301,9 @@
       "tmdb_id": 10227,
       "tmdb_url": "https://www.themoviedb.org/movie/10227",
       "tmdb_rating": 7.7,
+      "genres": [
+        "Comedy"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -12451,6 +13358,12 @@
       "tmdb_id": 2062,
       "tmdb_url": "https://www.themoviedb.org/movie/2062",
       "tmdb_rating": 7.85,
+      "genres": [
+        "Animation",
+        "Comedy",
+        "Family",
+        "Fantasy"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -12505,6 +13418,10 @@
       "tmdb_id": 500,
       "tmdb_url": "https://www.themoviedb.org/movie/500",
       "tmdb_rating": 8.1,
+      "genres": [
+        "Crime",
+        "Thriller"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -12559,6 +13476,13 @@
       "tmdb_id": 808,
       "tmdb_url": "https://www.themoviedb.org/movie/808",
       "tmdb_rating": 7.782,
+      "genres": [
+        "Animation",
+        "Comedy",
+        "Fantasy",
+        "Adventure",
+        "Family"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -12613,6 +13537,11 @@
       "tmdb_id": 11324,
       "tmdb_url": "https://www.themoviedb.org/movie/11324",
       "tmdb_rating": 8.2,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "Mystery"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -12667,6 +13596,10 @@
       "tmdb_id": 9426,
       "tmdb_url": "https://www.themoviedb.org/movie/9426",
       "tmdb_rating": 7.4,
+      "genres": [
+        "Horror",
+        "Science Fiction"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -12721,6 +13654,13 @@
       "tmdb_id": 10386,
       "tmdb_url": "https://www.themoviedb.org/movie/10386",
       "tmdb_rating": 7.967,
+      "genres": [
+        "Animation",
+        "Drama",
+        "Family",
+        "Science Fiction",
+        "Adventure"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -12775,6 +13715,12 @@
       "tmdb_id": 2493,
       "tmdb_url": "https://www.themoviedb.org/movie/2493",
       "tmdb_rating": 7.71,
+      "genres": [
+        "Fantasy",
+        "Comedy",
+        "Romance",
+        "Adventure"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -12829,6 +13775,9 @@
       "tmdb_id": 3114,
       "tmdb_url": "https://www.themoviedb.org/movie/3114",
       "tmdb_rating": 7.68,
+      "genres": [
+        "Western"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -12883,6 +13832,9 @@
       "tmdb_id": 37799,
       "tmdb_url": "https://www.themoviedb.org/movie/37799",
       "tmdb_rating": 7.379,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -12937,6 +13889,12 @@
       "tmdb_id": 14160,
       "tmdb_url": "https://www.themoviedb.org/movie/14160",
       "tmdb_rating": 7.962,
+      "genres": [
+        "Animation",
+        "Comedy",
+        "Family",
+        "Adventure"
+      ],
       "liked_in": 37,
       "watched": true,
       "lists": [
@@ -12991,6 +13949,11 @@
       "tmdb_id": 144,
       "tmdb_url": "https://www.themoviedb.org/movie/144",
       "tmdb_rating": 7.8,
+      "genres": [
+        "Drama",
+        "Fantasy",
+        "Romance"
+      ],
       "liked_in": 37,
       "watched": false,
       "lists": [
@@ -13045,6 +14008,10 @@
       "tmdb_id": 29845,
       "tmdb_url": "https://www.themoviedb.org/movie/29845",
       "tmdb_rating": 7.741,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13098,6 +14065,11 @@
       "tmdb_id": 149,
       "tmdb_url": "https://www.themoviedb.org/movie/149",
       "tmdb_rating": 7.939,
+      "genres": [
+        "Animation",
+        "Science Fiction",
+        "Action"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13151,6 +14123,9 @@
       "tmdb_id": 16858,
       "tmdb_url": "https://www.themoviedb.org/movie/16858",
       "tmdb_rating": 7.525,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13204,6 +14179,10 @@
       "tmdb_id": 475,
       "tmdb_url": "https://www.themoviedb.org/movie/475",
       "tmdb_rating": 7.483,
+      "genres": [
+        "Crime",
+        "Drama"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13257,6 +14236,11 @@
       "tmdb_id": 9693,
       "tmdb_url": "https://www.themoviedb.org/movie/9693",
       "tmdb_rating": 7.618,
+      "genres": [
+        "Science Fiction",
+        "Thriller",
+        "Action"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13310,6 +14294,10 @@
       "tmdb_id": 11216,
       "tmdb_url": "https://www.themoviedb.org/movie/11216",
       "tmdb_rating": 8.433,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13363,6 +14351,10 @@
       "tmdb_id": 923,
       "tmdb_url": "https://www.themoviedb.org/movie/923",
       "tmdb_rating": 7.478,
+      "genres": [
+        "Horror",
+        "Science Fiction"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13416,6 +14408,10 @@
       "tmdb_id": 827,
       "tmdb_url": "https://www.themoviedb.org/movie/827",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Thriller",
+        "Mystery"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13469,6 +14465,10 @@
       "tmdb_id": 438631,
       "tmdb_url": "https://www.themoviedb.org/movie/438631",
       "tmdb_rating": 7.785,
+      "genres": [
+        "Science Fiction",
+        "Adventure"
+      ],
       "liked_in": 36,
       "watched": true,
       "lists": [
@@ -13522,6 +14522,10 @@
       "tmdb_id": 693134,
       "tmdb_url": "https://www.themoviedb.org/movie/693134",
       "tmdb_rating": 8.1,
+      "genres": [
+        "Science Fiction",
+        "Adventure"
+      ],
       "liked_in": 36,
       "watched": true,
       "lists": [
@@ -13575,6 +14579,11 @@
       "tmdb_id": 3035,
       "tmdb_url": "https://www.themoviedb.org/movie/3035",
       "tmdb_rating": 7.467,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Science Fiction"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13628,6 +14637,11 @@
       "tmdb_id": 4935,
       "tmdb_url": "https://www.themoviedb.org/movie/4935",
       "tmdb_rating": 8.39,
+      "genres": [
+        "Fantasy",
+        "Animation",
+        "Adventure"
+      ],
       "liked_in": 36,
       "watched": true,
       "lists": [
@@ -13681,6 +14695,11 @@
       "tmdb_id": 5511,
       "tmdb_url": "https://www.themoviedb.org/movie/5511",
       "tmdb_rating": 7.783,
+      "genres": [
+        "Crime",
+        "Thriller",
+        "Drama"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13734,6 +14753,11 @@
       "tmdb_id": 593,
       "tmdb_url": "https://www.themoviedb.org/movie/593",
       "tmdb_rating": 7.756,
+      "genres": [
+        "Drama",
+        "Science Fiction",
+        "Mystery"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13777,16 +14801,19 @@
     },
     {
       "title": "The Conformist",
-      "year": "1970",
+      "year": "1971",
       "letterboxd_title": "The Conformist",
       "letterboxd_year": "1970",
       "letterboxd_url": "https://letterboxd.com/film/the-conformist/",
-      "poster_url": "",
-      "backdrop_url": "",
-      "overview": "",
-      "tmdb_id": null,
-      "tmdb_url": "",
-      "tmdb_rating": null,
+      "poster_url": "https://image.tmdb.org/t/p/w500/nLJjFRqIJAK8qz0OKYnpKCblZNK.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w780/xKhnjQA5wrAUaopEKegdKD3Yi26.jpg",
+      "overview": "A weak-willed Italian man becomes a fascist flunky who goes abroad to arrange the assassination of his old teacher, now a political dissident.",
+      "tmdb_id": 8416,
+      "tmdb_url": "https://www.themoviedb.org/movie/8416",
+      "tmdb_rating": 7.6,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13840,6 +14867,10 @@
       "tmdb_id": 1955,
       "tmdb_url": "https://www.themoviedb.org/movie/1955",
       "tmdb_rating": 8.049,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13893,6 +14924,11 @@
       "tmdb_id": 962,
       "tmdb_url": "https://www.themoviedb.org/movie/962",
       "tmdb_rating": 7.964,
+      "genres": [
+        "Adventure",
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -13946,6 +14982,12 @@
       "tmdb_id": 9806,
       "tmdb_url": "https://www.themoviedb.org/movie/9806",
       "tmdb_rating": 7.73,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Animation",
+        "Family"
+      ],
       "liked_in": 36,
       "watched": true,
       "lists": [
@@ -13999,6 +15041,11 @@
       "tmdb_id": 503919,
       "tmdb_url": "https://www.themoviedb.org/movie/503919",
       "tmdb_rating": 7.461,
+      "genres": [
+        "Drama",
+        "Fantasy",
+        "Thriller"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -14052,6 +15099,11 @@
       "tmdb_id": 9277,
       "tmdb_url": "https://www.themoviedb.org/movie/9277",
       "tmdb_rating": 8.011,
+      "genres": [
+        "Comedy",
+        "Crime",
+        "Drama"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -14105,6 +15157,11 @@
       "tmdb_id": 2433,
       "tmdb_url": "https://www.themoviedb.org/movie/2433",
       "tmdb_rating": 7.7,
+      "genres": [
+        "Romance",
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -14158,6 +15215,11 @@
       "tmdb_id": 198,
       "tmdb_url": "https://www.themoviedb.org/movie/198",
       "tmdb_rating": 7.82,
+      "genres": [
+        "Comedy",
+        "War",
+        "Romance"
+      ],
       "liked_in": 36,
       "watched": false,
       "lists": [
@@ -14211,6 +15273,11 @@
       "tmdb_id": 2000,
       "tmdb_url": "https://www.themoviedb.org/movie/2000",
       "tmdb_rating": 7.44,
+      "genres": [
+        "History",
+        "Adventure",
+        "Drama"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14263,6 +15330,11 @@
       "tmdb_id": 299534,
       "tmdb_url": "https://www.themoviedb.org/movie/299534",
       "tmdb_rating": 8.247,
+      "genres": [
+        "Adventure",
+        "Science Fiction",
+        "Action"
+      ],
       "liked_in": 35,
       "watched": true,
       "lists": [
@@ -14315,6 +15387,11 @@
       "tmdb_id": 299536,
       "tmdb_url": "https://www.themoviedb.org/movie/299536",
       "tmdb_rating": 8.246,
+      "genres": [
+        "Adventure",
+        "Action",
+        "Science Fiction"
+      ],
       "liked_in": 35,
       "watched": true,
       "lists": [
@@ -14367,6 +15444,11 @@
       "tmdb_id": 14537,
       "tmdb_url": "https://www.themoviedb.org/movie/14537",
       "tmdb_rating": 8.472,
+      "genres": [
+        "Action",
+        "Drama",
+        "History"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14419,6 +15501,11 @@
       "tmdb_id": 433,
       "tmdb_url": "https://www.themoviedb.org/movie/433",
       "tmdb_rating": 7.551,
+      "genres": [
+        "Comedy",
+        "Family",
+        "Fantasy"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14471,6 +15558,11 @@
       "tmdb_id": 11423,
       "tmdb_url": "https://www.themoviedb.org/movie/11423",
       "tmdb_rating": 8.064,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14523,6 +15615,9 @@
       "tmdb_id": 10331,
       "tmdb_url": "https://www.themoviedb.org/movie/10331",
       "tmdb_rating": 7.6,
+      "genres": [
+        "Horror"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14575,6 +15670,11 @@
       "tmdb_id": 303,
       "tmdb_url": "https://www.themoviedb.org/movie/303",
       "tmdb_rating": 7.7,
+      "genres": [
+        "Drama",
+        "Romance",
+        "Thriller"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14627,6 +15727,11 @@
       "tmdb_id": 223,
       "tmdb_url": "https://www.themoviedb.org/movie/223",
       "tmdb_rating": 7.886,
+      "genres": [
+        "Mystery",
+        "Romance",
+        "Thriller"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14679,6 +15784,10 @@
       "tmdb_id": 11906,
       "tmdb_url": "https://www.themoviedb.org/movie/11906",
       "tmdb_rating": 7.458,
+      "genres": [
+        "Horror",
+        "Mystery"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14731,6 +15840,11 @@
       "tmdb_id": 1124,
       "tmdb_url": "https://www.themoviedb.org/movie/1124",
       "tmdb_rating": 8.212,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Science Fiction"
+      ],
       "liked_in": 35,
       "watched": true,
       "lists": [
@@ -14783,6 +15897,11 @@
       "tmdb_id": 36685,
       "tmdb_url": "https://www.themoviedb.org/movie/36685",
       "tmdb_rating": 7.444,
+      "genres": [
+        "Comedy",
+        "Science Fiction",
+        "Horror"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14835,6 +15954,9 @@
       "tmdb_id": 30497,
       "tmdb_url": "https://www.themoviedb.org/movie/30497",
       "tmdb_rating": 7.29,
+      "genres": [
+        "Horror"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14887,6 +16009,11 @@
       "tmdb_id": 629,
       "tmdb_url": "https://www.themoviedb.org/movie/629",
       "tmdb_rating": 8.163,
+      "genres": [
+        "Drama",
+        "Crime",
+        "Thriller"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14939,6 +16066,11 @@
       "tmdb_id": 372058,
       "tmdb_url": "https://www.themoviedb.org/movie/372058",
       "tmdb_rating": 8.491,
+      "genres": [
+        "Animation",
+        "Romance",
+        "Drama"
+      ],
       "liked_in": 35,
       "watched": false,
       "lists": [
@@ -14991,6 +16123,9 @@
       "tmdb_id": 16391,
       "tmdb_url": "https://www.themoviedb.org/movie/16391",
       "tmdb_rating": 7.5,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15042,6 +16177,10 @@
       "tmdb_id": 4995,
       "tmdb_url": "https://www.themoviedb.org/movie/4995",
       "tmdb_rating": 7.635,
+      "genres": [
+        "Drama",
+        "Comedy"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15093,6 +16232,10 @@
       "tmdb_id": 7340,
       "tmdb_url": "https://www.themoviedb.org/movie/7340",
       "tmdb_rating": 7.343,
+      "genres": [
+        "Horror",
+        "Thriller"
+      ],
       "liked_in": 34,
       "watched": true,
       "lists": [
@@ -15144,6 +16287,10 @@
       "tmdb_id": 840,
       "tmdb_url": "https://www.themoviedb.org/movie/840",
       "tmdb_rating": 7.351,
+      "genres": [
+        "Science Fiction",
+        "Drama"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15195,6 +16342,10 @@
       "tmdb_id": 903,
       "tmdb_url": "https://www.themoviedb.org/movie/903",
       "tmdb_rating": 7.736,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15246,6 +16397,10 @@
       "tmdb_id": 46919,
       "tmdb_url": "https://www.themoviedb.org/movie/46919",
       "tmdb_rating": 7.3,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15297,6 +16452,11 @@
       "tmdb_id": 765,
       "tmdb_url": "https://www.themoviedb.org/movie/765",
       "tmdb_rating": 7.532,
+      "genres": [
+        "Horror",
+        "Comedy",
+        "Fantasy"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15348,6 +16508,11 @@
       "tmdb_id": 345,
       "tmdb_url": "https://www.themoviedb.org/movie/345",
       "tmdb_rating": 7.483,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "Mystery"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15399,6 +16564,10 @@
       "tmdb_id": 136,
       "tmdb_url": "https://www.themoviedb.org/movie/136",
       "tmdb_rating": 7.77,
+      "genres": [
+        "Drama",
+        "Horror"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15450,6 +16619,11 @@
       "tmdb_id": 3085,
       "tmdb_url": "https://www.themoviedb.org/movie/3085",
       "tmdb_rating": 7.389,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Crime"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15501,6 +16675,11 @@
       "tmdb_id": 10633,
       "tmdb_url": "https://www.themoviedb.org/movie/10633",
       "tmdb_rating": 7.683,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15552,6 +16731,9 @@
       "tmdb_id": 406,
       "tmdb_url": "https://www.themoviedb.org/movie/406",
       "tmdb_rating": 8.089,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15603,6 +16785,10 @@
       "tmdb_id": 773,
       "tmdb_url": "https://www.themoviedb.org/movie/773",
       "tmdb_rating": 7.7,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15654,6 +16840,9 @@
       "tmdb_id": 334,
       "tmdb_url": "https://www.themoviedb.org/movie/334",
       "tmdb_rating": 7.7,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15705,6 +16894,9 @@
       "tmdb_id": 376867,
       "tmdb_url": "https://www.themoviedb.org/movie/376867",
       "tmdb_rating": 7.355,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15756,6 +16948,11 @@
       "tmdb_id": 27327,
       "tmdb_url": "https://www.themoviedb.org/movie/27327",
       "tmdb_rating": 7.5,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Music"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15807,6 +17004,12 @@
       "tmdb_id": 871,
       "tmdb_url": "https://www.themoviedb.org/movie/871",
       "tmdb_rating": 7.657,
+      "genres": [
+        "Science Fiction",
+        "Adventure",
+        "Drama",
+        "Action"
+      ],
       "liked_in": 34,
       "watched": true,
       "lists": [
@@ -15858,6 +17061,11 @@
       "tmdb_id": 1892,
       "tmdb_url": "https://www.themoviedb.org/movie/1892",
       "tmdb_rating": 7.912,
+      "genres": [
+        "Adventure",
+        "Action",
+        "Science Fiction"
+      ],
       "liked_in": 34,
       "watched": true,
       "lists": [
@@ -15909,6 +17117,11 @@
       "tmdb_id": 1580,
       "tmdb_url": "https://www.themoviedb.org/movie/1580",
       "tmdb_rating": 7.929,
+      "genres": [
+        "Thriller",
+        "Crime",
+        "Drama"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -15960,6 +17173,11 @@
       "tmdb_id": 845,
       "tmdb_url": "https://www.themoviedb.org/movie/845",
       "tmdb_rating": 7.66,
+      "genres": [
+        "Crime",
+        "Thriller",
+        "Drama"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -16011,6 +17229,10 @@
       "tmdb_id": 914,
       "tmdb_url": "https://www.themoviedb.org/movie/914",
       "tmdb_rating": 8.281,
+      "genres": [
+        "Comedy",
+        "War"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -16062,6 +17284,10 @@
       "tmdb_id": 1847,
       "tmdb_url": "https://www.themoviedb.org/movie/1847",
       "tmdb_rating": 7.43,
+      "genres": [
+        "Mystery",
+        "Crime"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -16113,6 +17339,10 @@
       "tmdb_id": 981,
       "tmdb_url": "https://www.themoviedb.org/movie/981",
       "tmdb_rating": 7.537,
+      "genres": [
+        "Comedy",
+        "Romance"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -16164,6 +17394,10 @@
       "tmdb_id": 1541,
       "tmdb_url": "https://www.themoviedb.org/movie/1541",
       "tmdb_rating": 7.594,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -16215,6 +17449,11 @@
       "tmdb_id": 110,
       "tmdb_url": "https://www.themoviedb.org/movie/110",
       "tmdb_rating": 7.885,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Romance"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -16266,6 +17505,9 @@
       "tmdb_id": 595,
       "tmdb_url": "https://www.themoviedb.org/movie/595",
       "tmdb_rating": 7.978,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -16317,6 +17559,11 @@
       "tmdb_id": 837,
       "tmdb_url": "https://www.themoviedb.org/movie/837",
       "tmdb_rating": 7.25,
+      "genres": [
+        "Horror",
+        "Science Fiction",
+        "Mystery"
+      ],
       "liked_in": 34,
       "watched": false,
       "lists": [
@@ -16368,6 +17615,11 @@
       "tmdb_id": 1949,
       "tmdb_url": "https://www.themoviedb.org/movie/1949",
       "tmdb_rating": 7.533,
+      "genres": [
+        "Crime",
+        "Mystery",
+        "Thriller"
+      ],
       "liked_in": 34,
       "watched": true,
       "lists": [
@@ -16419,6 +17671,11 @@
       "tmdb_id": 4951,
       "tmdb_url": "https://www.themoviedb.org/movie/4951",
       "tmdb_rating": 7.602,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": true,
       "lists": [
@@ -16469,6 +17726,10 @@
       "tmdb_id": 76203,
       "tmdb_url": "https://www.themoviedb.org/movie/76203",
       "tmdb_rating": 7.927,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -16519,6 +17780,10 @@
       "tmdb_id": 99,
       "tmdb_url": "https://www.themoviedb.org/movie/99",
       "tmdb_rating": 7.604,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -16569,6 +17834,10 @@
       "tmdb_id": 143,
       "tmdb_url": "https://www.themoviedb.org/movie/143",
       "tmdb_rating": 7.76,
+      "genres": [
+        "Drama",
+        "War"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -16619,6 +17888,11 @@
       "tmdb_id": 1359,
       "tmdb_url": "https://www.themoviedb.org/movie/1359",
       "tmdb_rating": 7.4,
+      "genres": [
+        "Thriller",
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 33,
       "watched": true,
       "lists": [
@@ -16669,6 +17943,12 @@
       "tmdb_id": 10020,
       "tmdb_url": "https://www.themoviedb.org/movie/10020",
       "tmdb_rating": 7.726,
+      "genres": [
+        "Romance",
+        "Family",
+        "Animation",
+        "Fantasy"
+      ],
       "liked_in": 33,
       "watched": true,
       "lists": [
@@ -16719,6 +17999,10 @@
       "tmdb_id": 335984,
       "tmdb_url": "https://www.themoviedb.org/movie/335984",
       "tmdb_rating": 7.61,
+      "genres": [
+        "Science Fiction",
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": true,
       "lists": [
@@ -16769,6 +18053,10 @@
       "tmdb_id": 640,
       "tmdb_url": "https://www.themoviedb.org/movie/640",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -16819,6 +18107,11 @@
       "tmdb_id": 146,
       "tmdb_url": "https://www.themoviedb.org/movie/146",
       "tmdb_rating": 7.436,
+      "genres": [
+        "Romance",
+        "Drama",
+        "Action"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -16869,6 +18162,11 @@
       "tmdb_id": 141,
       "tmdb_url": "https://www.themoviedb.org/movie/141",
       "tmdb_rating": 7.761,
+      "genres": [
+        "Fantasy",
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -16919,6 +18217,10 @@
       "tmdb_id": 3063,
       "tmdb_url": "https://www.themoviedb.org/movie/3063",
       "tmdb_rating": 7.316,
+      "genres": [
+        "Comedy",
+        "War"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -16969,6 +18271,10 @@
       "tmdb_id": 673,
       "tmdb_url": "https://www.themoviedb.org/movie/673",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Adventure",
+        "Fantasy"
+      ],
       "liked_in": 33,
       "watched": true,
       "lists": [
@@ -17019,6 +18325,11 @@
       "tmdb_id": 152601,
       "tmdb_url": "https://www.themoviedb.org/movie/152601",
       "tmdb_rating": 7.834,
+      "genres": [
+        "Romance",
+        "Science Fiction",
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17059,16 +18370,19 @@
     },
     {
       "title": "Jeanne Dielman, 23, quai du Commerce, 1080 Bruxelles",
-      "year": "1975",
+      "year": "1976",
       "letterboxd_title": "Jeanne Dielman, 23, quai du Commerce, 1080 Bruxelles",
       "letterboxd_year": "1975",
       "letterboxd_url": "https://letterboxd.com/film/jeanne-dielman-23-quai-du-commerce-1080-bruxelles/",
-      "poster_url": "",
-      "backdrop_url": "",
-      "overview": "",
-      "tmdb_id": null,
-      "tmdb_url": "",
-      "tmdb_rating": null,
+      "poster_url": "https://image.tmdb.org/t/p/w500/fqfSu8Y1YSVFkoCJyiTXI6woYma.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w780/2qL6rsvq29ueZ0ITh47Jj2F985R.jpg",
+      "overview": "A lonely young widow lives with her son following an immutable order: while the boy is in school, she cares for their apartment, does chores, and receives clients in the afternoon.",
+      "tmdb_id": 44012,
+      "tmdb_url": "https://www.themoviedb.org/movie/44012",
+      "tmdb_rating": 7.4,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17119,6 +18433,11 @@
       "tmdb_id": 244,
       "tmdb_url": "https://www.themoviedb.org/movie/244",
       "tmdb_rating": 7.589,
+      "genres": [
+        "Adventure",
+        "Fantasy",
+        "Horror"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17169,6 +18488,11 @@
       "tmdb_id": 43904,
       "tmdb_url": "https://www.themoviedb.org/movie/43904",
       "tmdb_rating": 7.484,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17219,6 +18543,11 @@
       "tmdb_id": 5165,
       "tmdb_url": "https://www.themoviedb.org/movie/5165",
       "tmdb_rating": 7.5,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Romance"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17269,6 +18598,9 @@
       "tmdb_id": 405,
       "tmdb_url": "https://www.themoviedb.org/movie/405",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17319,6 +18651,10 @@
       "tmdb_id": 4024,
       "tmdb_url": "https://www.themoviedb.org/movie/4024",
       "tmdb_rating": 7.431,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17369,6 +18705,10 @@
       "tmdb_id": 1939,
       "tmdb_url": "https://www.themoviedb.org/movie/1939",
       "tmdb_rating": 7.632,
+      "genres": [
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17419,6 +18759,10 @@
       "tmdb_id": 3083,
       "tmdb_url": "https://www.themoviedb.org/movie/3083",
       "tmdb_rating": 7.816,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17469,6 +18813,10 @@
       "tmdb_id": 5801,
       "tmdb_url": "https://www.themoviedb.org/movie/5801",
       "tmdb_rating": 7.816,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 33,
       "watched": true,
       "lists": [
@@ -17519,6 +18867,11 @@
       "tmdb_id": 146233,
       "tmdb_url": "https://www.themoviedb.org/movie/146233",
       "tmdb_rating": 8.105,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "Crime"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17569,6 +18922,11 @@
       "tmdb_id": 804,
       "tmdb_url": "https://www.themoviedb.org/movie/804",
       "tmdb_rating": 7.888,
+      "genres": [
+        "Romance",
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17619,6 +18977,9 @@
       "tmdb_id": 995,
       "tmdb_url": "https://www.themoviedb.org/movie/995",
       "tmdb_rating": 7.595,
+      "genres": [
+        "Western"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17669,6 +19030,9 @@
       "tmdb_id": 30020,
       "tmdb_url": "https://www.themoviedb.org/movie/30020",
       "tmdb_rating": 7.705,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17719,6 +19083,9 @@
       "tmdb_id": 596,
       "tmdb_url": "https://www.themoviedb.org/movie/596",
       "tmdb_rating": 7.799,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17769,6 +19136,11 @@
       "tmdb_id": 5925,
       "tmdb_url": "https://www.themoviedb.org/movie/5925",
       "tmdb_rating": 7.922,
+      "genres": [
+        "Adventure",
+        "Drama",
+        "War"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17819,6 +19191,10 @@
       "tmdb_id": 990,
       "tmdb_url": "https://www.themoviedb.org/movie/990",
       "tmdb_rating": 7.667,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17869,6 +19245,10 @@
       "tmdb_id": 262,
       "tmdb_url": "https://www.themoviedb.org/movie/262",
       "tmdb_rating": 7.8,
+      "genres": [
+        "Drama",
+        "Comedy"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17919,6 +19299,11 @@
       "tmdb_id": 218,
       "tmdb_url": "https://www.themoviedb.org/movie/218",
       "tmdb_rating": 7.697,
+      "genres": [
+        "Action",
+        "Thriller",
+        "Science Fiction"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -17969,6 +19354,11 @@
       "tmdb_id": 204,
       "tmdb_url": "https://www.themoviedb.org/movie/204",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "Adventure"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -18019,6 +19409,9 @@
       "tmdb_id": 16307,
       "tmdb_url": "https://www.themoviedb.org/movie/16307",
       "tmdb_rating": 7.332,
+      "genres": [
+        "Horror"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -18069,6 +19462,10 @@
       "tmdb_id": 800,
       "tmdb_url": "https://www.themoviedb.org/movie/800",
       "tmdb_rating": 8.057,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -18119,6 +19516,10 @@
       "tmdb_id": 3777,
       "tmdb_url": "https://www.themoviedb.org/movie/3777",
       "tmdb_rating": 7.922,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -18169,6 +19570,9 @@
       "tmdb_id": 1626,
       "tmdb_url": "https://www.themoviedb.org/movie/1626",
       "tmdb_rating": 7.697,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -18219,6 +19623,12 @@
       "tmdb_id": 856,
       "tmdb_url": "https://www.themoviedb.org/movie/856",
       "tmdb_rating": 7.543,
+      "genres": [
+        "Fantasy",
+        "Animation",
+        "Comedy",
+        "Crime"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -18269,6 +19679,10 @@
       "tmdb_id": 11878,
       "tmdb_url": "https://www.themoviedb.org/movie/11878",
       "tmdb_rating": 8.076,
+      "genres": [
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 33,
       "watched": false,
       "lists": [
@@ -18319,6 +19733,11 @@
       "tmdb_id": 15804,
       "tmdb_url": "https://www.themoviedb.org/movie/15804",
       "tmdb_rating": 8.2,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -18368,6 +19787,11 @@
       "tmdb_id": 197,
       "tmdb_url": "https://www.themoviedb.org/movie/197",
       "tmdb_rating": 7.946,
+      "genres": [
+        "Drama",
+        "History",
+        "War"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -18417,6 +19841,10 @@
       "tmdb_id": 524,
       "tmdb_url": "https://www.themoviedb.org/movie/524",
       "tmdb_rating": 7.999,
+      "genres": [
+        "Crime",
+        "Drama"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -18466,6 +19894,9 @@
       "tmdb_id": 10238,
       "tmdb_url": "https://www.themoviedb.org/movie/10238",
       "tmdb_rating": 7.853,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -18515,6 +19946,11 @@
       "tmdb_id": 12,
       "tmdb_url": "https://www.themoviedb.org/movie/12",
       "tmdb_rating": 7.823,
+      "genres": [
+        "Animation",
+        "Family",
+        "Adventure"
+      ],
       "liked_in": 32,
       "watched": true,
       "lists": [
@@ -18564,6 +20000,11 @@
       "tmdb_id": 1678,
       "tmdb_url": "https://www.themoviedb.org/movie/1678",
       "tmdb_rating": 7.626,
+      "genres": [
+        "Thriller",
+        "Horror",
+        "Science Fiction"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -18613,6 +20054,11 @@
       "tmdb_id": 210577,
       "tmdb_url": "https://www.themoviedb.org/movie/210577",
       "tmdb_rating": 7.891,
+      "genres": [
+        "Mystery",
+        "Thriller",
+        "Drama"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -18662,6 +20108,11 @@
       "tmdb_id": 777,
       "tmdb_url": "https://www.themoviedb.org/movie/777",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Drama",
+        "History",
+        "War"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -18711,6 +20162,11 @@
       "tmdb_id": 493922,
       "tmdb_url": "https://www.themoviedb.org/movie/493922",
       "tmdb_rating": 7.298,
+      "genres": [
+        "Horror",
+        "Mystery",
+        "Thriller"
+      ],
       "liked_in": 32,
       "watched": true,
       "lists": [
@@ -18760,6 +20216,9 @@
       "tmdb_id": 288,
       "tmdb_url": "https://www.themoviedb.org/movie/288",
       "tmdb_rating": 7.659,
+      "genres": [
+        "Western"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -18809,6 +20268,12 @@
       "tmdb_id": 10191,
       "tmdb_url": "https://www.themoviedb.org/movie/10191",
       "tmdb_rating": 7.867,
+      "genres": [
+        "Fantasy",
+        "Adventure",
+        "Animation",
+        "Family"
+      ],
       "liked_in": 32,
       "watched": true,
       "lists": [
@@ -18858,6 +20323,12 @@
       "tmdb_id": 17057,
       "tmdb_url": "https://www.themoviedb.org/movie/17057",
       "tmdb_rating": 7.627,
+      "genres": [
+        "Thriller",
+        "Drama",
+        "Romance",
+        "Mystery"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -18907,6 +20378,10 @@
       "tmdb_id": 391713,
       "tmdb_url": "https://www.themoviedb.org/movie/391713",
       "tmdb_rating": 7.249,
+      "genres": [
+        "Drama",
+        "Comedy"
+      ],
       "liked_in": 32,
       "watched": true,
       "lists": [
@@ -18956,6 +20431,9 @@
       "tmdb_id": 20530,
       "tmdb_url": "https://www.themoviedb.org/movie/20530",
       "tmdb_rating": 8.023,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19005,6 +20483,11 @@
       "tmdb_id": 11293,
       "tmdb_url": "https://www.themoviedb.org/movie/11293",
       "tmdb_rating": 7.867,
+      "genres": [
+        "Comedy",
+        "Crime",
+        "Drama"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19054,6 +20537,10 @@
       "tmdb_id": 531428,
       "tmdb_url": "https://www.themoviedb.org/movie/531428",
       "tmdb_rating": 8.089,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19103,6 +20590,9 @@
       "tmdb_id": 21484,
       "tmdb_url": "https://www.themoviedb.org/movie/21484",
       "tmdb_rating": 7.3,
+      "genres": [
+        "Horror"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19152,6 +20642,9 @@
       "tmdb_id": 221,
       "tmdb_url": "https://www.themoviedb.org/movie/221",
       "tmdb_rating": 7.484,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19201,6 +20694,10 @@
       "tmdb_id": 301,
       "tmdb_url": "https://www.themoviedb.org/movie/301",
       "tmdb_rating": 7.8,
+      "genres": [
+        "Western",
+        "Drama"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19250,6 +20747,10 @@
       "tmdb_id": 307,
       "tmdb_url": "https://www.themoviedb.org/movie/307",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Drama",
+        "War"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19289,16 +20790,21 @@
     },
     {
       "title": "Snow White and the Seven Dwarfs",
-      "year": "1937",
+      "year": "1938",
       "letterboxd_title": "Snow White and the Seven Dwarfs",
       "letterboxd_year": "1937",
       "letterboxd_url": "https://letterboxd.com/film/snow-white-and-the-seven-dwarfs/",
-      "poster_url": "",
-      "backdrop_url": "",
-      "overview": "",
-      "tmdb_id": null,
-      "tmdb_url": "",
-      "tmdb_rating": null,
+      "poster_url": "https://image.tmdb.org/t/p/w500/3VAHfuNb6Z7UiW12iYKANSPBl8m.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w780/4yWayBvwl9gHXaWrDrAslxjL7mh.jpg",
+      "overview": "A beautiful girl, Snow White, takes refuge in the forest in the house of seven dwarfs to hide from her stepmother, the wicked Queen. The Queen is jealous because she wants to be known as \"the fairest in the land,\" and Snow White's beauty surpasses her own.",
+      "tmdb_id": 408,
+      "tmdb_url": "https://www.themoviedb.org/movie/408",
+      "tmdb_rating": 7.13,
+      "genres": [
+        "Fantasy",
+        "Animation",
+        "Family"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19348,6 +20854,11 @@
       "tmdb_id": 967,
       "tmdb_url": "https://www.themoviedb.org/movie/967",
       "tmdb_rating": 7.535,
+      "genres": [
+        "History",
+        "Drama",
+        "Adventure"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19397,6 +20908,10 @@
       "tmdb_id": 571,
       "tmdb_url": "https://www.themoviedb.org/movie/571",
       "tmdb_rating": 7.508,
+      "genres": [
+        "Horror",
+        "Thriller"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19446,6 +20961,10 @@
       "tmdb_id": 26302,
       "tmdb_url": "https://www.themoviedb.org/movie/26302",
       "tmdb_rating": 7.4,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19495,6 +21014,10 @@
       "tmdb_id": 1600,
       "tmdb_url": "https://www.themoviedb.org/movie/1600",
       "tmdb_rating": 7.5,
+      "genres": [
+        "Drama",
+        "Fantasy"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19544,6 +21067,11 @@
       "tmdb_id": 29264,
       "tmdb_url": "https://www.themoviedb.org/movie/29264",
       "tmdb_rating": 7.903,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Fantasy"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19593,6 +21121,11 @@
       "tmdb_id": 497,
       "tmdb_url": "https://www.themoviedb.org/movie/497",
       "tmdb_rating": 8.506,
+      "genres": [
+        "Fantasy",
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19642,6 +21175,11 @@
       "tmdb_id": 247,
       "tmdb_url": "https://www.themoviedb.org/movie/247",
       "tmdb_rating": 7.6,
+      "genres": [
+        "Crime",
+        "Thriller",
+        "Drama"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19691,6 +21229,10 @@
       "tmdb_id": 746,
       "tmdb_url": "https://www.themoviedb.org/movie/746",
       "tmdb_rating": 7.591,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19740,6 +21282,10 @@
       "tmdb_id": 582,
       "tmdb_url": "https://www.themoviedb.org/movie/582",
       "tmdb_rating": 8.039,
+      "genres": [
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19789,6 +21335,11 @@
       "tmdb_id": 963,
       "tmdb_url": "https://www.themoviedb.org/movie/963",
       "tmdb_rating": 7.704,
+      "genres": [
+        "Mystery",
+        "Crime",
+        "Thriller"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19838,6 +21389,11 @@
       "tmdb_id": 9479,
       "tmdb_url": "https://www.themoviedb.org/movie/9479",
       "tmdb_rating": 7.852,
+      "genres": [
+        "Fantasy",
+        "Animation",
+        "Family"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19887,6 +21443,11 @@
       "tmdb_id": 776,
       "tmdb_url": "https://www.themoviedb.org/movie/776",
       "tmdb_rating": 7.5,
+      "genres": [
+        "Drama",
+        "Comedy",
+        "Romance"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19936,6 +21497,9 @@
       "tmdb_id": 576,
       "tmdb_url": "https://www.themoviedb.org/movie/576",
       "tmdb_rating": 7.593,
+      "genres": [
+        "Western"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -19985,6 +21549,9 @@
       "tmdb_id": 108,
       "tmdb_url": "https://www.themoviedb.org/movie/108",
       "tmdb_rating": 7.616,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -20034,6 +21601,11 @@
       "tmdb_id": 1923,
       "tmdb_url": "https://www.themoviedb.org/movie/1923",
       "tmdb_rating": 7.4,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Horror"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -20083,6 +21655,10 @@
       "tmdb_id": 16672,
       "tmdb_url": "https://www.themoviedb.org/movie/16672",
       "tmdb_rating": 8.23,
+      "genres": [
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -20132,6 +21708,9 @@
       "tmdb_id": 25538,
       "tmdb_url": "https://www.themoviedb.org/movie/25538",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 32,
       "watched": false,
       "lists": [
@@ -20181,6 +21760,11 @@
       "tmdb_id": 530915,
       "tmdb_url": "https://www.themoviedb.org/movie/530915",
       "tmdb_rating": 8.0,
+      "genres": [
+        "War",
+        "Drama",
+        "History"
+      ],
       "liked_in": 31,
       "watched": true,
       "lists": [
@@ -20229,6 +21813,11 @@
       "tmdb_id": 93,
       "tmdb_url": "https://www.themoviedb.org/movie/93",
       "tmdb_rating": 7.835,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20277,6 +21866,10 @@
       "tmdb_id": 10322,
       "tmdb_url": "https://www.themoviedb.org/movie/10322",
       "tmdb_rating": 7.591,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20325,6 +21918,10 @@
       "tmdb_id": 194662,
       "tmdb_url": "https://www.themoviedb.org/movie/194662",
       "tmdb_rating": 7.434,
+      "genres": [
+        "Drama",
+        "Comedy"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20373,6 +21970,10 @@
       "tmdb_id": 30017,
       "tmdb_url": "https://www.themoviedb.org/movie/30017",
       "tmdb_rating": 7.972,
+      "genres": [
+        "Crime",
+        "Drama"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20421,6 +22022,11 @@
       "tmdb_id": 36095,
       "tmdb_url": "https://www.themoviedb.org/movie/36095",
       "tmdb_rating": 7.615,
+      "genres": [
+        "Horror",
+        "Mystery",
+        "Crime"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20469,6 +22075,11 @@
       "tmdb_id": 387,
       "tmdb_url": "https://www.themoviedb.org/movie/387",
       "tmdb_rating": 8.087,
+      "genres": [
+        "Drama",
+        "History",
+        "War"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20517,6 +22128,10 @@
       "tmdb_id": 264660,
       "tmdb_url": "https://www.themoviedb.org/movie/264660",
       "tmdb_rating": 7.571,
+      "genres": [
+        "Drama",
+        "Science Fiction"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20565,6 +22180,11 @@
       "tmdb_id": 31417,
       "tmdb_url": "https://www.themoviedb.org/movie/31417",
       "tmdb_rating": 7.587,
+      "genres": [
+        "Drama",
+        "Horror",
+        "Thriller"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20613,6 +22233,11 @@
       "tmdb_id": 9323,
       "tmdb_url": "https://www.themoviedb.org/movie/9323",
       "tmdb_rating": 7.929,
+      "genres": [
+        "Action",
+        "Animation",
+        "Science Fiction"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20661,6 +22286,11 @@
       "tmdb_id": 137,
       "tmdb_url": "https://www.themoviedb.org/movie/137",
       "tmdb_rating": 7.638,
+      "genres": [
+        "Romance",
+        "Fantasy",
+        "Comedy"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20709,6 +22339,11 @@
       "tmdb_id": 25623,
       "tmdb_url": "https://www.themoviedb.org/movie/25623",
       "tmdb_rating": 7.325,
+      "genres": [
+        "Comedy",
+        "Fantasy",
+        "Horror"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20757,6 +22392,13 @@
       "tmdb_id": 150540,
       "tmdb_url": "https://www.themoviedb.org/movie/150540",
       "tmdb_rating": 7.906,
+      "genres": [
+        "Animation",
+        "Family",
+        "Adventure",
+        "Drama",
+        "Comedy"
+      ],
       "liked_in": 31,
       "watched": true,
       "lists": [
@@ -20805,6 +22447,11 @@
       "tmdb_id": 546554,
       "tmdb_url": "https://www.themoviedb.org/movie/546554",
       "tmdb_rating": 7.844,
+      "genres": [
+        "Comedy",
+        "Crime",
+        "Mystery"
+      ],
       "liked_in": 31,
       "watched": true,
       "lists": [
@@ -20853,6 +22500,10 @@
       "tmdb_id": 13310,
       "tmdb_url": "https://www.themoviedb.org/movie/13310",
       "tmdb_rating": 7.542,
+      "genres": [
+        "Horror",
+        "Drama"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20901,6 +22552,10 @@
       "tmdb_id": 637,
       "tmdb_url": "https://www.themoviedb.org/movie/637",
       "tmdb_rating": 8.436,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 31,
       "watched": true,
       "lists": [
@@ -20949,6 +22604,11 @@
       "tmdb_id": 153,
       "tmdb_url": "https://www.themoviedb.org/movie/153",
       "tmdb_rating": 7.377,
+      "genres": [
+        "Drama",
+        "Comedy",
+        "Romance"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -20997,6 +22657,11 @@
       "tmdb_id": 101,
       "tmdb_url": "https://www.themoviedb.org/movie/101",
       "tmdb_rating": 8.289,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Action"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21045,6 +22710,12 @@
       "tmdb_id": 585,
       "tmdb_url": "https://www.themoviedb.org/movie/585",
       "tmdb_rating": 7.859,
+      "genres": [
+        "Animation",
+        "Comedy",
+        "Family",
+        "Fantasy"
+      ],
       "liked_in": 31,
       "watched": true,
       "lists": [
@@ -21093,6 +22764,11 @@
       "tmdb_id": 1054867,
       "tmdb_url": "https://www.themoviedb.org/movie/1054867",
       "tmdb_rating": 7.338,
+      "genres": [
+        "Thriller",
+        "Crime",
+        "Comedy"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21141,6 +22817,10 @@
       "tmdb_id": 678,
       "tmdb_url": "https://www.themoviedb.org/movie/678",
       "tmdb_rating": 7.658,
+      "genres": [
+        "Crime",
+        "Thriller"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21189,6 +22869,10 @@
       "tmdb_id": 11167,
       "tmdb_url": "https://www.themoviedb.org/movie/11167",
       "tmdb_rating": 7.449,
+      "genres": [
+        "Thriller",
+        "Horror"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21237,6 +22921,11 @@
       "tmdb_id": 2786,
       "tmdb_url": "https://www.themoviedb.org/movie/2786",
       "tmdb_rating": 7.303,
+      "genres": [
+        "Drama",
+        "Romance",
+        "Crime"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21285,6 +22974,11 @@
       "tmdb_id": 792,
       "tmdb_url": "https://www.themoviedb.org/movie/792",
       "tmdb_rating": 7.745,
+      "genres": [
+        "Drama",
+        "War",
+        "Action"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21333,6 +23027,11 @@
       "tmdb_id": 22538,
       "tmdb_url": "https://www.themoviedb.org/movie/22538",
       "tmdb_rating": 7.484,
+      "genres": [
+        "Action",
+        "Comedy",
+        "Romance"
+      ],
       "liked_in": 31,
       "watched": true,
       "lists": [
@@ -21381,6 +23080,10 @@
       "tmdb_id": 747,
       "tmdb_url": "https://www.themoviedb.org/movie/747",
       "tmdb_rating": 7.545,
+      "genres": [
+        "Horror",
+        "Comedy"
+      ],
       "liked_in": 31,
       "watched": true,
       "lists": [
@@ -21429,6 +23132,9 @@
       "tmdb_id": 976,
       "tmdb_url": "https://www.themoviedb.org/movie/976",
       "tmdb_rating": 7.615,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21477,6 +23183,11 @@
       "tmdb_id": 31767,
       "tmdb_url": "https://www.themoviedb.org/movie/31767",
       "tmdb_rating": 7.461,
+      "genres": [
+        "Drama",
+        "History",
+        "Horror"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21525,6 +23236,10 @@
       "tmdb_id": 4593,
       "tmdb_url": "https://www.themoviedb.org/movie/4593",
       "tmdb_rating": 7.447,
+      "genres": [
+        "Comedy",
+        "Fantasy"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21573,6 +23288,11 @@
       "tmdb_id": 290098,
       "tmdb_url": "https://www.themoviedb.org/movie/290098",
       "tmdb_rating": 8.177,
+      "genres": [
+        "Thriller",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21621,6 +23341,10 @@
       "tmdb_id": 10098,
       "tmdb_url": "https://www.themoviedb.org/movie/10098",
       "tmdb_rating": 8.134,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21669,6 +23393,10 @@
       "tmdb_id": 713,
       "tmdb_url": "https://www.themoviedb.org/movie/713",
       "tmdb_rating": 7.4,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21717,6 +23445,10 @@
       "tmdb_id": 4495,
       "tmdb_url": "https://www.themoviedb.org/movie/4495",
       "tmdb_rating": 7.6,
+      "genres": [
+        "Drama",
+        "Fantasy"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21765,6 +23497,11 @@
       "tmdb_id": 8741,
       "tmdb_url": "https://www.themoviedb.org/movie/8741",
       "tmdb_rating": 7.442,
+      "genres": [
+        "Drama",
+        "History",
+        "War"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21813,6 +23550,12 @@
       "tmdb_id": 396535,
       "tmdb_url": "https://www.themoviedb.org/movie/396535",
       "tmdb_rating": 7.75,
+      "genres": [
+        "Action",
+        "Horror",
+        "Thriller",
+        "Adventure"
+      ],
       "liked_in": 31,
       "watched": true,
       "lists": [
@@ -21861,6 +23604,9 @@
       "tmdb_id": 833,
       "tmdb_url": "https://www.themoviedb.org/movie/833",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21909,6 +23655,10 @@
       "tmdb_id": 49964,
       "tmdb_url": "https://www.themoviedb.org/movie/49964",
       "tmdb_rating": 7.918,
+      "genres": [
+        "Drama",
+        "Adventure"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -21957,6 +23707,10 @@
       "tmdb_id": 1391,
       "tmdb_url": "https://www.themoviedb.org/movie/1391",
       "tmdb_rating": 7.4,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 31,
       "watched": false,
       "lists": [
@@ -22005,6 +23759,10 @@
       "tmdb_id": 15244,
       "tmdb_url": "https://www.themoviedb.org/movie/15244",
       "tmdb_rating": 7.955,
+      "genres": [
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22052,6 +23810,9 @@
       "tmdb_id": 60243,
       "tmdb_url": "https://www.themoviedb.org/movie/60243",
       "tmdb_rating": 7.905,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22099,6 +23860,13 @@
       "tmdb_id": 812,
       "tmdb_url": "https://www.themoviedb.org/movie/812",
       "tmdb_rating": 7.657,
+      "genres": [
+        "Animation",
+        "Family",
+        "Adventure",
+        "Fantasy",
+        "Romance"
+      ],
       "liked_in": 30,
       "watched": true,
       "lists": [
@@ -22146,6 +23914,10 @@
       "tmdb_id": 7857,
       "tmdb_url": "https://www.themoviedb.org/movie/7857",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22193,6 +23965,11 @@
       "tmdb_id": 19995,
       "tmdb_url": "https://www.themoviedb.org/movie/19995",
       "tmdb_rating": 7.611,
+      "genres": [
+        "Science Fiction",
+        "Action",
+        "Adventure"
+      ],
       "liked_in": 30,
       "watched": true,
       "lists": [
@@ -22240,6 +24017,11 @@
       "tmdb_id": 648,
       "tmdb_url": "https://www.themoviedb.org/movie/648",
       "tmdb_rating": 7.505,
+      "genres": [
+        "Drama",
+        "Fantasy",
+        "Romance"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22287,6 +24069,11 @@
       "tmdb_id": 4808,
       "tmdb_url": "https://www.themoviedb.org/movie/4808",
       "tmdb_rating": 7.7,
+      "genres": [
+        "Comedy",
+        "Mystery",
+        "Romance"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22334,6 +24121,11 @@
       "tmdb_id": 581,
       "tmdb_url": "https://www.themoviedb.org/movie/581",
       "tmdb_rating": 7.839,
+      "genres": [
+        "Adventure",
+        "Drama",
+        "Western"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22381,6 +24173,11 @@
       "tmdb_id": 907,
       "tmdb_url": "https://www.themoviedb.org/movie/907",
       "tmdb_rating": 7.553,
+      "genres": [
+        "Drama",
+        "Romance",
+        "War"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22428,6 +24225,11 @@
       "tmdb_id": 11220,
       "tmdb_url": "https://www.themoviedb.org/movie/11220",
       "tmdb_rating": 7.685,
+      "genres": [
+        "Action",
+        "Romance",
+        "Crime"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22475,6 +24277,11 @@
       "tmdb_id": 756,
       "tmdb_url": "https://www.themoviedb.org/movie/756",
       "tmdb_rating": 7.35,
+      "genres": [
+        "Animation",
+        "Family",
+        "Fantasy"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22522,6 +24329,12 @@
       "tmdb_id": 13528,
       "tmdb_url": "https://www.themoviedb.org/movie/13528",
       "tmdb_rating": 7.504,
+      "genres": [
+        "Thriller",
+        "Drama",
+        "Mystery",
+        "Crime"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22569,6 +24382,10 @@
       "tmdb_id": 5143,
       "tmdb_url": "https://www.themoviedb.org/movie/5143",
       "tmdb_rating": 7.454,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22616,6 +24433,11 @@
       "tmdb_id": 820,
       "tmdb_url": "https://www.themoviedb.org/movie/820",
       "tmdb_rating": 7.593,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "History"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22663,6 +24485,9 @@
       "tmdb_id": 70,
       "tmdb_url": "https://www.themoviedb.org/movie/70",
       "tmdb_rating": 7.954,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22710,6 +24535,10 @@
       "tmdb_id": 1396,
       "tmdb_url": "https://www.themoviedb.org/movie/1396",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22757,6 +24586,11 @@
       "tmdb_id": 11113,
       "tmdb_url": "https://www.themoviedb.org/movie/11113",
       "tmdb_rating": 7.483,
+      "genres": [
+        "Comedy",
+        "Music",
+        "Drama"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22804,6 +24638,10 @@
       "tmdb_id": 2011,
       "tmdb_url": "https://www.themoviedb.org/movie/2011",
       "tmdb_rating": 7.875,
+      "genres": [
+        "Animation",
+        "Drama"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22851,6 +24689,11 @@
       "tmdb_id": 22,
       "tmdb_url": "https://www.themoviedb.org/movie/22",
       "tmdb_rating": 7.837,
+      "genres": [
+        "Adventure",
+        "Fantasy",
+        "Action"
+      ],
       "liked_in": 30,
       "watched": true,
       "lists": [
@@ -22898,6 +24741,11 @@
       "tmdb_id": 792307,
       "tmdb_url": "https://www.themoviedb.org/movie/792307",
       "tmdb_rating": 7.623,
+      "genres": [
+        "Science Fiction",
+        "Romance",
+        "Comedy"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -22945,6 +24793,13 @@
       "tmdb_id": 508442,
       "tmdb_url": "https://www.themoviedb.org/movie/508442",
       "tmdb_rating": 8.087,
+      "genres": [
+        "Animation",
+        "Family",
+        "Drama",
+        "Music",
+        "Fantasy"
+      ],
       "liked_in": 30,
       "watched": true,
       "lists": [
@@ -22992,6 +24847,11 @@
       "tmdb_id": 634649,
       "tmdb_url": "https://www.themoviedb.org/movie/634649",
       "tmdb_rating": 7.9,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Science Fiction"
+      ],
       "liked_in": 30,
       "watched": true,
       "lists": [
@@ -23039,6 +24899,11 @@
       "tmdb_id": 16305,
       "tmdb_url": "https://www.themoviedb.org/movie/16305",
       "tmdb_rating": 7.402,
+      "genres": [
+        "Comedy",
+        "Romance",
+        "Adventure"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -23086,6 +24951,11 @@
       "tmdb_id": 38757,
       "tmdb_url": "https://www.themoviedb.org/movie/38757",
       "tmdb_rating": 7.617,
+      "genres": [
+        "Animation",
+        "Family",
+        "Adventure"
+      ],
       "liked_in": 30,
       "watched": true,
       "lists": [
@@ -23133,6 +25003,11 @@
       "tmdb_id": 910,
       "tmdb_url": "https://www.themoviedb.org/movie/910",
       "tmdb_rating": 7.597,
+      "genres": [
+        "Mystery",
+        "Crime",
+        "Thriller"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -23180,6 +25055,9 @@
       "tmdb_id": 11697,
       "tmdb_url": "https://www.themoviedb.org/movie/11697",
       "tmdb_rating": 7.824,
+      "genres": [
+        "Western"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -23227,6 +25105,9 @@
       "tmdb_id": 84892,
       "tmdb_url": "https://www.themoviedb.org/movie/84892",
       "tmdb_rating": 7.8,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 30,
       "watched": true,
       "lists": [
@@ -23274,6 +25155,11 @@
       "tmdb_id": 20334,
       "tmdb_url": "https://www.themoviedb.org/movie/20334",
       "tmdb_rating": 8.058,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -23321,6 +25207,11 @@
       "tmdb_id": 10193,
       "tmdb_url": "https://www.themoviedb.org/movie/10193",
       "tmdb_rating": 7.819,
+      "genres": [
+        "Animation",
+        "Family",
+        "Comedy"
+      ],
       "liked_in": 30,
       "watched": true,
       "lists": [
@@ -23368,6 +25259,11 @@
       "tmdb_id": 14696,
       "tmdb_url": "https://www.themoviedb.org/movie/14696",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Fantasy",
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 30,
       "watched": false,
       "lists": [
@@ -23415,6 +25311,9 @@
       "tmdb_id": 965150,
       "tmdb_url": "https://www.themoviedb.org/movie/965150",
       "tmdb_rating": 7.7,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23461,6 +25360,10 @@
       "tmdb_id": 216,
       "tmdb_url": "https://www.themoviedb.org/movie/216",
       "tmdb_rating": 7.741,
+      "genres": [
+        "Romance",
+        "Drama"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23507,6 +25410,9 @@
       "tmdb_id": 20108,
       "tmdb_url": "https://www.themoviedb.org/movie/20108",
       "tmdb_rating": 7.5,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23553,6 +25459,9 @@
       "tmdb_id": 12761,
       "tmdb_url": "https://www.themoviedb.org/movie/12761",
       "tmdb_rating": 7.975,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23599,6 +25508,11 @@
       "tmdb_id": 11644,
       "tmdb_url": "https://www.themoviedb.org/movie/11644",
       "tmdb_rating": 7.347,
+      "genres": [
+        "Crime",
+        "Mystery",
+        "Thriller"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23645,6 +25559,10 @@
       "tmdb_id": 2457,
       "tmdb_url": "https://www.themoviedb.org/movie/2457",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23691,6 +25609,11 @@
       "tmdb_id": 10669,
       "tmdb_url": "https://www.themoviedb.org/movie/10669",
       "tmdb_rating": 7.317,
+      "genres": [
+        "Drama",
+        "Adventure",
+        "Thriller"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23737,6 +25660,11 @@
       "tmdb_id": 931,
       "tmdb_url": "https://www.themoviedb.org/movie/931",
       "tmdb_rating": 6.924,
+      "genres": [
+        "Thriller",
+        "Drama",
+        "Horror"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23783,6 +25711,9 @@
       "tmdb_id": 938,
       "tmdb_url": "https://www.themoviedb.org/movie/938",
       "tmdb_rating": 8.029,
+      "genres": [
+        "Western"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23829,6 +25760,11 @@
       "tmdb_id": 343,
       "tmdb_url": "https://www.themoviedb.org/movie/343",
       "tmdb_rating": 7.577,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23875,6 +25811,10 @@
       "tmdb_id": 12445,
       "tmdb_url": "https://www.themoviedb.org/movie/12445",
       "tmdb_rating": 8.082,
+      "genres": [
+        "Adventure",
+        "Fantasy"
+      ],
       "liked_in": 29,
       "watched": true,
       "lists": [
@@ -23921,6 +25861,10 @@
       "tmdb_id": 31442,
       "tmdb_url": "https://www.themoviedb.org/movie/31442",
       "tmdb_rating": 7.818,
+      "genres": [
+        "Drama",
+        "War"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -23967,6 +25911,11 @@
       "tmdb_id": 475557,
       "tmdb_url": "https://www.themoviedb.org/movie/475557",
       "tmdb_rating": 8.114,
+      "genres": [
+        "Crime",
+        "Thriller",
+        "Drama"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24013,6 +25962,11 @@
       "tmdb_id": 16859,
       "tmdb_url": "https://www.themoviedb.org/movie/16859",
       "tmdb_rating": 7.84,
+      "genres": [
+        "Animation",
+        "Family",
+        "Fantasy"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24059,6 +26013,9 @@
       "tmdb_id": 12102,
       "tmdb_url": "https://www.themoviedb.org/movie/12102",
       "tmdb_rating": 7.566,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24105,6 +26062,11 @@
       "tmdb_id": 696,
       "tmdb_url": "https://www.themoviedb.org/movie/696",
       "tmdb_rating": 7.697,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24151,6 +26113,11 @@
       "tmdb_id": 530385,
       "tmdb_url": "https://www.themoviedb.org/movie/530385",
       "tmdb_rating": 7.141,
+      "genres": [
+        "Horror",
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 29,
       "watched": true,
       "lists": [
@@ -24197,6 +26164,11 @@
       "tmdb_id": 83666,
       "tmdb_url": "https://www.themoviedb.org/movie/83666",
       "tmdb_rating": 7.678,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24243,6 +26215,13 @@
       "tmdb_id": 18491,
       "tmdb_url": "https://www.themoviedb.org/movie/18491",
       "tmdb_rating": 8.265,
+      "genres": [
+        "Animation",
+        "Science Fiction",
+        "Drama",
+        "Fantasy",
+        "Action"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24289,6 +26268,10 @@
       "tmdb_id": 19426,
       "tmdb_url": "https://www.themoviedb.org/movie/19426",
       "tmdb_rating": 8.0,
+      "genres": [
+        "Drama",
+        "Comedy"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24335,6 +26318,10 @@
       "tmdb_id": 4348,
       "tmdb_url": "https://www.themoviedb.org/movie/4348",
       "tmdb_rating": 8.1,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24381,6 +26368,9 @@
       "tmdb_id": 380,
       "tmdb_url": "https://www.themoviedb.org/movie/380",
       "tmdb_rating": 7.748,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24427,6 +26417,11 @@
       "tmdb_id": 11481,
       "tmdb_url": "https://www.themoviedb.org/movie/11481",
       "tmdb_rating": 7.357,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "Horror"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24473,6 +26468,11 @@
       "tmdb_id": 5548,
       "tmdb_url": "https://www.themoviedb.org/movie/5548",
       "tmdb_rating": 7.369,
+      "genres": [
+        "Action",
+        "Thriller",
+        "Science Fiction"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24519,6 +26519,10 @@
       "tmdb_id": 12405,
       "tmdb_url": "https://www.themoviedb.org/movie/12405",
       "tmdb_rating": 7.726,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24565,6 +26569,11 @@
       "tmdb_id": 558,
       "tmdb_url": "https://www.themoviedb.org/movie/558",
       "tmdb_rating": 7.337,
+      "genres": [
+        "Action",
+        "Adventure",
+        "Science Fiction"
+      ],
       "liked_in": 29,
       "watched": true,
       "lists": [
@@ -24611,6 +26620,10 @@
       "tmdb_id": 314365,
       "tmdb_url": "https://www.themoviedb.org/movie/314365",
       "tmdb_rating": 7.811,
+      "genres": [
+        "Drama",
+        "History"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24657,6 +26670,10 @@
       "tmdb_id": 2108,
       "tmdb_url": "https://www.themoviedb.org/movie/2108",
       "tmdb_rating": 7.713,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24703,6 +26720,9 @@
       "tmdb_id": 309,
       "tmdb_url": "https://www.themoviedb.org/movie/309",
       "tmdb_rating": 7.693,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24749,6 +26769,10 @@
       "tmdb_id": 982,
       "tmdb_url": "https://www.themoviedb.org/movie/982",
       "tmdb_rating": 7.518,
+      "genres": [
+        "Thriller",
+        "Drama"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24795,6 +26819,11 @@
       "tmdb_id": 10403,
       "tmdb_url": "https://www.themoviedb.org/movie/10403",
       "tmdb_rating": 7.19,
+      "genres": [
+        "Mystery",
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24841,6 +26870,11 @@
       "tmdb_id": 660120,
       "tmdb_url": "https://www.themoviedb.org/movie/660120",
       "tmdb_rating": 7.431,
+      "genres": [
+        "Drama",
+        "Romance",
+        "Comedy"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24887,6 +26921,10 @@
       "tmdb_id": 246741,
       "tmdb_url": "https://www.themoviedb.org/movie/246741",
       "tmdb_rating": 7.5,
+      "genres": [
+        "Comedy",
+        "Horror"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24933,6 +26971,9 @@
       "tmdb_id": 3034,
       "tmdb_url": "https://www.themoviedb.org/movie/3034",
       "tmdb_rating": 7.856,
+      "genres": [
+        "Comedy"
+      ],
       "liked_in": 29,
       "watched": false,
       "lists": [
@@ -24979,6 +27020,10 @@
       "tmdb_id": 814,
       "tmdb_url": "https://www.themoviedb.org/movie/814",
       "tmdb_rating": 7.4,
+      "genres": [
+        "Comedy",
+        "Horror"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25024,6 +27069,10 @@
       "tmdb_id": 15383,
       "tmdb_url": "https://www.themoviedb.org/movie/15383",
       "tmdb_rating": 7.886,
+      "genres": [
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25059,16 +27108,19 @@
     },
     {
       "title": "Beau Travail",
-      "year": "1999",
+      "year": "2000",
       "letterboxd_title": "Beau Travail",
       "letterboxd_year": "1999",
       "letterboxd_url": "https://letterboxd.com/film/beau-travail/",
-      "poster_url": "",
-      "backdrop_url": "",
-      "overview": "",
-      "tmdb_id": null,
-      "tmdb_url": "",
-      "tmdb_rating": null,
+      "poster_url": "https://image.tmdb.org/t/p/w500/5ySa1aQaT7kMcAbKwlS1HXxp2hM.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w780/1C84Yg3F2CgGJlOilvXBP8OZCMB.jpg",
+      "overview": "Foreign Legion officer Galoup recalls his once glorious life, training troops in the Gulf of Djibouti. His existence there was happy, strict and regimented, until the arrival of a promising young recruit, Sentain, plants the seeds of jealousy in Galoup's mind.",
+      "tmdb_id": 14626,
+      "tmdb_url": "https://www.themoviedb.org/movie/14626",
+      "tmdb_rating": 7.137,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25114,6 +27166,10 @@
       "tmdb_id": 649,
       "tmdb_url": "https://www.themoviedb.org/movie/649",
       "tmdb_rating": 7.3,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25159,6 +27215,10 @@
       "tmdb_id": 16,
       "tmdb_url": "https://www.themoviedb.org/movie/16",
       "tmdb_rating": 7.828,
+      "genres": [
+        "Drama",
+        "Crime"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25204,6 +27264,11 @@
       "tmdb_id": 522,
       "tmdb_url": "https://www.themoviedb.org/movie/522",
       "tmdb_rating": 7.476,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "History"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25249,6 +27314,11 @@
       "tmdb_id": 162,
       "tmdb_url": "https://www.themoviedb.org/movie/162",
       "tmdb_rating": 7.719,
+      "genres": [
+        "Fantasy",
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25294,6 +27364,9 @@
       "tmdb_id": 9377,
       "tmdb_url": "https://www.themoviedb.org/movie/9377",
       "tmdb_rating": 7.557,
+      "genres": [
+        "Comedy"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25339,6 +27412,10 @@
       "tmdb_id": 9343,
       "tmdb_url": "https://www.themoviedb.org/movie/9343",
       "tmdb_rating": 7.596,
+      "genres": [
+        "Drama",
+        "Adventure"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25384,6 +27461,10 @@
       "tmdb_id": 18329,
       "tmdb_url": "https://www.themoviedb.org/movie/18329",
       "tmdb_rating": 7.594,
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25429,6 +27510,11 @@
       "tmdb_id": 46738,
       "tmdb_url": "https://www.themoviedb.org/movie/46738",
       "tmdb_rating": 8.105,
+      "genres": [
+        "Drama",
+        "War",
+        "Mystery"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25474,6 +27560,11 @@
       "tmdb_id": 11549,
       "tmdb_url": "https://www.themoviedb.org/movie/11549",
       "tmdb_rating": 7.453,
+      "genres": [
+        "Science Fiction",
+        "Horror",
+        "Thriller"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25509,16 +27600,21 @@
     },
     {
       "title": "Kwaidan",
-      "year": "1964",
+      "year": "1965",
       "letterboxd_title": "Kwaidan",
       "letterboxd_year": "1964",
       "letterboxd_url": "https://letterboxd.com/film/kwaidan/",
-      "poster_url": "",
-      "backdrop_url": "",
-      "overview": "",
-      "tmdb_id": null,
-      "tmdb_url": "",
-      "tmdb_rating": null,
+      "poster_url": "https://image.tmdb.org/t/p/w500/t9UMfViYl47SdZZatKQ1JKjjCgs.jpg",
+      "backdrop_url": "https://image.tmdb.org/t/p/w780/9GAU0z2wVA8M2D2w36CaloWYYgv.jpg",
+      "overview": "Taking its title from an archaic Japanese word meaning \"ghost story,\" this anthology adapts four folk tales. A penniless samurai marries for money with tragic results. A man stranded in a blizzard is saved by Yuki the Snow Maiden, but his rescue comes at a cost. Blind musician Hoichi is forced to perform for an audience of ghosts. An author relates the story of a samurai who sees another warrior's reflection in his teacup.",
+      "tmdb_id": 30959,
+      "tmdb_url": "https://www.themoviedb.org/movie/30959",
+      "tmdb_rating": 7.7,
+      "genres": [
+        "Horror",
+        "Fantasy",
+        "Drama"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25564,6 +27660,9 @@
       "tmdb_id": 583,
       "tmdb_url": "https://www.themoviedb.org/movie/583",
       "tmdb_rating": 7.763,
+      "genres": [
+        "Comedy"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25609,6 +27708,11 @@
       "tmdb_id": 263115,
       "tmdb_url": "https://www.themoviedb.org/movie/263115",
       "tmdb_rating": 7.822,
+      "genres": [
+        "Action",
+        "Drama",
+        "Science Fiction"
+      ],
       "liked_in": 28,
       "watched": true,
       "lists": [
@@ -25654,6 +27758,10 @@
       "tmdb_id": 1700,
       "tmdb_url": "https://www.themoviedb.org/movie/1700",
       "tmdb_rating": 7.755,
+      "genres": [
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25699,6 +27807,9 @@
       "tmdb_id": 27064,
       "tmdb_url": "https://www.themoviedb.org/movie/27064",
       "tmdb_rating": 7.812,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25744,6 +27855,11 @@
       "tmdb_id": 242582,
       "tmdb_url": "https://www.themoviedb.org/movie/242582",
       "tmdb_rating": 7.708,
+      "genres": [
+        "Crime",
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25789,6 +27905,11 @@
       "tmdb_id": 466272,
       "tmdb_url": "https://www.themoviedb.org/movie/466272",
       "tmdb_rating": 7.417,
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 28,
       "watched": true,
       "lists": [
@@ -25834,6 +27955,9 @@
       "tmdb_id": 16619,
       "tmdb_url": "https://www.themoviedb.org/movie/16619",
       "tmdb_rating": 7.454,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25879,6 +28003,11 @@
       "tmdb_id": 4977,
       "tmdb_url": "https://www.themoviedb.org/movie/4977",
       "tmdb_rating": 7.814,
+      "genres": [
+        "Animation",
+        "Science Fiction",
+        "Thriller"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25924,6 +28053,10 @@
       "tmdb_id": 11020,
       "tmdb_url": "https://www.themoviedb.org/movie/11020",
       "tmdb_rating": 7.221,
+      "genres": [
+        "Drama",
+        "Mystery"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -25969,6 +28102,11 @@
       "tmdb_id": 8051,
       "tmdb_url": "https://www.themoviedb.org/movie/8051",
       "tmdb_rating": 7.108,
+      "genres": [
+        "Romance",
+        "Drama",
+        "Comedy"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26014,6 +28152,9 @@
       "tmdb_id": 426426,
       "tmdb_url": "https://www.themoviedb.org/movie/426426",
       "tmdb_rating": 7.614,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26059,6 +28200,11 @@
       "tmdb_id": 21734,
       "tmdb_url": "https://www.themoviedb.org/movie/21734",
       "tmdb_rating": 7.5,
+      "genres": [
+        "Thriller",
+        "Mystery",
+        "Crime"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26104,6 +28250,9 @@
       "tmdb_id": 11830,
       "tmdb_url": "https://www.themoviedb.org/movie/11830",
       "tmdb_rating": 7.79,
+      "genres": [
+        "Comedy"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26149,6 +28298,11 @@
       "tmdb_id": 414906,
       "tmdb_url": "https://www.themoviedb.org/movie/414906",
       "tmdb_rating": 7.674,
+      "genres": [
+        "Crime",
+        "Mystery",
+        "Thriller"
+      ],
       "liked_in": 28,
       "watched": true,
       "lists": [
@@ -26194,6 +28348,11 @@
       "tmdb_id": 38360,
       "tmdb_url": "https://www.themoviedb.org/movie/38360",
       "tmdb_rating": 7.924,
+      "genres": [
+        "Drama",
+        "Romance",
+        "War"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26239,6 +28398,9 @@
       "tmdb_id": 600354,
       "tmdb_url": "https://www.themoviedb.org/movie/600354",
       "tmdb_rating": 8.093,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26284,6 +28446,10 @@
       "tmdb_id": 16372,
       "tmdb_url": "https://www.themoviedb.org/movie/16372",
       "tmdb_rating": 7.474,
+      "genres": [
+        "Horror",
+        "Mystery"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26329,6 +28495,12 @@
       "tmdb_id": 10835,
       "tmdb_url": "https://www.themoviedb.org/movie/10835",
       "tmdb_rating": 7.593,
+      "genres": [
+        "Action",
+        "Crime",
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26374,6 +28546,9 @@
       "tmdb_id": 1040,
       "tmdb_url": "https://www.themoviedb.org/movie/1040",
       "tmdb_rating": 7.723,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26419,6 +28594,10 @@
       "tmdb_id": 9428,
       "tmdb_url": "https://www.themoviedb.org/movie/9428",
       "tmdb_rating": 7.451,
+      "genres": [
+        "Comedy",
+        "Drama"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26464,6 +28643,10 @@
       "tmdb_id": 933260,
       "tmdb_url": "https://www.themoviedb.org/movie/933260",
       "tmdb_rating": 7.13,
+      "genres": [
+        "Horror",
+        "Science Fiction"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26509,6 +28692,10 @@
       "tmdb_id": 8740,
       "tmdb_url": "https://www.themoviedb.org/movie/8740",
       "tmdb_rating": 7.4,
+      "genres": [
+        "Thriller",
+        "Mystery"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26554,6 +28741,11 @@
       "tmdb_id": 37257,
       "tmdb_url": "https://www.themoviedb.org/movie/37257",
       "tmdb_rating": 8.208,
+      "genres": [
+        "Drama",
+        "Mystery",
+        "Crime"
+      ],
       "liked_in": 28,
       "watched": false,
       "lists": [
@@ -26599,6 +28791,10 @@
       "tmdb_id": 704,
       "tmdb_url": "https://www.themoviedb.org/movie/704",
       "tmdb_rating": 7.316,
+      "genres": [
+        "Comedy",
+        "Music"
+      ],
       "liked_in": 27,
       "watched": false,
       "lists": [
@@ -26643,6 +28839,11 @@
       "tmdb_id": 28162,
       "tmdb_url": "https://www.themoviedb.org/movie/28162",
       "tmdb_rating": 7.7,
+      "genres": [
+        "Romance",
+        "Fantasy",
+        "Drama"
+      ],
       "liked_in": 27,
       "watched": false,
       "lists": [
@@ -26687,6 +28888,9 @@
       "tmdb_id": 377,
       "tmdb_url": "https://www.themoviedb.org/movie/377",
       "tmdb_rating": 7.4,
+      "genres": [
+        "Horror"
+      ],
       "liked_in": 27,
       "watched": false,
       "lists": [
@@ -26731,6 +28935,11 @@
       "tmdb_id": 2757,
       "tmdb_url": "https://www.themoviedb.org/movie/2757",
       "tmdb_rating": 7.325,
+      "genres": [
+        "Comedy",
+        "Crime",
+        "Drama"
+      ],
       "liked_in": 27,
       "watched": false,
       "lists": [
@@ -26775,6 +28984,9 @@
       "tmdb_id": 73,
       "tmdb_url": "https://www.themoviedb.org/movie/73",
       "tmdb_rating": 8.323,
+      "genres": [
+        "Drama"
+      ],
       "liked_in": 27,
       "watched": false,
       "lists": [
@@ -26819,6 +29031,10 @@
       "tmdb_id": 55,
       "tmdb_url": "https://www.themoviedb.org/movie/55",
       "tmdb_rating": 7.648,
+      "genres": [
+        "Drama",
+        "Thriller"
+      ],
       "liked_in": 27,
       "watched": false,
       "lists": [

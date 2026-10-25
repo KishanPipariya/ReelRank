@@ -60,7 +60,7 @@ Until the snapshot matches the configured username, the site shows a setup scree
 
 The public site displays ranked films, how many liked lists each film appears in, watched status, and source-list links. Use a public deployment only if you are comfortable sharing that information.
 
-The username is the only required site setting. TMDB is optional: when `TMDB_API_KEY` is configured while generating a snapshot, TMDB provides film titles, years, posters, and synopses; without it, the snapshot generator uses titles and poster image URLs already present in fetched Letterboxd list pages. No additional Letterboxd requests are made for posters. The GitHub Actions workflow does not need a TMDB secret because it does not refresh snapshots.
+The username is the only required site setting. TMDB is optional: when `TMDB_API_KEY` is configured while generating a snapshot, TMDB provides film titles, years, posters, synopses, ratings, and genre names; without it, the snapshot generator uses titles and poster image URLs already present in fetched Letterboxd list pages, and genre arrays are empty. No additional Letterboxd requests are made for posters. The GitHub Actions workflow does not need a TMDB secret because it does not refresh snapshots.
 
 If you are authorized to use the snapshot command, run `uv sync` and then `uv run reelrank-snapshot --username YOUR_USERNAME`. Add `TMDB_API_KEY` to `.env` if you want TMDB metadata. A failed refresh leaves the previous snapshot in place.
 

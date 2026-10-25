@@ -305,6 +305,31 @@ def _write_tmdb_metadata_cache(cache_path: Path, cache: dict[str, dict | None]) 
     temporary.replace(cache_path)
 
 
+def _fetch_tmdb_movie_genres(client: curl_requests.Session, api_key: str) -> dict[int, str]:
+    try:
+        response = client.get(
+            "https://api.themoviedb.org/3/genre/movie/list",
+            params={"api_key": api_key, "language": "en-US"},
+        )
+        if response.status_code == 401:
+            raise ValueError("TMDB rejected TMDB_API_KEY; check the API key configured for this job")
+        response.raise_for_status()
+    except RequestsError as error:
+        raise ValueError("TMDB movie genre lookup failed; the previous snapshot was left unchanged") from error
+
+    genres = response.json().get("genres", [])
+    if not isinstance(genres, list):
+        raise ValueError("TMDB returned an invalid movie genre list; the previous snapshot was left unchanged")
+    genre_names = {
+        genre["id"]: genre["name"]
+        for genre in genres
+        if isinstance(genre, dict) and isinstance(genre.get("id"), int) and isinstance(genre.get("name"), str)
+    }
+    if not genre_names:
+        raise ValueError("TMDB returned no movie genres; the previous snapshot was left unchanged")
+    return genre_names
+
+
 def create_snapshot(username: str) -> dict:
     """Fetch and serialize one user's ranked liked-list films for the web demo."""
     username = username.strip().strip("/")
@@ -327,11 +352,17 @@ def create_snapshot(username: str) -> dict:
         for index, result in enumerate(featured_results):
             cache_key = _tmdb_metadata_key(result.movie)
             if cache_key in tmdb_cache:
-                metadata[index] = tmdb_cache[cache_key]
+                cached = tmdb_cache[cache_key]
+                if not tmdb_api_key or (isinstance(cached, dict) and "genres" in cached):
+                    metadata[index] = cached
+                else:
+                    missing_metadata.append((index, result, cache_key))
             else:
                 missing_metadata.append((index, result, cache_key))
 
         if tmdb_api_key:
+            genre_names = _fetch_tmdb_movie_genres(client, tmdb_api_key) if missing_metadata else {}
+
             def fetch_tmdb_metadata(entry: tuple[int, MovieResult, str]) -> tuple[int, str, dict | None, bool]:
                 index, result, cache_key = entry
                 try:
@@ -347,10 +378,25 @@ def create_snapshot(username: str) -> dict:
                         raise ValueError("TMDB rejected TMDB_API_KEY; check the API key configured for this job")
                     response.raise_for_status()
                     candidates = response.json().get("results", [])
+                    if not candidates and "," in result.movie.title:
+                        short_title = result.movie.title.split(",", 1)[0].strip()
+                        if short_title:
+                            response = client.get(
+                                "https://api.themoviedb.org/3/search/movie",
+                                params={
+                                    "api_key": tmdb_api_key,
+                                    "query": short_title,
+                                    **({"year": result.movie.year} if result.movie.year.isdigit() else {}),
+                                },
+                            )
+                            if response.status_code == 401:
+                                raise ValueError("TMDB rejected TMDB_API_KEY; check the API key configured for this job")
+                            response.raise_for_status()
+                            candidates = response.json().get("results", [])
                     if not candidates:
                         return index, cache_key, None, False
 
-                    def title_score(candidate: dict) -> tuple[float, int]:
+                    def title_score(candidate: dict) -> tuple[int, float, int, int]:
                         target = re.sub(r"[^a-z0-9]+", "", result.movie.title.casefold())
                         names = (candidate.get("title", ""), candidate.get("original_title", ""))
                         score = max(
@@ -362,12 +408,15 @@ def create_snapshot(username: str) -> dict:
                             for name in names
                         )
                         candidate_year = (candidate.get("release_date") or "")[:4]
-                        year_match = int(not result.movie.year or not candidate_year or candidate_year == result.movie.year)
-                        return year_match, score
+                        has_both_years = result.movie.year.isdigit() and candidate_year.isdigit()
+                        year_delta = abs(int(result.movie.year) - int(candidate_year)) if has_both_years else 0
+                        within_year_tolerance = int(not has_both_years or year_delta <= 1)
+                        exact_year = int(not has_both_years or year_delta == 0)
+                        return within_year_tolerance, score, exact_year, -year_delta
 
                     best = max(candidates, key=title_score)
-                    year_match, score = title_score(best)
-                    if score < 0.55 or not year_match:
+                    year_match, score, exact_year, _ = title_score(best)
+                    if not year_match or score < 0.55 or (not exact_year and score < 0.9):
                         return index, cache_key, None, False
                     poster_path = best.get("poster_path") or ""
                     backdrop_path = best.get("backdrop_path") or ""
@@ -380,6 +429,11 @@ def create_snapshot(username: str) -> dict:
                         "poster_url": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "",
                         "backdrop_url": f"https://image.tmdb.org/t/p/w780{backdrop_path}" if backdrop_path else "",
                         "tmdb_rating": best.get("vote_average"),
+                        "genres": [
+                            genre_names[genre_id]
+                            for genre_id in best.get("genre_ids", [])
+                            if genre_id in genre_names
+                        ],
                     }, True
                 except RequestsError:
                     return index, cache_key, None, False
@@ -413,6 +467,7 @@ def create_snapshot(username: str) -> dict:
                 "tmdb_id": tmdb.get("tmdb_id"),
                 "tmdb_url": tmdb.get("tmdb_url", ""),
                 "tmdb_rating": tmdb.get("tmdb_rating"),
+                "genres": tmdb.get("genres", []),
                 "liked_in": result.liked_in,
                 "watched": is_watched,
                 "lists": result.lists,
