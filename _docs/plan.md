@@ -1,5 +1,7 @@
 # Reelrank demo plan
 
+> Historical plan. The scheduled Letterboxd snapshot refresh workflow has been removed; do not restore automated page extraction without authorization from Letterboxd. The separate quality and accessibility workflow remains active.
+
 ## Goal
 
 Build and deploy a public Reelrank demo for the Letterboxd profile `intelkishan`. The page will show a weekly-refreshed snapshot of films ranked by how often they appear across the profile's liked public lists.

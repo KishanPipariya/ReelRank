@@ -49,19 +49,20 @@ Results are saved to `liked-list-movies.csv`. Choose a different path with `--ou
 
 ## Make your own site
 
-The web demo is a static site backed by a weekly snapshot. Visitors only download that snapshot; the scheduled GitHub Action reads Letterboxd to find the public liked lists, list membership, and watched status.
+The web demo is a static site backed by a checked-in snapshot. The GitHub Actions workflow that contacted Letterboxd to refresh it has been removed; the remaining workflow runs quality and accessibility checks only.
 
 1. Create your own copy of the repository. Once the repository is marked as a GitHub template, use **Use this template**; otherwise, fork it.
 2. In `web/site-config.json`, replace `intelkishan` with your Letterboxd username.
-3. Connect your copy to Vercel and set the project root directory to `web`.
+3. Supply a snapshot in `web/data/snapshot.json` whose username matches the configured username, using a data source you are authorized to use.
+4. Connect your copy to Vercel and set the project root directory to `web`.
 
-Pushing the username change starts the first refresh. Until its snapshot matches the configured username, the site shows a setup screen rather than another profile's data. You can opt into a clearly labelled demo preview from that screen. Once a matching snapshot exists, it remains available during later refreshes and is replaced only after a successful update. Later refreshes run weekly; you can also start one from the Actions tab. Your liked lists and Films page must be public.
+Until the snapshot matches the configured username, the site shows a setup screen rather than another profile's data. You can opt into a clearly labelled demo preview from that screen. Snapshot updates are manual: commit the replacement snapshot and deploy it. The repository's snapshot command reads Letterboxd pages and may be denied; only use automated access in a way Letterboxd authorizes. See [Letterboxd's Terms of Use](https://letterboxd.com/legal/terms-of-use/). If you use the command, the liked lists and Films page must be public.
 
 The public site displays ranked films, how many liked lists each film appears in, watched status, and source-list links. Use a public deployment only if you are comfortable sharing that information.
 
-The username is the only required site setting. TMDB is optional: when `TMDB_API_KEY` is configured, TMDB provides film titles, years, posters, and synopses; without it, the site uses titles and poster image URLs already present in the fetched Letterboxd list pages. No additional Letterboxd requests are made for posters. To enable TMDB metadata, add a TMDB API key as the `TMDB_API_KEY` repository secret. Its metadata cache is reused between refreshes.
+The username is the only required site setting. TMDB is optional: when `TMDB_API_KEY` is configured while generating a snapshot, TMDB provides film titles, years, posters, and synopses; without it, the snapshot generator uses titles and poster image URLs already present in fetched Letterboxd list pages. No additional Letterboxd requests are made for posters. The GitHub Actions workflow does not need a TMDB secret because it does not refresh snapshots.
 
-To generate a snapshot locally, run `uv sync` and then `uv run reelrank-snapshot --username YOUR_USERNAME`. Add `TMDB_API_KEY` to `.env` if you want TMDB metadata locally. A failed refresh leaves the previous snapshot in place.
+If you are authorized to use the snapshot command, run `uv sync` and then `uv run reelrank-snapshot --username YOUR_USERNAME`. Add `TMDB_API_KEY` to `.env` if you want TMDB metadata. A failed refresh leaves the previous snapshot in place.
 
 Pull requests and pushes to `main` run parser/snapshot checks and an axe accessibility scan across desktop, mobile, dark mode, expanded synopsis, empty results, setup, and demo-preview states.
 
