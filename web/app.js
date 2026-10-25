@@ -321,7 +321,13 @@ function genreChipFor(genre) {
   tag.textContent = genre;
   tag.setAttribute('aria-label', `Filter by ${genre}`);
   tag.setAttribute('aria-pressed', String(activeGenres.includes(genre)));
-  tag.addEventListener('click', () => toggleGenre(genre));
+  tag.addEventListener('click', () => {
+    toggleGenre(genre);
+    const collectionTitle = document.querySelector('#collection-title');
+    collectionTitle.focus({ preventScroll: true });
+    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    collectionTitle.scrollIntoView({ behavior, block: 'start' });
+  });
   return tag;
 }
 
