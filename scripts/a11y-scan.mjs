@@ -109,6 +109,8 @@ async function checkCatalogInteractions(page) {
   check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Long source-list filter chip does not cause mobile overflow.');
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.locator('#catalog-filters > summary').click();
+  check(await page.locator('#catalog-filters').evaluate((element) => element.open), 'Filters panel opens before using its facet controls.');
   await page.locator('#runtime-options [data-runtime="under-90"]').click();
   check(new URL(page.url()).searchParams.get('runtime') === 'under-90', 'Runtime selection is reflected in the URL.');
   check(await page.locator('#heading-count').textContent() === '01', 'Under-90-minute selection returns the matching film.');
@@ -307,7 +309,11 @@ async function checkKeyboardAndReflow() {
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
-    check(await page.evaluate(() => document.activeElement.matches('#genre-filter > summary')), 'Tab reaches the genre disclosure.');
+    check(await page.evaluate(() => document.activeElement.matches('#catalog-filters > summary')), 'Tab reaches the Filters panel.');
+    await page.keyboard.press('Enter');
+    check(await page.locator('#catalog-filters').evaluate((element) => element.open), 'Enter opens the Filters panel.');
+    await page.keyboard.press('Tab');
+    check(await page.evaluate(() => document.activeElement.matches('#genre-filter > summary')), 'Tab reaches the genre disclosure inside the Filters panel.');
     await page.keyboard.press('Enter');
     check(await page.locator('#genre-filter').evaluate((element) => element.open), 'Enter opens the genre disclosure.');
     await page.keyboard.press('Tab');
