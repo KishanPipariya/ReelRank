@@ -240,12 +240,6 @@ function formatDate(value) {
   return `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
 }
 
-function searchPriority(film, query) {
-  const title = (film.title || '').toLocaleLowerCase();
-  const year = String(film.year || '').toLocaleLowerCase();
-  return title.includes(query) || year.includes(query) ? 0 : 1;
-}
-
 function matchesSearchAndGenres(film, query, selectedGenreList = activeGenres) {
   const filmGenres = Array.isArray(film.genres) ? film.genres : [];
   if (selectedGenreList.length && !selectedGenreList.some((genre) => filmGenres.includes(genre))) return false;
@@ -487,7 +481,7 @@ function render() {
     if (activeFilter === 'watched' && !film.watched) return false;
     return matchesSearchAndGenres(film, query);
   });
-  matching.sort((left, right) => (query ? searchPriority(left, query) - searchPriority(right, query) : 0) || compareFilms(left, right));
+  matching.sort((left, right) => compareFilms(left, right));
   const highlighted = matching.slice(0, 3);
   const shown = matching.slice(0, visibleLimit + highlighted.length);
   currentShownCount = shown.length;
