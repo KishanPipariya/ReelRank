@@ -276,6 +276,10 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .featured-film-year { color: #d0d6ca; font-family: var(--mono); font-size: 11px; }
 .featured-film-director { margin: 11px 0 0; color: #e0e3da; font-size: 14px; line-height: 1.45; }
 .featured-film-facts { margin: 6px 0 0; color: #c6cec0; font-family: var(--mono); font-size: 12px; line-height: 1.45; }
+.featured-film-overview { max-width: 620px; display: -webkit-box; overflow: hidden; margin: 10px 0 0; color: #d2d7cc; font-size: 12px; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.featured-film-genres { margin-top: 10px; }
+.featured-film-genres .genre-tag { border-color: #d4e6c74d; background: #101b164d; color: #dce8d1; }
+.featured-film-genres .genre-tag:hover, .featured-film-genres .genre-tag[aria-pressed='true'] { border-color: #d2e69f; background: #d2e69f; color: #17231d; }
 .featured-film-count { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; margin: 17px 0 0; color: #e0e3da; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
 .featured-film-count strong { color: #d2e69f; font-family: var(--serif); font-size: 24px; font-weight: 600; line-height: 1; }
 .top-billed-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 24px; }
@@ -517,6 +521,9 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .featured-film-title { font-size: clamp(20px, 5.8vw, 29px); }
   .featured-film-director { font-size: 12px; }
   .featured-film-facts, .featured-film-count { font-size: 11px; }
+  .featured-film-overview { font-size: 10px; -webkit-line-clamp: 2; }
+  .featured-film-genres { gap: 3px; }
+  .featured-film-genres .genre-tag { min-height: 22px; padding: 2px 6px; font-size: 8px; }
   .film-info { padding: 8px 6px 8px; }
   .film-title { font-size: 12px; }
   .director-credit { font-size: 9px; }
@@ -532,6 +539,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 @media (max-width: 430px) {
   .film-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px 15px; }
   .top-billed-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px 15px; }
+  .featured-film-facts .cinephile-country-primary { overflow: visible; overflow-wrap: anywhere; text-overflow: clip; white-space: normal; }
 }
 @media (max-width: 380px) {
   .hero { padding-inline: 21px; }

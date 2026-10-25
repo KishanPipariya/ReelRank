@@ -1546,6 +1546,21 @@ function featuredFilmFor(film) {
   if (directorCredit) copy.append(directorCredit);
   const featuredFacts = countryRuntimeMetaFor(film, 'featured-film-facts');
   if (featuredFacts) copy.append(featuredFacts);
+  if (film.overview) {
+    const synopsis = document.createElement('p');
+    synopsis.className = 'featured-film-overview';
+    synopsis.textContent = film.overview;
+    copy.append(synopsis);
+  }
+  const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];
+  if (genres.length) {
+    const genreTags = document.createElement('div');
+    genreTags.className = 'genre-tags featured-film-genres';
+    genreTags.setAttribute('role', 'group');
+    genreTags.setAttribute('aria-label', `Genres for ${film.title}`);
+    genres.forEach((genre) => genreTags.append(genreChipFor(genre)));
+    copy.append(genreTags);
+  }
   const count = document.createElement('p');
   count.className = 'featured-film-count';
   const countValue = document.createElement('strong');
