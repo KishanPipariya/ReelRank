@@ -180,6 +180,8 @@ function renderFilmDetails(film, retainFocus = false) {
   const layout = document.createElement('div');
   layout.className = 'film-detail-layout';
   const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
+  const posterColumn = document.createElement('div');
+  posterColumn.className = 'film-detail-poster-column';
   const poster = document.createElement(posterUrl ? 'button' : 'div');
   poster.className = `film-detail-poster${posterUrl ? ' film-detail-poster-trigger' : ''}`;
   if (posterUrl) {
@@ -201,6 +203,16 @@ function renderFilmDetails(film, retainFocus = false) {
     poster.append(cue);
   } else {
     poster.append(posterFallbackFor(film, 'poster-fallback film-detail-poster-fallback'));
+  }
+  posterColumn.append(poster);
+  if (Number.isSafeInteger(film.tmdb_id)) {
+    const galleryButton = document.createElement('button');
+    galleryButton.type = 'button';
+    galleryButton.className = 'film-detail-gallery-button';
+    galleryButton.textContent = posterUrl ? 'View other posters' : 'Browse posters';
+    galleryButton.setAttribute('aria-label', `${posterUrl ? 'View other posters for' : 'Browse posters for'} ${film.title}`);
+    galleryButton.addEventListener('click', () => openPosterViewer(film, posterUrl, true));
+    posterColumn.append(galleryButton);
   }
   const copy = document.createElement('div');
   copy.className = 'film-detail-copy';
@@ -268,15 +280,6 @@ function renderFilmDetails(film, retainFocus = false) {
   scoreValue.textContent = (Number(film.liked_in) || 0).toLocaleString();
   score.append(scoreValue, ` ${Number(film.liked_in) === 1 ? 'list appearance' : 'list appearances'}`);
   copy.append(kicker, title, year);
-  if (Number.isSafeInteger(film.tmdb_id)) {
-    const galleryButton = document.createElement('button');
-    galleryButton.type = 'button';
-    galleryButton.className = 'film-detail-gallery-button';
-    galleryButton.textContent = posterUrl ? 'View other posters' : 'Browse posters';
-    galleryButton.setAttribute('aria-label', `${posterUrl ? 'View other posters for' : 'Browse posters for'} ${film.title}`);
-    galleryButton.addEventListener('click', () => openPosterViewer(film, posterUrl, true));
-    copy.append(galleryButton);
-  }
   const originalFacts = originalFilmFactsFor(film);
   if (originalFacts) {
     const originalTitle = originalFacts.querySelector('dd[lang]');
@@ -342,7 +345,7 @@ function renderFilmDetails(film, retainFocus = false) {
   const letterboxdUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
   if (letterboxdUrl) links.append(makeLink('Open on Letterboxd ↗', letterboxdUrl, 'film-detail-external-link'));
   copy.append(links);
-  layout.append(poster, copy);
+  layout.append(posterColumn, copy);
   filmDetailContent.append(layout);
   const accentRequest = ++posterAccentRequest;
   filmDetailDialog.style.removeProperty('--poster-accent');

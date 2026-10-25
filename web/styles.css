@@ -407,11 +407,12 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .film-detail-step:disabled { border-color: var(--line); background: var(--surface-soft); color: var(--muted); cursor: default; }
 .film-detail-step:not(:disabled):hover { border-color: var(--rust-ink); background: var(--rust-ink); color: #fffaf4; }
 .film-detail-layout { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); align-items: start; gap: clamp(18px, 4vw, 32px); padding: clamp(20px, 4vw, 34px); }
+.film-detail-poster-column { min-width: 0; display: grid; align-content: start; gap: 9px; }
 .film-detail-poster { min-width: 0; overflow: hidden; border: 1px solid var(--line); background: var(--surface-soft); color: var(--muted); aspect-ratio: 2 / 3; font-family: var(--serif); font-size: 18px; }
 .film-detail-poster-trigger { display: block; width: 100%; padding: 0; cursor: zoom-in; }
 .film-detail-poster-trigger:hover { border-color: var(--rust-ink); }
-.film-detail-gallery-button { min-height: 36px; margin-top: 12px; padding: 6px 9px; border: 1px solid var(--line); background: var(--surface); color: var(--forest); cursor: pointer; font-family: var(--mono); font-size: 9px; text-decoration: underline; text-underline-offset: 2px; }
-.film-detail-gallery-button:hover { border-color: var(--forest); background: var(--surface-soft); }
+.film-detail-gallery-button { min-height: 42px; width: 100%; padding: 8px 9px; border: 1px solid var(--forest); background: var(--filter-active); color: var(--filter-active-ink); cursor: pointer; font-family: var(--mono); font-size: 9px; font-weight: 500; letter-spacing: .03em; }
+.film-detail-gallery-button:hover { border-color: var(--rust-ink); background: var(--rust-ink); color: #fffaf4; }
 .film-detail-poster-fallback { font-size: 14px; }
 .film-detail-poster img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .poster-viewer-dialog:not([open]) { display: none; }
@@ -521,7 +522,8 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 
 @media (max-width: 600px) {
   .film-detail-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-  .film-detail-poster { width: min(48vw, 190px); justify-self: center; }
+  .film-detail-poster-column { width: min(48vw, 190px); justify-self: center; }
+  .film-detail-poster { width: 100%; justify-self: stretch; }
   .film-detail-copy { padding-top: 0; }
   .film-detail-navigation { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; margin-right: 0; }
   .film-detail-step { min-width: 0; padding-inline: 8px; font-size: 9px; }
