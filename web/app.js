@@ -23,6 +23,9 @@ const printProgrammeUsername = document.querySelector('#print-programme-username
 const printProgrammeDate = document.querySelector('#print-programme-date');
 const printProgrammeContext = document.querySelector('#print-programme-context');
 const printProgrammeFilms = document.querySelector('#print-programme-films');
+const filmDetailDialog = document.querySelector('#film-detail-dialog');
+const filmDetailContent = document.querySelector('#film-detail-content');
+const filmDetailClose = document.querySelector('#film-detail-close');
 const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
@@ -840,55 +843,13 @@ function languageNameFor(languageCode) {
   }
 }
 
-function hasInlineOriginalTitle(film) {
-  const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
-  const languageCode = typeof film.original_language === 'string' ? film.original_language.trim() : '';
-  const isNonEnglish = languageCode && languageCode.toLocaleLowerCase().split('-')[0] !== 'en';
-  return Boolean(isNonEnglish && originalTitle);
-}
-
-function originalTitleCreditFor(film, className) {
-  if (!hasInlineOriginalTitle(film)) return null;
-  const languageCode = film.original_language.trim();
-  const languageName = languageNameFor(languageCode);
-  const originalTitle = film.original_title.trim();
-  const hasDistinctTitle = originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0;
-  const credit = document.createElement('p');
-  credit.className = className;
-  credit.setAttribute('role', 'group');
-  credit.setAttribute('aria-label', hasDistinctTitle ? `Original title in ${languageName}` : `Original language: ${languageName}`);
-  const label = document.createElement('span');
-  label.className = 'original-title-credit-label';
-  label.textContent = languageCode.toLocaleUpperCase();
-  label.setAttribute('aria-hidden', 'true');
-  credit.append(label);
-  if (hasDistinctTitle) {
-    const divider = document.createElement('span');
-    divider.className = 'original-title-credit-divider';
-    divider.textContent = '·';
-    divider.setAttribute('aria-hidden', 'true');
-    const title = document.createElement('span');
-    title.className = 'original-title-credit-title';
-    title.lang = languageCode;
-    title.textContent = originalTitle;
-    credit.append(divider, title);
-  }
-  return credit;
-}
-
-function originalDetailsFor(film) {
+function originalFilmFactsFor(film) {
   const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
   const languageCode = typeof film.original_language === 'string' ? film.original_language.trim() : '';
   const hasDistinctTitle = originalTitle && originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0;
   if (languageCode.toLocaleLowerCase().split('-')[0] === 'en') return null;
-  if (hasInlineOriginalTitle(film)) return null;
   if (!hasDistinctTitle && !languageCode) return null;
   const languageName = languageNameFor(languageCode);
-  const details = document.createElement('details');
-  details.className = 'film-original-details';
-  const summary = document.createElement('summary');
-  summary.textContent = 'Original title & language';
-  details.append(summary);
   const facts = document.createElement('dl');
   facts.className = 'original-film-facts';
   if (hasDistinctTitle) {
@@ -906,8 +867,7 @@ function originalDetailsFor(film) {
     languageValue.textContent = `${languageName} (${languageCode.toUpperCase()})`;
     facts.append(languageLabel, languageValue);
   }
-  details.append(facts);
-  return details;
+  return facts;
 }
 
 function countryRuntimeMetaFor(film, className) {
@@ -981,6 +941,157 @@ function countryRuntimeMetaFor(film, className) {
   return meta;
 }
 
+function sourceListNotesFor(film, visibleCount = 4) {
+  const sourceListUrls = [...new Set((Array.isArray(film.lists) ? film.lists : []).map(sourceListUrl).filter(Boolean))];
+  if (!sourceListUrls.length) return null;
+  const section = document.createElement('section');
+  section.className = 'film-note-section film-note-sources';
+  const heading = document.createElement('h4');
+  heading.textContent = `List provenance · ${sourceListUrls.length.toLocaleString()} ${sourceListUrls.length === 1 ? 'list' : 'lists'}`;
+  const list = document.createElement('ol');
+  list.className = 'list-links film-note-list-links';
+  const entries = sourceListUrls.map((url) => {
+    const item = document.createElement('li');
+    item.append(makeLink(listLabel(url), url));
+    return item;
+  });
+  list.append(...entries.slice(0, visibleCount));
+  const hiddenEntries = entries.slice(visibleCount);
+  hiddenEntries.forEach((entry) => {
+    entry.hidden = true;
+    list.append(entry);
+  });
+  section.append(heading, list);
+  if (hiddenEntries.length) {
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'list-links-toggle';
+    toggle.textContent = `Show all ${sourceListUrls.length.toLocaleString()} lists`;
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.addEventListener('click', () => {
+      const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+      hiddenEntries.forEach((entry) => { entry.hidden = !expanded; });
+      toggle.setAttribute('aria-expanded', String(expanded));
+      toggle.textContent = expanded ? 'Show fewer lists' : `Show all ${sourceListUrls.length.toLocaleString()} lists`;
+    });
+    section.append(toggle);
+  }
+  return section;
+}
+
+function filmProgrammeNotesFor(film) {
+  const notes = document.createElement('section');
+  notes.className = 'film-notes';
+  notes.setAttribute('aria-label', 'Programme notes');
+  const body = document.createElement('div');
+  body.className = 'film-notes-body';
+  if (film.overview) {
+    const section = document.createElement('section');
+    section.className = 'film-note-section';
+    const heading = document.createElement('h4');
+    heading.textContent = 'Synopsis';
+    const synopsis = document.createElement('p');
+    synopsis.className = 'film-note-synopsis';
+    synopsis.textContent = film.overview;
+    section.append(heading, synopsis);
+    body.append(section);
+  }
+  const originalFacts = originalFilmFactsFor(film);
+  if (originalFacts) {
+    const section = document.createElement('section');
+    section.className = 'film-note-section';
+    const heading = document.createElement('h4');
+    heading.textContent = 'Original title & language';
+    section.append(heading, originalFacts);
+    body.append(section);
+  }
+  const sourceNotes = sourceListNotesFor(film);
+  if (sourceNotes) body.append(sourceNotes);
+  if (!body.childElementCount) return null;
+  const heading = document.createElement('h3');
+  heading.className = 'film-notes-heading';
+  heading.textContent = 'Programme notes';
+  notes.append(heading, body);
+  return notes;
+}
+
+function filmDetailButtonFor(film) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'film-detail-trigger';
+  button.textContent = 'Read programme notes';
+  button.setAttribute('aria-label', `Read programme notes for ${film.title}`);
+  button.addEventListener('click', () => openFilmDetails(film));
+  return button;
+}
+
+function openFilmDetails(film) {
+  filmDetailContent.replaceChildren();
+  const layout = document.createElement('div');
+  layout.className = 'film-detail-layout';
+  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
+  const poster = document.createElement('div');
+  poster.className = 'film-detail-poster';
+  if (posterUrl) {
+    const image = document.createElement('img');
+    image.src = posterUrl;
+    image.alt = `Poster for ${film.title}`;
+    image.referrerPolicy = 'no-referrer';
+    poster.append(image);
+  } else {
+    poster.textContent = film.title;
+  }
+  const copy = document.createElement('div');
+  copy.className = 'film-detail-copy';
+  const rank = films.indexOf(film) + 1;
+  const kicker = document.createElement('p');
+  kicker.className = 'film-detail-kicker';
+  kicker.textContent = `Catalogue no. ${String(rank).padStart(3, '0')} · ${film.watched ? 'Watched' : 'Unwatched'}`;
+  const title = document.createElement('h2');
+  title.id = 'film-detail-title';
+  title.textContent = film.title;
+  const year = document.createElement('span');
+  year.className = 'film-detail-year';
+  year.textContent = film.year || 'Year unknown';
+  const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
+  const director = document.createElement('p');
+  director.className = 'film-detail-director';
+  director.textContent = directors.length ? `Directed by ${directors.join(', ')}` : 'Director not listed';
+  const facts = document.createElement('p');
+  facts.className = 'film-detail-facts';
+  const countries = [...new Set(Array.isArray(film.countries) ? film.countries.filter((name) => typeof name === 'string' && name.trim()) : [])];
+  const runtime = Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0 ? `${film.runtime_minutes} min` : '';
+  facts.textContent = [countries.join(', '), runtime].filter(Boolean).join(' · ');
+  const score = document.createElement('p');
+  score.className = 'film-detail-score';
+  const scoreValue = document.createElement('strong');
+  scoreValue.textContent = (Number(film.liked_in) || 0).toLocaleString();
+  score.append(scoreValue, ` ${Number(film.liked_in) === 1 ? 'list appearance' : 'list appearances'}`);
+  copy.append(kicker, title, year, director);
+  if (facts.textContent) copy.append(facts);
+  copy.append(score);
+  const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];
+  if (genres.length) {
+    const genreList = document.createElement('p');
+    genreList.className = 'film-detail-genres';
+    genreList.textContent = genres.join(' · ');
+    genreList.setAttribute('aria-label', `Genres: ${genres.join(', ')}`);
+    copy.append(genreList);
+  }
+  const notes = filmProgrammeNotesFor(film);
+  if (notes) copy.append(notes);
+  const links = document.createElement('div');
+  links.className = 'film-detail-links';
+  const tmdbUrl = safeUrl(film.tmdb_url, ['themoviedb.org']);
+  if (tmdbUrl) links.append(makeLink('Film data on TMDB ↗', tmdbUrl, 'film-detail-external-link'));
+  const letterboxdUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
+  if (letterboxdUrl) links.append(makeLink('Open on Letterboxd ↗', letterboxdUrl, 'film-detail-external-link'));
+  copy.append(links);
+  layout.append(poster, copy);
+  filmDetailContent.append(layout);
+  filmDetailDialog.showModal();
+}
+
 function cardFor(film, index) {
   const rankNumber = films.indexOf(film) + 1;
   const card = document.createElement('article');
@@ -1049,9 +1160,6 @@ function cardFor(film, index) {
   titleRow.append(year);
   info.append(titleRow);
 
-  const originalTitleCredit = originalTitleCreditFor(film, 'original-title-credit');
-  if (originalTitleCredit) info.append(originalTitleCredit);
-
   const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
   const directorCredit = directorCreditFor(directors, 'director-credit');
   if (directorCredit) info.append(directorCredit);
@@ -1102,72 +1210,7 @@ function cardFor(film, index) {
     info.append(genreTags);
   }
 
-  if (film.overview) {
-    const overview = document.createElement('p');
-    overview.className = 'film-overview';
-    overview.textContent = film.overview;
-    overview.hidden = true;
-    info.append(overview);
-
-    const overviewToggle = document.createElement('button');
-    overviewToggle.className = 'overview-toggle';
-    overviewToggle.type = 'button';
-    overviewToggle.textContent = 'Show synopsis';
-    overviewToggle.setAttribute('aria-expanded', 'false');
-    overviewToggle.addEventListener('click', () => {
-      const expanded = overview.hidden;
-      overview.hidden = !expanded;
-      overviewToggle.textContent = expanded ? 'Hide synopsis' : 'Show synopsis';
-      overviewToggle.setAttribute('aria-expanded', String(expanded));
-    });
-    info.append(overviewToggle);
-  }
-
-  const originalDetails = originalDetailsFor(film);
-  if (originalDetails) info.append(originalDetails);
-
-  const lists = film.lists || [];
-  const listDetails = document.createElement('details');
-  listDetails.className = 'list-details';
-  const listSummary = document.createElement('summary');
-  const listLinks = document.createElement('ol');
-  listLinks.className = 'list-links';
-  const sourceListLinks = lists.map((url) => {
-    const safeListUrl = safeUrl(url, ['letterboxd.com']);
-    if (!safeListUrl) return null;
-    const item = document.createElement('li');
-    item.append(makeLink(listLabel(safeListUrl), safeListUrl));
-    return item;
-  }).filter(Boolean);
-  const visibleListCount = 4;
-  listLinks.append(...sourceListLinks.slice(0, visibleListCount));
-  const hiddenListLinks = sourceListLinks.slice(visibleListCount);
-  hiddenListLinks.forEach((link) => {
-    link.hidden = true;
-    listLinks.append(link);
-  });
-  listSummary.textContent = listLinks.childElementCount
-    ? `Seen on ${listLinks.childElementCount.toLocaleString()} liked ${listLinks.childElementCount === 1 ? 'list' : 'lists'}`
-    : 'Film details';
-  listDetails.append(listSummary);
-  if (listLinks.childElementCount) listDetails.append(listLinks);
-  if (hiddenListLinks.length) {
-    const listLinksToggle = document.createElement('button');
-    listLinksToggle.className = 'list-links-toggle';
-    listLinksToggle.type = 'button';
-    listLinksToggle.textContent = `Show all ${sourceListLinks.length.toLocaleString()} lists`;
-    listLinksToggle.setAttribute('aria-expanded', 'false');
-    listLinksToggle.addEventListener('click', () => {
-      const expanded = listLinksToggle.getAttribute('aria-expanded') !== 'true';
-      hiddenListLinks.forEach((item) => { item.hidden = !expanded; });
-      listLinksToggle.setAttribute('aria-expanded', String(expanded));
-      listLinksToggle.textContent = expanded ? 'Show fewer lists' : `Show all ${sourceListLinks.length.toLocaleString()} lists`;
-    });
-    listDetails.append(listLinksToggle);
-  }
-  const tmdbUrl = safeUrl(film.tmdb_url, ['themoviedb.org']);
-  if (tmdbUrl) listDetails.append(makeLink('Film data on TMDB ↗', tmdbUrl, 'tmdb-film-link'));
-  if (listDetails.childElementCount > 1) info.append(listDetails);
+  info.append(filmDetailButtonFor(film));
   card.append(info);
   return card;
 }
@@ -1219,8 +1262,7 @@ function ledgerRowFor(film) {
   year.textContent = film.year || 'Year unknown';
   title.append(year);
   titleBlock.append(title);
-  const originalTitleCredit = originalTitleCreditFor(film, 'original-title-credit ledger-original-title-credit');
-  if (originalTitleCredit) titleBlock.append(originalTitleCredit);
+  titleBlock.append(filmDetailButtonFor(film));
   filmLayout.append(titleBlock);
   filmCell.append(filmLayout);
 
@@ -1256,44 +1298,6 @@ function ledgerRowFor(film) {
   countLabel.textContent = likedListCount === 1 ? 'list' : 'lists';
   countCell.append(count, countLabel);
   countCell.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
-  const sourceListUrls = [...new Set((Array.isArray(film.lists) ? film.lists : [])
-    .map((url) => safeUrl(url, ['letterboxd.com'])).filter(Boolean))];
-  if (sourceListUrls.length) {
-    const sources = document.createElement('details');
-    sources.className = 'list-details ledger-provenance-details';
-    const sourcesSummary = document.createElement('summary');
-    sourcesSummary.textContent = `Source lists · ${sourceListUrls.length.toLocaleString()}`;
-    const sourceLinks = document.createElement('ol');
-    sourceLinks.className = 'list-links';
-    const entries = sourceListUrls.map((url) => {
-      const item = document.createElement('li');
-      item.append(makeLink(listLabel(url), url));
-      return item;
-    });
-    const visibleEntries = 3;
-    sourceLinks.append(...entries.slice(0, visibleEntries));
-    const hiddenEntries = entries.slice(visibleEntries);
-    hiddenEntries.forEach((entry) => {
-      entry.hidden = true;
-      sourceLinks.append(entry);
-    });
-    sources.append(sourcesSummary, sourceLinks);
-    if (hiddenEntries.length) {
-      const toggle = document.createElement('button');
-      toggle.className = 'list-links-toggle';
-      toggle.type = 'button';
-      toggle.textContent = `Show all ${sourceListUrls.length.toLocaleString()} lists`;
-      toggle.setAttribute('aria-expanded', 'false');
-      toggle.addEventListener('click', () => {
-        const expanded = toggle.getAttribute('aria-expanded') !== 'true';
-        hiddenEntries.forEach((entry) => { entry.hidden = !expanded; });
-        toggle.setAttribute('aria-expanded', String(expanded));
-        toggle.textContent = expanded ? 'Show fewer lists' : `Show all ${sourceListUrls.length.toLocaleString()} lists`;
-      });
-      sources.append(toggle);
-    }
-    countCell.append(sources);
-  }
 
   row.append(catalogueCell, filmCell, directorCell, productionCell, countCell);
   return row;
@@ -1537,20 +1541,11 @@ function featuredFilmFor(film) {
   title.append(year);
   copy.append(title);
 
-  const originalTitleCredit = originalTitleCreditFor(film, 'original-title-credit featured-original-title-credit');
-  if (originalTitleCredit) copy.append(originalTitleCredit);
-
   const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
   const directorCredit = directorCreditFor(directors, 'featured-film-director');
   if (directorCredit) copy.append(directorCredit);
   const featuredFacts = countryRuntimeMetaFor(film, 'featured-film-facts');
   if (featuredFacts) copy.append(featuredFacts);
-  if (film.overview) {
-    const overview = document.createElement('p');
-    overview.className = 'featured-film-overview';
-    overview.textContent = film.overview;
-    copy.append(overview);
-  }
   const count = document.createElement('p');
   count.className = 'featured-film-count';
   const countValue = document.createElement('strong');
@@ -1559,21 +1554,7 @@ function featuredFilmFor(film) {
   count.append(countValue, ` ${likedListCount === 1 ? 'list appearance' : 'list appearances'}`, scoreMeterFor(film, 'featured-score-meter'));
   count.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
   copy.append(count);
-  const sourceLists = (Array.isArray(film.lists) ? film.lists : []).map((url) => safeUrl(url, ['letterboxd.com'])).filter(Boolean);
-  if (sourceLists.length) {
-    const sources = document.createElement('div');
-    sources.className = 'featured-film-sources';
-    const sourcesLabel = document.createElement('p');
-    sourcesLabel.className = 'featured-film-sources-label';
-    sourcesLabel.textContent = 'From the programme of your liked lists';
-    const sourceLinks = document.createElement('div');
-    sourceLinks.className = 'featured-film-source-links';
-    sourceLists.slice(0, 2).forEach((url) => sourceLinks.append(makeLink(listLabel(url), url)));
-    sources.append(sourcesLabel, sourceLinks);
-    copy.append(sources);
-  }
-  const originalDetails = originalDetailsFor(film);
-  if (originalDetails) copy.append(originalDetails);
+  copy.append(filmDetailButtonFor(film));
   feature.append(copy);
   return feature;
 }
@@ -1893,6 +1874,10 @@ countryIndexSearch.addEventListener('input', updateCountryIndexVisibility);
 posterDisplayButton.addEventListener('click', () => setView('posters'));
 ledgerDisplayButton.addEventListener('click', () => setView('ledger'));
 printProgrammeButton.addEventListener('click', printProgramme);
+filmDetailClose.addEventListener('click', () => filmDetailDialog.close());
+filmDetailDialog.addEventListener('click', (event) => {
+  if (event.target === filmDetailDialog) filmDetailDialog.close();
+});
 decadeOptions.addEventListener('click', (event) => {
   const button = event.target.closest('[data-decade]');
   if (button) setDecade(button.dataset.decade);
