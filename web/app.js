@@ -348,6 +348,58 @@ function genreChipFor(genre) {
   return tag;
 }
 
+function countryRuntimeMetaFor(film, className) {
+  const countries = [...new Set(Array.isArray(film.countries) ? film.countries.filter((name) => typeof name === 'string' && name.trim()) : [])];
+  const runtime = Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0 ? film.runtime_minutes : null;
+  if (!countries.length && !runtime) return null;
+
+  const meta = document.createElement('p');
+  meta.className = className;
+  if (countries.length) {
+    const countryGroup = document.createElement('span');
+    countryGroup.className = 'cinephile-country-group';
+    const primaryCountry = document.createElement('span');
+    primaryCountry.className = 'cinephile-country-primary';
+    primaryCountry.textContent = countries[0];
+    countryGroup.append(primaryCountry);
+
+    if (countries.length > 1) {
+      countryGroup.classList.add('has-more');
+      const extraCountries = document.createElement('span');
+      extraCountries.className = 'cinephile-country-extra';
+      extraCountries.textContent = countries.slice(1).join(', ');
+      extraCountries.setAttribute('aria-hidden', 'true');
+      const toggle = document.createElement('button');
+      toggle.className = 'country-more-button';
+      toggle.type = 'button';
+      toggle.textContent = `+${countries.length - 1}`;
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', `Show ${countries.length - 1} more ${countries.length === 2 ? 'country' : 'countries'} for ${film.title}`);
+      toggle.addEventListener('click', () => {
+        const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+        extraCountries.setAttribute('aria-hidden', String(!expanded));
+        meta.classList.toggle('is-expanded', expanded);
+        countryGroup.classList.toggle('is-expanded', expanded);
+        toggle.setAttribute('aria-expanded', String(expanded));
+        toggle.textContent = expanded ? 'Show fewer' : `+${countries.length - 1}`;
+        toggle.setAttribute('aria-label', expanded
+          ? `Show fewer countries for ${film.title}`
+          : `Show ${countries.length - 1} more ${countries.length === 2 ? 'country' : 'countries'} for ${film.title}`);
+      });
+      countryGroup.append(toggle, extraCountries);
+    }
+    meta.append(countryGroup);
+  }
+
+  if (runtime) {
+    const runtimeLabel = document.createElement('span');
+    runtimeLabel.className = 'cinephile-runtime';
+    runtimeLabel.textContent = `${runtime} min`;
+    meta.append(runtimeLabel);
+  }
+  return meta;
+}
+
 function cardFor(film, index) {
   const rankNumber = films.indexOf(film) + 1;
   const card = document.createElement('article');
@@ -423,16 +475,8 @@ function cardFor(film, index) {
     info.append(director);
   }
 
-  const countries = [...new Set(Array.isArray(film.countries) ? film.countries.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  const runtime = Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0 ? film.runtime_minutes : null;
-  if (countries.length || runtime) {
-    const details = document.createElement('p');
-    details.className = 'cinephile-meta';
-    const countryLabel = countries.length > 1 ? `${countries[0]} +${countries.length - 1}` : countries[0];
-    details.textContent = [countryLabel, runtime ? `${runtime} min` : ''].filter(Boolean).join(' · ');
-    details.setAttribute('aria-label', [countries.length ? `Countries: ${countries.join(', ')}` : '', runtime ? `Runtime: ${runtime} minutes` : ''].filter(Boolean).join('. '));
-    info.append(details);
-  }
+  const cinephileMeta = countryRuntimeMetaFor(film, 'cinephile-meta');
+  if (cinephileMeta) info.append(cinephileMeta);
 
   const count = document.createElement('p');
   count.className = 'film-count';
@@ -626,14 +670,8 @@ function featuredFilmFor(film) {
     director.textContent = `Directed by ${directors.join(', ')}`;
     copy.append(director);
   }
-  const countries = [...new Set(Array.isArray(film.countries) ? film.countries.filter((name) => typeof name === 'string' && name.trim()) : [])];
-  const runtime = Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0 ? film.runtime_minutes : null;
-  if (countries.length || runtime) {
-    const facts = document.createElement('p');
-    facts.className = 'featured-film-facts';
-    facts.textContent = [countries.length ? countries.join(' · ') : '', runtime ? `${runtime} min` : ''].filter(Boolean).join(' · ');
-    copy.append(facts);
-  }
+  const featuredFacts = countryRuntimeMetaFor(film, 'featured-film-facts');
+  if (featuredFacts) copy.append(featuredFacts);
   const count = document.createElement('p');
   count.className = 'featured-film-count';
   const countValue = document.createElement('strong');
