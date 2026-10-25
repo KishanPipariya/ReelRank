@@ -1055,6 +1055,8 @@ clearSearchStateButton.addEventListener('click', () => {
   window.clearTimeout(searchUrlTimer);
   searchEditing = false;
   searchInput.value = '';
+  genreSearchInput.value = '';
+  updateGenreOptionVisibility();
   activeFilter = 'all';
   activeSort = 'rank';
   activeGenres = [];
