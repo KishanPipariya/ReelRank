@@ -40,7 +40,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Scan site with axe
+      - name: Run browser accessibility checks
         run: |
           python -m http.server 4173 --directory web >/tmp/reelrank-site.log 2>&1 &
           server_pid=$!

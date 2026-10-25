@@ -64,6 +64,6 @@ The username is the only required site setting. Snapshot generation reads each f
 
 If you are authorized to use the snapshot command, run `uv sync` and then `uv run reelrank-snapshot --username YOUR_USERNAME`. Add `TMDB_API_KEY` to `.env` if you want TMDB metadata. A failed refresh leaves the previous snapshot in place.
 
-Pull requests and pushes to `main` run parser/snapshot checks and an axe accessibility scan across desktop, mobile, dark mode, expanded synopsis, empty results, setup, and demo-preview states.
+Pull requests and pushes to `main` run parser/snapshot checks and browser accessibility checks. The Playwright scan runs axe across desktop, mobile, dark mode, expanded synopsis, empty results, setup, and demo-preview states. It also checks keyboard navigation and focus, accessible names, result announcements, and reflow at 200% and 400% zoom-equivalent viewport widths. These automated checks do not replace testing with a real screen reader.
 
 To enable **Use this template** on the upstream repository, open **Settings → General** and select **Template repository**. Until that setting is enabled, users should fork the repository.

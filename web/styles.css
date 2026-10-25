@@ -265,6 +265,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .collection-heading { align-items: flex-start; flex-direction: column; gap: 19px; margin-bottom: 22px; }
   .collection-tools { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .genre-filter { width: 100%; }
+  .genre-filter-menu { width: 100%; min-width: 0; max-width: 100%; }
   .genre-filter-toggle { justify-content: space-between; }
   .search-box { width: 100%; max-width: none; }
   .search-box input { font-size: 16px; }
