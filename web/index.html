@@ -82,16 +82,27 @@
             <div class="collection-tools">
               <label class="search-box">
                 <span class="search-icon" aria-hidden="true">⌕</span>
-                <span class="sr-only">Search film titles, years, synopses, and source lists</span>
+                <span class="sr-only">Search film titles, years, genres, synopses, and source lists</span>
                 <input id="search-input" type="search" placeholder="Find films or lists" autocomplete="off" aria-keyshortcuts="/" aria-describedby="search-help" />
                 <kbd>/</kbd>
               </label>
-              <span id="search-help" class="sr-only">Search film titles, years, synopses, and source lists. Press slash to focus search. Press Escape to clear it.</span>
+              <span id="search-help" class="sr-only">Search film titles, years, genres, synopses, and source lists. Press slash to focus search. Press Escape to clear it.</span>
               <div class="filter-tabs" role="group" aria-label="Filter films">
                 <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
                 <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count">—</span></button>
                 <button class="filter-button" type="button" data-filter="watched" aria-pressed="false">Watched <span id="watched-tab-count">—</span></button>
               </div>
+              <details id="genre-filter" class="genre-filter" hidden>
+                <summary class="genre-filter-toggle">
+                  <span>Genre</span>
+                  <span id="genre-filter-summary" class="genre-filter-summary">Any</span>
+                </summary>
+                <div class="genre-filter-menu">
+                  <p class="genre-filter-help">Show films matching any selected genre.</p>
+                  <div id="genre-options" class="genre-options" role="group" aria-label="Available genres"></div>
+                  <button id="clear-genres" class="clear-genres" type="button" hidden>Clear genres</button>
+                </div>
+              </details>
               <label class="sort-control">
                 <span class="sr-only">Sort films</span>
                 <select id="sort-select" aria-label="Sort films">
@@ -103,6 +114,7 @@
               </label>
             </div>
           </div>
+          <div id="active-genre-filters" class="active-genre-filters" aria-label="Selected genre filters" hidden></div>
 
           <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>
             <div class="top-billed-heading">

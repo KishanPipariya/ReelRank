@@ -5,6 +5,11 @@ const statusMessage = document.querySelector('#status-message');
 const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
+const genreFilter = document.querySelector('#genre-filter');
+const genreFilterSummary = document.querySelector('#genre-filter-summary');
+const genreOptions = document.querySelector('#genre-options');
+const clearGenresButton = document.querySelector('#clear-genres');
+const activeGenreFilters = document.querySelector('#active-genre-filters');
 const backToFiltersButton = document.querySelector('#back-to-filters');
 const clearSearchStateButton = document.querySelector('#clear-search-state');
 const setupState = document.querySelector('#setup-state');
@@ -18,6 +23,8 @@ const validSorts = new Set(['rank', 'title', 'year-newest', 'year-oldest']);
 let films = [];
 let activeFilter = readUrlState().filter;
 let activeSort = readUrlState().sort;
+let activeGenres = readUrlState().genres;
+let availableGenres = [];
 let rankedTotal = 0;
 let visibleLimit = 40;
 let searchUrlTimer;
@@ -32,6 +39,7 @@ function readUrlState() {
     query: params.get('q') || '',
     filter: validFilters.has(filter) ? filter : 'all',
     sort: validSorts.has(sort) ? sort : 'rank',
+    genres: [...new Set(params.getAll('genre'))],
   };
 }
 
@@ -42,6 +50,64 @@ function syncControls() {
     button.classList.toggle('is-active', selected);
     button.setAttribute('aria-pressed', String(selected));
   });
+  genreOptions.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    input.checked = activeGenres.includes(input.value);
+  });
+  genreFilterSummary.textContent = activeGenres.length ? `${activeGenres.length} selected` : 'Any';
+  clearGenresButton.hidden = activeGenres.length === 0;
+  renderActiveGenreFilters();
+}
+
+function renderActiveGenreFilters() {
+  activeGenreFilters.replaceChildren();
+  activeGenreFilters.hidden = activeGenres.length === 0;
+  activeGenres.forEach((genre) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'active-genre-chip';
+    chip.textContent = `${genre} ×`;
+    chip.setAttribute('aria-label', `Remove ${genre} genre filter`);
+    chip.addEventListener('click', () => toggleGenre(genre));
+    activeGenreFilters.append(chip);
+  });
+}
+
+function buildGenreFilter() {
+  const counts = new Map();
+  films.forEach((film) => {
+    [...new Set(Array.isArray(film.genres) ? film.genres : [])].forEach((genre) => {
+      if (typeof genre === 'string' && genre.trim()) counts.set(genre, (counts.get(genre) || 0) + 1);
+    });
+  });
+  availableGenres = [...counts.keys()].sort((left, right) => left.localeCompare(right));
+  activeGenres = activeGenres.filter((genre) => availableGenres.includes(genre));
+  genreFilter.hidden = availableGenres.length === 0;
+  genreOptions.replaceChildren();
+  availableGenres.forEach((genre) => {
+    const label = document.createElement('label');
+    label.className = 'genre-option';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = genre;
+    checkbox.addEventListener('change', () => toggleGenre(genre));
+    const name = document.createElement('span');
+    name.textContent = genre;
+    const count = document.createElement('small');
+    count.textContent = counts.get(genre).toLocaleString();
+    label.append(checkbox, name, count);
+    genreOptions.append(label);
+  });
+  syncControls();
+}
+
+function toggleGenre(genre) {
+  activeGenres = activeGenres.includes(genre)
+    ? activeGenres.filter((selected) => selected !== genre)
+    : [...activeGenres, genre].sort((left, right) => left.localeCompare(right));
+  visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
 }
 
 function updateUrlState({ replace = false } = {}) {
@@ -53,6 +119,8 @@ function updateUrlState({ replace = false } = {}) {
   else url.searchParams.set('filter', activeFilter);
   if (activeSort === 'rank') url.searchParams.delete('sort');
   else url.searchParams.set('sort', activeSort);
+  url.searchParams.delete('genre');
+  activeGenres.forEach((genre) => url.searchParams.append('genre', genre));
   if (url.href === window.location.href) return;
   const method = replace ? 'replaceState' : 'pushState';
   window.history[method]({}, '', url);
@@ -69,6 +137,7 @@ function restoreUrlState() {
   searchInput.value = state.query;
   activeFilter = state.filter;
   activeSort = state.sort;
+  activeGenres = state.genres.filter((genre) => availableGenres.includes(genre));
   visibleLimit = 40;
   syncControls();
   render();
@@ -127,8 +196,9 @@ function compareFilms(left, right, sort = activeSort) {
 function updateBackToFiltersVisibility() {
   backToFiltersButton.hidden = visibleLimit <= 40 || window.scrollY < 600;
   const filterLabel = activeFilter === 'all' ? 'All films' : `${activeFilter[0].toLocaleUpperCase()}${activeFilter.slice(1)}`;
-  backToFiltersButton.textContent = `${currentShownCount} / ${currentMatchCount} · ${filterLabel} · ↑ Filters`;
-  backToFiltersButton.setAttribute('aria-label', `Showing ${currentShownCount} of ${currentMatchCount} matching films, ${filterLabel} filter. Return to search and filters.`);
+  const genreLabel = activeGenres.length ? ` · ${activeGenres.join(' or ')}` : '';
+  backToFiltersButton.textContent = `${currentShownCount} / ${currentMatchCount} · ${filterLabel}${genreLabel} · ↑ Filters`;
+  backToFiltersButton.setAttribute('aria-label', `Showing ${currentShownCount} of ${currentMatchCount} matching films, ${filterLabel} filter${activeGenres.length ? `, genres ${activeGenres.join(' or ')}` : ''}. Return to search and filters.`);
 }
 
 function makeLink(label, href, className = '') {
@@ -220,6 +290,33 @@ function cardFor(film, index) {
   count.setAttribute('aria-label', `Appears in ${likedListCount.toLocaleString()} ${likedListCount === 1 ? 'liked list' : 'liked lists'}`);
   info.append(count);
 
+  const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre) : [])];
+  if (genres.length) {
+    const genreTags = document.createElement('div');
+    genreTags.className = 'genre-tags';
+    genreTags.setAttribute('role', 'group');
+    genreTags.setAttribute('aria-label', `Genres: ${genres.join(', ')}`);
+    genres.slice(0, 2).forEach((genre) => {
+      const tag = document.createElement('button');
+      tag.type = 'button';
+      tag.className = 'genre-tag';
+      tag.textContent = genre;
+      tag.setAttribute('aria-label', `Filter by ${genre}`);
+      tag.setAttribute('aria-pressed', String(activeGenres.includes(genre)));
+      tag.addEventListener('click', () => toggleGenre(genre));
+      genreTags.append(tag);
+    });
+    if (genres.length > 2) {
+      const more = document.createElement('span');
+      more.className = 'genre-tag genre-tag-more';
+      more.textContent = `+${genres.length - 2}`;
+      more.title = genres.slice(2).join(', ');
+      more.setAttribute('aria-label', `${genres.length - 2} more genres: ${genres.slice(2).join(', ')}`);
+      genreTags.append(more);
+    }
+    info.append(genreTags);
+  }
+
   if (film.overview) {
     const overview = document.createElement('p');
     overview.className = 'film-overview';
@@ -266,14 +363,17 @@ function render() {
   const matching = films.filter((film) => {
     if (activeFilter === 'unwatched' && film.watched) return false;
     if (activeFilter === 'watched' && !film.watched) return false;
+    const filmGenres = Array.isArray(film.genres) ? film.genres : [];
+    if (activeGenres.length && !activeGenres.some((genre) => filmGenres.includes(genre))) return false;
     if (!query) return true;
     const titleAndYear = `${film.title || ''} ${film.year || ''}`.toLocaleLowerCase();
     const overview = (film.overview || '').toLocaleLowerCase();
     const sourceLists = (film.lists || []).map(listLabel).join(' ').toLocaleLowerCase();
-    return titleAndYear.includes(query) || overview.includes(query) || sourceLists.includes(query);
+    const genres = (Array.isArray(film.genres) ? film.genres : []).join(' ').toLocaleLowerCase();
+    return titleAndYear.includes(query) || overview.includes(query) || sourceLists.includes(query) || genres.includes(query);
   });
   matching.sort((left, right) => (query ? searchPriority(left, query) - searchPriority(right, query) : 0) || compareFilms(left, right));
-  const highlighted = activeFilter === 'all' && activeSort === 'rank' && !query ? matching.slice(0, 3) : [];
+  const highlighted = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0 ? matching.slice(0, 3) : [];
   const shown = matching.slice(0, visibleLimit + highlighted.length);
   currentShownCount = shown.length;
   currentMatchCount = matching.length;
@@ -284,10 +384,11 @@ function render() {
   statusMessage.classList.toggle('is-visible', matching.length === 0);
   if (films.length === 0) statusMessage.textContent = 'No films are available in this snapshot yet.';
   else if (matching.length === 0 && query) statusMessage.textContent = 'No films match that search. Try another title.';
+  else if (matching.length === 0 && activeGenres.length) statusMessage.textContent = `No films match ${activeGenres.join(' or ')}.`;
   else if (matching.length === 0 && activeFilter === 'unwatched') statusMessage.textContent = 'No unwatched films in this snapshot.';
   else if (matching.length === 0 && activeFilter === 'watched') statusMessage.textContent = 'No watched films in this snapshot.';
   else if (matching.length === 0) statusMessage.textContent = 'Everything in this snapshot is marked watched.';
-  clearSearchStateButton.hidden = matching.length > 0 || (activeFilter === 'all' && activeSort === 'rank' && !searchInput.value.trim());
+  clearSearchStateButton.hidden = matching.length > 0 || (activeFilter === 'all' && activeSort === 'rank' && !searchInput.value.trim() && activeGenres.length === 0);
   loadMoreButton.hidden = matching.length <= shown.length;
   if (!loadMoreButton.hidden) {
     const remaining = matching.length - shown.length;
@@ -295,9 +396,9 @@ function render() {
   }
   updateBackToFiltersVisibility();
   const resultAnnouncement = document.querySelector('#results-announcement');
-  const filterDescription = activeFilter === 'all' ? '' : `, ${activeFilter} only`;
+  const filterDescription = [activeFilter === 'all' ? '' : `${activeFilter} only`, activeGenres.length ? `genres: ${activeGenres.join(' or ')}` : ''].filter(Boolean).join(', ');
   const sortDescription = activeSort === 'rank' ? '' : `, sorted by ${sortSelect.options[sortSelect.selectedIndex].text}`;
-  resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
+  resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription ? `, ${filterDescription}` : ''}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
 }
 
 async function loadSnapshot() {
@@ -340,6 +441,7 @@ async function loadSnapshot() {
     setupState.hidden = true;
     siteShell.hidden = false;
     films = snapshot.films;
+    buildGenreFilter();
     const username = snapshotUsername;
     const profileUrl = safeUrl(snapshot.profile_url, ['letterboxd.com']) || `https://letterboxd.com/${encodeURIComponent(username)}/`;
     const profileLink = document.querySelector('#profile-link');
@@ -409,11 +511,19 @@ clearSearchStateButton.addEventListener('click', () => {
   searchInput.value = '';
   activeFilter = 'all';
   activeSort = 'rank';
+  activeGenres = [];
   visibleLimit = 40;
   syncControls();
   updateUrlState();
   render();
   searchInput.focus();
+});
+clearGenresButton.addEventListener('click', () => {
+  activeGenres = [];
+  visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
 });
 loadMoreButton.addEventListener('click', () => {
   visibleLimit += 40;
