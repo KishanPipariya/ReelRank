@@ -911,12 +911,28 @@ function render() {
   grid.replaceChildren(...shown.slice(highlighted.length).map((film, index) => cardFor(film, index)));
   document.querySelector('#heading-count').textContent = String(matching.length).padStart(2, '0');
   statusMessage.classList.toggle('is-visible', matching.length === 0);
+  const hasFacetFilters = activeGenres.length > 0 || activeDirectors.length > 0 || Boolean(activeCountry) || activeDecade !== '';
+  const emptyContext = query && hasFacetFilters
+    ? 'this search and the selected filters'
+    : query ? 'this search' : 'the selected filters';
   if (films.length === 0) statusMessage.textContent = 'No films are available in this snapshot yet.';
-  else if (matching.length === 0 && query) statusMessage.textContent = 'No films match that search. Try another title.';
-  else if (matching.length === 0 && activeGenres.length) statusMessage.textContent = `No films match ${activeGenres.join(' or ')}.`;
-  else if (matching.length === 0 && activeFilter === 'unwatched') statusMessage.textContent = 'No unwatched films in this snapshot.';
-  else if (matching.length === 0 && activeFilter === 'watched') statusMessage.textContent = 'No watched films in this snapshot.';
-  else if (matching.length === 0) statusMessage.textContent = 'Everything in this snapshot is marked watched.';
+  else if (matching.length === 0 && activeFilter === 'unwatched') {
+    statusMessage.textContent = query || hasFacetFilters
+      ? `No unwatched films match ${emptyContext}.`
+      : 'No unwatched films in this snapshot.';
+  } else if (matching.length === 0 && activeFilter === 'watched') {
+    statusMessage.textContent = query || hasFacetFilters
+      ? `No watched films match ${emptyContext}.`
+      : 'No watched films in this snapshot.';
+  } else if (matching.length === 0 && query && hasFacetFilters) {
+    statusMessage.textContent = 'No films match this search and the selected filters.';
+  } else if (matching.length === 0 && query) {
+    statusMessage.textContent = 'No films match that search. Try another title.';
+  } else if (matching.length === 0 && hasFacetFilters) {
+    statusMessage.textContent = 'No films match the selected filters.';
+  } else if (matching.length === 0) {
+    statusMessage.textContent = 'No films match the current view.';
+  }
   loadMoreButton.hidden = matching.length <= shown.length;
   if (!loadMoreButton.hidden) {
     const remaining = matching.length - shown.length;
