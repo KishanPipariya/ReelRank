@@ -12,6 +12,7 @@ const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
 const countrySelect = document.querySelector('#country-select');
+const countryIndexOptions = document.querySelector('#country-index-options');
 const decadeOptions = document.querySelector('#decade-options');
 const genreFilter = document.querySelector('#genre-filter');
 const genreFilterTrigger = document.querySelector('#genre-filter > summary');
@@ -76,6 +77,10 @@ function readUrlState() {
 function syncControls() {
   sortSelect.value = activeSort;
   countrySelect.value = activeCountry;
+  countryIndexOptions.querySelectorAll('[data-country]').forEach((button) => {
+    const selected = button.dataset.country === activeCountry;
+    button.setAttribute('aria-pressed', String(selected));
+  });
   posterDisplayButton.classList.toggle('is-active', activeView === 'posters');
   posterDisplayButton.setAttribute('aria-pressed', String(activeView === 'posters'));
   ledgerDisplayButton.classList.toggle('is-active', activeView === 'ledger');
@@ -193,7 +198,13 @@ function buildGenreFilter() {
 }
 
 function buildCatalogFilters() {
-  const countries = [...new Set(films.flatMap((film) => Array.isArray(film.countries) ? film.countries : []))]
+  const countryCounts = new Map();
+  films.forEach((film) => {
+    [...new Set(Array.isArray(film.countries) ? film.countries : [])].forEach((country) => {
+      if (typeof country === 'string' && country.trim()) countryCounts.set(country, (countryCounts.get(country) || 0) + 1);
+    });
+  });
+  const countries = [...countryCounts.keys()]
     .filter((country) => typeof country === 'string' && country.trim())
     .sort((left, right) => left.localeCompare(right));
   const decadeCounts = new Map();
@@ -204,6 +215,22 @@ function buildCatalogFilters() {
   const decades = [...decadeCounts.keys()].sort((a, b) => a - b);
   availableDecades = decades;
   countrySelect.replaceChildren(new Option('Any country', ''), ...countries.map((country) => new Option(country, country)));
+  const leadingCountries = [...countryCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).slice(0, 6);
+  countryIndexOptions.replaceChildren(...leadingCountries.map(([country, count]) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'country-index-option';
+    button.dataset.country = country;
+    button.setAttribute('aria-pressed', 'false');
+    button.setAttribute('aria-label', `Filter by production country ${country}, ${count} films`);
+    const name = document.createElement('span');
+    name.textContent = country;
+    const total = document.createElement('small');
+    total.textContent = count.toLocaleString();
+    button.append(name, total);
+    button.addEventListener('click', () => toggleCountry(country));
+    return button;
+  }));
   const allEras = document.createElement('button');
   allEras.type = 'button';
   allEras.className = 'decade-option decade-option-all';
@@ -1054,6 +1081,53 @@ function ledgerRowsFor(shownFilms) {
   return rows;
 }
 
+function posterGridItemsFor(shownFilms) {
+  const items = [];
+  const groupByYear = activeSort === 'year-newest' || activeSort === 'year-oldest';
+  let previousYear = null;
+  shownFilms.forEach((film, index) => {
+    const year = film.year?.trim() || 'Year unknown';
+    if (groupByYear && year !== previousYear) {
+      const divider = document.createElement('h3');
+      divider.className = 'film-year-divider';
+      const label = document.createElement('span');
+      label.textContent = 'Release year';
+      const value = document.createElement('strong');
+      value.textContent = year;
+      divider.append(label, value);
+      items.push(divider);
+      previousYear = year;
+    }
+    items.push(cardFor(film, index));
+  });
+  return items;
+}
+
+function programmeHeadingFor(query, defaultRankedView, matching) {
+  if (defaultRankedView) return { eyebrow: 'Opening credits', title: 'Most listed' };
+  if (activeDirectors.length === 1) return { eyebrow: 'Filmography in this edition', title: activeDirectors[0] };
+  if (activeDirectors.length > 1) return { eyebrow: 'Director programme', title: `${activeDirectors.length} selected directors` };
+  if (activeCountry && activeDecade !== '') {
+    return { eyebrow: 'National cinema retrospective', title: `${activeCountry} · ${activeDecade}s` };
+  }
+  if (activeCountry) return { eyebrow: 'National cinema', title: activeCountry };
+  if (activeDecade !== '') return { eyebrow: 'Decade retrospective', title: `${activeDecade}s` };
+  if (activeGenres.length) {
+    const title = activeGenres.slice(0, 2).join(' · ');
+    return { eyebrow: 'Genre programme', title: activeGenres.length > 2 ? `${title} +${activeGenres.length - 2}` : title };
+  }
+  if (query) {
+    const phrase = searchInput.value.trim();
+    return { eyebrow: 'Search results', title: phrase.length > 38 ? `${phrase.slice(0, 35)}…` : phrase };
+  }
+  if (activeFilter === 'watched') return { eyebrow: 'Watched collection', title: 'Films seen' };
+  if (activeFilter === 'unwatched') return { eyebrow: 'Watchlist programme', title: 'Films to discover' };
+  if (activeSort === 'year-newest') return { eyebrow: 'Chronological programme', title: 'Newest first' };
+  if (activeSort === 'year-oldest') return { eyebrow: 'Chronological programme', title: 'Oldest first' };
+  if (activeSort === 'title') return { eyebrow: 'Alphabetical programme', title: 'A–Z' };
+  return { eyebrow: 'Your current programme', title: `${matching.length} films` };
+}
+
 function featuredFilmFor(film) {
   const rankNumber = films.indexOf(film) + 1;
   const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
@@ -1257,14 +1331,15 @@ function render() {
   grid.hidden = ledgerView;
   filmLedgerView.hidden = !ledgerView;
   const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0 && activeDirectors.length === 0 && !activeCountry && activeDecade === '';
-  topBilledEyebrow.textContent = defaultRankedView ? 'Opening credits' : 'Filtered view';
-  topBilledTitle.textContent = defaultRankedView ? 'Most listed' : 'Top results';
+  const programmeHeading = programmeHeadingFor(query, defaultRankedView, matching);
+  topBilledEyebrow.textContent = programmeHeading.eyebrow;
+  topBilledTitle.textContent = programmeHeading.title;
   if (ledgerView) {
     filmLedgerRows.replaceChildren(...ledgerRowsFor(shown));
   } else {
     topBilledFeature.replaceChildren(...(highlighted.length ? [featuredFilmFor(highlighted[0])] : []));
     topBilledGrid.replaceChildren(...highlighted.slice(1).map((film, index) => cardFor(film, index)));
-    grid.replaceChildren(...shown.slice(highlighted.length).map((film, index) => cardFor(film, index)));
+    grid.replaceChildren(...posterGridItemsFor(shown.slice(highlighted.length)));
   }
   document.querySelector('#heading-count').textContent = String(matching.length).padStart(2, '0');
   statusMessage.classList.toggle('is-visible', matching.length === 0);

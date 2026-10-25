@@ -107,6 +107,19 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .decade-option-label { font-family: var(--mono); font-size: 10px; }
 .decade-option-count { color: var(--muted); font-family: var(--mono); font-size: 9px; }
 .decade-option[aria-pressed='true'] .decade-option-count { color: var(--filter-active-count); }
+.country-index { display: flex; align-items: center; gap: 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.country-index-heading { flex: 0 0 auto; margin: 0; color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
+.country-index-options { min-width: 0; display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: thin; }
+.country-index-option { min-height: 30px; flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 8px; padding: 5px 8px; border: 1px solid var(--line); background: var(--surface); color: var(--control-ink); cursor: pointer; font-size: 9px; }
+.country-index-option span { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.country-index-option small { color: var(--muted); font-family: var(--mono); font-size: 8px; }
+.country-index-option:hover { border-color: var(--forest); }
+.country-index-option[aria-pressed='true'] { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); }
+.country-index-option[aria-pressed='true'] small { color: var(--filter-active-count); }
+.film-year-divider { min-width: 0; grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; margin: 5px 0 -17px; color: var(--rust-ink); }
+.film-year-divider span { color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .12em; text-transform: uppercase; }
+.film-year-divider strong { font-family: var(--serif); font-size: 16px; font-style: italic; font-weight: 500; }
+.film-year-divider::after { height: 1px; flex: 1 1 auto; background: var(--line); content: ''; }
 .active-view-tools { min-height: 34px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: -2px 0 20px; }
 .active-view-tools[hidden] { display: none; }
 .active-genre-filters { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -416,6 +429,8 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .decade-retrospective { margin-bottom: 20px; padding-inline: 10px; }
   .decade-retrospective-heading { flex-wrap: wrap; gap: 4px 9px; }
   .decade-options { margin-inline: -2px; }
+  .country-index { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .country-index-options { width: 100%; margin-inline: -2px; }
   .collection-display-bar { align-items: flex-start; flex-direction: column; margin-bottom: 12px; }
   .genre-filter { width: 100%; }
   .genre-filter-menu { width: 100%; min-width: 0; max-width: 100%; }
@@ -531,6 +546,12 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .decade-option:hover { border-color: #a3bd85; }
   .decade-option[aria-pressed='true'] { border-color: #a3bd85; background: #243d31; color: #f5f3eb; }
   .decade-option-count { color: #a2aa98; }
+  .country-index-heading { color: #a8b294; }
+  .country-index-option { border-color: #424a40; background: #1e241f; color: #c0c5b9; }
+  .country-index-option:hover { border-color: #a3bd85; }
+  .country-index-option[aria-pressed='true'] { border-color: #a3bd85; background: #243d31; color: #f5f3eb; }
+  .country-index-option small { color: #a2aa98; }
+  .film-year-divider span { color: #a4aa9e; }
   .ledger-appearance-cell strong { color: #c7e58f; }
   .rank-chip, .watched-chip { background: #171c18ed; }
   .watched-chip { border-color: #a3bd85; color: #e2e8d9; }
