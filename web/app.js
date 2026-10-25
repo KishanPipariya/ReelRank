@@ -1,9 +1,25 @@
+import { programmeShare } from './programme-share.js';
 import { buildSearchText, compareFilms as compareCatalogFilms, filmDecade, matchesFilm } from './catalog.js';
 import { validateSnapshot } from './snapshot.js';
 import { cardFor as createFilmCard, updateFilmCard } from './film-components.js';
 import { parseUrlState, urlForState } from './url-state.js';
 import { createFilterControls } from './filter-controls.js';
 import { createFilmViews } from './film-views.js';
+
+const clearQueryButton = document.querySelector('#clear-query');
+const emptyResultActions = document.querySelector('#empty-result-actions');
+const emptyClearQuery = document.querySelector('#empty-clear-query');
+const emptyClearFilters = document.querySelector('#empty-clear-filters');
+const selectionEnd = document.querySelector('#selection-end');
+
+const programmeShareDetails = document.querySelector('#programme-share');
+const programmeShareDescription = document.querySelector('#programme-share-description');
+const programmeShareUrl = document.querySelector('#programme-share-url');
+const programmeShareCopy = document.querySelector('#programme-share-copy');
+const programmeShareStatus = document.querySelector('#programme-share-status');
+let currentShare;
+let publicSiteUrl = '';
+let shareAttempt = 0;
 
 const grid = document.querySelector('#film-grid');
 const filmLedgerView = document.querySelector('#film-ledger-view');
@@ -35,6 +51,12 @@ const printProgrammeFilms = document.querySelector('#print-programme-films');
 const filmDetailDialog = document.querySelector('#film-detail-dialog');
 const filmDetailContent = document.querySelector('#film-detail-content');
 const filmDetailClose = document.querySelector('#film-detail-close');
+const posterViewerDialog = document.querySelector('#poster-viewer-dialog');
+const posterViewerImage = document.querySelector('#poster-viewer-image');
+const posterViewerTitle = document.querySelector('#poster-viewer-title');
+const posterViewerCaption = document.querySelector('#poster-viewer-caption');
+const posterViewerZoom = document.querySelector('#poster-viewer-zoom');
+const posterViewerClose = document.querySelector('#poster-viewer-close');
 const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
@@ -657,7 +679,7 @@ function compareFilms(left, right, sort = state.sort) {
 }
 
 function updateBackToFiltersVisibility() {
-  backToFiltersButton.hidden = state.visibleLimit <= 40 || window.scrollY < 600;
+  backToFiltersButton.hidden = currentShownCount === 0 || window.scrollY < 600;
   const filterLabel = state.filter === 'all' ? 'All films' : `${state.filter[0].toLocaleUpperCase()}${state.filter.slice(1)}`;
   const viewDescription = [
     `${filterLabel} filter`,
@@ -875,7 +897,7 @@ function sourceListNotesFor(film, visibleCount = 4) {
   return section;
 }
 
-function filmProgrammeNotesFor(film) {
+function filmProgrammeNotesFor(film, { includeOriginalFacts = true } = {}) {
   const notes = document.createElement('section');
   notes.className = 'film-notes';
   notes.setAttribute('aria-label', 'Programme notes');
@@ -892,7 +914,7 @@ function filmProgrammeNotesFor(film) {
     section.append(heading, synopsis);
     body.append(section);
   }
-  const originalFacts = originalFilmFactsFor(film);
+  const originalFacts = includeOriginalFacts ? originalFilmFactsFor(film) : null;
   if (originalFacts) {
     const section = document.createElement('section');
     section.className = 'film-note-section';
@@ -928,6 +950,12 @@ const filmViews = createFilmViews({
   filmProgrammeNotesFor,
   filmDetailContent,
   filmDetailDialog,
+  posterViewerDialog,
+  posterViewerImage,
+  posterViewerTitle,
+  posterViewerCaption,
+  posterViewerZoom,
+  posterViewerClose,
   getCurrentMatchingFilms: () => currentMatchingFilms,
 });
 
@@ -1144,8 +1172,40 @@ function renderDirectorFilmography() {
   directorFilmography.append(heading, timeline);
 }
 
+function updateProgrammeShare() {
+  const next = programmeShare(window.location.href, state, searchInput.value, availableSourceLists, publicSiteUrl);
+  if (next.url !== currentShare?.url || next.description !== currentShare?.description) {
+    shareAttempt += 1;
+    programmeShareStatus.textContent = '';
+  }
+  currentShare = next;
+  programmeShareDescription.textContent = next.description;
+  programmeShareUrl.value = next.url;
+}
+
+programmeShareDetails.addEventListener('toggle', () => {
+  if (programmeShareDetails.open) updateProgrammeShare();
+});
+programmeShareUrl.addEventListener('focus', () => programmeShareUrl.select());
+programmeShareCopy.addEventListener('click', async () => {
+  updateProgrammeShare();
+  const attempt = ++shareAttempt;
+  const text = currentShare.url;
+  try {
+    await navigator.clipboard.writeText(text);
+    if (attempt === shareAttempt) programmeShareStatus.textContent = 'Programme link copied.';
+  } catch {
+    if (attempt !== shareAttempt) return;
+    programmeShareStatus.textContent = 'Select and copy the programme link below the description.';
+    programmeShareUrl.focus();
+    programmeShareUrl.select();
+  }
+});
+
 function render() {
+  updateProgrammeShare();
   const query = searchInput.value.trim().toLocaleLowerCase();
+  clearQueryButton.hidden = !query;
   filterControls.renderActiveViewFilters();
   renderDirectorFilmography();
   updateWatchFilterCounts(query);
@@ -1207,6 +1267,12 @@ function render() {
   } else if (matching.length === 0) {
     statusMessageCopy.textContent = 'No films match the current view.';
   }
+  const canClearFilters = hasFacetFilters || state.filter !== 'all';
+  emptyResultActions.hidden = matching.length !== 0 || (!query && !canClearFilters);
+  emptyClearQuery.hidden = !query;
+  emptyClearFilters.hidden = !canClearFilters;
+  selectionEnd.hidden = matching.length === 0 || shown.length < matching.length;
+  selectionEnd.textContent = `End of this selection · ${matching.length} ${matching.length === 1 ? 'film' : 'films'}`;
   loadMoreButton.hidden = matching.length <= shown.length;
   if (!loadMoreButton.hidden) {
     const remaining = matching.length - shown.length;
@@ -1225,6 +1291,7 @@ async function loadSnapshot() {
     if (!configResponse.ok) throw new Error(`Site configuration request failed: ${configResponse.status}`);
     const config = await configResponse.json();
     const configuredUsername = typeof config.letterboxd_username === 'string' ? config.letterboxd_username.trim() : '';
+    publicSiteUrl = typeof config.public_site_url === 'string' ? config.public_site_url.trim() : '';
     if (!configuredUsername) throw new Error('Site configuration does not include a Letterboxd username');
     setupTitle.textContent = `Preparing @${configuredUsername}'s ReelRank`;
     setupCopy.textContent = 'Checking the latest snapshot. The first refresh can take a few minutes while public lists and watched films are gathered.';
@@ -1316,6 +1383,31 @@ document.querySelectorAll('.filter-button').forEach((button) => {
     updateUrlState();
     render();
   });
+});
+
+function clearQuery() {
+  beginSearchEdit();
+  searchInput.value = '';
+  state.visibleLimit = 40;
+  commitSearchEdit();
+  render();
+  searchInput.focus();
+}
+clearQueryButton.addEventListener('click', clearQuery);
+emptyClearQuery.addEventListener('click', clearQuery);
+emptyClearFilters.addEventListener('click', () => {
+  state.filter = 'all';
+  state.genres = [];
+  state.directors = [];
+  state.sourceLists = [];
+  state.country = '';
+  state.decade = '';
+  state.runtime = '';
+  state.visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
+  searchInput.focus();
 });
 
 searchInput.addEventListener('input', () => {

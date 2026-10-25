@@ -86,12 +86,13 @@
               <h2 id="collection-title" tabindex="-1">Across your lists <span id="heading-count">—</span></h2>
             </div>
             <div class="collection-tools">
-              <label class="search-box">
+              <div class="search-box">
                 <span class="search-icon" aria-hidden="true">⌕</span>
-                <span class="sr-only">Search film titles, years, genres, synopses, and source lists</span>
-                <input id="search-input" type="search" placeholder="Search titles, genres, or lists" autocomplete="off" aria-keyshortcuts="/" aria-describedby="search-help" />
+                <label class="sr-only" for="search-input">Find a film or filmmaker</label>
+                <input id="search-input" type="search" placeholder="Find a film or filmmaker" autocomplete="off" aria-keyshortcuts="/" aria-describedby="search-help" />
+                <button id="clear-query" class="clear-query" type="button" hidden aria-label="Clear search">Clear</button>
                 <kbd>/</kbd>
-              </label>
+              </div>
               <span id="search-help" class="sr-only">Search titles, original titles, directors, years, genres, synopses, and source lists. Press slash to focus search. Press Escape to clear it.</span>
               <div class="filter-tabs" role="group" aria-label="Filter films">
                 <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
@@ -214,6 +215,17 @@
               </div>
             </div>
           </div>
+          <details id="programme-share" class="programme-share">
+            <summary>Share programme</summary>
+            <div class="programme-share-panel">
+              <p id="programme-share-description" class="programme-share-description"></p>
+              <p class="programme-share-help">Opens this selection with the same filters, sorting, and layout. Results follow the current catalogue.</p>
+              <label for="programme-share-url">Programme link</label>
+              <input id="programme-share-url" type="url" readonly />
+              <button id="programme-share-copy" class="print-programme-button" type="button">Copy programme link</button>
+              <p id="programme-share-status" class="programme-share-status" role="status" aria-live="polite"></p>
+            </div>
+          </details>
           <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>
             <div class="top-billed-heading">
               <p id="top-billed-eyebrow" class="eyebrow section-eyebrow">Opening credits</p>
@@ -226,6 +238,10 @@
           <div id="status-message" class="status-message" role="status">
             <span class="status-message-kicker" aria-hidden="true">Programme note</span>
             <p id="status-message-copy">Loading your snapshot…</p>
+            <div id="empty-result-actions" class="empty-result-actions" hidden>
+              <button id="empty-clear-query" class="clear-search-state" type="button" hidden>Clear search</button>
+              <button id="empty-clear-filters" class="clear-search-state" type="button" hidden>Clear filters</button>
+            </div>
           </div>
           <p id="results-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
           <div id="film-grid" class="film-grid"></div>
@@ -241,6 +257,7 @@
             </div>
           </div>
           <button id="load-more" class="load-more" type="button" hidden>Show more films</button>
+          <p id="selection-end" class="selection-end" hidden></p>
           <button id="back-to-filters" class="back-to-filters" type="button" hidden>Back to filters ↑</button>
           <p id="collection-footnote" class="collection-footnote">Film and poster details link back to Letterboxd. This page reflects public profile data.</p>
         </section>
@@ -262,6 +279,15 @@
     <dialog id="film-detail-dialog" class="film-detail-dialog" aria-labelledby="film-detail-title">
       <button id="film-detail-close" class="film-detail-close" type="button" aria-label="Close film details" autofocus>×</button>
       <div id="film-detail-content" class="film-detail-content"></div>
+    </dialog>
+    <dialog id="poster-viewer-dialog" class="poster-viewer-dialog" aria-labelledby="poster-viewer-title">
+      <button id="poster-viewer-close" class="poster-viewer-close" type="button" aria-label="Close poster viewer" autofocus>×</button>
+      <h2 id="poster-viewer-title" class="sr-only">Film poster</h2>
+      <figure class="poster-viewer-figure">
+        <div class="poster-viewer-stage" tabindex="0" role="region" aria-label="Poster image"><img id="poster-viewer-image" class="poster-viewer-image" alt="" /></div>
+        <figcaption id="poster-viewer-caption" class="poster-viewer-caption"></figcaption>
+      </figure>
+      <button id="poster-viewer-zoom" class="poster-viewer-zoom" type="button" aria-pressed="false">View at actual size</button>
     </dialog>
     <main id="print-programme" class="print-programme" hidden aria-label="Printable ReelRank programme">
       <header class="print-programme-header">

@@ -6,8 +6,42 @@ export function createFilmViews(dependencies) {
     scoreMeterFor, genreChipFor, filmDetailButtonFor, toggleDirector, toggleGenre,
     originalFilmFactsFor, sourceListNotesFor, filmProgrammeNotesFor,
     filmDetailContent, filmDetailDialog, getCurrentMatchingFilms,
+    posterViewerDialog, posterViewerImage, posterViewerTitle, posterViewerCaption,
+    posterViewerZoom, posterViewerClose,
   } = dependencies;
 let posterAccentRequest = 0;
+
+function openPosterViewer(film, posterUrl) {
+  posterViewerTitle.textContent = `${film.title} poster`;
+  posterViewerCaption.textContent = [film.title, film.year].filter(Boolean).join(' · ');
+  posterViewerImage.src = posterUrl;
+  posterViewerImage.alt = `${film.title} poster`;
+  posterViewerImage.classList.remove('is-zoomed');
+  posterViewerZoom.setAttribute('aria-pressed', 'false');
+  posterViewerZoom.textContent = 'View at actual size';
+  posterViewerDialog.showModal();
+}
+
+posterViewerZoom.addEventListener('click', () => {
+  const zoomed = posterViewerZoom.getAttribute('aria-pressed') !== 'true';
+  posterViewerZoom.setAttribute('aria-pressed', String(zoomed));
+  posterViewerZoom.textContent = zoomed ? 'Fit to screen' : 'View at actual size';
+  posterViewerImage.classList.toggle('is-zoomed', zoomed);
+});
+posterViewerClose.addEventListener('click', () => posterViewerDialog.close());
+posterViewerDialog.addEventListener('click', (event) => {
+  if (event.target === posterViewerDialog) posterViewerDialog.close();
+});
+
+filmDetailDialog.addEventListener('keydown', (event) => {
+  if (event.altKey || event.ctrlKey || event.metaKey || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+  const selector = event.key === 'ArrowLeft' ? '#film-detail-previous' : event.key === 'ArrowRight' ? '#film-detail-next' : '';
+  if (!selector) return;
+  const button = filmDetailContent.querySelector(selector);
+  if (!button || button.disabled) return;
+  event.preventDefault();
+  button.click();
+});
 
 function samplePosterAccent(posterUrl, request) {
   if (!posterUrl) return;
@@ -69,17 +103,25 @@ function renderFilmDetails(film, retainFocus = false) {
   const layout = document.createElement('div');
   layout.className = 'film-detail-layout';
   const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
-  const poster = document.createElement('div');
-  poster.className = 'film-detail-poster';
+  const poster = document.createElement(posterUrl ? 'button' : 'div');
+  poster.className = `film-detail-poster${posterUrl ? ' film-detail-poster-trigger' : ''}`;
   if (posterUrl) {
+    poster.type = 'button';
+    poster.setAttribute('aria-label', `View poster for ${film.title}`);
+    poster.addEventListener('click', () => openPosterViewer(film, posterUrl));
     const image = document.createElement('img');
     image.src = posterUrl;
-    image.alt = `Poster for ${film.title}`;
+    image.alt = '';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
-      image.replaceWith(posterFallbackFor(film, 'poster-fallback film-detail-poster-fallback'));
+      poster.replaceWith(posterFallbackFor(film, 'film-detail-poster poster-fallback film-detail-poster-fallback'));
     }, { once: true });
     poster.append(image);
+    const cue = document.createElement('span');
+    cue.className = 'poster-enlarge-cue';
+    cue.textContent = 'Enlarge poster';
+    cue.setAttribute('aria-hidden', 'true');
+    poster.append(cue);
   } else {
     poster.append(posterFallbackFor(film, 'poster-fallback film-detail-poster-fallback'));
   }
@@ -101,23 +143,33 @@ function renderFilmDetails(film, retainFocus = false) {
     position.setAttribute('aria-live', 'polite');
     position.setAttribute('aria-atomic', 'true');
     position.textContent = `Film ${currentIndex + 1} of ${currentFilms.length}`;
-    const previous = document.createElement('button');
-    previous.type = 'button';
-    previous.className = 'film-detail-step';
-    previous.id = 'film-detail-previous';
-    previous.textContent = '← Previous';
-    previous.disabled = currentIndex === 0;
-    previous.setAttribute('aria-label', currentIndex > 0 ? `Previous: ${currentFilms[currentIndex - 1].title}` : 'First film in the current results');
-    previous.addEventListener('click', () => renderFilmDetails(currentFilms[currentIndex - 1], 'previous'));
-    const next = document.createElement('button');
-    next.type = 'button';
-    next.className = 'film-detail-step';
-    next.id = 'film-detail-next';
-    next.textContent = 'Next →';
-    next.disabled = currentIndex >= currentFilms.length - 1;
-    next.setAttribute('aria-label', currentIndex < currentFilms.length - 1 ? `Next: ${currentFilms[currentIndex + 1].title}` : 'Last film in the current results');
-    next.addEventListener('click', () => renderFilmDetails(currentFilms[currentIndex + 1], 'next'));
+    const stepButtonFor = (direction, destination, boundaryLabel) => {
+      const isPrevious = direction === 'previous';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'film-detail-step';
+      button.id = `film-detail-${direction}`;
+      button.disabled = !destination;
+      const label = document.createElement('span');
+      label.className = 'film-detail-step-label';
+      label.textContent = isPrevious ? '← Previous' : 'Next →';
+      const title = document.createElement('span');
+      title.className = 'film-detail-step-title';
+      title.textContent = destination?.title || boundaryLabel;
+      button.append(label, title);
+      button.setAttribute('aria-label', destination
+        ? `${isPrevious ? 'Previous' : 'Next'}: ${destination.title}`
+        : boundaryLabel);
+      if (destination) button.addEventListener('click', () => renderFilmDetails(destination, direction));
+      return button;
+    };
+    const previous = stepButtonFor('previous', currentFilms[currentIndex - 1], 'First film in the current results');
+    const next = stepButtonFor('next', currentFilms[currentIndex + 1], 'Last film in the current results');
+    const keyboardHint = document.createElement('span');
+    keyboardHint.className = 'film-detail-keyboard-hint';
+    keyboardHint.append('Use ', Object.assign(document.createElement('kbd'), { textContent: '←' }), ' and ', Object.assign(document.createElement('kbd'), { textContent: '→' }), ' to browse');
     navigation.append(previous, position, next);
+    navigation.append(keyboardHint);
     copy.append(navigation);
   }
   const title = document.createElement('h2');
@@ -138,7 +190,35 @@ function renderFilmDetails(film, retainFocus = false) {
   const scoreValue = document.createElement('strong');
   scoreValue.textContent = (Number(film.liked_in) || 0).toLocaleString();
   score.append(scoreValue, ` ${Number(film.liked_in) === 1 ? 'list appearance' : 'list appearances'}`);
-  copy.append(kicker, title, year, director);
+  copy.append(kicker, title, year);
+  const originalFacts = originalFilmFactsFor(film);
+  if (originalFacts) {
+    const originalTitle = originalFacts.querySelector('dd[lang]');
+    const languageTerm = [...originalFacts.querySelectorAll('dt')].find((term) => term.textContent === 'Original language');
+    const languageValue = languageTerm?.nextElementSibling;
+    const originalCredit = document.createElement('div');
+    originalCredit.className = 'film-detail-original';
+    originalCredit.setAttribute('role', 'group');
+    originalCredit.setAttribute('aria-label', 'Original title and language');
+    if (originalTitle) {
+      const originalLabel = document.createElement('span');
+      originalLabel.className = 'film-detail-original-label';
+      originalLabel.textContent = 'Original title';
+      const originalName = document.createElement('span');
+      originalName.className = 'film-detail-original-name';
+      originalName.lang = originalTitle.lang;
+      originalName.textContent = originalTitle.textContent;
+      originalCredit.append(originalLabel, originalName);
+    }
+    if (languageValue) {
+      const language = document.createElement('span');
+      language.className = 'film-detail-original-language';
+      language.textContent = languageValue.textContent;
+      originalCredit.append(language);
+    }
+    copy.append(originalCredit);
+  }
+  copy.append(director);
   if (facts) copy.append(facts);
   copy.append(score);
   const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];
@@ -167,7 +247,7 @@ function renderFilmDetails(film, retainFocus = false) {
     });
     copy.append(genreList);
   }
-  const notes = filmProgrammeNotesFor(film);
+  const notes = filmProgrammeNotesFor(film, { includeOriginalFacts: false });
   if (notes) copy.append(notes);
   const links = document.createElement('div');
   links.className = 'film-detail-links';

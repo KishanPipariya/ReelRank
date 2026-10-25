@@ -116,3 +116,16 @@ test('URL state serialization preserves unrelated parameters and supports repeat
   assert.equal(url.searchParams.get('runtime'), '90-120');
   assert.equal(parseUrlState(url.search).runtime, '90-120');
 });
+
+test('shared programmes describe facets and restore the full view without unrelated URL state', async () => {
+  const { programmeShare } = await import('../web/programme-share.js');
+  const state = parseUrlState('?country=Japan&decade=1960&filter=unwatched&genre=Drama&director=Akira+Kurosawa&list=https%3A%2F%2Fletterboxd.com%2Flist%2Fexample%2F&runtime=under-90&sort=year-oldest&view=ledger');
+  const share = programmeShare('https://example.com/catalogue/?tracking=private&demo=1#film-42', state, '  samurai  ', [{ url: state.sourceLists[0], label: 'Favourites' }]);
+  assert.match(share.description, /Japan · 1960s · Directed by Akira Kurosawa · Drama · From Favourites · Under 90 minutes · Unwatched · Search: “samurai”/);
+  assert.deepEqual(parseUrlState(new URL(share.url).search), { ...state, query: 'samurai' });
+  assert.equal(new URL(share.url).pathname, '/catalogue/');
+  assert.equal(new URL(share.url).searchParams.get('demo'), '1');
+  assert.equal(new URL(share.url).searchParams.has('tracking'), false);
+  assert.equal(new URL(share.url).hash, '');
+  assert.equal(programmeShare('https://example.com/', parseUrlState(''), '').description, 'All films');
+});

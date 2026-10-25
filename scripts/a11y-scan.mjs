@@ -222,6 +222,38 @@ async function openSite(options = {}) {
   return { context, page };
 }
 
+async function checkProgrammeSharing() {
+  for (const width of [1440, 320]) {
+    const { context, page } = await openSite({ viewport: { width, height: 900 }, colorScheme: width === 320 ? 'dark' : 'light', reducedMotion: 'reduce', path: '/?genre=Drama&filter=unwatched&sort=title&view=ledger' });
+    await page.locator('#film-ledger-view').waitFor({ state: 'visible' });
+    await page.locator('#search-input').fill('film');
+    await page.locator('#programme-share > summary').click();
+    const link = await page.locator('#programme-share-url').inputValue();
+    const shared = new URL(link);
+    check(shared.searchParams.get('q') === 'film', 'Share link includes the live search query.');
+    check(shared.searchParams.get('genre') === 'Drama' && shared.searchParams.get('filter') === 'unwatched', 'Share link includes selected facets.');
+    check(shared.searchParams.get('view') === 'ledger' && shared.searchParams.get('sort') === 'title', 'Share link includes sorting and layout.');
+    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copiedProgramme = text; } } }));
+    await page.locator('#programme-share-copy').click();
+    await page.waitForFunction(() => document.querySelector('#programme-share-status').textContent.includes('copied'));
+    check(await page.evaluate((url) => window.copiedProgramme === url, link), 'Copy contains only the programme URL.');
+    await page.locator('#clear-query').click();
+    check(await page.locator('#programme-share-status').textContent() === '', 'Changing the selection clears stale copy feedback.');
+    check(!new URL(await page.locator('#programme-share-url').inputValue()).searchParams.has('q'), 'Open share panel follows selection changes.');
+    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('Clipboard unavailable'); } } }));
+    await page.locator('#programme-share-copy').click();
+    await page.waitForFunction(() => document.activeElement.id === 'programme-share-url');
+    check(await page.locator('#programme-share-url').evaluate((input) => input.selectionEnd - input.selectionStart === input.value.length), 'Clipboard failure selects the link for manual copying.');
+    await scan(page, `share programme ${width}px`);
+    check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Share panel fits the viewport.');
+    await page.goto(link, { waitUntil: 'domcontentloaded' });
+    await page.locator('#film-ledger-view').waitFor({ state: 'visible' });
+    check(await page.locator('#search-input').inputValue() === 'film', 'Opening a shared link restores the search.');
+    check(await page.locator('#sort-select').inputValue() === 'title', 'Opening a shared link restores sorting.');
+    await context.close();
+  }
+}
+
 async function checkKeyboardAndReflow() {
   const { context, page } = await openSite({
     viewport: { width: 1440, height: 900 },
@@ -233,7 +265,7 @@ async function checkKeyboardAndReflow() {
     await page.waitForSelector('#site-shell:not([hidden])');
     await page.waitForSelector('.film-card');
 
-    check(await page.getByLabel('Search film titles, years, genres, synopses, and source lists').count() === 1, 'Search field has an accessible name.');
+    check(await page.getByLabel('Find a film or filmmaker', { exact: true }).count() === 1, 'Search field has an accessible name.');
     check(await page.getByLabel('Sort films').count() === 1, 'Sort control has an accessible name.');
     check(await page.getByRole('group', { name: 'Filter films', exact: true }).count() === 1, 'Watched filters have a labelled group.');
     check(await page.locator('#results-announcement').getAttribute('aria-live') === 'polite', 'Results use a polite live region.');
@@ -259,6 +291,13 @@ async function checkKeyboardAndReflow() {
     await page.keyboard.type(query);
     await page.waitForFunction((value) => document.querySelector('#results-announcement').textContent.includes(value), query);
     check(await page.locator('#status-message').textContent().then((text) => text.includes('No films match')), 'Search has a clear no-results message.');
+    check(await page.locator('#clear-query').isVisible(), 'A query has a visible clear action.');
+    check(await page.locator('#empty-clear-query').isVisible(), 'Empty search results offer local recovery.');
+    check(await page.locator('#selection-end').isHidden(), 'Empty results do not show an end-of-selection marker.');
+    await page.locator('#empty-clear-query').click();
+    check(await page.locator('#search-input').inputValue() === '', 'Empty-state recovery clears the query.');
+    check(await page.locator('#selection-end').isVisible(), 'A fully displayed selection has a closing marker.');
+    await page.locator('#search-input').fill(query);
     await page.keyboard.press('Escape');
     check(await page.locator('#search-input').inputValue() === '', 'Escape clears the search.');
 
@@ -340,6 +379,7 @@ try {
     await context.close();
   }
 
+  await checkProgrammeSharing();
   await checkKeyboardAndReflow();
   await checkBrokenPosterFallback();
 
