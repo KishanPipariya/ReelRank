@@ -88,6 +88,19 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .collection { padding: 58px 0 48px; }
 .collection-heading { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-bottom: 30px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
 .collection-scope { margin: -14px 0 18px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.decade-retrospective { margin: 0 0 23px; padding: 13px 15px 11px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: linear-gradient(90deg, var(--surface-soft), transparent 86%); }
+.decade-retrospective-heading { display: flex; align-items: baseline; gap: 12px; margin-bottom: 9px; }
+.decade-retrospective-heading .eyebrow { margin: 0; color: var(--rust-ink); font-size: 8px; letter-spacing: .12em; }
+.decade-retrospective-heading h3 { margin: 0; color: var(--muted); font-family: var(--serif); font-size: 14px; font-weight: 500; font-style: italic; }
+.decade-options { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 5px; scrollbar-width: thin; }
+.decade-option { min-width: 79px; min-height: 39px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface); color: var(--control-ink); cursor: pointer; text-align: left; transition: border-color .16s ease, background .16s ease, color .16s ease; }
+.decade-option-all { min-width: 102px; }
+.decade-option:hover { border-color: var(--forest); }
+.decade-option[aria-pressed='true'] { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); }
+.decade-option-label, .decade-option-count { flex: 0 0 auto; white-space: nowrap; }
+.decade-option-label { font-family: var(--mono); font-size: 10px; }
+.decade-option-count { color: var(--muted); font-family: var(--mono); font-size: 9px; }
+.decade-option[aria-pressed='true'] .decade-option-count { color: var(--filter-active-count); }
 .active-view-tools { min-height: 34px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: -2px 0 20px; }
 .active-view-tools[hidden] { display: none; }
 .active-genre-filters { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -97,10 +110,8 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .section-eyebrow { margin: 0 0 10px; color: #5b6251; font-size: 10px; letter-spacing: .14em; }
 h2 { margin: 0; font-family: var(--serif); font-size: clamp(34px, 5vw, 47px); font-weight: 500; letter-spacing: -.055em; }
 h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: center; margin-left: 7px; vertical-align: 8px; border: 1px solid var(--line); background: var(--surface-soft); color: var(--ink); font-family: var(--mono); font-size: 11px; letter-spacing: 0; }
-.collection-tools { display: grid; grid-template-columns: minmax(200px, 1.35fr) minmax(250px, 1.4fr) minmax(105px, .65fr) minmax(150px, 1fr) minmax(130px, .85fr) minmax(112px, .7fr); align-items: center; gap: 8px; }
+.collection-tools { display: grid; grid-template-columns: minmax(200px, 1.35fr) minmax(250px, 1.4fr) minmax(105px, .65fr) minmax(150px, 1fr) minmax(112px, .7fr); align-items: center; gap: 8px; }
 .sort-control, .facet-select { min-width: 0; display: block; }
-.decade-filter { position: relative; }
-.decade-era-label { position: absolute; z-index: 1; top: -6px; left: 8px; padding: 0 4px; background: var(--paper); color: var(--rust-ink); font-family: var(--mono); font-size: 7px; letter-spacing: .12em; line-height: 1; text-transform: uppercase; }
 .search-box { width: 100%; max-width: none; }
 .filter-tabs { min-width: 0; justify-content: space-between; }
 .genre-filter-toggle { width: 100%; justify-content: space-between; }
@@ -179,6 +190,11 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .featured-original-title-credit .original-title-credit-title { color: #fffdf5; font-size: 11px; }
 .featured-film-count { display: flex; align-items: baseline; gap: 7px; margin: 17px 0 0; color: #e0e3da; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
 .featured-film-count strong { color: #d2e69f; font-family: var(--serif); font-size: 24px; font-weight: 600; line-height: 1; }
+.featured-film-sources { margin-top: 16px; padding-top: 10px; border-top: 1px solid #d4e6c733; }
+.featured-film-sources-label { margin: 0 0 6px; color: #c6cec0; font-family: var(--mono); font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+.featured-film-source-links { display: flex; flex-wrap: wrap; gap: 5px 14px; }
+.featured-film-source-links a { max-width: 100%; overflow: hidden; color: #f0a07b; font-size: 11px; text-decoration-color: #f0a07b88; text-overflow: ellipsis; text-underline-offset: 3px; white-space: nowrap; }
+.featured-film-source-links a:hover { color: #ffc19e; }
 .top-billed-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 24px; }
 .top-billed-grid .film-card { width: min(100%, 28vw, 360px); justify-self: center; }
 .top-billed-grid .film-title { font-size: 16px; }
@@ -246,7 +262,10 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .original-film-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 8px; margin: 4px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
 .original-film-facts dt { font-family: var(--mono); }
 .original-film-facts dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
-.list-links { display: flex; flex-wrap: wrap; gap: 5px 8px; margin-top: 7px; }
+.list-links { display: grid; gap: 4px; margin: 7px 0 0; padding: 0; counter-reset: source-list; list-style: none; }
+.list-links li { min-width: 0; display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: baseline; gap: 5px; counter-increment: source-list; }
+.list-links li::before { color: var(--rust-ink); content: '[' counter(source-list, decimal-leading-zero) ']'; font-family: var(--mono); font-size: 8px; }
+.list-links li[hidden] { display: none; }
 .list-links a { max-width: 100%; overflow: hidden; color: #60665d; font-size: 10px; text-decoration-color: #838a79; text-overflow: ellipsis; white-space: nowrap; }
 .list-links a:hover { color: var(--forest); }
 .list-links-toggle { min-height: 24px; display: block; margin-top: 6px; padding: 0; border: 0; background: transparent; color: var(--forest); cursor: pointer; font-size: 10px; text-align: left; text-decoration: underline; text-decoration-color: #838a79; text-underline-offset: 2px; }
@@ -341,6 +360,10 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .collection-heading { grid-template-columns: minmax(0, 1fr); gap: 15px; margin-bottom: 22px; }
   .collection-tools { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .collection-tools > .search-box, .collection-tools > .filter-tabs { grid-column: 1 / -1; }
+  .collection-tools > .sort-control { grid-column: 1 / -1; }
+  .decade-retrospective { margin-bottom: 20px; padding-inline: 10px; }
+  .decade-retrospective-heading { flex-wrap: wrap; gap: 4px 9px; }
+  .decade-options { margin-inline: -2px; }
   .genre-filter { width: 100%; }
   .genre-filter-menu { width: 100%; min-width: 0; max-width: 100%; }
   .genre-filter-toggle { justify-content: space-between; }
@@ -449,6 +472,12 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .featured-original-title-credit .original-title-credit-title { color: #fffdf5; }
   .film-full-overview { color: #bbc0b5; }
   .list-links a { color: #b7bdaf; text-decoration-color: #4e574b; }
+  .list-links li::before { color: #d18b6d; }
+  .decade-retrospective-heading .eyebrow { color: #d18b6d; }
+  .decade-option { border-color: #424a40; background: #1e241f; color: #c0c5b9; }
+  .decade-option:hover { border-color: #a3bd85; }
+  .decade-option[aria-pressed='true'] { border-color: #a3bd85; background: #243d31; color: #f5f3eb; }
+  .decade-option-count { color: #a2aa98; }
   .rank-chip, .watched-chip { background: #171c18ed; }
   .watched-chip { border-color: #a3bd85; color: #e2e8d9; }
   .poster-link { background: #30372f; }

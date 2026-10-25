@@ -7,7 +7,7 @@ const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
 const countrySelect = document.querySelector('#country-select');
-const decadeSelect = document.querySelector('#decade-select');
+const decadeOptions = document.querySelector('#decade-options');
 const genreFilter = document.querySelector('#genre-filter');
 const genreFilterTrigger = document.querySelector('#genre-filter > summary');
 const genreFilterSummary = document.querySelector('#genre-filter-summary');
@@ -42,6 +42,7 @@ let activeCountry = readUrlState().country;
 let activeDecade = readUrlState().decade;
 let availableGenres = [];
 let availableDirectors = [];
+let availableDecades = [];
 let rankedTotal = 0;
 let visibleLimit = 40;
 let searchUrlTimer;
@@ -67,7 +68,10 @@ function readUrlState() {
 function syncControls() {
   sortSelect.value = activeSort;
   countrySelect.value = activeCountry;
-  decadeSelect.value = activeDecade === '' ? '' : String(activeDecade);
+  decadeOptions.querySelectorAll('[data-decade]').forEach((button) => {
+    const selected = button.dataset.decade === (activeDecade === '' ? '' : String(activeDecade));
+    button.setAttribute('aria-pressed', String(selected));
+  });
   document.querySelectorAll('.filter-button').forEach((button) => {
     const selected = button.dataset.filter === activeFilter;
     button.classList.toggle('is-active', selected);
@@ -180,9 +184,29 @@ function buildCatalogFilters() {
   const countries = [...new Set(films.flatMap((film) => Array.isArray(film.countries) ? film.countries : []))]
     .filter((country) => typeof country === 'string' && country.trim())
     .sort((left, right) => left.localeCompare(right));
-  const decades = [...new Set(films.map((film) => filmDecade(film)).filter((decade) => decade !== null))].sort((a, b) => a - b);
+  const decadeCounts = new Map();
+  films.forEach((film) => {
+    const decade = filmDecade(film);
+    if (decade !== null) decadeCounts.set(decade, (decadeCounts.get(decade) || 0) + 1);
+  });
+  const decades = [...decadeCounts.keys()].sort((a, b) => a - b);
+  availableDecades = decades;
   countrySelect.replaceChildren(new Option('Any country', ''), ...countries.map((country) => new Option(country, country)));
-  decadeSelect.replaceChildren(new Option('Any decade', ''), ...decades.map((decade) => new Option(`${decade}s`, String(decade))));
+  const allEras = document.createElement('button');
+  allEras.type = 'button';
+  allEras.className = 'decade-option decade-option-all';
+  allEras.dataset.decade = '';
+  allEras.setAttribute('aria-pressed', 'true');
+  allEras.append(decadeOptionLabel('All eras', films.length));
+  decadeOptions.replaceChildren(allEras, ...decades.map((decade) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'decade-option';
+    button.dataset.decade = String(decade);
+    button.setAttribute('aria-pressed', 'false');
+    button.append(decadeOptionLabel(`${decade}s`, decadeCounts.get(decade)));
+    return button;
+  }));
   activeCountry = countries.includes(activeCountry) ? activeCountry : '';
   activeDecade = decades.includes(Number(activeDecade)) ? Number(activeDecade) : '';
   availableDirectors = [...new Set(films.flatMap((film) => Array.isArray(film.directors) ? film.directors : []))]
@@ -190,6 +214,18 @@ function buildCatalogFilters() {
     .sort((left, right) => left.localeCompare(right));
   activeDirectors = activeDirectors.filter((director) => availableDirectors.includes(director));
   updateUrlState({ replace: true });
+}
+
+function decadeOptionLabel(label, count) {
+  const name = document.createElement('span');
+  name.className = 'decade-option-label';
+  name.textContent = label;
+  const total = document.createElement('small');
+  total.className = 'decade-option-count';
+  total.textContent = count.toLocaleString();
+  const fragment = document.createDocumentFragment();
+  fragment.append(name, total);
+  return fragment;
 }
 
 function filmDecade(film) {
@@ -316,7 +352,7 @@ function restoreUrlState() {
     ? state.country
     : '';
   const decadeValue = state.decade === '' ? '' : String(state.decade);
-  activeDecade = decadeValue && [...decadeSelect.options].some((option) => option.value === decadeValue)
+  activeDecade = decadeValue && availableDecades.includes(Number(decadeValue))
     ? Number(decadeValue)
     : '';
   visibleLimit = 40;
@@ -671,7 +707,8 @@ function cardFor(film, index) {
 
   const rank = document.createElement('span');
   rank.className = 'rank-chip';
-  rank.textContent = activeSort === 'rank' ? String(rankNumber).padStart(2, '0') : `Overall ${rankNumber}`;
+  rank.textContent = activeSort === 'rank' ? `No. ${rankNumber}` : `Overall ${rankNumber}`;
+  rank.setAttribute('aria-label', activeSort === 'rank' ? `Catalogue number ${rankNumber}` : `Overall rank ${rankNumber}`);
   poster.append(rank);
   if (film.watched) {
     const watched = document.createElement('span');
@@ -779,11 +816,14 @@ function cardFor(film, index) {
   const listDetails = document.createElement('details');
   listDetails.className = 'list-details';
   const listSummary = document.createElement('summary');
-  const listLinks = document.createElement('div');
+  const listLinks = document.createElement('ol');
   listLinks.className = 'list-links';
   const sourceListLinks = lists.map((url) => {
     const safeListUrl = safeUrl(url, ['letterboxd.com']);
-    return safeListUrl ? makeLink(listLabel(safeListUrl), safeListUrl) : null;
+    if (!safeListUrl) return null;
+    const item = document.createElement('li');
+    item.append(makeLink(listLabel(safeListUrl), safeListUrl));
+    return item;
   }).filter(Boolean);
   const visibleListCount = 4;
   listLinks.append(...sourceListLinks.slice(0, visibleListCount));
@@ -805,7 +845,7 @@ function cardFor(film, index) {
     listLinksToggle.setAttribute('aria-expanded', 'false');
     listLinksToggle.addEventListener('click', () => {
       const expanded = listLinksToggle.getAttribute('aria-expanded') !== 'true';
-      hiddenListLinks.forEach((link) => { link.hidden = !expanded; });
+      hiddenListLinks.forEach((item) => { item.hidden = !expanded; });
       listLinksToggle.setAttribute('aria-expanded', String(expanded));
       listLinksToggle.textContent = expanded ? 'Show fewer lists' : `Show all ${sourceListLinks.length.toLocaleString()} lists`;
     });
@@ -866,7 +906,8 @@ function featuredFilmFor(film) {
   }
   const rank = document.createElement('span');
   rank.className = 'rank-chip';
-  rank.textContent = activeSort === 'rank' ? String(rankNumber).padStart(2, '0') : `Overall ${rankNumber}`;
+  rank.textContent = activeSort === 'rank' ? `No. ${rankNumber}` : `Overall ${rankNumber}`;
+  rank.setAttribute('aria-label', activeSort === 'rank' ? `Catalogue number ${rankNumber}` : `Overall rank ${rankNumber}`);
   poster.append(rank);
   if (film.watched) {
     const watched = document.createElement('span');
@@ -918,6 +959,19 @@ function featuredFilmFor(film) {
   count.append(countValue, ` ${likedListCount === 1 ? 'list appearance' : 'list appearances'}`);
   count.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
   copy.append(count);
+  const sourceLists = (Array.isArray(film.lists) ? film.lists : []).map((url) => safeUrl(url, ['letterboxd.com'])).filter(Boolean);
+  if (sourceLists.length) {
+    const sources = document.createElement('div');
+    sources.className = 'featured-film-sources';
+    const sourcesLabel = document.createElement('p');
+    sourcesLabel.className = 'featured-film-sources-label';
+    sourcesLabel.textContent = 'From the programme of your liked lists';
+    const sourceLinks = document.createElement('div');
+    sourceLinks.className = 'featured-film-source-links';
+    sourceLists.slice(0, 2).forEach((url) => sourceLinks.append(makeLink(listLabel(url), url)));
+    sources.append(sourcesLabel, sourceLinks);
+    copy.append(sources);
+  }
   const originalDetails = originalDetailsFor(film);
   if (originalDetails) copy.append(originalDetails);
   feature.append(copy);
@@ -1154,7 +1208,10 @@ clearGenresButton.addEventListener('click', () => {
   render();
 });
 countrySelect.addEventListener('change', () => setCountry(countrySelect.value));
-decadeSelect.addEventListener('change', () => setDecade(decadeSelect.value));
+decadeOptions.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-decade]');
+  if (button) setDecade(button.dataset.decade);
+});
 closeGenresButton.addEventListener('click', () => {
   genreFilter.open = false;
   genreFilterTrigger.focus();
