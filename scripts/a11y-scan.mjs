@@ -109,6 +109,13 @@ async function checkCatalogInteractions(page) {
   check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Long source-list filter chip does not cause mobile overflow.');
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.locator('#runtime-options [data-runtime="under-90"]').click();
+  check(new URL(page.url()).searchParams.get('runtime') === 'under-90', 'Runtime selection is reflected in the URL.');
+  check(await page.locator('#heading-count').textContent() === '01', 'Under-90-minute selection returns the matching film.');
+  check(await page.locator('#active-genre-filters').getByRole('button', { name: 'Remove runtime filter: Under 90 min' }).count() === 1, 'Runtime selection has a named removable filter chip.');
+  await page.locator('#runtime-options [data-runtime="90-120"]').click();
+  check(await page.locator('#heading-count').textContent() === '03', '90–120-minute selection respects inclusive boundaries.');
+  await page.locator('#runtime-options [data-runtime=""]').click();
   await page.locator('#sort-select').selectOption('title');
   await page.locator('#country-index-options .country-index-option:visible').first().click();
   check(Boolean(new URL(page.url()).searchParams.get('country')), 'Country selection is reflected in the URL.');
@@ -122,8 +129,78 @@ async function checkCatalogInteractions(page) {
   await page.locator('#sort-select').selectOption('rank');
   await page.locator('.film-detail-trigger:visible').first().click();
   check(await page.locator('#film-detail-dialog').evaluate((dialog) => dialog.open), 'Film details control opens the programme notes dialog.');
+  check(await page.locator('#film-detail-position').textContent() === 'Film 1 of 8', 'Film details show position in the current results separately from overall rank.');
+  await page.locator('#film-detail-next').click();
+  check(await page.locator('#film-detail-title').textContent() === 'Arrival', 'Next navigates in current result order without closing the dialog.');
+  await page.locator('#film-detail-previous').click();
+  check(await page.locator('#film-detail-title').textContent() === 'The Third Man', 'Previous returns to the earlier film.');
+  check(await page.evaluate(() => document.activeElement.id === 'film-detail-next'), 'Film navigation keeps focus on a usable adjacent control when it reaches the first film.');
   await page.locator('#film-detail-close').click();
   check(!(await page.locator('#film-detail-dialog').evaluate((dialog) => dialog.open)), 'Programme notes dialog closes from its close control.');
+  await page.locator('#runtime-options [data-runtime="90-120"]').click();
+  await page.locator('#sort-select').selectOption('title');
+  await page.locator('.film-detail-trigger:visible').first().click();
+  check(await page.locator('#film-detail-title').textContent() === 'Arrival', 'Details start with the first film in the sorted, filtered results.');
+  check(await page.locator('#film-detail-position').textContent() === 'Film 1 of 3', 'Detail position counts only matching films.');
+  await page.locator('#film-detail-next').click();
+  check(await page.locator('#film-detail-title').textContent() === 'Portrait of a Lady on Fire', 'Next follows the chosen sort within the runtime filter.');
+  check((await page.locator('.film-detail-kicker').textContent()).includes('007'), 'Detail browsing preserves overall catalogue rank.');
+  await page.locator('#film-detail-next').click();
+  check(await page.locator('#film-detail-next').isDisabled(), 'Next is disabled at the end of the filtered results.');
+  check(await page.evaluate(() => document.activeElement.id === 'film-detail-previous'), 'Reaching the last film keeps focus on an enabled navigation control.');
+  await page.keyboard.press('Escape');
+}
+
+async function checkDetailPresentation(page, label) {
+  await page.locator('.film-detail-trigger:visible').first().click();
+  const next = page.locator('#film-detail-next');
+  for (const hover of [false, true]) {
+    if (hover) await next.hover();
+    const contrast = await next.evaluate((button) => {
+      const luminance = (color) => {
+        const channels = color.match(/[\d.]+/g).slice(0, 3).map((value) => {
+          const channel = Number(value) / 255;
+          return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4;
+        });
+        return channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
+      };
+      const style = getComputedStyle(button);
+      const values = [luminance(style.color), luminance(style.backgroundColor)].sort((a, b) => b - a);
+      return (values[0] + .05) / (values[1] + .05);
+    });
+    check(contrast >= 4.5, `${label} navigation ${hover ? 'hover' : 'default'} text contrast is at least 4.5:1 (${contrast.toFixed(2)}:1).`);
+  }
+  const initialViewport = page.viewportSize();
+  for (const width of label === 'mobile' ? [320, 390, 600, 601, 720] : [initialViewport.width]) {
+    await page.setViewportSize({ ...initialViewport, width });
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const layout = await page.locator('#film-detail-dialog').evaluate((dialog) => {
+      const bounds = dialog.getBoundingClientRect();
+      const controls = [...dialog.querySelectorAll('.film-detail-step')].map((button) => button.getBoundingClientRect());
+      return bounds.left >= 0 && bounds.right <= innerWidth && dialog.scrollWidth <= dialog.clientWidth
+        && controls.every((control) => control.left >= bounds.left && control.right <= bounds.right && control.height >= 40)
+        && controls[0].right <= controls[1].left;
+    });
+    check(layout, `${label} detail controls fit at ${width}px without overlap and retain 40px targets.`);
+  }
+  await page.setViewportSize(initialViewport);
+  await scan(page, `${label} film details`);
+  await page.locator('#film-detail-dialog').screenshot({ path: `/tmp/reelrank-details-${label.replaceAll(' ', '-')}.png`, animations: 'disabled' });
+  await page.locator('#film-detail-close').click();
+}
+
+async function checkBrokenPosterFallback() {
+  const { context, page } = await openSite();
+  const brokenSnapshot = structuredClone(snapshot);
+  brokenSnapshot.films[0].poster_url = 'https://image.tmdb.org/t/p/w500/unavailable-poster.jpg';
+  await page.route('**/data/snapshot.json', (route) => route.fulfill({ json: brokenSnapshot }));
+  await page.route('**/unavailable-poster.jpg', (route) => route.abort());
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('.featured-film-poster .poster-fallback-title').waitFor();
+  await page.locator('.film-detail-trigger:visible').first().click();
+  await page.locator('.film-detail-poster .poster-fallback-title').waitFor();
+  check(await page.locator('.film-detail-poster .poster-fallback-title').textContent() === snapshot.films[0].title, 'A failed detail poster displays the designed fallback with the correct title.');
+  await context.close();
 }
 
 async function openSite(options = {}) {
@@ -249,6 +326,7 @@ try {
     await page.waitForSelector('.film-card');
     await scan(page, name);
     await checkFeaturedVisualLayout(page, name);
+    await checkDetailPresentation(page, name);
     if (name === 'desktop') {
       await checkCatalogInteractions(page);
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -263,6 +341,7 @@ try {
   }
 
   await checkKeyboardAndReflow();
+  await checkBrokenPosterFallback();
 
   const { context: setupContext, page: setupPage } = await openSite({
     viewport: { width: 320, height: 800 },

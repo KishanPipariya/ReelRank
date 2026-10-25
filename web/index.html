@@ -155,13 +155,23 @@
               </label>
             </div>
           </div>
-          <p id="collection-scope" class="collection-scope">Search covers film titles, original titles, directors, years, genres, synopses, and source lists. Filter by liked list, production country, or decade.</p>
+          <p id="collection-scope" class="collection-scope">Search titles, directors, years, genres, synopses, and source lists. Browse by decade, production country, or running time.</p>
           <section class="decade-retrospective" aria-labelledby="decade-retrospective-title">
             <div class="decade-retrospective-heading">
               <p class="eyebrow">A retrospective by release decade</p>
               <h3 id="decade-retrospective-title">Browse the eras</h3>
             </div>
             <div id="decade-options" class="decade-options" role="group" aria-label="Filter films by release decade"></div>
+            <div id="runtime-filter" class="runtime-filter" hidden>
+              <span class="runtime-filter-label">Running time</span>
+              <div id="runtime-options" class="runtime-options" role="group" aria-label="Filter films by running time" aria-describedby="runtime-filter-note">
+                <button class="runtime-option" type="button" data-runtime="" aria-pressed="true">Any length</button>
+                <button class="runtime-option" type="button" data-runtime="under-90" aria-pressed="false">Under 90 min</button>
+                <button class="runtime-option" type="button" data-runtime="90-120" aria-pressed="false">90–120 min</button>
+                <button class="runtime-option" type="button" data-runtime="over-120" aria-pressed="false">Over 120 min</button>
+                <span id="runtime-filter-note" class="runtime-filter-note">Choosing a running time excludes films with unknown runtimes.</span>
+              </div>
+            </div>
             <div class="country-index">
               <p class="country-index-heading">Leading production countries</p>
               <label id="country-index-search-control" class="country-index-search-control" hidden>

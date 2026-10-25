@@ -139,6 +139,14 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .country-index-option[aria-pressed='true'] small { color: var(--filter-active-count); }
 .country-index-toggle { min-height: 30px; flex: 0 0 auto; padding: 5px 8px; border: 1px solid var(--line); background: transparent; color: var(--forest); cursor: pointer; font-family: var(--mono); font-size: 8px; text-decoration: underline; text-underline-offset: 2px; }
 .country-index-toggle[hidden] { display: none; }
+.runtime-filter { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.runtime-filter[hidden] { display: none; }
+.runtime-filter-label { flex: 0 0 auto; color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
+.runtime-options { display: flex; flex-wrap: wrap; gap: 5px; }
+.runtime-option { min-height: 30px; padding: 5px 9px; border: 1px solid var(--line); background: var(--surface); color: var(--control-ink); cursor: pointer; font-size: 9px; }
+.runtime-option:hover { border-color: var(--forest); }
+.runtime-option[aria-pressed='true'] { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); }
+.runtime-filter-note { flex-basis: 100%; color: var(--muted); font-family: var(--mono); font-size: 8px; }
 .film-year-divider { min-width: 0; grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; margin: 5px 0 -17px; color: var(--rust-ink); }
 .film-year-divider span { color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .12em; text-transform: uppercase; }
 .film-year-divider span::before { margin-right: 6px; color: var(--orange); content: '✳'; }
@@ -277,7 +285,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .featured-film::after { position: absolute; z-index: 1; inset: 9px; border: 1px solid #f0ead826; content: ''; pointer-events: none; }
 .featured-film-backdrop { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; opacity: .52; }
 .featured-film-poster { width: min(100%, 360px); position: relative; z-index: 2; display: block; overflow: hidden; aspect-ratio: 2 / 3; border: 1px solid #f7f1e766; background: #30372f; box-shadow: 0 8px 20px #080d0a66; }
-.featured-film-poster > img, .featured-film-poster > .poster-fallback { width: 100%; height: 100%; display: block; object-fit: cover; }
+.featured-film-poster > img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .featured-film-copy { min-width: 0; position: relative; z-index: 2; }
 .featured-film-label { margin: 0 0 9px; color: #d2dfc6; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
 .featured-film-label::before { margin-right: 7px; color: #f0a07b; content: '✳'; }
@@ -306,12 +314,17 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .poster-image { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .4s cubic-bezier(.2,.75,.25,1); }
 .poster-link:hover, .poster-link:focus-visible { transform: translateY(-3px); box-shadow: 0 5px 10px #24251d1c, 0 16px 28px #24251d17; }
 .poster-link:hover .poster-image { transform: scale(1.035); }
-.poster-fallback { width: 100%; height: 100%; display: grid; place-items: center; padding: 20px; background: linear-gradient(145deg, #d7d8bf, #b7c5a8 52%, #e1b798); color: var(--forest); font-family: var(--serif); font-size: 18px; text-align: center; }
+.poster-fallback { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; overflow: hidden; padding: 24px 18px; background: #e8e4d5; color: var(--forest); text-align: center; }
+.poster-fallback::before { position: absolute; inset: 10px; border: 1px solid #294b3a55; content: ''; pointer-events: none; }
+.poster-fallback::after { width: 44px; height: 1px; flex: 0 0 1px; order: -1; background: var(--rust-ink); content: ''; }
+.poster-fallback-label, .poster-fallback-details { position: relative; color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
+.poster-fallback-title { max-width: 100%; position: relative; display: -webkit-box; overflow: hidden; color: var(--forest); font-family: var(--serif); font-size: clamp(14px, 1.6vw, 21px); font-weight: 500; line-height: 1.25; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow-wrap: anywhere; }
+.poster-fallback-details { font-size: 7px; letter-spacing: .06em; }
 .rank-chip { position: absolute; z-index: 1; top: 9px; left: 9px; min-width: 30px; height: 34px; display: grid; place-items: center; padding: 0 7px; border: 1px solid var(--rust-ink); border-radius: 2px; background: #f5f1e9f2; color: var(--rust-ink); font-family: var(--mono); font-size: 10px; white-space: nowrap; box-shadow: 0 2px 8px #16181026; }
 .watched-chip { position: absolute; z-index: 1; top: 9px; right: 9px; padding: 6px 8px; border: 1px solid #b5d67a77; background: #243d31ed; color: #e7f0dd; font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
 .film-info { position: relative; margin-top: 0; padding: 11px 10px 10px; border: 1px solid var(--line); border-top: 0; background: var(--surface); }
 .film-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin: 0; font: inherit; }
-.film-title { min-width: 0; min-height: 2.7em; flex: 1 1 auto; display: -webkit-box; overflow: hidden; color: var(--ink); font-family: var(--serif); font-size: 14px; font-weight: 500; line-height: 1.35; text-decoration-color: #818778; text-underline-offset: 2px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.film-title { min-width: 0; min-height: 2.7em; flex: 1 1 auto; display: -webkit-box; overflow: hidden; color: var(--ink); font-family: var(--serif); font-size: 15px; font-weight: 550; line-height: 1.32; text-decoration-color: #818778; text-underline-offset: 2px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .director-credit { margin: 5px 0 0; overflow: hidden; color: var(--forest); display: -webkit-box; font-size: 10px; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .director-filter { padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; text-decoration: underline; text-decoration-color: #879182; text-underline-offset: 2px; }
 .director-filter:hover, .director-filter[aria-pressed='true'] { color: var(--rust-ink); text-decoration-thickness: 2px; }
@@ -336,7 +349,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .film-year { flex: 0 0 auto; padding-left: 8px; border-left: 1px solid var(--line); color: #62685e; font-family: var(--mono); font-size: 10px; }
 .film-count { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; margin: 8px 0 0; color: #62685e; font-family: var(--mono); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
 .film-count::before { width: 3px; height: 18px; align-self: center; background: var(--rust-ink); content: ''; }
-.film-count strong { color: var(--forest); font-family: var(--serif); font-size: 22px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
+.film-count strong { color: var(--forest); font-family: var(--serif); font-size: 23px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
 .film-score-meter, .featured-score-meter { height: 3px; display: block; overflow: hidden; background: var(--surface-soft); }
 .film-score-meter { flex: 0 0 calc(100% - 20px); margin-inline: 10px; }
 .film-score-meter > span, .featured-score-meter > span { width: var(--score-share); height: 100%; display: block; background: var(--rust-ink); }
@@ -361,8 +374,15 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .film-detail-dialog { width: min(820px, calc(100vw - 32px)); max-width: none; max-height: min(90vh, 780px); padding: 0; overflow: auto; border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: 0 24px 90px #10140f66; }
 .film-detail-dialog::backdrop { background: #151915b8; backdrop-filter: blur(3px); }
 .film-detail-close { position: sticky; z-index: 2; top: 10px; float: right; width: 36px; height: 36px; margin: 10px 10px -46px 0; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; font-size: 23px; line-height: 1; }
+.film-detail-navigation { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin: 0 42px 16px 0; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.film-detail-position { color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-align: center; text-transform: uppercase; }
+.film-detail-step { min-width: 104px; min-height: 40px; width: fit-content; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 12px; border: 1px solid var(--filter-active); border-radius: 2px; background: var(--filter-active); color: var(--filter-active-ink); cursor: pointer; font-family: var(--mono); font-size: 10px; font-weight: 500; transition: background-color .16s ease, border-color .16s ease, transform .16s ease; }
+.film-detail-step:last-child { justify-self: end; }
+.film-detail-step:disabled { border-color: var(--line); background: var(--surface-soft); color: var(--muted); cursor: default; }
+.film-detail-step:not(:disabled):hover { border-color: var(--rust-ink); background: var(--rust-ink); color: #fffaf4; }
 .film-detail-layout { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); align-items: start; gap: clamp(18px, 4vw, 32px); padding: clamp(20px, 4vw, 34px); }
 .film-detail-poster { min-width: 0; overflow: hidden; border: 1px solid var(--line); background: var(--surface-soft); color: var(--muted); aspect-ratio: 2 / 3; font-family: var(--serif); font-size: 18px; }
+.film-detail-poster-fallback { font-size: 14px; }
 .film-detail-poster img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .film-detail-copy { min-width: 0; padding-top: 5px; }
 .film-detail-kicker { margin: 0 45px 10px 0; color: var(--rust-ink); font-family: var(--mono); font-size: 9px; letter-spacing: .09em; text-transform: uppercase; }
@@ -370,7 +390,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .film-detail-year { display: block; margin-top: 7px; color: var(--muted); font-family: var(--mono); font-size: 11px; }
 .film-detail-director, .film-detail-facts { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .film-detail-score { display: flex; align-items: baseline; gap: 5px; margin: 15px 0 0; color: var(--muted); font-family: var(--mono); font-size: 10px; }
-.film-detail-score strong { color: var(--rust-ink); font-family: var(--serif); font-size: 24px; font-weight: 500; }
+.film-detail-score strong { color: var(--rust-ink); font-family: var(--serif); font-size: 26px; font-weight: 500; }
 .film-detail-genres { margin: 10px 0 0; color: var(--forest); font-family: var(--mono); font-size: 9px; line-height: 1.6; }
 .film-detail-copy .film-notes { margin-top: 16px; }
 .film-detail-copy .film-notes-heading { font-size: 10px; }
@@ -416,7 +436,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .sr-only { width: 1px; height: 1px; position: absolute; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 
 @media (forced-colors: active) {
-  .search-box, .filter-tabs, .sort-control select, .country-index-search-control input, .genre-filter-toggle, .genre-filter-menu, .genre-search-box, .genre-tag, .selected-genre-chip, .load-more, .clear-search-state, .back-to-filters, .poster-link, .featured-film, .film-detail-dialog, .film-detail-close { border: 1px solid ButtonText; }
+  .search-box, .filter-tabs, .sort-control select, .country-index-search-control input, .genre-filter-toggle, .genre-filter-menu, .genre-search-box, .genre-tag, .selected-genre-chip, .load-more, .clear-search-state, .back-to-filters, .poster-link, .featured-film, .film-detail-dialog, .film-detail-close, .film-detail-step { border: 1px solid ButtonText; }
   .genre-option input { forced-color-adjust: auto; }
   .featured-film { background: Canvas; color: CanvasText; }
   .featured-film::before { display: none; }
@@ -443,6 +463,8 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .film-detail-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .film-detail-poster { width: min(48vw, 190px); justify-self: center; }
   .film-detail-copy { padding-top: 0; }
+  .film-detail-navigation { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; margin-right: 0; }
+  .film-detail-step { min-width: 0; padding-inline: 8px; font-size: 9px; }
   .film-detail-close { position: absolute; top: 10px; right: 10px; margin: 0; }
   .film-detail-kicker { padding-right: 42px; }
 }
@@ -538,7 +560,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .film-info { padding: 8px 6px 8px; }
   .film-title { font-size: 12px; }
   .director-credit { font-size: 9px; }
-  .top-billed-grid .film-title { font-size: 13px; }
+  .top-billed-grid .film-title { font-size: 14px; }
   .top-billed-grid .director-credit { font-size: 10px; }
   .top-billed-grid .cinephile-meta, .top-billed-grid .film-count { font-size: 10px; }
   .top-billed-grid .film-count strong { font-size: 20px; }
@@ -581,6 +603,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 
   .profile-link { color: #c1c8bb; }
   .film-detail-trigger, .film-detail-external-link { color: #d6e6c2; }
+  .film-detail-step:not(:disabled):hover { color: #182219; }
   .film-detail-genres { color: #c3d89c; }
   .setup-card { border-color: #424a40; background: #1e241f; }
   .setup-card .wordmark { color: var(--ink); }
@@ -635,6 +658,9 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .watched-chip { border-color: #a3bd85; color: #e2e8d9; }
   .poster-link { background: #30372f; }
   .poster-fallback { background: linear-gradient(145deg, #535943, #394a3b 52%, #775344); color: #f1f0df; }
+  .poster-fallback::before { border-color: #f1f0df55; }
+  .poster-fallback-title { color: #f1f0df; }
+  .poster-fallback-label, .poster-fallback-details { color: #e0e3d4; }
   .status-message { border-color: #465044; color: #c1c7b9; }
   .clear-search-state { border-color: #566251; color: #d6e6c2; }
   .clear-search-state:hover { border-color: #9bb977; background: #222a22; }

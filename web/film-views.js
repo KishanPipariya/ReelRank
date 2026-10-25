@@ -1,13 +1,21 @@
+import { posterFallbackFor } from './film-components.js';
+
 export function createFilmViews(dependencies) {
   const {
     getFilms, state, safeUrl, makeLink, directorCreditFor, countryRuntimeMetaFor,
     scoreMeterFor, genreChipFor, filmDetailButtonFor, toggleDirector,
     originalFilmFactsFor, sourceListNotesFor, filmProgrammeNotesFor,
-    filmDetailContent, filmDetailDialog,
+    filmDetailContent, filmDetailDialog, getCurrentMatchingFilms,
   } = dependencies;
 
 function openFilmDetails(film) {
+  renderFilmDetails(film);
+  if (!filmDetailDialog.open) filmDetailDialog.showModal();
+}
+
+function renderFilmDetails(film, retainFocus = false) {
   const films = getFilms();
+  const currentFilms = getCurrentMatchingFilms();
   filmDetailContent.replaceChildren();
   const layout = document.createElement('div');
   layout.className = 'film-detail-layout';
@@ -19,9 +27,12 @@ function openFilmDetails(film) {
     image.src = posterUrl;
     image.alt = `Poster for ${film.title}`;
     image.referrerPolicy = 'no-referrer';
+    image.addEventListener('error', () => {
+      image.replaceWith(posterFallbackFor(film, 'poster-fallback film-detail-poster-fallback'));
+    }, { once: true });
     poster.append(image);
   } else {
-    poster.textContent = film.title;
+    poster.append(posterFallbackFor(film, 'poster-fallback film-detail-poster-fallback'));
   }
   const copy = document.createElement('div');
   copy.className = 'film-detail-copy';
@@ -29,6 +40,37 @@ function openFilmDetails(film) {
   const kicker = document.createElement('p');
   kicker.className = 'film-detail-kicker';
   kicker.textContent = `Catalogue no. ${String(rank).padStart(3, '0')} · ${film.watched ? 'Watched' : 'Unwatched'}`;
+  const currentIndex = currentFilms.indexOf(film);
+  if (currentIndex >= 0) {
+    const navigation = document.createElement('nav');
+    navigation.className = 'film-detail-navigation';
+    navigation.setAttribute('aria-label', 'Browse films in the current results');
+    const position = document.createElement('span');
+    position.className = 'film-detail-position';
+    position.id = 'film-detail-position';
+    position.setAttribute('role', 'status');
+    position.setAttribute('aria-live', 'polite');
+    position.setAttribute('aria-atomic', 'true');
+    position.textContent = `Film ${currentIndex + 1} of ${currentFilms.length}`;
+    const previous = document.createElement('button');
+    previous.type = 'button';
+    previous.className = 'film-detail-step';
+    previous.id = 'film-detail-previous';
+    previous.textContent = '← Previous';
+    previous.disabled = currentIndex === 0;
+    previous.setAttribute('aria-label', currentIndex > 0 ? `Previous: ${currentFilms[currentIndex - 1].title}` : 'First film in the current results');
+    previous.addEventListener('click', () => renderFilmDetails(currentFilms[currentIndex - 1], 'previous'));
+    const next = document.createElement('button');
+    next.type = 'button';
+    next.className = 'film-detail-step';
+    next.id = 'film-detail-next';
+    next.textContent = 'Next →';
+    next.disabled = currentIndex >= currentFilms.length - 1;
+    next.setAttribute('aria-label', currentIndex < currentFilms.length - 1 ? `Next: ${currentFilms[currentIndex + 1].title}` : 'Last film in the current results');
+    next.addEventListener('click', () => renderFilmDetails(currentFilms[currentIndex + 1], 'next'));
+    navigation.append(previous, position, next);
+    copy.append(navigation);
+  }
   const title = document.createElement('h2');
   title.id = 'film-detail-title';
   title.textContent = film.title;
@@ -71,7 +113,12 @@ function openFilmDetails(film) {
   copy.append(links);
   layout.append(poster, copy);
   filmDetailContent.append(layout);
-  filmDetailDialog.showModal();
+  if (retainFocus) {
+    filmDetailDialog.scrollTop = 0;
+    const preferredFocus = filmDetailContent.querySelector(`#film-detail-${retainFocus}`);
+    const fallbackFocus = filmDetailContent.querySelector(retainFocus === 'next' ? '#film-detail-previous' : '#film-detail-next');
+    (preferredFocus?.disabled ? fallbackFocus : preferredFocus)?.focus();
+  }
 }
 
 
@@ -222,17 +269,11 @@ function featuredFilmFor(film) {
     image.loading = 'eager';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
-      const fallback = document.createElement('span');
-      fallback.className = 'poster-fallback';
-      fallback.textContent = film.title;
-      image.replaceWith(fallback);
+      image.replaceWith(posterFallbackFor(film));
     }, { once: true });
     poster.append(image);
   } else {
-    const fallback = document.createElement('span');
-    fallback.className = 'poster-fallback';
-    fallback.textContent = film.title;
-    poster.append(fallback);
+    poster.append(posterFallbackFor(film));
   }
   const rank = document.createElement('span');
   rank.className = 'rank-chip';
@@ -251,7 +292,7 @@ function featuredFilmFor(film) {
   copy.className = 'featured-film-copy';
   const label = document.createElement('p');
   label.className = 'featured-film-label';
-  label.textContent = `Program selection · Overall rank ${rankNumber}`;
+  label.textContent = `Programme selection · Overall rank ${rankNumber}`;
   copy.append(label);
   const title = document.createElement('h4');
   if (filmUrl) title.append(makeLink(film.title, filmUrl, 'featured-film-title'));

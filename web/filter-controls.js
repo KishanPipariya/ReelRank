@@ -54,10 +54,10 @@ export function createFilterControls({ state, sources, elements, actions }) {
 
   function renderActiveViewFilters() {
     const hasActiveView = Boolean(elements.searchInput.value.trim()) || state.filter !== 'all' || state.sort !== 'rank'
-      || state.genres.length || state.directors.length || state.sourceLists.length || state.country || state.decade !== '';
+      || state.genres.length || state.directors.length || state.sourceLists.length || state.country || state.decade !== '' || state.runtime;
     elements.activeViewTools.hidden = !hasActiveView;
     elements.activeGenreFilters.replaceChildren();
-    elements.activeGenreFilters.hidden = state.genres.length === 0 && !state.country && state.decade === '';
+    elements.activeGenreFilters.hidden = state.genres.length === 0 && !state.country && state.decade === '' && !state.runtime;
     state.genres.forEach((genre) => appendFacetChip(elements.activeGenreFilters, genre, `Remove ${genre} genre filter`, () => actions.toggleGenre(genre)));
     elements.activeDirectorFilters.replaceChildren();
     elements.activeDirectorFilters.hidden = state.directors.length === 0;
@@ -78,6 +78,10 @@ export function createFilterControls({ state, sources, elements, actions }) {
     });
     if (state.country) appendFacetChip(elements.activeGenreFilters, `Country: ${state.country}`, 'Remove production country filter', () => actions.setCountry(''));
     if (state.decade !== '') appendFacetChip(elements.activeGenreFilters, `${state.decade}s`, 'Remove decade filter', () => actions.setDecade(''));
+    if (state.runtime) {
+      const label = state.runtime === 'under-90' ? 'Under 90 min' : state.runtime === '90-120' ? '90–120 min' : 'Over 120 min';
+      appendFacetChip(elements.activeGenreFilters, label, `Remove runtime filter: ${label}`, () => actions.setRuntime(''));
+    }
   }
 
   function syncControls() {
@@ -96,6 +100,9 @@ export function createFilterControls({ state, sources, elements, actions }) {
     elements.ledgerDisplayButton.setAttribute('aria-pressed', String(state.view === 'ledger'));
     elements.decadeOptions.querySelectorAll('[data-decade]').forEach((button) => {
       button.setAttribute('aria-pressed', String(button.dataset.decade === (state.decade === '' ? '' : String(state.decade))));
+    });
+    elements.runtimeOptions.querySelectorAll('[data-runtime]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.runtime === state.runtime));
     });
     document.querySelectorAll('.filter-button').forEach((button) => {
       const selected = button.dataset.filter === state.filter;

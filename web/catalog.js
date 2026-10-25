@@ -20,6 +20,13 @@ export function matchesFilm(film, filters, sourceListUrls = film.lists || [], so
   if (filters.sourceLists?.length && !filters.sourceLists.some((url) => sourceListUrls.includes(url))) return false;
   if (filters.country && !(Array.isArray(film.countries) && film.countries.includes(filters.country))) return false;
   if (filters.decade !== undefined && filters.decade !== '' && filmDecade(film) !== filters.decade) return false;
+  if (filters.runtime) {
+    const runtime = Number(film.runtime_minutes);
+    if (!Number.isInteger(runtime) || runtime <= 0) return false;
+    if (filters.runtime === 'under-90' && runtime >= 90) return false;
+    if (filters.runtime === '90-120' && (runtime < 90 || runtime > 120)) return false;
+    if (filters.runtime === 'over-120' && runtime <= 120) return false;
+  }
   const query = (filters.query || '').toLocaleLowerCase();
   if (!query) return true;
   return searchText.includes(query);

@@ -1,3 +1,20 @@
+export function posterFallbackFor(film, className = 'poster-fallback') {
+  const cover = document.createElement('div');
+  cover.className = className;
+  const label = document.createElement('span');
+  label.className = 'poster-fallback-label';
+  label.textContent = 'ReelRank · Catalogue';
+  const title = document.createElement('strong');
+  title.className = 'poster-fallback-title';
+  title.textContent = film.title || 'Untitled film';
+  const details = document.createElement('span');
+  details.className = 'poster-fallback-details';
+  const director = Array.isArray(film.directors) ? film.directors.find((name) => typeof name === 'string' && name.trim()) : '';
+  details.textContent = [film.year, director].filter(Boolean).join(' · ');
+  cover.append(label, title, details);
+  return cover;
+}
+
 export function cardFor(film, index, dependencies) {
   const { films, state, safeUrl, makeLink, directorCreditFor, countryRuntimeMetaFor, scoreMeterFor, genreChipFor, filmDetailButtonFor } = dependencies;
   const rankNumber = films.indexOf(film) + 1;
@@ -24,17 +41,11 @@ export function cardFor(film, index, dependencies) {
     image.loading = state.filter === 'watched' ? 'eager' : 'lazy';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
-      const fallback = document.createElement('div');
-      fallback.className = 'poster-fallback';
-      fallback.textContent = film.title;
-      image.replaceWith(fallback);
+      image.replaceWith(posterFallbackFor(film));
     }, { once: true });
     poster.append(image);
   } else {
-    const fallback = document.createElement('div');
-    fallback.className = 'poster-fallback';
-    fallback.textContent = film.title;
-    poster.append(fallback);
+    poster.append(posterFallbackFor(film));
   }
 
   const rank = document.createElement('span');

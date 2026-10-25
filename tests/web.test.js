@@ -67,6 +67,15 @@ test('catalog filters combine genres, director, list, country, decade, and query
   assert.equal(matchesFilm(film, { ...filters, query: 'la llegada' }, film.lists, ['Favorites']), true);
 });
 
+test('runtime filters use clear boundaries and exclude unknown runtimes', () => {
+  const film = { title: 'Screening', year: '2000', runtime_minutes: 90 };
+  assert.equal(matchesFilm(film, { runtime: 'under-90' }), false);
+  assert.equal(matchesFilm(film, { runtime: '90-120' }), true);
+  assert.equal(matchesFilm({ ...film, runtime_minutes: 120 }, { runtime: '90-120' }), true);
+  assert.equal(matchesFilm({ ...film, runtime_minutes: 121 }, { runtime: 'over-120' }), true);
+  assert.equal(matchesFilm({ ...film, runtime_minutes: null }, { runtime: 'under-90' }), false);
+});
+
 test('catalog search index includes metadata and source list labels', () => {
   const film = { title: 'Arrival', year: '2016', overview: 'A linguist arrives', genres: ['Drama'], directors: ['Denis Villeneuve'] };
   const searchable = buildSearchText(film, ['Evening programme']);
@@ -97,11 +106,13 @@ test('URL state parsing removes duplicate facets and ignores unsupported options
 test('URL state serialization preserves unrelated parameters and supports repeatable filters', () => {
   const url = urlForState('https://example.test/?demo=1&genre=Old', {
     filter: 'unwatched', sort: 'year-newest', genres: ['Drama', 'Crime'], directors: ['Director'],
-    sourceLists: [], country: 'Japan', decade: 1960, view: 'ledger',
+    sourceLists: [], country: 'Japan', decade: 1960, runtime: '90-120', view: 'ledger',
   }, '  Rashomon  ');
   assert.equal(url.searchParams.get('demo'), '1');
   assert.equal(url.searchParams.get('q'), 'Rashomon');
   assert.deepEqual(url.searchParams.getAll('genre'), ['Drama', 'Crime']);
   assert.equal(url.searchParams.get('director'), 'Director');
   assert.equal(url.searchParams.get('view'), 'ledger');
+  assert.equal(url.searchParams.get('runtime'), '90-120');
+  assert.equal(parseUrlState(url.search).runtime, '90-120');
 });
