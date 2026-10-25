@@ -496,14 +496,21 @@ function originalTitleCreditFor(film, className) {
   const languageCode = film.original_language.trim();
   const credit = document.createElement('p');
   credit.className = className;
+  credit.setAttribute('role', 'group');
+  credit.setAttribute('aria-label', `Original title in ${languageNameFor(languageCode)}`);
   const label = document.createElement('span');
   label.className = 'original-title-credit-label';
-  label.textContent = `${languageNameFor(languageCode)} original title`;
+  label.textContent = languageCode.toLocaleUpperCase();
+  label.setAttribute('aria-hidden', 'true');
+  const divider = document.createElement('span');
+  divider.className = 'original-title-credit-divider';
+  divider.textContent = '·';
+  divider.setAttribute('aria-hidden', 'true');
   const title = document.createElement('span');
   title.className = 'original-title-credit-title';
   title.lang = languageCode;
   title.textContent = film.original_title.trim();
-  credit.append(label, title);
+  credit.append(label, divider, title);
   return credit;
 }
 
@@ -511,6 +518,7 @@ function originalDetailsFor(film) {
   const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
   const languageCode = typeof film.original_language === 'string' ? film.original_language.trim() : '';
   const hasDistinctTitle = originalTitle && originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0;
+  if (languageCode.toLocaleLowerCase().split('-')[0] === 'en') return null;
   if (hasInlineOriginalTitle(film)) return null;
   if (!hasDistinctTitle && !languageCode) return null;
   const languageName = languageNameFor(languageCode);

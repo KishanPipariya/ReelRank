@@ -169,12 +169,14 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .featured-film-director { margin: 11px 0 0; color: #e0e3da; font-size: 14px; line-height: 1.45; }
 .featured-film-facts { margin: 6px 0 0; color: #c6cec0; font-family: var(--mono); font-size: 12px; line-height: 1.45; }
 .featured-film-overview { max-width: 640px; display: -webkit-box; overflow: hidden; margin: 9px 0 0; color: #d2d7cc; font-size: 12px; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-.original-title-credit { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 6px; margin: 4px 0 0; line-height: 1.35; }
-.original-title-credit-label { color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .04em; text-transform: uppercase; }
-.original-title-credit-title { color: var(--ink); font-family: var(--serif); font-size: 11px; font-style: italic; }
+.original-title-credit { min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; margin: 5px 0 0; line-height: 1.25; }
+.original-title-credit-label { flex: 0 0 auto; padding: 1px 4px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-family: var(--mono); font-size: 7px; letter-spacing: .08em; line-height: 1.2; white-space: nowrap; }
+.original-title-credit-divider { color: var(--orange); font-family: var(--mono); font-size: 9px; }
+.original-title-credit-title { min-width: 0; color: var(--ink); font-family: var(--serif); font-size: 9px; line-height: 1.25; overflow-wrap: anywhere; }
 .featured-original-title-credit { margin-top: 8px; }
-.featured-original-title-credit .original-title-credit-label { color: #c6cec0; }
-.featured-original-title-credit .original-title-credit-title { color: #fffdf5; font-size: 13px; }
+.featured-original-title-credit .original-title-credit-label { border-color: #d4e6c755; color: #d2dfc6; }
+.featured-original-title-credit .original-title-credit-divider { color: #f0a07b; }
+.featured-original-title-credit .original-title-credit-title { color: #fffdf5; font-size: 11px; }
 .featured-film-count { display: flex; align-items: baseline; gap: 7px; margin: 17px 0 0; color: #e0e3da; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
 .featured-film-count strong { color: #d2e69f; font-family: var(--serif); font-size: 24px; font-weight: 600; line-height: 1; }
 .top-billed-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 24px; }
@@ -361,7 +363,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .featured-film-director { font-size: 12px; }
   .featured-film-facts, .featured-film-count { font-size: 11px; }
   .featured-film-overview { font-size: 10px; -webkit-line-clamp: 2; }
-  .featured-original-title-credit .original-title-credit-title { font-size: 11px; }
+  .featured-original-title-credit .original-title-credit-title { font-size: 10px; }
   .film-info { padding: 8px 6px 8px; }
   .film-title { font-size: 12px; }
   .director-credit { font-size: 9px; }
