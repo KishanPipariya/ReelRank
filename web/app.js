@@ -6,11 +6,13 @@ const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
 const genreFilter = document.querySelector('#genre-filter');
+const genreFilterTrigger = document.querySelector('#genre-filter > summary');
 const genreFilterSummary = document.querySelector('#genre-filter-summary');
 const genreOptions = document.querySelector('#genre-options');
 const genreSearchInput = document.querySelector('#genre-search');
 const genreEmptyState = document.querySelector('#genre-empty-state');
 const clearGenresButton = document.querySelector('#clear-genres');
+const closeGenresButton = document.querySelector('#close-genres');
 const selectedGenres = document.querySelector('#selected-genres');
 const backToFiltersButton = document.querySelector('#back-to-filters');
 const clearSearchStateButton = document.querySelector('#clear-search-state');
@@ -591,6 +593,13 @@ clearGenresButton.addEventListener('click', () => {
   updateUrlState();
   render();
 });
+closeGenresButton.addEventListener('click', () => {
+  genreFilter.open = false;
+  genreFilterTrigger.focus();
+});
+document.addEventListener('pointerdown', (event) => {
+  if (genreFilter.open && !genreFilter.contains(event.target)) genreFilter.open = false;
+});
 loadMoreButton.addEventListener('click', () => {
   visibleLimit += 40;
   render();
@@ -601,6 +610,12 @@ backToFiltersButton.addEventListener('click', () => {
 });
 window.addEventListener('scroll', updateBackToFiltersVisibility, { passive: true });
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && genreFilter.open) {
+    event.preventDefault();
+    genreFilter.open = false;
+    genreFilterTrigger.focus();
+    return;
+  }
   if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
     event.preventDefault();
     searchInput.focus();
