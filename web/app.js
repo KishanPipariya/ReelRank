@@ -7,11 +7,22 @@ const topBilledGrid = document.querySelector('#top-billed-grid');
 const statusMessage = document.querySelector('#status-message');
 const posterDisplayButton = document.querySelector('#poster-display-button');
 const ledgerDisplayButton = document.querySelector('#ledger-display-button');
+const printProgrammeButton = document.querySelector('#print-programme-button');
+const countryIndexToggle = document.querySelector('#country-index-toggle');
+const countryIndex = document.querySelector('.country-index');
+const countryIndexHeading = document.querySelector('.country-index-heading');
+const countryIndexSearch = document.querySelector('#country-index-search');
+const countryIndexSearchControl = document.querySelector('#country-index-search-control');
+const countryIndexEmpty = document.querySelector('#country-index-empty');
 const directorFilmography = document.querySelector('#director-filmography');
+const printProgrammeTitle = document.querySelector('#print-programme-title');
+const printProgrammeUsername = document.querySelector('#print-programme-username');
+const printProgrammeDate = document.querySelector('#print-programme-date');
+const printProgrammeContext = document.querySelector('#print-programme-context');
+const printProgrammeFilms = document.querySelector('#print-programme-films');
 const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
-const countrySelect = document.querySelector('#country-select');
 const countryIndexOptions = document.querySelector('#country-index-options');
 const decadeOptions = document.querySelector('#decade-options');
 const genreFilter = document.querySelector('#genre-filter');
@@ -51,12 +62,16 @@ let activeDecade = readUrlState().decade;
 let availableGenres = [];
 let availableDirectors = [];
 let availableDecades = [];
+let availableCountries = [];
 let rankedTotal = 0;
 let visibleLimit = 40;
 let searchUrlTimer;
 let searchEditing = false;
 let currentShownCount = 0;
 let currentMatchCount = 0;
+let currentMatchingFilms = [];
+let countryAtlasSize = 0;
+let snapshotRefreshedAt = '';
 
 function readUrlState() {
   const params = new URLSearchParams(window.location.search);
@@ -74,12 +89,39 @@ function readUrlState() {
   };
 }
 
+function setCountryIndexExpanded(expanded) {
+  countryIndex.classList.toggle('is-expanded', expanded);
+  countryIndexOptions.classList.toggle('is-expanded', expanded);
+  countryIndexSearchControl.hidden = !expanded;
+  if (!expanded) countryIndexSearch.value = '';
+  countryIndexHeading.textContent = expanded ? 'Production countries' : 'Leading production countries';
+  countryIndexToggle.setAttribute('aria-expanded', String(expanded));
+  countryIndexToggle.textContent = expanded ? 'Show leading six' : `Browse all ${countryAtlasSize}`;
+  updateCountryIndexVisibility();
+}
+
+function updateCountryIndexVisibility() {
+  const expanded = countryIndexOptions.classList.contains('is-expanded');
+  const query = countryIndexSearch.value.trim().toLocaleLowerCase();
+  let visibleCount = 0;
+  countryIndexOptions.querySelectorAll('[data-country]').forEach((button, index) => {
+    const inLeadingSix = index < 6;
+    const matchesSearch = button.dataset.country.toLocaleLowerCase().includes(query);
+    button.hidden = (!expanded && !inLeadingSix) || !matchesSearch;
+    if (!button.hidden) visibleCount += 1;
+  });
+  countryIndexEmpty.hidden = !expanded || visibleCount > 0;
+}
+
 function syncControls() {
   sortSelect.value = activeSort;
-  countrySelect.value = activeCountry;
   countryIndexOptions.querySelectorAll('[data-country]').forEach((button) => {
     const selected = button.dataset.country === activeCountry;
     button.setAttribute('aria-pressed', String(selected));
+    if (selected && button.hidden) {
+      countryIndexSearch.value = '';
+      setCountryIndexExpanded(true);
+    }
   });
   posterDisplayButton.classList.toggle('is-active', activeView === 'posters');
   posterDisplayButton.setAttribute('aria-pressed', String(activeView === 'posters'));
@@ -207,6 +249,7 @@ function buildCatalogFilters() {
   const countries = [...countryCounts.keys()]
     .filter((country) => typeof country === 'string' && country.trim())
     .sort((left, right) => left.localeCompare(right));
+  availableCountries = countries;
   const decadeCounts = new Map();
   films.forEach((film) => {
     const decade = filmDecade(film);
@@ -214,12 +257,13 @@ function buildCatalogFilters() {
   });
   const decades = [...decadeCounts.keys()].sort((a, b) => a - b);
   availableDecades = decades;
-  countrySelect.replaceChildren(new Option('Any country', ''), ...countries.map((country) => new Option(country, country)));
-  const leadingCountries = [...countryCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])).slice(0, 6);
-  countryIndexOptions.replaceChildren(...leadingCountries.map(([country, count]) => {
+  const countryAtlas = [...countryCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]));
+  countryAtlasSize = countryAtlas.length;
+  countryIndexOptions.replaceChildren(...countryAtlas.map(([country, count], index) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'country-index-option';
+    button.hidden = index >= 6;
     button.dataset.country = country;
     button.setAttribute('aria-pressed', 'false');
     button.setAttribute('aria-label', `Filter by production country ${country}, ${count} films`);
@@ -231,6 +275,7 @@ function buildCatalogFilters() {
     button.addEventListener('click', () => toggleCountry(country));
     return button;
   }));
+  countryIndexToggle.hidden = countryAtlasSize <= 6;
   const allEras = document.createElement('button');
   allEras.type = 'button';
   allEras.className = 'decade-option decade-option-all';
@@ -248,6 +293,8 @@ function buildCatalogFilters() {
   }));
   activeCountry = countries.includes(activeCountry) ? activeCountry : '';
   activeDecade = decades.includes(Number(activeDecade)) ? Number(activeDecade) : '';
+  const selectedCountryIndex = countryAtlas.findIndex(([country]) => country === activeCountry);
+  setCountryIndexExpanded(selectedCountryIndex >= 6);
   availableDirectors = [...new Set(films.flatMap((film) => Array.isArray(film.directors) ? film.directors : []))]
     .filter((director) => typeof director === 'string' && director.trim())
     .sort((left, right) => left.localeCompare(right));
@@ -398,7 +445,7 @@ function restoreUrlState() {
   activeView = state.view;
   activeGenres = state.genres.filter((genre) => availableGenres.includes(genre));
   activeDirectors = state.directors.filter((director) => availableDirectors.includes(director));
-  activeCountry = state.country && [...countrySelect.options].some((option) => option.value === state.country)
+  activeCountry = availableCountries.includes(state.country)
     ? state.country
     : '';
   const decadeValue = state.decade === '' ? '' : String(state.decade);
@@ -1133,6 +1180,90 @@ function programmeHeadingFor(query, defaultRankedView, matching) {
   return { eyebrow: 'Your current programme', title: `${matching.length} films` };
 }
 
+function buildPrintProgramme() {
+  const filmsForProgramme = [...currentMatchingFilms].sort((left, right) => compareFilms(left, right, 'year-oldest'));
+  printProgrammeTitle.textContent = topBilledTitle.textContent || 'ReelRank programme';
+  printProgrammeUsername.textContent = document.querySelector('#profile-username').textContent;
+  printProgrammeDate.textContent = formatEditionDate(snapshotRefreshedAt);
+  printProgrammeDate.dateTime = snapshotRefreshedAt;
+  const activeFilters = [
+    activeFilter === 'all' ? '' : `${activeFilter} films`,
+    activeDirectors.length ? `directors: ${activeDirectors.join(' / ')}` : '',
+    activeCountry ? `country: ${activeCountry}` : '',
+    activeDecade !== '' ? `decade: ${activeDecade}s` : '',
+    activeGenres.length ? `genres: ${activeGenres.join(' / ')}` : '',
+    searchInput.value.trim() ? `search: ${searchInput.value.trim()}` : '',
+  ].filter(Boolean);
+  const selectedView = activeFilters.length ? `Selected view: ${activeFilters.join(' · ')}` : 'Full catalogue';
+  printProgrammeContext.textContent = `${filmsForProgramme.length} ${filmsForProgramme.length === 1 ? 'film' : 'films'} · Arranged by release year · ${selectedView}`;
+  printProgrammeFilms.replaceChildren();
+
+  if (!filmsForProgramme.length) {
+    const empty = document.createElement('p');
+    empty.className = 'print-programme-empty';
+    empty.textContent = 'No films match this programme.';
+    printProgrammeFilms.append(empty);
+    return;
+  }
+
+  let currentYear = null;
+  let yearList = null;
+  filmsForProgramme.forEach((film) => {
+    const year = film.year?.trim() || 'Year unknown';
+    if (year !== currentYear) {
+      const chapter = document.createElement('section');
+      chapter.className = 'print-year-chapter';
+      const heading = document.createElement('h2');
+      heading.textContent = year;
+      yearList = document.createElement('ol');
+      yearList.className = 'print-year-films';
+      chapter.append(heading, yearList);
+      printProgrammeFilms.append(chapter);
+      currentYear = year;
+    }
+
+    const entry = document.createElement('li');
+    entry.className = 'print-film-entry';
+    const catalogueNumber = document.createElement('span');
+    catalogueNumber.className = 'print-film-number';
+    catalogueNumber.textContent = `No. ${String(films.indexOf(film) + 1).padStart(3, '0')}`;
+    const details = document.createElement('div');
+    details.className = 'print-film-details';
+    const title = document.createElement('h3');
+    title.textContent = film.title;
+    const credits = document.createElement('p');
+    credits.className = 'print-film-credits';
+    const facts = [];
+    const directors = [...new Set(Array.isArray(film.directors) ? film.directors : [])];
+    if (directors.length) facts.push(`Directed by ${directors.join(', ')}`);
+    const countries = [...new Set(Array.isArray(film.countries) ? film.countries : [])];
+    if (countries.length) facts.push(countries.join(', '));
+    if (Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0) facts.push(`${film.runtime_minutes} min`);
+    const language = typeof film.original_language === 'string' ? film.original_language.trim() : '';
+    const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
+    const isNonEnglish = language && language.toLocaleLowerCase().split('-')[0] !== 'en';
+    const hasDistinctOriginalTitle = originalTitle && originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0;
+    if (isNonEnglish && hasDistinctOriginalTitle) facts.push(`Original title: ${originalTitle}`);
+    if (isNonEnglish) facts.push(`Original language: ${languageNameFor(language)}`);
+    if (film.watched) facts.push('Watched');
+    credits.textContent = facts.join(' · ');
+    details.append(title, credits);
+    const score = document.createElement('p');
+    score.className = 'print-film-score';
+    const scoreValue = document.createElement('strong');
+    const likedIn = Number(film.liked_in) || 0;
+    scoreValue.textContent = likedIn.toLocaleString();
+    score.append(scoreValue, ` ${likedIn === 1 ? 'list appearance' : 'list appearances'}`);
+    entry.append(catalogueNumber, details, score);
+    yearList.append(entry);
+  });
+}
+
+function printProgramme() {
+  buildPrintProgramme();
+  window.print();
+}
+
 function featuredFilmFor(film) {
   const rankNumber = films.indexOf(film) + 1;
   const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
@@ -1312,7 +1443,29 @@ function renderDirectorFilmography() {
     ? ` · ${years[0] === years[years.length - 1] ? years[0] : `${years[0]}–${years[years.length - 1]}`}`
     : '';
   details.textContent = `${titles.length} ${titles.length === 1 ? 'film' : 'films'} in this catalogue${yearSpan}`;
-  directorFilmography.append(label, name, details);
+  const heading = document.createElement('div');
+  heading.className = 'director-filmography-heading';
+  heading.append(label, name, details);
+  const timeline = document.createElement('div');
+  timeline.className = 'director-career-timeline';
+  timeline.setAttribute('role', 'group');
+  timeline.setAttribute('aria-label', `Films by ${director}, linked by release year`);
+  [...titles].sort((left, right) => compareFilms(left, right, 'year-oldest')).forEach((film) => {
+    const year = film.year || '—';
+    const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
+    const marker = document.createElement(filmUrl ? 'a' : 'span');
+    marker.className = 'director-career-year';
+    marker.textContent = year;
+    marker.title = `${film.title} (${year})`;
+    marker.setAttribute('aria-label', `${film.title}, ${year}${filmUrl ? ', opens on Letterboxd in a new tab' : ''}`);
+    if (filmUrl) {
+      marker.href = filmUrl;
+      marker.target = '_blank';
+      marker.rel = 'noreferrer';
+    }
+    timeline.append(marker);
+  });
+  directorFilmography.append(heading, timeline);
 }
 
 function render() {
@@ -1327,6 +1480,7 @@ function render() {
     return matchesSearchAndGenres(film, query);
   });
   matching.sort((left, right) => compareFilms(left, right));
+  currentMatchingFilms = matching;
   const ledgerView = activeView === 'ledger';
   const rankedPosterView = !ledgerView && activeSort === 'rank';
   const highlighted = rankedPosterView ? matching.slice(0, 3) : [];
@@ -1424,6 +1578,7 @@ async function loadSnapshot() {
     setupState.hidden = true;
     siteShell.hidden = false;
     films = snapshot.films;
+    snapshotRefreshedAt = snapshot.refreshed_at;
     const colophon = editionColophonFor(films);
     document.querySelector('#edition-leading-decade').textContent = colophon.decade;
     document.querySelector('#edition-leading-country').textContent = colophon.country;
@@ -1522,9 +1677,13 @@ clearGenresButton.addEventListener('click', () => {
   updateUrlState();
   render();
 });
-countrySelect.addEventListener('change', () => setCountry(countrySelect.value));
+countryIndexToggle.addEventListener('click', () => {
+  setCountryIndexExpanded(countryIndexToggle.getAttribute('aria-expanded') !== 'true');
+});
+countryIndexSearch.addEventListener('input', updateCountryIndexVisibility);
 posterDisplayButton.addEventListener('click', () => setView('posters'));
 ledgerDisplayButton.addEventListener('click', () => setView('ledger'));
+printProgrammeButton.addEventListener('click', printProgramme);
 decadeOptions.addEventListener('click', (event) => {
   const button = event.target.closest('[data-decade]');
   if (button) setDecade(button.dataset.decade);

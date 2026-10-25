@@ -121,12 +121,6 @@
                   <p id="genre-empty-state" class="genre-empty-state" hidden>No genres match that search.</p>
                 </div>
               </details>
-              <label class="facet-select">
-                <span class="sr-only">Filter by production country</span>
-                <select id="country-select" aria-label="Filter by production country">
-                  <option value="">Any country</option>
-                </select>
-              </label>
               <label class="sort-control">
                 <span class="sr-only">Sort films</span>
                 <select id="sort-select" aria-label="Sort films">
@@ -147,7 +141,13 @@
             <div id="decade-options" class="decade-options" role="group" aria-label="Filter films by release decade"></div>
             <div class="country-index">
               <p class="country-index-heading">Leading production countries</p>
+              <label id="country-index-search-control" class="country-index-search-control" hidden>
+                <span class="sr-only">Search all production countries</span>
+                <input id="country-index-search" type="search" placeholder="Find a country" autocomplete="off" />
+              </label>
               <div id="country-index-options" class="country-index-options" role="group" aria-label="Filter by leading production countries"></div>
+              <p id="country-index-empty" class="country-index-empty" role="status" hidden>No countries match that search.</p>
+              <button id="country-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Browse all countries</button>
             </div>
           </section>
           <div id="active-view-tools" class="active-view-tools" hidden>
@@ -156,10 +156,13 @@
             <button id="clear-search-state" class="clear-search-state" type="button">Clear search &amp; reset view</button>
           </div>
           <div class="collection-display-bar">
-            <p id="director-filmography" class="director-filmography" hidden></p>
-            <div class="collection-view-control" role="group" aria-label="Choose film layout">
-              <button id="poster-display-button" class="collection-view-button is-active" type="button" aria-pressed="true">Poster wall</button>
-              <button id="ledger-display-button" class="collection-view-button" type="button" aria-pressed="false">Ledger</button>
+            <div id="director-filmography" class="director-filmography" hidden></div>
+            <div class="collection-display-actions">
+              <div class="collection-view-control" role="group" aria-label="Choose film layout">
+                <button id="poster-display-button" class="collection-view-button is-active" type="button" aria-pressed="true">Poster wall</button>
+                <button id="ledger-display-button" class="collection-view-button" type="button" aria-pressed="false">Ledger</button>
+              </div>
+              <button id="print-programme-button" class="print-programme-button" type="button">Print programme</button>
             </div>
           </div>
           <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>
@@ -204,5 +207,16 @@
         <div><strong>Film data and poster credits</strong><p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p></div>
       </section>
     </div>
+    <main id="print-programme" class="print-programme" hidden aria-label="Printable ReelRank programme">
+      <header class="print-programme-header">
+        <p class="print-programme-kicker">ReelRank · Catalogue edition</p>
+        <h1 id="print-programme-title">Film programme</h1>
+        <p class="print-programme-edition"><span id="print-programme-username"></span><span aria-hidden="true"> · </span><time id="print-programme-date"></time></p>
+        <p id="print-programme-context" class="print-programme-context"></p>
+        <p class="print-programme-method">Catalogue numbers preserve overall rank. Scores count how many liked lists include each film.</p>
+      </header>
+      <div id="print-programme-films" class="print-programme-films"></div>
+      <footer class="print-programme-footer">A ReelRank catalogue · Based on public Letterboxd lists and film credits</footer>
+    </main>
   </body>
 </html>
