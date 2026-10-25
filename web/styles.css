@@ -168,7 +168,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .film-count::before { width: 3px; height: 18px; align-self: center; background: var(--rust-ink); content: ''; }
 .film-count strong { color: var(--forest); font-family: var(--serif); font-size: 19px; font-weight: 600; letter-spacing: -.04em; line-height: 1; }
 .genre-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
-.genre-tag { max-width: 100%; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-soft); color: var(--control-ink); cursor: pointer; font-size: 9px; line-height: 1.25; }
+.genre-tag { min-height: 24px; max-width: 100%; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-soft); color: var(--control-ink); cursor: pointer; font-size: 9px; line-height: 1.25; }
 .genre-tag:hover, .genre-tag[aria-pressed='true'] { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); }
 .genre-tag-more { display: none; flex: 0 0 auto; }
 .film-overview { margin: 8px 0 0; color: #62685e; font-size: 11px; line-height: 1.6; }
