@@ -147,8 +147,30 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .top-billed-heading { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
 .top-billed-heading .section-eyebrow { margin: 0; }
 .top-billed-heading h3 { margin: 0; font-family: var(--serif); font-size: 22px; font-weight: 500; letter-spacing: -.04em; }
-.top-billed-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 38px 24px; }
+.top-billed-feature { margin-bottom: 22px; }
+.featured-film { min-height: 540px; position: relative; display: grid; grid-template-columns: 360px minmax(0, 1fr); align-items: center; gap: 32px; overflow: hidden; padding: 25px 34px; border: 1px solid #586755; background: #1b2b22; color: #f4f1e8; }
+.featured-film::before { position: absolute; z-index: 1; inset: 0; background: linear-gradient(90deg, #17231df2 0%, #17231de8 42%, #17231dc7 100%); content: ''; pointer-events: none; }
+.featured-film::after { position: absolute; z-index: 1; inset: 9px; border: 1px solid #f0ead826; content: ''; pointer-events: none; }
+.featured-film-backdrop { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; opacity: .52; }
+.featured-film-poster { width: min(100%, 360px); position: relative; z-index: 2; display: block; overflow: hidden; aspect-ratio: 2 / 3; border: 1px solid #f7f1e766; background: #30372f; box-shadow: 0 8px 20px #080d0a66; }
+.featured-film-poster > img, .featured-film-poster > .poster-fallback { width: 100%; height: 100%; display: block; object-fit: cover; }
+.featured-film-copy { min-width: 0; position: relative; z-index: 2; }
+.featured-film-label { margin: 0 0 9px; color: #d2dfc6; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+.featured-film-label::before { margin-right: 7px; color: #f0a07b; content: '✳'; }
+.featured-film-copy h4 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px 12px; margin: 0; font-weight: 500; }
+.featured-film-title { color: #fffdf5; font-family: var(--serif); font-size: clamp(23px, 3.3vw, 38px); line-height: 1.08; letter-spacing: -.045em; text-decoration-color: #ffffff80; text-underline-offset: 3px; }
+.featured-film-year { color: #d0d6ca; font-family: var(--mono); font-size: 11px; }
+.featured-film-director { margin: 11px 0 0; color: #e0e3da; font-size: 14px; line-height: 1.45; }
+.featured-film-facts { margin: 6px 0 0; color: #c6cec0; font-family: var(--mono); font-size: 12px; line-height: 1.45; }
+.featured-film-count { display: flex; align-items: baseline; gap: 7px; margin: 17px 0 0; color: #e0e3da; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.featured-film-count strong { color: #d2e69f; font-family: var(--serif); font-size: 24px; font-weight: 600; line-height: 1; }
+.top-billed-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 24px; }
 .top-billed-grid .film-card { width: min(100%, 28vw, 360px); justify-self: center; }
+.top-billed-grid .film-title { font-size: 16px; }
+.top-billed-grid .director-credit { font-size: 12px; }
+.top-billed-grid .cinephile-meta { font-size: 11px; }
+.top-billed-grid .film-count { font-size: 10px; }
+.top-billed-grid .film-count strong { font-size: 21px; }
 .film-card { min-width: 0; animation: arrive .35s ease both; }
 @keyframes arrive { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 .poster-link { display: block; position: relative; overflow: hidden; aspect-ratio: 2 / 3; border: 1px solid #383c301c; background: #dedbd2; box-shadow: 0 2px 6px #24251d12, 0 10px 22px #24251d0d; text-decoration: none; transition: transform .25s ease, box-shadow .25s ease; }
@@ -162,6 +184,8 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .film-info { position: relative; margin-top: 0; padding: 11px 10px 10px; border: 1px solid var(--line); border-top: 0; background: var(--surface); }
 .film-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin: 0; font: inherit; }
 .film-title { min-width: 0; min-height: 2.7em; flex: 1 1 auto; display: -webkit-box; overflow: hidden; color: var(--ink); font-family: var(--serif); font-size: 14px; font-weight: 500; line-height: 1.35; text-decoration-color: #818778; text-underline-offset: 2px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.director-credit { margin: 5px 0 0; overflow: hidden; color: var(--forest); font-size: 10px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+.cinephile-meta { margin: 4px 0 0; overflow: hidden; color: #747a70; font-family: var(--mono); font-size: 9px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
 .film-year { flex: 0 0 auto; padding-left: 8px; border-left: 1px solid var(--line); color: #62685e; font-family: var(--mono); font-size: 10px; }
 .film-count { display: flex; align-items: baseline; gap: 7px; margin: 8px 0 0; color: #62685e; font-family: var(--mono); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
 .film-count::before { width: 3px; height: 18px; align-self: center; background: var(--rust-ink); content: ''; }
@@ -211,8 +235,13 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .sr-only { width: 1px; height: 1px; position: absolute; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 
 @media (forced-colors: active) {
-  .search-box, .filter-tabs, .sort-control select, .genre-filter-toggle, .genre-filter-menu, .genre-search-box, .genre-tag, .selected-genre-chip, .load-more, .clear-search-state, .back-to-filters, .poster-link { border: 1px solid ButtonText; }
+  .search-box, .filter-tabs, .sort-control select, .genre-filter-toggle, .genre-filter-menu, .genre-search-box, .genre-tag, .selected-genre-chip, .load-more, .clear-search-state, .back-to-filters, .poster-link, .featured-film { border: 1px solid ButtonText; }
   .genre-option input { forced-color-adjust: auto; }
+  .featured-film { background: Canvas; color: CanvasText; }
+  .featured-film::before { display: none; }
+  .featured-film::after { border-color: CanvasText; }
+  .featured-film-label, .featured-film-year, .featured-film-director, .featured-film-facts, .featured-film-count { color: CanvasText; }
+  .featured-film-title { color: LinkText; }
   .setup-card, .demo-banner { border: 1px solid ButtonText; }
   :focus-visible, .search-box:focus-within { outline-color: Highlight; }
   a { text-decoration: underline; }
@@ -234,8 +263,9 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .film-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .top-billed { padding-inline: 0; }
   .top-billed-heading { padding-inline: 22px; }
-  .top-billed-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .top-billed-grid .film-card { width: 100%; }
+  .top-billed-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .featured-film { min-height: 0; grid-template-columns: minmax(230px, 30vw) minmax(0, 1fr); gap: 20px; padding: 20px; }
+  .featured-film-poster { width: 100%; }
   .hero { padding-inline: 6%; }
   .hero-stamp { width: 132px; height: 132px; }
   .stamp-main { font-size: 21px; }
@@ -282,8 +312,20 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .top-billed-heading { align-items: baseline; justify-content: space-between; }
   .top-billed-heading .section-eyebrow { font-size: 9px; }
   .top-billed-heading h3 { font-size: 19px; }
+  .featured-film { grid-template-columns: minmax(135px, 44vw) minmax(0, 1fr); gap: 15px; padding: 17px; }
+  .featured-film-poster { width: 100%; }
+  .featured-film-label { font-size: 9px; letter-spacing: .09em; }
+  .featured-film-title { font-size: clamp(20px, 5.8vw, 29px); }
+  .featured-film-director { font-size: 12px; }
+  .featured-film-facts, .featured-film-count { font-size: 11px; }
   .film-info { padding: 8px 6px 8px; }
   .film-title { font-size: 12px; }
+  .director-credit { font-size: 9px; }
+  .top-billed-grid .film-title { font-size: 13px; }
+  .top-billed-grid .director-credit { font-size: 10px; }
+  .top-billed-grid .cinephile-meta, .top-billed-grid .film-count { font-size: 10px; }
+  .top-billed-grid .film-count strong { font-size: 20px; }
+  .top-billed-grid .film-card { width: min(100%, 44vw, 240px); }
   .film-overview { font-size: 10px; }
   .back-to-filters { right: 12px; bottom: 12px; padding: 10px 11px; font-size: 9px; }
   .footer { min-height: 75px; flex-wrap: wrap; padding: 16px 0; }
@@ -298,6 +340,9 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .hero-description { max-width: none; }
   .collection-tools { gap: 7px; }
   .filter-button { padding-inline: 4px; font-size: 9px; }
+  .featured-film { grid-template-columns: minmax(125px, 40vw) minmax(0, 1fr); gap: 11px; padding: 14px; }
+  .featured-film::after { inset: 6px; }
+  .featured-film-label { margin-bottom: 6px; font-size: 8px; }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -344,6 +389,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .watch-progress progress::-moz-progress-bar { background: #b5d67a; }
   .film-count { color: #b5bbad; }
   .film-count strong { color: #c7e58f; }
+  .director-credit, .cinephile-meta { color: #bec6b7; }
   .film-year { color: #a4aa9e; }
   .film-overview { color: #bbc0b5; }
   .overview-toggle, .list-details summary { color: #c0c5b9; }

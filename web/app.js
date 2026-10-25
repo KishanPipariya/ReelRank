@@ -1,5 +1,6 @@
 const grid = document.querySelector('#film-grid');
 const topBilled = document.querySelector('#top-billed');
+const topBilledFeature = document.querySelector('#top-billed-feature');
 const topBilledGrid = document.querySelector('#top-billed-grid');
 const statusMessage = document.querySelector('#status-message');
 const searchInput = document.querySelector('#search-input');
@@ -414,6 +415,25 @@ function cardFor(film, index) {
   titleRow.append(year);
   info.append(titleRow);
 
+  const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
+  if (directors.length) {
+    const director = document.createElement('p');
+    director.className = 'director-credit';
+    director.textContent = `Directed by ${directors.join(', ')}`;
+    info.append(director);
+  }
+
+  const countries = [...new Set(Array.isArray(film.countries) ? film.countries.filter((name) => typeof name === 'string' && name.trim()) : [])];
+  const runtime = Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0 ? film.runtime_minutes : null;
+  if (countries.length || runtime) {
+    const details = document.createElement('p');
+    details.className = 'cinephile-meta';
+    const countryLabel = countries.length > 1 ? `${countries[0]} +${countries.length - 1}` : countries[0];
+    details.textContent = [countryLabel, runtime ? `${runtime} min` : ''].filter(Boolean).join(' · ');
+    details.setAttribute('aria-label', [countries.length ? `Countries: ${countries.join(', ')}` : '', runtime ? `Runtime: ${runtime} minutes` : ''].filter(Boolean).join('. '));
+    info.append(details);
+  }
+
   const count = document.createElement('p');
   count.className = 'film-count';
   const countValue = document.createElement('strong');
@@ -521,6 +541,111 @@ function cardFor(film, index) {
   return card;
 }
 
+function featuredFilmFor(film) {
+  const rankNumber = films.indexOf(film) + 1;
+  const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
+  const backdropUrl = safeUrl(film.backdrop_url, ['image.tmdb.org']);
+  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
+  const feature = document.createElement('article');
+  feature.className = 'featured-film';
+
+  if (backdropUrl) {
+    const backdrop = document.createElement('img');
+    backdrop.className = 'featured-film-backdrop';
+    backdrop.src = backdropUrl;
+    backdrop.alt = '';
+    backdrop.setAttribute('aria-hidden', 'true');
+    backdrop.loading = 'eager';
+    backdrop.referrerPolicy = 'no-referrer';
+    feature.append(backdrop);
+  }
+
+  const poster = document.createElement(filmUrl ? 'a' : 'div');
+  poster.className = 'featured-film-poster';
+  if (filmUrl) {
+    poster.href = filmUrl;
+    poster.target = '_blank';
+    poster.rel = 'noreferrer';
+    poster.setAttribute('aria-label', `Open poster for ${film.title}, overall rank ${rankNumber}, ${film.watched ? 'watched' : 'unwatched'}, on Letterboxd, opens in a new tab`);
+  }
+  if (posterUrl) {
+    const image = document.createElement('img');
+    image.src = posterUrl;
+    image.alt = `Poster for ${film.title}`;
+    image.loading = 'eager';
+    image.referrerPolicy = 'no-referrer';
+    image.addEventListener('error', () => {
+      const fallback = document.createElement('span');
+      fallback.className = 'poster-fallback';
+      fallback.textContent = film.title;
+      image.replaceWith(fallback);
+    }, { once: true });
+    poster.append(image);
+  } else {
+    const fallback = document.createElement('span');
+    fallback.className = 'poster-fallback';
+    fallback.textContent = film.title;
+    poster.append(fallback);
+  }
+  const rank = document.createElement('span');
+  rank.className = 'rank-chip';
+  rank.textContent = activeSort === 'rank' ? String(rankNumber).padStart(2, '0') : `Overall ${rankNumber}`;
+  poster.append(rank);
+  if (film.watched) {
+    const watched = document.createElement('span');
+    watched.className = 'watched-chip';
+    watched.textContent = 'Watched';
+    poster.append(watched);
+  }
+  feature.append(poster);
+
+  const copy = document.createElement('div');
+  copy.className = 'featured-film-copy';
+  const label = document.createElement('p');
+  label.className = 'featured-film-label';
+  label.textContent = `Program selection · Overall rank ${rankNumber}`;
+  copy.append(label);
+  const title = document.createElement('h4');
+  if (filmUrl) title.append(makeLink(film.title, filmUrl, 'featured-film-title'));
+  else {
+    const titleText = document.createElement('span');
+    titleText.className = 'featured-film-title';
+    titleText.textContent = film.title;
+    title.append(titleText);
+  }
+  const year = document.createElement('span');
+  year.className = 'featured-film-year';
+  year.textContent = film.year || '';
+  title.append(year);
+  copy.append(title);
+
+  const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
+  if (directors.length) {
+    const director = document.createElement('p');
+    director.className = 'featured-film-director';
+    director.textContent = `Directed by ${directors.join(', ')}`;
+    copy.append(director);
+  }
+  const countries = [...new Set(Array.isArray(film.countries) ? film.countries.filter((name) => typeof name === 'string' && name.trim()) : [])];
+  const runtime = Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0 ? film.runtime_minutes : null;
+  if (countries.length || runtime) {
+    const facts = document.createElement('p');
+    facts.className = 'featured-film-facts';
+    facts.textContent = [countries.length ? countries.join(' · ') : '', runtime ? `${runtime} min` : ''].filter(Boolean).join(' · ');
+    copy.append(facts);
+  }
+  const count = document.createElement('p');
+  count.className = 'featured-film-count';
+  const countValue = document.createElement('strong');
+  const likedListCount = Number(film.liked_in) || 0;
+  countValue.textContent = likedListCount.toLocaleString();
+  count.append(countValue, ` ${likedListCount === 1 ? 'liked list' : 'liked lists'}`);
+  count.setAttribute('aria-label', `Appears in ${likedListCount.toLocaleString()} ${likedListCount === 1 ? 'liked list' : 'liked lists'}`);
+  copy.append(count);
+  feature.append(copy);
+  return feature;
+}
+
 function validateSnapshot(snapshot) {
   const isRecord = (value) => value && typeof value === 'object' && !Array.isArray(value);
   const isCount = (value) => Number.isSafeInteger(value) && value >= 0;
@@ -534,6 +659,9 @@ function validateSnapshot(snapshot) {
     && isCount(film.liked_in)
     && isStringList(film.genres)
     && isStringList(film.lists)
+    && (film.directors === undefined || isStringList(film.directors))
+    && (film.countries === undefined || isStringList(film.countries))
+    && (film.runtime_minutes === undefined || film.runtime_minutes === null || (isCount(film.runtime_minutes) && film.runtime_minutes > 0))
     && (film.tmdb_id === null || isCount(film.tmdb_id))
     && (film.tmdb_rating === null || (typeof film.tmdb_rating === 'number' && Number.isFinite(film.tmdb_rating)));
 
@@ -575,7 +703,8 @@ function render() {
   const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0;
   topBilledEyebrow.textContent = defaultRankedView ? 'Opening credits' : 'Filtered view';
   topBilledTitle.textContent = defaultRankedView ? 'Most listed' : 'Top results';
-  topBilledGrid.replaceChildren(...highlighted.map(cardFor));
+  topBilledFeature.replaceChildren(...(highlighted.length ? [featuredFilmFor(highlighted[0])] : []));
+  topBilledGrid.replaceChildren(...highlighted.slice(1).map((film, index) => cardFor(film, index)));
   grid.replaceChildren(...shown.slice(highlighted.length).map((film, index) => cardFor(film, index)));
   document.querySelector('#heading-count').textContent = String(matching.length).padStart(2, '0');
   statusMessage.classList.toggle('is-visible', matching.length === 0);

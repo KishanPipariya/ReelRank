@@ -173,6 +173,21 @@ def _tmdb_metadata_payload(movie: Movie, record: dict, genre_names: dict[int, st
         genres = [genre_names[genre_id] for genre_id in record.get("genre_ids", []) if genre_id in genre_names]
     poster_path = record.get("poster_path") or ""
     backdrop_path = record.get("backdrop_path") or ""
+    crew = record.get("credits", {}).get("crew", []) if isinstance(record.get("credits"), dict) else []
+    directors = list(dict.fromkeys(
+        person["name"]
+        for person in crew
+        if isinstance(person, dict) and person.get("job") == "Director"
+        and isinstance(person.get("name"), str) and person["name"].strip()
+    )) if isinstance(crew, list) else []
+    production_countries = record.get("production_countries", [])
+    countries = list(dict.fromkeys(
+        country["name"]
+        for country in production_countries
+        if isinstance(country, dict) and isinstance(country.get("name"), str) and country["name"].strip()
+    )) if isinstance(production_countries, list) else []
+    runtime = record.get("runtime")
+    runtime_minutes = runtime if isinstance(runtime, int) and not isinstance(runtime, bool) and runtime > 0 else None
     return {
         "tmdb_id": movie_id,
         "tmdb_url": f"https://www.themoviedb.org/movie/{movie_id}" if movie_id else "",
@@ -183,6 +198,10 @@ def _tmdb_metadata_payload(movie: Movie, record: dict, genre_names: dict[int, st
         "backdrop_url": f"https://image.tmdb.org/t/p/w780{backdrop_path}" if backdrop_path else "",
         "tmdb_rating": record.get("vote_average"),
         "genres": genres,
+        "directors": directors,
+        "countries": countries,
+        "runtime_minutes": runtime_minutes,
+        "metadata_details_loaded": isinstance(record.get("credits"), dict),
     }
 
 def _fetch_tmdb_movie_genres(client: curl_requests.Session, api_key: str) -> dict[int, str]:

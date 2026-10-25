@@ -85,6 +85,13 @@ def validate_snapshot(snapshot: object) -> dict:
             raise ValueError(f"Snapshot film {index} liked_in must be a non-negative integer")
         if not _is_string_list(film.get("genres")) or not _is_string_list(film.get("lists")):
             raise ValueError(f"Snapshot film {index} genres and lists must be arrays of strings")
+        if "directors" in film and not _is_string_list(film["directors"]):
+            raise ValueError(f"Snapshot film {index} directors must be an array of strings")
+        if "countries" in film and not _is_string_list(film["countries"]):
+            raise ValueError(f"Snapshot film {index} countries must be an array of strings")
+        runtime = film.get("runtime_minutes")
+        if runtime is not None and (not _is_nonnegative_integer(runtime) or runtime == 0):
+            raise ValueError(f"Snapshot film {index} runtime_minutes must be a positive integer or null")
         tmdb_id = film.get("tmdb_id")
         if tmdb_id is not None and not _is_nonnegative_integer(tmdb_id):
             raise ValueError(f"Snapshot film {index} tmdb_id must be an integer or null")
@@ -124,7 +131,7 @@ def create_snapshot(username: str) -> dict:
         featured_results = results[:500]
         metadata: dict[int, dict | None] = {}
         tmdb_match_count = 0
-        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v3.json"
+        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v4.json"
         tmdb_cache = _load_tmdb_metadata_cache(tmdb_cache_path)
         missing_metadata: list[tuple[int, MovieResult, str]] = []
         for index, result in enumerate(featured_results):
@@ -132,7 +139,7 @@ def create_snapshot(username: str) -> dict:
             if cache_key in tmdb_cache:
                 cached = tmdb_cache[cache_key]
                 if isinstance(cached, dict) and (
-                    (tmdb_api_key and "genres" in cached)
+                    (tmdb_api_key and all(field in cached for field in ("genres", "directors", "countries", "runtime_minutes")) and cached.get("metadata_details_loaded"))
                     or (not tmdb_api_key and cached.get("tmdb_id"))
                 ):
                     metadata[index] = cached
@@ -156,7 +163,7 @@ def create_snapshot(username: str) -> dict:
                         try:
                             response = worker_client.get(
                                 f"https://api.themoviedb.org/3/movie/{letterboxd_tmdb_id}",
-                                params={"api_key": tmdb_api_key, "language": "en-US"},
+                                params={"api_key": tmdb_api_key, "language": "en-US", "append_to_response": "credits"},
                             )
                             if response.status_code == 401:
                                 raise ValueError("TMDB rejected TMDB_API_KEY; check the API key configured for this job")
@@ -209,7 +216,19 @@ def create_snapshot(username: str) -> dict:
                     best = _select_tmdb_candidate(movie, candidates, fallback_title)
                     if best is None:
                         return index, cache_key, None, False
-                    return index, cache_key, _tmdb_metadata_payload(movie, best, genre_names), True
+                    best_id = best.get("id")
+                    if not isinstance(best_id, int):
+                        return index, cache_key, _tmdb_metadata_payload(movie, best, genre_names), False
+                    details_response = worker_client.get(
+                        f"https://api.themoviedb.org/3/movie/{best_id}",
+                        params={"api_key": tmdb_api_key, "language": "en-US", "append_to_response": "credits"},
+                    )
+                    if details_response.status_code == 401:
+                        raise ValueError("TMDB rejected TMDB_API_KEY; check the API key configured for this job")
+                    details_response.raise_for_status()
+                    details = details_response.json()
+                    record = details if details.get("id") == best_id else best
+                    return index, cache_key, _tmdb_metadata_payload(movie, record, genre_names), True
                 except RequestsError:
                     return index, cache_key, None, False
 
@@ -243,6 +262,9 @@ def create_snapshot(username: str) -> dict:
                 "tmdb_url": tmdb.get("tmdb_url", ""),
                 "tmdb_rating": tmdb.get("tmdb_rating"),
                 "genres": tmdb.get("genres", []),
+                "directors": tmdb.get("directors", []),
+                "countries": tmdb.get("countries", []),
+                "runtime_minutes": tmdb.get("runtime_minutes"),
                 "liked_in": result.liked_in,
                 "watched": is_watched,
                 "lists": result.lists,
