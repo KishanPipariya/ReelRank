@@ -6,6 +6,8 @@ const topBilledFeature = document.querySelector('#top-billed-feature');
 const topBilledGrid = document.querySelector('#top-billed-grid');
 const statusMessage = document.querySelector('#status-message');
 const statusMessageCopy = document.querySelector('#status-message-copy');
+const programmeNote = document.querySelector('#programme-note');
+const programmeNoteCopy = document.querySelector('#programme-note-copy');
 const posterDisplayButton = document.querySelector('#poster-display-button');
 const ledgerDisplayButton = document.querySelector('#ledger-display-button');
 const printProgrammeButton = document.querySelector('#print-programme-button');
@@ -34,10 +36,19 @@ const genreSearchInput = document.querySelector('#genre-search');
 const genreEmptyState = document.querySelector('#genre-empty-state');
 const clearGenresButton = document.querySelector('#clear-genres');
 const closeGenresButton = document.querySelector('#close-genres');
+const sourceListFilter = document.querySelector('#source-list-filter');
+const sourceListFilterSummary = document.querySelector('#source-list-filter-summary');
+const sourceListOptions = document.querySelector('#source-list-options');
+const sourceListSearch = document.querySelector('#source-list-search');
+const sourceListEmpty = document.querySelector('#source-list-empty');
+const selectedSourceLists = document.querySelector('#selected-source-lists');
+const clearSourceListsButton = document.querySelector('#clear-source-lists');
+const closeSourceListsButton = document.querySelector('#close-source-lists');
 const selectedGenres = document.querySelector('#selected-genres');
 const activeViewTools = document.querySelector('#active-view-tools');
 const activeGenreFilters = document.querySelector('#active-genre-filters');
 const activeDirectorFilters = document.querySelector('#active-director-filters');
+const activeSourceListFilters = document.querySelector('#active-source-list-filters');
 const collectionScope = document.querySelector('#collection-scope');
 const topBilledEyebrow = document.querySelector('#top-billed-eyebrow');
 const topBilledTitle = document.querySelector('#top-billed-title');
@@ -58,12 +69,15 @@ let activeSort = readUrlState().sort;
 let activeView = readUrlState().view;
 let activeGenres = readUrlState().genres;
 let activeDirectors = readUrlState().directors;
+let activeSourceLists = readUrlState().sourceLists;
 let activeCountry = readUrlState().country;
 let activeDecade = readUrlState().decade;
 let availableGenres = [];
 let availableDirectors = [];
 let availableDecades = [];
 let availableCountries = [];
+let availableSourceLists = [];
+const sourceListUrlsByFilm = new WeakMap();
 let rankedTotal = 0;
 let visibleLimit = 40;
 let searchUrlTimer;
@@ -85,6 +99,7 @@ function readUrlState() {
     sort: validSorts.has(sort) ? sort : 'rank',
     genres: [...new Set(params.getAll('genre'))],
     directors: [...new Set(params.getAll('director'))],
+    sourceLists: [...new Set(params.getAll('list'))],
     country: params.get('country') || '',
     decade: /^\d{4}$/.test(params.get('decade') || '') ? Number(params.get('decade')) : '',
     view: validViews.has(params.get('view')) ? params.get('view') : 'posters',
@@ -146,6 +161,19 @@ function syncControls() {
     : 'Any';
   clearGenresButton.hidden = activeGenres.length === 0;
   renderSelectedGenres();
+  sourceListOptions.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    input.checked = activeSourceLists.includes(input.value);
+  });
+  const selectedSourceListLabels = activeSourceLists
+    .map((url) => availableSourceLists.find((sourceList) => sourceList.url === url)?.label)
+    .filter(Boolean);
+  sourceListFilterSummary.textContent = selectedSourceListLabels.length === 0
+    ? 'Any'
+    : selectedSourceListLabels.length === 1
+      ? selectedSourceListLabels[0]
+      : `${selectedSourceListLabels.length} selected`;
+  clearSourceListsButton.hidden = activeSourceLists.length === 0;
+  renderSelectedSourceLists();
   renderActiveViewFilters();
 }
 
@@ -169,9 +197,31 @@ function renderSelectedGenres() {
   });
 }
 
+function renderSelectedSourceLists() {
+  selectedSourceLists.replaceChildren();
+  if (activeSourceLists.length === 0) {
+    const empty = document.createElement('span');
+    empty.className = 'selected-genres-empty';
+    empty.textContent = 'No source lists selected';
+    selectedSourceLists.append(empty);
+    return;
+  }
+  activeSourceLists.forEach((url) => {
+    const sourceList = availableSourceLists.find((item) => item.url === url);
+    if (!sourceList) return;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'selected-genre-chip';
+    chip.textContent = `${sourceList.label} ×`;
+    chip.setAttribute('aria-label', `Remove ${sourceList.label} source list filter`);
+    chip.addEventListener('click', () => toggleSourceList(url));
+    selectedSourceLists.append(chip);
+  });
+}
+
 function renderActiveViewFilters() {
   const hasActiveView = Boolean(searchInput.value.trim()) || activeFilter !== 'all' || activeSort !== 'rank'
-    || activeGenres.length > 0 || activeDirectors.length > 0 || Boolean(activeCountry) || activeDecade !== '';
+    || activeGenres.length > 0 || activeDirectors.length > 0 || activeSourceLists.length > 0 || Boolean(activeCountry) || activeDecade !== '';
   activeViewTools.hidden = !hasActiveView;
   activeGenreFilters.replaceChildren();
   activeGenreFilters.hidden = activeGenres.length === 0;
@@ -194,6 +244,19 @@ function renderActiveViewFilters() {
     chip.setAttribute('aria-label', `Remove ${director} director filter`);
     chip.addEventListener('click', () => toggleDirector(director));
     activeDirectorFilters.append(chip);
+  });
+  activeSourceListFilters.replaceChildren();
+  activeSourceListFilters.hidden = activeSourceLists.length === 0;
+  activeSourceLists.forEach((url) => {
+    const sourceList = availableSourceLists.find((item) => item.url === url);
+    if (!sourceList) return;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'active-genre-chip active-source-list-chip';
+    chip.textContent = `List: ${sourceList.label} ×`;
+    chip.setAttribute('aria-label', `Remove ${sourceList.label} source list filter`);
+    chip.addEventListener('click', () => toggleSourceList(url));
+    activeSourceListFilters.append(chip);
   });
   if (activeCountry) appendFacetChip(activeGenreFilters, `Country: ${activeCountry}`, 'Remove production country filter', () => setCountry(''));
   if (activeDecade !== '') appendFacetChip(activeGenreFilters, `${activeDecade}s`, 'Remove decade filter', () => setDecade(''));
@@ -242,6 +305,37 @@ function buildGenreFilter() {
 }
 
 function buildCatalogFilters() {
+  const sourceListCounts = new Map();
+  films.forEach((film) => {
+    const urls = filmSourceListUrls(film);
+    sourceListUrlsByFilm.set(film, urls);
+    urls.forEach((url) => {
+      sourceListCounts.set(url, (sourceListCounts.get(url) || 0) + 1);
+    });
+  });
+  availableSourceLists = [...sourceListCounts]
+    .map(([url, count]) => ({ url, count, label: listLabel(url) }))
+    .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label));
+  activeSourceLists = [...new Set(activeSourceLists.map(sourceListUrl).filter((url) => sourceListCounts.has(url)))];
+  sourceListFilter.hidden = availableSourceLists.length === 0;
+  sourceListOptions.replaceChildren(...availableSourceLists.map((sourceList) => {
+    const option = document.createElement('label');
+    option.className = 'genre-option';
+    option.dataset.sourceList = sourceList.url;
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = sourceList.url;
+    checkbox.addEventListener('change', () => toggleSourceList(sourceList.url));
+    const name = document.createElement('span');
+    name.textContent = sourceList.label;
+    const count = document.createElement('small');
+    count.className = 'genre-option-count';
+    count.textContent = sourceList.count.toLocaleString();
+    option.append(checkbox, name, count);
+    return option;
+  }));
+  updateSourceListOptionVisibility();
+
   const countryCounts = new Map();
   films.forEach((film) => {
     [...new Set(Array.isArray(film.countries) ? film.countries : [])].forEach((country) => {
@@ -353,6 +447,27 @@ function toggleGenre(genre) {
   render();
 }
 
+function toggleSourceList(url) {
+  activeSourceLists = activeSourceLists.includes(url)
+    ? activeSourceLists.filter((selected) => selected !== url)
+    : [...activeSourceLists, url].sort((left, right) => left.localeCompare(right));
+  visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
+}
+
+function updateSourceListOptionVisibility() {
+  const query = sourceListSearch.value.trim().toLocaleLowerCase();
+  let visibleCount = 0;
+  sourceListOptions.querySelectorAll('.genre-option').forEach((option) => {
+    const matches = option.querySelector('span').textContent.toLocaleLowerCase().includes(query);
+    option.hidden = !matches;
+    if (matches) visibleCount += 1;
+  });
+  sourceListEmpty.hidden = visibleCount > 0;
+}
+
 function toggleDirector(director) {
   activeDirectors = activeDirectors.includes(director)
     ? activeDirectors.filter((selected) => selected !== director)
@@ -416,6 +531,8 @@ function updateUrlState({ replace = false } = {}) {
   activeGenres.forEach((genre) => url.searchParams.append('genre', genre));
   url.searchParams.delete('director');
   activeDirectors.forEach((director) => url.searchParams.append('director', director));
+  url.searchParams.delete('list');
+  activeSourceLists.forEach((listUrl) => url.searchParams.append('list', listUrl));
   if (activeCountry) url.searchParams.set('country', activeCountry);
   else url.searchParams.delete('country');
   if (activeDecade !== '') url.searchParams.set('decade', String(activeDecade));
@@ -457,6 +574,7 @@ function restoreUrlState() {
   activeView = state.view;
   activeGenres = state.genres.filter((genre) => availableGenres.includes(genre));
   activeDirectors = state.directors.filter((director) => availableDirectors.includes(director));
+  activeSourceLists = state.sourceLists.map(sourceListUrl).filter((url) => availableSourceLists.some((sourceList) => sourceList.url === url));
   activeCountry = availableCountries.includes(state.country)
     ? state.country
     : '';
@@ -488,6 +606,21 @@ function listLabel(value) {
   } catch {
     return 'Letterboxd list';
   }
+}
+
+function sourceListUrl(value) {
+  const safeListUrl = safeUrl(value, ['letterboxd.com']);
+  if (!safeListUrl) return '';
+  const url = new URL(safeListUrl);
+  url.search = '';
+  url.hash = '';
+  url.pathname = `${url.pathname.replace(/\/+$/, '')}/`;
+  return url.href;
+}
+
+function filmSourceListUrls(film) {
+  if (sourceListUrlsByFilm.has(film)) return sourceListUrlsByFilm.get(film);
+  return [...new Set((Array.isArray(film.lists) ? film.lists : []).map(sourceListUrl).filter(Boolean))];
 }
 
 function formatDate(value) {
@@ -536,11 +669,37 @@ function editionColophonFor(catalogue) {
   };
 }
 
-function matchesSearchAndGenres(film, query, selectedGenreList = activeGenres) {
+function programmeNoteFor(catalogue) {
+  const decadeCounts = new Map();
+  const countryCounts = new Map();
+  const genreCounts = new Map();
+  catalogue.forEach((film) => {
+    const decade = filmDecade(film);
+    if (decade !== null) decadeCounts.set(decade, (decadeCounts.get(decade) || 0) + 1);
+    [...new Set(Array.isArray(film.countries) ? film.countries : [])].forEach((country) => {
+      if (typeof country === 'string' && country.trim()) countryCounts.set(country, (countryCounts.get(country) || 0) + 1);
+    });
+    [...new Set(Array.isArray(film.genres) ? film.genres : [])].forEach((genre) => {
+      if (typeof genre === 'string' && genre.trim()) genreCounts.set(genre, (genreCounts.get(genre) || 0) + 1);
+    });
+  });
+  const leadingDecade = [...decadeCounts].sort((left, right) => right[1] - left[1] || left[0] - right[0])[0];
+  const leadingCountry = [...countryCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0];
+  const leadingGenre = [...genreCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0];
+  const details = [
+    leadingGenre ? `Genre: ${leadingGenre[0]}` : '',
+    leadingDecade ? `Era: ${leadingDecade[0]}s` : '',
+    leadingCountry ? `Country: ${leadingCountry[0]}` : '',
+  ].filter(Boolean);
+  return `${catalogue.length.toLocaleString()} ${catalogue.length === 1 ? 'film' : 'films'}${details.length ? ` · ${details.join(' · ')}` : ''}`;
+}
+
+function matchesSearchAndGenres(film, query, selectedGenreList = activeGenres, selectedSourceListUrls = activeSourceLists) {
   const filmGenres = Array.isArray(film.genres) ? film.genres : [];
   if (selectedGenreList.length && !selectedGenreList.some((genre) => filmGenres.includes(genre))) return false;
   const directors = Array.isArray(film.directors) ? film.directors : [];
   if (activeDirectors.length && !activeDirectors.some((director) => directors.includes(director))) return false;
+  if (selectedSourceListUrls.length && !selectedSourceListUrls.some((url) => filmSourceListUrls(film).includes(url))) return false;
   if (activeCountry && !(Array.isArray(film.countries) && film.countries.includes(activeCountry))) return false;
   if (activeDecade !== '' && filmDecade(film) !== activeDecade) return false;
   if (!query) return true;
@@ -574,6 +733,22 @@ function updateGenreOptionCounts(query) {
   });
 }
 
+function updateSourceListOptionCounts(query) {
+  const contextFilms = films.filter((film) => {
+    if (activeFilter === 'unwatched' && film.watched) return false;
+    if (activeFilter === 'watched' && !film.watched) return false;
+    return matchesSearchAndGenres(film, query, activeGenres, []);
+  });
+  const counts = new Map();
+  contextFilms.forEach((film) => {
+    filmSourceListUrls(film).forEach((url) => counts.set(url, (counts.get(url) || 0) + 1));
+  });
+  sourceListOptions.querySelectorAll('.genre-option').forEach((option) => {
+    const url = option.dataset.sourceList;
+    option.querySelector('.genre-option-count').textContent = (counts.get(url) || 0).toLocaleString();
+  });
+}
+
 function compareFilms(left, right, sort = activeSort) {
   const leftRank = films.indexOf(left);
   const rightRank = films.indexOf(right);
@@ -599,6 +774,7 @@ function updateBackToFiltersVisibility() {
     `${filterLabel} filter`,
     activeGenres.length ? `genres ${activeGenres.join(' or ')}` : '',
     activeDirectors.length ? `directors ${activeDirectors.join(' or ')}` : '',
+    activeSourceLists.length ? `source lists ${activeSourceLists.map((url) => availableSourceLists.find((item) => item.url === url)?.label).filter(Boolean).join(' or ')}` : '',
     activeCountry ? `country ${activeCountry}` : '',
     activeDecade !== '' ? `decade ${activeDecade}s` : '',
     searchInput.value.trim() ? `search ${searchInput.value.trim()}` : '',
@@ -1171,6 +1347,11 @@ function programmeHeadingFor(query, defaultRankedView, matching) {
   if (defaultRankedView) return { eyebrow: 'Opening credits', title: 'Most listed' };
   if (activeDirectors.length === 1) return { eyebrow: 'Filmography in this edition', title: activeDirectors[0] };
   if (activeDirectors.length > 1) return { eyebrow: 'Director programme', title: `${activeDirectors.length} selected directors` };
+  if (activeSourceLists.length === 1) {
+    const sourceList = availableSourceLists.find((item) => item.url === activeSourceLists[0]);
+    if (sourceList) return { eyebrow: 'From a liked list', title: sourceList.label };
+  }
+  if (activeSourceLists.length > 1) return { eyebrow: 'Liked-list programme', title: `${activeSourceLists.length} selected lists` };
   if (activeCountry && activeDecade !== '') {
     return { eyebrow: 'National cinema retrospective', title: `${activeCountry} · ${activeDecade}s` };
   }
@@ -1201,6 +1382,7 @@ function buildPrintProgramme() {
   const activeFilters = [
     activeFilter === 'all' ? '' : `${activeFilter} films`,
     activeDirectors.length ? `directors: ${activeDirectors.join(' / ')}` : '',
+    activeSourceLists.length ? `liked lists: ${activeSourceLists.map((url) => availableSourceLists.find((item) => item.url === url)?.label).filter(Boolean).join(' / ')}` : '',
     activeCountry ? `country: ${activeCountry}` : '',
     activeDecade !== '' ? `decade: ${activeDecade}s` : '',
     activeGenres.length ? `genres: ${activeGenres.join(' / ')}` : '',
@@ -1486,6 +1668,7 @@ function render() {
   renderDirectorFilmography();
   updateWatchFilterCounts(query);
   updateGenreOptionCounts(query);
+  updateSourceListOptionCounts(query);
   const matching = films.filter((film) => {
     if (activeFilter === 'unwatched' && film.watched) return false;
     if (activeFilter === 'watched' && !film.watched) return false;
@@ -1493,6 +1676,8 @@ function render() {
   });
   matching.sort((left, right) => compareFilms(left, right));
   currentMatchingFilms = matching;
+  programmeNote.hidden = matching.length === 0;
+  programmeNoteCopy.textContent = programmeNoteFor(matching);
   currentHighestScore = Math.max(1, ...matching.map((film) => Number(film.liked_in) || 0));
   const ledgerView = activeView === 'ledger';
   const rankedPosterView = !ledgerView && activeSort === 'rank';
@@ -1503,7 +1688,7 @@ function render() {
   topBilled.hidden = !rankedPosterView || highlighted.length === 0;
   grid.hidden = ledgerView;
   filmLedgerView.hidden = !ledgerView;
-  const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0 && activeDirectors.length === 0 && !activeCountry && activeDecade === '';
+  const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0 && activeDirectors.length === 0 && activeSourceLists.length === 0 && !activeCountry && activeDecade === '';
   const programmeHeading = programmeHeadingFor(query, defaultRankedView, matching);
   topBilledEyebrow.textContent = programmeHeading.eyebrow;
   topBilledTitle.textContent = programmeHeading.title;
@@ -1518,7 +1703,7 @@ function render() {
   }
   document.querySelector('#heading-count').textContent = String(matching.length).padStart(2, '0');
   statusMessage.classList.toggle('is-visible', matching.length === 0);
-  const hasFacetFilters = activeGenres.length > 0 || activeDirectors.length > 0 || Boolean(activeCountry) || activeDecade !== '';
+  const hasFacetFilters = activeGenres.length > 0 || activeDirectors.length > 0 || activeSourceLists.length > 0 || Boolean(activeCountry) || activeDecade !== '';
   const emptyContext = query && hasFacetFilters
     ? 'this search and the selected filters'
     : query ? 'this search' : 'the selected filters';
@@ -1547,7 +1732,7 @@ function render() {
   }
   updateBackToFiltersVisibility();
   const resultAnnouncement = document.querySelector('#results-announcement');
-  const filterDescription = [activeFilter === 'all' ? '' : `${activeFilter} only`, activeGenres.length ? `genres: ${activeGenres.join(' or ')}` : '', activeDirectors.length ? `directors: ${activeDirectors.join(' or ')}` : '', activeCountry ? `country: ${activeCountry}` : '', activeDecade !== '' ? `decade: ${activeDecade}s` : ''].filter(Boolean).join(', ');
+  const filterDescription = [activeFilter === 'all' ? '' : `${activeFilter} only`, activeGenres.length ? `genres: ${activeGenres.join(' or ')}` : '', activeDirectors.length ? `directors: ${activeDirectors.join(' or ')}` : '', activeSourceLists.length ? `source lists: ${activeSourceLists.map((url) => availableSourceLists.find((sourceList) => sourceList.url === url)?.label).filter(Boolean).join(' or ')}` : '', activeCountry ? `country: ${activeCountry}` : '', activeDecade !== '' ? `decade: ${activeDecade}s` : ''].filter(Boolean).join(', ');
   const sortDescription = activeSort === 'rank' ? '' : `, sorted by ${sortSelect.options[sortSelect.selectedIndex].text}`;
   resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription ? `, ${filterDescription}` : ''}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
 }
@@ -1627,7 +1812,7 @@ async function loadSnapshot() {
   editionDate.textContent = formatEditionDate(snapshot.refreshed_at);
   editionDate.title = formatDate(snapshot.refreshed_at);
     const displayed = snapshot.displayed_film_count ?? films.length;
-    collectionScope.textContent = `Search covers all ${displayed.toLocaleString()} films by title, original title, director, year, genre, synopsis, and source list. Refine by production country or decade.`;
+    collectionScope.textContent = `Search covers all ${displayed.toLocaleString()} films by title, original title, director, year, genre, synopsis, and source list. Filter by liked list, production country, or decade.`;
     document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
     document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
     render();
@@ -1669,11 +1854,14 @@ clearSearchStateButton.addEventListener('click', () => {
   searchEditing = false;
   searchInput.value = '';
   genreSearchInput.value = '';
+  sourceListSearch.value = '';
+  updateSourceListOptionVisibility();
   updateGenreOptionVisibility();
   activeFilter = 'all';
   activeSort = 'rank';
   activeGenres = [];
   activeDirectors = [];
+  activeSourceLists = [];
   activeCountry = '';
   activeDecade = '';
   activeView = 'posters';
@@ -1685,6 +1873,14 @@ clearSearchStateButton.addEventListener('click', () => {
 });
 clearGenresButton.addEventListener('click', () => {
   activeGenres = [];
+  visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
+});
+sourceListSearch.addEventListener('input', updateSourceListOptionVisibility);
+clearSourceListsButton.addEventListener('click', () => {
+  activeSourceLists = [];
   visibleLimit = 40;
   syncControls();
   updateUrlState();
@@ -1705,8 +1901,13 @@ closeGenresButton.addEventListener('click', () => {
   genreFilter.open = false;
   genreFilterTrigger.focus();
 });
+closeSourceListsButton.addEventListener('click', () => {
+  sourceListFilter.open = false;
+  sourceListFilter.querySelector('summary').focus();
+});
 document.addEventListener('pointerdown', (event) => {
   if (genreFilter.open && !genreFilter.contains(event.target)) genreFilter.open = false;
+  if (sourceListFilter.open && !sourceListFilter.contains(event.target)) sourceListFilter.open = false;
 });
 loadMoreButton.addEventListener('click', () => {
   visibleLimit += 40;
@@ -1722,6 +1923,12 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     genreFilter.open = false;
     genreFilterTrigger.focus();
+    return;
+  }
+  if (event.key === 'Escape' && sourceListFilter.open) {
+    event.preventDefault();
+    sourceListFilter.open = false;
+    sourceListFilter.querySelector('summary').focus();
     return;
   }
   if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
