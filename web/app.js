@@ -484,15 +484,36 @@ function cardFor(film, index) {
   const listSummary = document.createElement('summary');
   const listLinks = document.createElement('div');
   listLinks.className = 'list-links';
-  lists.forEach((url) => {
+  const sourceListLinks = lists.map((url) => {
     const safeListUrl = safeUrl(url, ['letterboxd.com']);
-    if (safeListUrl) listLinks.append(makeLink(listLabel(safeListUrl), safeListUrl));
+    return safeListUrl ? makeLink(listLabel(safeListUrl), safeListUrl) : null;
+  }).filter(Boolean);
+  const visibleListCount = 4;
+  listLinks.append(...sourceListLinks.slice(0, visibleListCount));
+  const hiddenListLinks = sourceListLinks.slice(visibleListCount);
+  hiddenListLinks.forEach((link) => {
+    link.hidden = true;
+    listLinks.append(link);
   });
   listSummary.textContent = listLinks.childElementCount
     ? `Appears on ${listLinks.childElementCount.toLocaleString()} liked ${listLinks.childElementCount === 1 ? 'list' : 'lists'}`
     : 'Film details';
   listDetails.append(listSummary);
   if (listLinks.childElementCount) listDetails.append(listLinks);
+  if (hiddenListLinks.length) {
+    const listLinksToggle = document.createElement('button');
+    listLinksToggle.className = 'list-links-toggle';
+    listLinksToggle.type = 'button';
+    listLinksToggle.textContent = `Show all ${sourceListLinks.length.toLocaleString()} lists`;
+    listLinksToggle.setAttribute('aria-expanded', 'false');
+    listLinksToggle.addEventListener('click', () => {
+      const expanded = listLinksToggle.getAttribute('aria-expanded') !== 'true';
+      hiddenListLinks.forEach((link) => { link.hidden = !expanded; });
+      listLinksToggle.setAttribute('aria-expanded', String(expanded));
+      listLinksToggle.textContent = expanded ? 'Show fewer lists' : `Show all ${sourceListLinks.length.toLocaleString()} lists`;
+    });
+    listDetails.append(listLinksToggle);
+  }
   const tmdbUrl = safeUrl(film.tmdb_url, ['themoviedb.org']);
   if (tmdbUrl) listDetails.append(makeLink('Film data on TMDB ↗', tmdbUrl, 'tmdb-film-link'));
   if (listDetails.childElementCount > 1) info.append(listDetails);
