@@ -45,7 +45,7 @@
             <p class="hero-description">A little signal from all the films you’ve saved across other people’s lists. The more lists a film appears in, the higher it rises.</p>
             <a class="hero-story-link" href="https://kishan.pipaliya.com/2026/10/06/a-custom-recommendation-system-for-letterboxd/" target="_blank" rel="noreferrer" aria-label="Read how the ranking algorithm works and where it came from, opens in a new tab">How the ranking works ↗</a>
             <div class="hero-meta">
-              <span class="snapshot-label">Snapshot</span>
+              <span class="snapshot-label">Catalogue edition</span>
               <span class="meta-separator" aria-hidden="true">·</span>
               <span id="refreshed-label">Loading update time…</span>
             </div>
@@ -145,6 +145,13 @@
             <div id="active-director-filters" class="active-genre-filters" aria-label="Active director filters" hidden></div>
             <button id="clear-search-state" class="clear-search-state" type="button">Clear search &amp; reset view</button>
           </div>
+          <div class="collection-display-bar">
+            <p id="director-filmography" class="director-filmography" hidden></p>
+            <div class="collection-view-control" role="group" aria-label="Choose film layout">
+              <button id="poster-display-button" class="collection-view-button is-active" type="button" aria-pressed="true">Poster wall</button>
+              <button id="ledger-display-button" class="collection-view-button" type="button" aria-pressed="false">Ledger</button>
+            </div>
+          </div>
           <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>
             <div class="top-billed-heading">
               <p id="top-billed-eyebrow" class="eyebrow section-eyebrow">Opening credits</p>
@@ -157,6 +164,17 @@
           <div id="status-message" class="status-message" role="status">Loading your snapshot…</div>
           <p id="results-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
           <div id="film-grid" class="film-grid"></div>
+          <div id="film-ledger-view" class="film-ledger-view" hidden>
+            <div class="film-ledger-scroll" tabindex="0" aria-label="Film catalogue table; scroll horizontally to see all columns">
+              <table class="film-ledger-table">
+                <caption class="sr-only">Films in the current catalogue view</caption>
+                <thead>
+                  <tr><th scope="col">Catalogue</th><th scope="col">Film</th><th scope="col">Director</th><th scope="col">Production</th><th scope="col">List appearances</th></tr>
+                </thead>
+                <tbody id="film-ledger-rows"></tbody>
+              </table>
+            </div>
+          </div>
           <button id="load-more" class="load-more" type="button" hidden>Show more films</button>
           <button id="back-to-filters" class="back-to-filters" type="button" hidden>Back to filters ↑</button>
           <p id="collection-footnote" class="collection-footnote">Film and poster details link back to Letterboxd. This page reflects public profile data.</p>

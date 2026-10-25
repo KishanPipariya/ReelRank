@@ -1,8 +1,13 @@
 const grid = document.querySelector('#film-grid');
+const filmLedgerView = document.querySelector('#film-ledger-view');
+const filmLedgerRows = document.querySelector('#film-ledger-rows');
 const topBilled = document.querySelector('#top-billed');
 const topBilledFeature = document.querySelector('#top-billed-feature');
 const topBilledGrid = document.querySelector('#top-billed-grid');
 const statusMessage = document.querySelector('#status-message');
+const posterDisplayButton = document.querySelector('#poster-display-button');
+const ledgerDisplayButton = document.querySelector('#ledger-display-button');
+const directorFilmography = document.querySelector('#director-filmography');
 const searchInput = document.querySelector('#search-input');
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
@@ -33,9 +38,11 @@ const siteShell = document.querySelector('#site-shell');
 const demoBanner = document.querySelector('#demo-banner');
 const validFilters = new Set(['all', 'unwatched', 'watched']);
 const validSorts = new Set(['rank', 'title', 'year-newest', 'year-oldest']);
+const validViews = new Set(['posters', 'ledger']);
 let films = [];
 let activeFilter = readUrlState().filter;
 let activeSort = readUrlState().sort;
+let activeView = readUrlState().view;
 let activeGenres = readUrlState().genres;
 let activeDirectors = readUrlState().directors;
 let activeCountry = readUrlState().country;
@@ -62,12 +69,17 @@ function readUrlState() {
     directors: [...new Set(params.getAll('director'))],
     country: params.get('country') || '',
     decade: /^\d{4}$/.test(params.get('decade') || '') ? Number(params.get('decade')) : '',
+    view: validViews.has(params.get('view')) ? params.get('view') : 'posters',
   };
 }
 
 function syncControls() {
   sortSelect.value = activeSort;
   countrySelect.value = activeCountry;
+  posterDisplayButton.classList.toggle('is-active', activeView === 'posters');
+  posterDisplayButton.setAttribute('aria-pressed', String(activeView === 'posters'));
+  ledgerDisplayButton.classList.toggle('is-active', activeView === 'ledger');
+  ledgerDisplayButton.setAttribute('aria-pressed', String(activeView === 'ledger'));
   decadeOptions.querySelectorAll('[data-decade]').forEach((button) => {
     const selected = button.dataset.decade === (activeDecade === '' ? '' : String(activeDecade));
     button.setAttribute('aria-pressed', String(selected));
@@ -297,6 +309,14 @@ function setDecade(decade) {
   render();
 }
 
+function setView(view) {
+  activeView = validViews.has(view) ? view : 'posters';
+  visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
+}
+
 function updateUrlState({ replace = false } = {}) {
   const url = new URL(window.location.href);
   const query = searchInput.value.trim();
@@ -314,6 +334,8 @@ function updateUrlState({ replace = false } = {}) {
   else url.searchParams.delete('country');
   if (activeDecade !== '') url.searchParams.set('decade', String(activeDecade));
   else url.searchParams.delete('decade');
+  if (activeView === 'ledger') url.searchParams.set('view', activeView);
+  else url.searchParams.delete('view');
   if (url.href === window.location.href) return;
   const method = replace ? 'replaceState' : 'pushState';
   window.history[method]({}, '', url);
@@ -346,6 +368,7 @@ function restoreUrlState() {
   searchInput.value = state.query;
   activeFilter = state.filter;
   activeSort = state.sort;
+  activeView = state.view;
   activeGenres = state.genres.filter((genre) => availableGenres.includes(genre));
   activeDirectors = state.directors.filter((director) => availableDirectors.includes(director));
   activeCountry = state.country && [...countrySelect.options].some((option) => option.value === state.country)
@@ -401,6 +424,12 @@ function formatDate(value) {
   const relativeTime = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' }).format(-amount, unit);
   const exactTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
   return `Updated ${relativeTime} · ${exactTime}`;
+}
+
+function formatEditionDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Date unavailable';
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date);
 }
 
 function matchesSearchAndGenres(film, query, selectedGenreList = activeGenres) {
@@ -858,6 +887,92 @@ function cardFor(film, index) {
   return card;
 }
 
+function ledgerRowFor(film) {
+  const rankNumber = films.indexOf(film) + 1;
+  const row = document.createElement('tr');
+
+  const catalogueCell = document.createElement('th');
+  catalogueCell.scope = 'row';
+  catalogueCell.className = 'ledger-catalogue-number';
+  catalogueCell.textContent = `No. ${String(rankNumber).padStart(3, '0')}`;
+
+  const filmCell = document.createElement('td');
+  filmCell.className = 'ledger-film-cell';
+  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
+  const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
+  if (posterUrl) {
+    const poster = document.createElement(filmUrl ? 'a' : 'span');
+    poster.className = 'ledger-poster';
+    if (filmUrl) {
+      poster.href = filmUrl;
+      poster.target = '_blank';
+      poster.rel = 'noreferrer';
+      poster.setAttribute('aria-label', `Open ${film.title} on Letterboxd, opens in a new tab`);
+    }
+    const image = document.createElement('img');
+    image.src = posterUrl;
+    image.alt = '';
+    image.loading = 'lazy';
+    image.referrerPolicy = 'no-referrer';
+    poster.append(image);
+    filmCell.append(poster);
+  }
+  const titleBlock = document.createElement('div');
+  titleBlock.className = 'ledger-film-copy';
+  const title = document.createElement('h3');
+  if (filmUrl) title.append(makeLink(film.title, filmUrl, 'ledger-film-title'));
+  else {
+    const titleText = document.createElement('span');
+    titleText.className = 'ledger-film-title';
+    titleText.textContent = film.title;
+    title.append(titleText);
+  }
+  const year = document.createElement('span');
+  year.className = 'ledger-film-year';
+  year.textContent = film.year || 'Year unknown';
+  title.append(year);
+  titleBlock.append(title);
+  const originalTitleCredit = originalTitleCreditFor(film, 'original-title-credit ledger-original-title-credit');
+  if (originalTitleCredit) titleBlock.append(originalTitleCredit);
+  filmCell.append(titleBlock);
+
+  const directorCell = document.createElement('td');
+  directorCell.className = 'ledger-director-cell';
+  const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
+  if (directors.length) {
+    directors.forEach((director, index) => {
+      if (index) directorCell.append(document.createTextNode(', '));
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'director-filter';
+      button.textContent = director;
+      button.setAttribute('aria-pressed', String(activeDirectors.includes(director)));
+      button.setAttribute('aria-label', `Filter by director ${director}`);
+      button.addEventListener('click', () => toggleDirector(director));
+      directorCell.append(button);
+    });
+  } else directorCell.textContent = '—';
+
+  const productionCell = document.createElement('td');
+  productionCell.className = 'ledger-production-cell';
+  const production = countryRuntimeMetaFor(film, 'ledger-production');
+  if (production) productionCell.append(production);
+  else productionCell.textContent = '—';
+
+  const countCell = document.createElement('td');
+  countCell.className = 'ledger-appearance-cell';
+  const count = document.createElement('strong');
+  const likedListCount = Number(film.liked_in) || 0;
+  count.textContent = likedListCount.toLocaleString();
+  const countLabel = document.createElement('span');
+  countLabel.textContent = likedListCount === 1 ? 'list' : 'lists';
+  countCell.append(count, countLabel);
+  countCell.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
+
+  row.append(catalogueCell, filmCell, directorCell, productionCell, countCell);
+  return row;
+}
+
 function featuredFilmFor(film) {
   const rankNumber = films.indexOf(film) + 1;
   const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
@@ -1018,9 +1133,32 @@ function validateSnapshot(snapshot) {
   return snapshot;
 }
 
+function renderDirectorFilmography() {
+  directorFilmography.replaceChildren();
+  directorFilmography.hidden = activeDirectors.length !== 1;
+  if (activeDirectors.length !== 1) return;
+
+  const director = activeDirectors[0];
+  const titles = films.filter((film) => Array.isArray(film.directors) && film.directors.includes(director));
+  const years = titles.map((film) => Number.parseInt(film.year, 10)).filter(Number.isFinite).sort((a, b) => a - b);
+  const label = document.createElement('span');
+  label.className = 'director-filmography-label';
+  label.textContent = 'Filmography';
+  const name = document.createElement('strong');
+  name.textContent = director;
+  const details = document.createElement('span');
+  details.className = 'director-filmography-details';
+  const yearSpan = years.length
+    ? ` · ${years[0] === years[years.length - 1] ? years[0] : `${years[0]}–${years[years.length - 1]}`}`
+    : '';
+  details.textContent = `${titles.length} ${titles.length === 1 ? 'film' : 'films'} in this catalogue${yearSpan}`;
+  directorFilmography.append(label, name, details);
+}
+
 function render() {
   const query = searchInput.value.trim().toLocaleLowerCase();
   renderActiveViewFilters();
+  renderDirectorFilmography();
   updateWatchFilterCounts(query);
   updateGenreOptionCounts(query);
   const matching = films.filter((film) => {
@@ -1030,16 +1168,23 @@ function render() {
   });
   matching.sort((left, right) => compareFilms(left, right));
   const highlighted = matching.slice(0, 3);
-  const shown = matching.slice(0, visibleLimit + highlighted.length);
+  const ledgerView = activeView === 'ledger';
+  const shown = matching.slice(0, visibleLimit + (ledgerView ? 0 : highlighted.length));
   currentShownCount = shown.length;
   currentMatchCount = matching.length;
-  topBilled.hidden = highlighted.length === 0;
+  topBilled.hidden = ledgerView || highlighted.length === 0;
+  grid.hidden = ledgerView;
+  filmLedgerView.hidden = !ledgerView;
   const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0 && activeDirectors.length === 0 && !activeCountry && activeDecade === '';
   topBilledEyebrow.textContent = defaultRankedView ? 'Opening credits' : 'Filtered view';
   topBilledTitle.textContent = defaultRankedView ? 'Most listed' : 'Top results';
-  topBilledFeature.replaceChildren(...(highlighted.length ? [featuredFilmFor(highlighted[0])] : []));
-  topBilledGrid.replaceChildren(...highlighted.slice(1).map((film, index) => cardFor(film, index)));
-  grid.replaceChildren(...shown.slice(highlighted.length).map((film, index) => cardFor(film, index)));
+  if (ledgerView) {
+    filmLedgerRows.replaceChildren(...shown.map((film) => ledgerRowFor(film)));
+  } else {
+    topBilledFeature.replaceChildren(...(highlighted.length ? [featuredFilmFor(highlighted[0])] : []));
+    topBilledGrid.replaceChildren(...highlighted.slice(1).map((film, index) => cardFor(film, index)));
+    grid.replaceChildren(...shown.slice(highlighted.length).map((film, index) => cardFor(film, index)));
+  }
   document.querySelector('#heading-count').textContent = String(matching.length).padStart(2, '0');
   statusMessage.classList.toggle('is-visible', matching.length === 0);
   const hasFacetFilters = activeGenres.length > 0 || activeDirectors.length > 0 || Boolean(activeCountry) || activeDecade !== '';
@@ -1143,7 +1288,9 @@ async function loadSnapshot() {
     const progressPercent = rankedTotal ? Math.round((watchedCount / rankedTotal) * 100) : 0;
     document.querySelector('#watch-progress-percent').textContent = `${progressPercent}% watched`;
     progress.setAttribute('aria-label', `${watchedCount.toLocaleString()} of ${rankedTotal.toLocaleString()} films watched (${progressPercent} percent)`);
-    document.querySelector('#refreshed-label').textContent = formatDate(snapshot.refreshed_at);
+  const editionDate = document.querySelector('#refreshed-label');
+  editionDate.textContent = formatEditionDate(snapshot.refreshed_at);
+  editionDate.title = formatDate(snapshot.refreshed_at);
     const displayed = snapshot.displayed_film_count ?? films.length;
     collectionScope.textContent = `Search covers all ${displayed.toLocaleString()} films by title, original title, director, year, genre, synopsis, and source list. Refine by production country or decade.`;
     document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
@@ -1194,6 +1341,7 @@ clearSearchStateButton.addEventListener('click', () => {
   activeDirectors = [];
   activeCountry = '';
   activeDecade = '';
+  activeView = 'posters';
   visibleLimit = 40;
   syncControls();
   updateUrlState();
@@ -1208,6 +1356,8 @@ clearGenresButton.addEventListener('click', () => {
   render();
 });
 countrySelect.addEventListener('change', () => setCountry(countrySelect.value));
+posterDisplayButton.addEventListener('click', () => setView('posters'));
+ledgerDisplayButton.addEventListener('click', () => setView('ledger'));
 decadeOptions.addEventListener('click', (event) => {
   const button = event.target.closest('[data-decade]');
   if (button) setDecade(button.dataset.decade);
