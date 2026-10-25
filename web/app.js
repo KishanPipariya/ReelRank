@@ -8,8 +8,10 @@ const sortSelect = document.querySelector('#sort-select');
 const genreFilter = document.querySelector('#genre-filter');
 const genreFilterSummary = document.querySelector('#genre-filter-summary');
 const genreOptions = document.querySelector('#genre-options');
+const genreSearchInput = document.querySelector('#genre-search');
+const genreEmptyState = document.querySelector('#genre-empty-state');
 const clearGenresButton = document.querySelector('#clear-genres');
-const activeGenreFilters = document.querySelector('#active-genre-filters');
+const selectedGenres = document.querySelector('#selected-genres');
 const backToFiltersButton = document.querySelector('#back-to-filters');
 const clearSearchStateButton = document.querySelector('#clear-search-state');
 const setupState = document.querySelector('#setup-state');
@@ -53,22 +55,30 @@ function syncControls() {
   genreOptions.querySelectorAll('input[type="checkbox"]').forEach((input) => {
     input.checked = activeGenres.includes(input.value);
   });
-  genreFilterSummary.textContent = activeGenres.length ? `${activeGenres.length} selected` : 'Any';
+  genreFilterSummary.textContent = activeGenres.length
+    ? `${activeGenres[0]}${activeGenres.length > 1 ? ` +${activeGenres.length - 1}` : ''}`
+    : 'Any';
   clearGenresButton.hidden = activeGenres.length === 0;
-  renderActiveGenreFilters();
+  renderSelectedGenres();
 }
 
-function renderActiveGenreFilters() {
-  activeGenreFilters.replaceChildren();
-  activeGenreFilters.hidden = activeGenres.length === 0;
+function renderSelectedGenres() {
+  selectedGenres.replaceChildren();
+  if (activeGenres.length === 0) {
+    const empty = document.createElement('span');
+    empty.className = 'selected-genres-empty';
+    empty.textContent = 'No genres selected';
+    selectedGenres.append(empty);
+    return;
+  }
   activeGenres.forEach((genre) => {
     const chip = document.createElement('button');
     chip.type = 'button';
-    chip.className = 'active-genre-chip';
+    chip.className = 'selected-genre-chip';
     chip.textContent = `${genre} ×`;
     chip.setAttribute('aria-label', `Remove ${genre} genre filter`);
     chip.addEventListener('click', () => toggleGenre(genre));
-    activeGenreFilters.append(chip);
+    selectedGenres.append(chip);
   });
 }
 
@@ -93,11 +103,25 @@ function buildGenreFilter() {
     const name = document.createElement('span');
     name.textContent = genre;
     const count = document.createElement('small');
+    count.className = 'genre-option-count';
     count.textContent = counts.get(genre).toLocaleString();
     label.append(checkbox, name, count);
     genreOptions.append(label);
   });
+  updateGenreOptionVisibility();
   syncControls();
+}
+
+function updateGenreOptionVisibility() {
+  const query = genreSearchInput.value.trim().toLocaleLowerCase();
+  const options = [...genreOptions.querySelectorAll('.genre-option')];
+  let visibleCount = 0;
+  options.forEach((option) => {
+    const matches = option.querySelector('input').value.toLocaleLowerCase().includes(query);
+    option.hidden = !matches;
+    if (matches) visibleCount += 1;
+  });
+  genreEmptyState.hidden = visibleCount > 0;
 }
 
 function toggleGenre(genre) {
@@ -175,9 +199,9 @@ function searchPriority(film, query) {
   return title.includes(query) || year.includes(query) ? 0 : 1;
 }
 
-function matchesSearchAndGenres(film, query) {
+function matchesSearchAndGenres(film, query, selectedGenreList = activeGenres) {
   const filmGenres = Array.isArray(film.genres) ? film.genres : [];
-  if (activeGenres.length && !activeGenres.some((genre) => filmGenres.includes(genre))) return false;
+  if (selectedGenreList.length && !selectedGenreList.some((genre) => filmGenres.includes(genre))) return false;
   if (!query) return true;
   const titleAndYear = `${film.title || ''} ${film.year || ''}`.toLocaleLowerCase();
   const overview = (film.overview || '').toLocaleLowerCase();
@@ -192,6 +216,19 @@ function updateWatchFilterCounts(query) {
   const unwatchedCount = contextualFilms.length - watchedCount;
   document.querySelector('#unwatched-tab-count').textContent = unwatchedCount.toLocaleString();
   document.querySelector('#watched-tab-count').textContent = watchedCount.toLocaleString();
+}
+
+function updateGenreOptionCounts(query) {
+  const contextFilms = films.filter((film) => {
+    if (activeFilter === 'unwatched' && film.watched) return false;
+    if (activeFilter === 'watched' && !film.watched) return false;
+    return matchesSearchAndGenres(film, query, []);
+  });
+  genreOptions.querySelectorAll('.genre-option').forEach((option) => {
+    const genre = option.querySelector('input').value;
+    const count = contextFilms.filter((film) => Array.isArray(film.genres) && film.genres.includes(genre)).length;
+    option.querySelector('.genre-option-count').textContent = count.toLocaleString();
+  });
 }
 
 function compareFilms(left, right, sort = activeSort) {
@@ -396,6 +433,7 @@ function cardFor(film, index) {
 function render() {
   const query = searchInput.value.trim().toLocaleLowerCase();
   updateWatchFilterCounts(query);
+  updateGenreOptionCounts(query);
   const matching = films.filter((film) => {
     if (activeFilter === 'unwatched' && film.watched) return false;
     if (activeFilter === 'watched' && !film.watched) return false;
@@ -533,6 +571,7 @@ sortSelect.addEventListener('change', () => {
   updateUrlState();
   render();
 });
+genreSearchInput.addEventListener('input', updateGenreOptionVisibility);
 clearSearchStateButton.addEventListener('click', () => {
   window.clearTimeout(searchUrlTimer);
   searchInput.value = '';
