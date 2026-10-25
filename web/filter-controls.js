@@ -116,6 +116,11 @@ export function createFilterControls({ state, sources, elements, actions }) {
     elements.sourceListOptions.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = state.sourceLists.includes(input.value); });
     const labels = state.sourceLists.map((url) => sources().find((item) => item.url === url)?.label).filter(Boolean);
     elements.sourceListFilterSummary.textContent = labels.length === 0 ? 'Any' : labels.length === 1 ? labels[0] : `${labels.length} selected`;
+    const activeFilterCount = state.genres.length + state.directors.length + state.sourceLists.length
+      + Number(Boolean(state.country)) + Number(state.decade !== '') + Number(Boolean(state.runtime));
+    elements.catalogFilterCount.hidden = activeFilterCount === 0;
+    elements.catalogFilterCount.textContent = activeFilterCount ? String(activeFilterCount) : '';
+    elements.catalogFilterCount.setAttribute('aria-label', `${activeFilterCount} active ${activeFilterCount === 1 ? 'filter' : 'filters'}`);
     elements.clearSourceListsButton.hidden = state.sourceLists.length === 0;
     renderSelectedSourceLists();
     renderActiveViewFilters();

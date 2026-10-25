@@ -74,6 +74,7 @@ const clearGenresButton = document.querySelector('#clear-genres');
 const closeGenresButton = document.querySelector('#close-genres');
 const sourceListFilter = document.querySelector('#source-list-filter');
 const sourceListFilterSummary = document.querySelector('#source-list-filter-summary');
+const catalogFilterCount = document.querySelector('#catalog-filter-count');
 const sourceListOptions = document.querySelector('#source-list-options');
 const sourceListSearch = document.querySelector('#source-list-search');
 const sourceListEmpty = document.querySelector('#source-list-empty');
@@ -81,6 +82,8 @@ const selectedSourceLists = document.querySelector('#selected-source-lists');
 const clearSourceListsButton = document.querySelector('#clear-source-lists');
 const closeSourceListsButton = document.querySelector('#close-source-lists');
 const selectedGenres = document.querySelector('#selected-genres');
+const catalogFilters = document.querySelector('#catalog-filters');
+const catalogFiltersTrigger = document.querySelector('#catalog-filters > summary');
 const activeViewTools = document.querySelector('#active-view-tools');
 const activeGenreFilters = document.querySelector('#active-genre-filters');
 const activeDirectorFilters = document.querySelector('#active-director-filters');
@@ -150,7 +153,7 @@ const filterControls = createFilterControls({
   elements: {
     sortSelect, countryIndexOptions, countryIndexSearch, posterDisplayButton, ledgerDisplayButton,
     decadeOptions, runtimeOptions, genreOptions, genreFilterSummary, clearGenresButton, selectedGenres,
-    sourceListOptions, sourceListFilterSummary, clearSourceListsButton, selectedSourceLists,
+    sourceListOptions, sourceListFilterSummary, catalogFilterCount, clearSourceListsButton, selectedSourceLists,
     activeViewTools, activeGenreFilters, activeDirectorFilters, activeSourceListFilters, searchInput,
   },
   actions: {
@@ -562,9 +565,9 @@ function programmeNoteFor(catalogue) {
   const leadingCountry = [...countryCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0];
   const leadingGenre = [...genreCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0];
   const details = [
-    leadingGenre ? `Genre: ${leadingGenre[0]}` : '',
-    leadingDecade ? `Era: ${leadingDecade[0]}s` : '',
-    leadingCountry ? `Country: ${leadingCountry[0]}` : '',
+    leadingGenre ? `Most common genre: ${leadingGenre[0]}` : '',
+    leadingDecade ? `Most represented decade: ${leadingDecade[0]}s` : '',
+    leadingCountry ? `Most common country: ${leadingCountry[0]}` : '',
   ].filter(Boolean);
   return `${catalogue.length.toLocaleString()} ${catalogue.length === 1 ? 'film' : 'films'}${details.length ? ` · ${details.join(' · ')}` : ''}`;
 }
@@ -1514,6 +1517,12 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     sourceListFilter.open = false;
     sourceListFilter.querySelector('summary').focus();
+    return;
+  }
+  if (event.key === 'Escape' && catalogFilters.open) {
+    event.preventDefault();
+    catalogFilters.open = false;
+    catalogFiltersTrigger.focus();
     return;
   }
   if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {

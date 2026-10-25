@@ -99,6 +99,12 @@
                 <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count">—</span></button>
                 <button class="filter-button" type="button" data-filter="watched" aria-pressed="false">Watched <span id="watched-tab-count">—</span></button>
               </div>
+              <details id="catalog-filters" class="catalog-filters">
+                <summary class="catalog-filters-toggle">
+                  <span>Filters</span>
+                  <span id="catalog-filter-count" class="catalog-filter-count" hidden></span>
+                </summary>
+                <div class="catalog-filters-panel">
               <details id="genre-filter" class="genre-filter" hidden>
                 <summary class="genre-filter-toggle">
                   <span>Genres</span>
@@ -145,6 +151,35 @@
                   <p id="source-list-empty" class="genre-empty-state" hidden>No source lists match that search.</p>
                 </div>
               </details>
+              <section class="decade-retrospective" aria-labelledby="decade-retrospective-title">
+                <div class="decade-retrospective-heading">
+                  <p class="eyebrow">Browse by</p>
+                  <h3 id="decade-retrospective-title">Decade, running time &amp; country</h3>
+                </div>
+                <div id="decade-options" class="decade-options" role="group" aria-label="Filter films by release decade"></div>
+                <div id="runtime-filter" class="runtime-filter" hidden>
+                  <span class="runtime-filter-label">Running time</span>
+                  <div id="runtime-options" class="runtime-options" role="group" aria-label="Filter films by running time" aria-describedby="runtime-filter-note">
+                    <button class="runtime-option" type="button" data-runtime="" aria-pressed="true">Any length</button>
+                    <button class="runtime-option" type="button" data-runtime="under-90" aria-pressed="false">Under 90 min</button>
+                    <button class="runtime-option" type="button" data-runtime="90-120" aria-pressed="false">90–120 min</button>
+                    <button class="runtime-option" type="button" data-runtime="over-120" aria-pressed="false">Over 120 min</button>
+                    <span id="runtime-filter-note" class="runtime-filter-note">Choosing a running time excludes films with unknown runtimes.</span>
+                  </div>
+                </div>
+                <div class="country-index">
+                  <p class="country-index-heading">Production country</p>
+                  <label id="country-index-search-control" class="country-index-search-control" hidden>
+                    <span class="sr-only">Search all production countries</span>
+                    <input id="country-index-search" type="search" placeholder="Find a country" autocomplete="off" />
+                  </label>
+                  <div id="country-index-options" class="country-index-options" role="group" aria-label="Filter by production country"></div>
+                  <p id="country-index-empty" class="country-index-empty" role="status" hidden>No countries match that search.</p>
+                  <button id="country-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Browse all countries</button>
+                </div>
+              </section>
+                </div>
+              </details>
               <label class="sort-control">
                 <span class="sr-only">Sort films</span>
                 <select id="sort-select" aria-label="Sort films">
@@ -156,57 +191,32 @@
               </label>
             </div>
           </div>
-          <p id="collection-scope" class="collection-scope">Search titles, directors, years, genres, synopses, and source lists. Browse by decade, production country, or running time.</p>
-          <section class="decade-retrospective" aria-labelledby="decade-retrospective-title">
-            <div class="decade-retrospective-heading">
-              <p class="eyebrow">A retrospective by release decade</p>
-              <h3 id="decade-retrospective-title">Browse the eras</h3>
-            </div>
-            <div id="decade-options" class="decade-options" role="group" aria-label="Filter films by release decade"></div>
-            <div id="runtime-filter" class="runtime-filter" hidden>
-              <span class="runtime-filter-label">Running time</span>
-              <div id="runtime-options" class="runtime-options" role="group" aria-label="Filter films by running time" aria-describedby="runtime-filter-note">
-                <button class="runtime-option" type="button" data-runtime="" aria-pressed="true">Any length</button>
-                <button class="runtime-option" type="button" data-runtime="under-90" aria-pressed="false">Under 90 min</button>
-                <button class="runtime-option" type="button" data-runtime="90-120" aria-pressed="false">90–120 min</button>
-                <button class="runtime-option" type="button" data-runtime="over-120" aria-pressed="false">Over 120 min</button>
-                <span id="runtime-filter-note" class="runtime-filter-note">Choosing a running time excludes films with unknown runtimes.</span>
-              </div>
-            </div>
-            <div class="country-index">
-              <p class="country-index-heading">Leading production countries</p>
-              <label id="country-index-search-control" class="country-index-search-control" hidden>
-                <span class="sr-only">Search all production countries</span>
-                <input id="country-index-search" type="search" placeholder="Find a country" autocomplete="off" />
-              </label>
-              <div id="country-index-options" class="country-index-options" role="group" aria-label="Filter by leading production countries"></div>
-              <p id="country-index-empty" class="country-index-empty" role="status" hidden>No countries match that search.</p>
-              <button id="country-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Browse all countries</button>
-            </div>
-          </section>
+          <p id="collection-scope" class="collection-scope">Search titles, directors, years, genres, synopses, and source lists.</p>
           <div id="active-view-tools" class="active-view-tools" hidden>
             <div id="active-genre-filters" class="active-genre-filters" aria-label="Active filters" hidden></div>
             <div id="active-director-filters" class="active-genre-filters" aria-label="Active director filters" hidden></div>
             <div id="active-source-list-filters" class="active-genre-filters" aria-label="Active source list filters" hidden></div>
             <button id="clear-search-state" class="clear-search-state" type="button">Clear search &amp; reset view</button>
           </div>
-          <aside id="programme-note" class="programme-note" aria-label="Notes on the current programme" hidden>
-            <span class="programme-note-kicker">Programme note</span>
+          <aside id="programme-note" class="programme-note" aria-label="Summary of this selection" hidden>
+            <span class="programme-note-kicker">In this selection</span>
             <p id="programme-note-copy"></p>
           </aside>
           <div class="collection-display-bar">
             <div id="director-filmography" class="director-filmography" hidden></div>
             <div class="collection-display-actions">
-              <div class="collection-view-control" role="group" aria-label="Choose film layout">
-                <button id="poster-display-button" class="collection-view-button is-active" type="button" aria-pressed="true">Poster wall</button>
-                <button id="ledger-display-button" class="collection-view-button" type="button" aria-pressed="false">Ledger</button>
+              <div class="collection-view-tools">
+                <div class="collection-view-control" role="group" aria-label="Choose film layout">
+                  <button id="poster-display-button" class="collection-view-button is-active" type="button" aria-pressed="true">Poster wall</button>
+                  <button id="ledger-display-button" class="collection-view-button" type="button" aria-pressed="false">Ledger</button>
+                </div>
+                <details class="score-key">
+                  <summary>Score key</summary>
+                  <p class="score-key-copy">The score counts liked lists that include a film. In Poster Wall, the bar compares it with the highest score in the current results.</p>
+                </details>
               </div>
-              <details class="score-key">
-                <summary>Score key</summary>
-                <p class="score-key-copy">The score counts liked lists that include a film. In Poster Wall, the bar compares it with the highest score in the current results.</p>
-              </details>
               <div class="print-programme-control">
-                <label class="sr-only" for="print-format-select">Printed programme format</label>
+                <label for="print-format-select">Print as</label>
                 <select id="print-format-select" class="print-format-select">
                   <option value="compact">Compact catalogue</option>
                   <option value="reader">Reader’s edition</option>
