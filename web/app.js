@@ -237,7 +237,23 @@ function listLabel(value) {
 function formatDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Refresh date unavailable';
-  return `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
+  const elapsedSeconds = Math.max(0, (Date.now() - date.getTime()) / 1000);
+  let amount;
+  let unit;
+  if (elapsedSeconds < 45) return `Updated just now · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
+  if (elapsedSeconds < 90) [amount, unit] = [1, 'minute'];
+  else if (elapsedSeconds < 60 * 60) [amount, unit] = [Math.round(elapsedSeconds / 60), 'minute'];
+  else if (elapsedSeconds < 90 * 60) [amount, unit] = [1, 'hour'];
+  else if (elapsedSeconds < 24 * 60 * 60) [amount, unit] = [Math.round(elapsedSeconds / (60 * 60)), 'hour'];
+  else if (elapsedSeconds < 36 * 60 * 60) [amount, unit] = [1, 'day'];
+  else if (elapsedSeconds < 30 * 24 * 60 * 60) [amount, unit] = [Math.round(elapsedSeconds / (24 * 60 * 60)), 'day'];
+  else if (elapsedSeconds < 45 * 24 * 60 * 60) [amount, unit] = [1, 'month'];
+  else if (elapsedSeconds < 365 * 24 * 60 * 60) [amount, unit] = [Math.round(elapsedSeconds / (30 * 24 * 60 * 60)), 'month'];
+  else if (elapsedSeconds < 545 * 24 * 60 * 60) [amount, unit] = [1, 'year'];
+  else [amount, unit] = [Math.round(elapsedSeconds / (365 * 24 * 60 * 60)), 'year'];
+  const relativeTime = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' }).format(-amount, unit);
+  const exactTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+  return `Updated ${relativeTime} · ${exactTime}`;
 }
 
 function matchesSearchAndGenres(film, query, selectedGenreList = activeGenres) {
@@ -466,14 +482,16 @@ function cardFor(film, index) {
   const listDetails = document.createElement('details');
   listDetails.className = 'list-details';
   const listSummary = document.createElement('summary');
-  listSummary.textContent = 'Film and source details';
-  listDetails.append(listSummary);
   const listLinks = document.createElement('div');
   listLinks.className = 'list-links';
   lists.forEach((url) => {
     const safeListUrl = safeUrl(url, ['letterboxd.com']);
     if (safeListUrl) listLinks.append(makeLink(listLabel(safeListUrl), safeListUrl));
   });
+  listSummary.textContent = listLinks.childElementCount
+    ? `Appears on ${listLinks.childElementCount.toLocaleString()} liked ${listLinks.childElementCount === 1 ? 'list' : 'lists'}`
+    : 'Film details';
+  listDetails.append(listSummary);
   if (listLinks.childElementCount) listDetails.append(listLinks);
   const tmdbUrl = safeUrl(film.tmdb_url, ['themoviedb.org']);
   if (tmdbUrl) listDetails.append(makeLink('Film data on TMDB ↗', tmdbUrl, 'tmdb-film-link'));
@@ -535,7 +553,7 @@ function render() {
   topBilled.hidden = highlighted.length === 0;
   const defaultRankedView = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0;
   topBilledEyebrow.textContent = defaultRankedView ? 'Opening credits' : 'Filtered view';
-  topBilledTitle.textContent = defaultRankedView ? 'Top billed' : 'Top results';
+  topBilledTitle.textContent = defaultRankedView ? 'Most listed' : 'Top results';
   topBilledGrid.replaceChildren(...highlighted.map(cardFor));
   grid.replaceChildren(...shown.slice(highlighted.length).map((film, index) => cardFor(film, index)));
   document.querySelector('#heading-count').textContent = String(matching.length).padStart(2, '0');

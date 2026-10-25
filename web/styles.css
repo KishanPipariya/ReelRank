@@ -49,7 +49,7 @@ button, input { font: inherit; }
 .wordmark-mark { width: 28px; height: 28px; display: grid; place-items: center; color: var(--forest); border: 1px solid var(--forest); border-radius: 50%; font-family: var(--serif); font-weight: 500; font-style: italic; font-size: 18px; }
 .profile-link { display: inline-flex; align-items: center; gap: 9px; color: #565c52; font-family: var(--mono); font-size: 11px; text-decoration: none; }
 .profile-link > span:last-child { color: var(--forest); font-size: 14px; }
-.profile-dot, .live-indicator > span { width: 7px; height: 7px; border-radius: 50%; background: #77a956; box-shadow: 0 0 0 3px #77a95621; }
+.profile-dot { width: 7px; height: 7px; border-radius: 50%; background: #77a956; box-shadow: 0 0 0 3px #77a95621; }
 .hero { min-height: 392px; position: relative; display: flex; align-items: center; justify-content: space-between; overflow: hidden; margin-top: 26px; padding: 50px 8.2%; background: var(--forest); color: #f6f3e9; box-shadow: inset 0 13px 0 #11171130, inset 0 -13px 0 #11171130; }
 .hero::after { position: absolute; z-index: 0; inset: 0; background: radial-gradient(ellipse at 76% 48%, #e8876030 0, #e8876014 23%, transparent 57%), radial-gradient(ellipse at 10% 0%, #b5d67a16 0, transparent 48%); content: ''; pointer-events: none; }
 .hero::before { position: absolute; z-index: 1; inset: 14px; border: 1px solid #d4e6c72b; content: ''; pointer-events: none; }
@@ -62,8 +62,7 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .hero-story-link { display: inline-block; margin: -10px 0 21px; color: #f0a07b; font-family: var(--mono); font-size: 10px; text-decoration-color: #f0a07b99; text-underline-offset: 4px; }
 .hero-story-link:hover { color: #ffc19e; text-decoration-thickness: 2px; }
 .hero-meta { display: flex; align-items: center; gap: 12px; color: #bbc5b7; font-family: var(--mono); font-size: 10px; }
-.live-indicator { display: inline-flex; align-items: center; gap: 8px; color: #e3ebdb; }
-.live-indicator > span { background: var(--green); box-shadow: none; }
+.snapshot-label { color: #e3ebdb; }
 .meta-separator { color: #77887a; }
 .hero-stamp { width: 158px; height: 158px; position: relative; z-index: 1; flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; border: 1px solid #d4e6c733; border-radius: 50%; text-align: center; transform: rotate(5deg); color: #c8d5c1; opacity: .78; box-shadow: 0 0 32px #e8876009, inset 0 0 24px #e8876006; }
 .stamp-top, .stamp-bottom { font-family: var(--mono); font-size: 8px; letter-spacing: .15em; text-transform: uppercase; }
