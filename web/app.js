@@ -432,6 +432,24 @@ function formatEditionDate(value) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date);
 }
 
+function editionColophonFor(catalogue) {
+  const decadeCounts = new Map();
+  const countryCounts = new Map();
+  catalogue.forEach((film) => {
+    const decade = filmDecade(film);
+    if (decade !== null) decadeCounts.set(decade, (decadeCounts.get(decade) || 0) + 1);
+    [...new Set(Array.isArray(film.countries) ? film.countries : [])].forEach((country) => {
+      if (typeof country === 'string' && country.trim()) countryCounts.set(country, (countryCounts.get(country) || 0) + 1);
+    });
+  });
+  const leadingDecade = [...decadeCounts].sort((left, right) => right[1] - left[1] || left[0] - right[0])[0];
+  const leadingCountry = [...countryCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0];
+  return {
+    decade: leadingDecade ? `${leadingDecade[0]}s` : 'Unavailable',
+    country: leadingCountry ? leadingCountry[0] : 'Unavailable',
+  };
+}
+
 function matchesSearchAndGenres(film, query, selectedGenreList = activeGenres) {
   const filmGenres = Array.isArray(film.genres) ? film.genres : [];
   if (selectedGenreList.length && !selectedGenreList.some((genre) => filmGenres.includes(genre))) return false;
@@ -898,6 +916,8 @@ function ledgerRowFor(film) {
 
   const filmCell = document.createElement('td');
   filmCell.className = 'ledger-film-cell';
+  const filmLayout = document.createElement('div');
+  filmLayout.className = 'ledger-film-layout';
   const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
   const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
   if (posterUrl) {
@@ -915,7 +935,7 @@ function ledgerRowFor(film) {
     image.loading = 'lazy';
     image.referrerPolicy = 'no-referrer';
     poster.append(image);
-    filmCell.append(poster);
+    filmLayout.append(poster);
   }
   const titleBlock = document.createElement('div');
   titleBlock.className = 'ledger-film-copy';
@@ -934,7 +954,8 @@ function ledgerRowFor(film) {
   titleBlock.append(title);
   const originalTitleCredit = originalTitleCreditFor(film, 'original-title-credit ledger-original-title-credit');
   if (originalTitleCredit) titleBlock.append(originalTitleCredit);
-  filmCell.append(titleBlock);
+  filmLayout.append(titleBlock);
+  filmCell.append(filmLayout);
 
   const directorCell = document.createElement('td');
   directorCell.className = 'ledger-director-cell';
@@ -968,9 +989,69 @@ function ledgerRowFor(film) {
   countLabel.textContent = likedListCount === 1 ? 'list' : 'lists';
   countCell.append(count, countLabel);
   countCell.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
+  const sourceListUrls = [...new Set((Array.isArray(film.lists) ? film.lists : [])
+    .map((url) => safeUrl(url, ['letterboxd.com'])).filter(Boolean))];
+  if (sourceListUrls.length) {
+    const sources = document.createElement('details');
+    sources.className = 'list-details ledger-provenance-details';
+    const sourcesSummary = document.createElement('summary');
+    sourcesSummary.textContent = `Source lists · ${sourceListUrls.length.toLocaleString()}`;
+    const sourceLinks = document.createElement('ol');
+    sourceLinks.className = 'list-links';
+    const entries = sourceListUrls.map((url) => {
+      const item = document.createElement('li');
+      item.append(makeLink(listLabel(url), url));
+      return item;
+    });
+    const visibleEntries = 3;
+    sourceLinks.append(...entries.slice(0, visibleEntries));
+    const hiddenEntries = entries.slice(visibleEntries);
+    hiddenEntries.forEach((entry) => {
+      entry.hidden = true;
+      sourceLinks.append(entry);
+    });
+    sources.append(sourcesSummary, sourceLinks);
+    if (hiddenEntries.length) {
+      const toggle = document.createElement('button');
+      toggle.className = 'list-links-toggle';
+      toggle.type = 'button';
+      toggle.textContent = `Show all ${sourceListUrls.length.toLocaleString()} lists`;
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.addEventListener('click', () => {
+        const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+        hiddenEntries.forEach((entry) => { entry.hidden = !expanded; });
+        toggle.setAttribute('aria-expanded', String(expanded));
+        toggle.textContent = expanded ? 'Show fewer lists' : `Show all ${sourceListUrls.length.toLocaleString()} lists`;
+      });
+      sources.append(toggle);
+    }
+    countCell.append(sources);
+  }
 
   row.append(catalogueCell, filmCell, directorCell, productionCell, countCell);
   return row;
+}
+
+function ledgerRowsFor(shownFilms) {
+  const rows = [];
+  const groupByYear = activeSort === 'year-newest' || activeSort === 'year-oldest';
+  let previousYear = null;
+  shownFilms.forEach((film) => {
+    const year = film.year?.trim() || 'Year unknown';
+    if (groupByYear && year !== previousYear) {
+      const divider = document.createElement('tr');
+      divider.className = 'ledger-year-divider';
+      const heading = document.createElement('th');
+      heading.scope = 'row';
+      heading.colSpan = 5;
+      heading.textContent = year;
+      divider.append(heading);
+      rows.push(divider);
+      previousYear = year;
+    }
+    rows.push(ledgerRowFor(film));
+  });
+  return rows;
 }
 
 function featuredFilmFor(film) {
@@ -1179,7 +1260,7 @@ function render() {
   topBilledEyebrow.textContent = defaultRankedView ? 'Opening credits' : 'Filtered view';
   topBilledTitle.textContent = defaultRankedView ? 'Most listed' : 'Top results';
   if (ledgerView) {
-    filmLedgerRows.replaceChildren(...shown.map((film) => ledgerRowFor(film)));
+    filmLedgerRows.replaceChildren(...ledgerRowsFor(shown));
   } else {
     topBilledFeature.replaceChildren(...(highlighted.length ? [featuredFilmFor(highlighted[0])] : []));
     topBilledGrid.replaceChildren(...highlighted.slice(1).map((film, index) => cardFor(film, index)));
@@ -1260,6 +1341,9 @@ async function loadSnapshot() {
     setupState.hidden = true;
     siteShell.hidden = false;
     films = snapshot.films;
+    const colophon = editionColophonFor(films);
+    document.querySelector('#edition-leading-decade').textContent = colophon.decade;
+    document.querySelector('#edition-leading-country').textContent = colophon.country;
     buildGenreFilter();
     const username = snapshotUsername;
     const profileUrl = safeUrl(snapshot.profile_url, ['letterboxd.com']) || `https://letterboxd.com/${encodeURIComponent(username)}/`;
