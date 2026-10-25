@@ -175,6 +175,25 @@ function searchPriority(film, query) {
   return title.includes(query) || year.includes(query) ? 0 : 1;
 }
 
+function matchesSearchAndGenres(film, query) {
+  const filmGenres = Array.isArray(film.genres) ? film.genres : [];
+  if (activeGenres.length && !activeGenres.some((genre) => filmGenres.includes(genre))) return false;
+  if (!query) return true;
+  const titleAndYear = `${film.title || ''} ${film.year || ''}`.toLocaleLowerCase();
+  const overview = (film.overview || '').toLocaleLowerCase();
+  const sourceLists = (film.lists || []).map(listLabel).join(' ').toLocaleLowerCase();
+  const genres = filmGenres.join(' ').toLocaleLowerCase();
+  return titleAndYear.includes(query) || overview.includes(query) || sourceLists.includes(query) || genres.includes(query);
+}
+
+function updateWatchFilterCounts(query) {
+  const contextualFilms = films.filter((film) => matchesSearchAndGenres(film, query));
+  const watchedCount = contextualFilms.filter((film) => film.watched).length;
+  const unwatchedCount = contextualFilms.length - watchedCount;
+  document.querySelector('#unwatched-tab-count').textContent = unwatchedCount.toLocaleString();
+  document.querySelector('#watched-tab-count').textContent = watchedCount.toLocaleString();
+}
+
 function compareFilms(left, right, sort = activeSort) {
   const leftRank = films.indexOf(left);
   const rightRank = films.indexOf(right);
@@ -360,17 +379,11 @@ function cardFor(film, index) {
 
 function render() {
   const query = searchInput.value.trim().toLocaleLowerCase();
+  updateWatchFilterCounts(query);
   const matching = films.filter((film) => {
     if (activeFilter === 'unwatched' && film.watched) return false;
     if (activeFilter === 'watched' && !film.watched) return false;
-    const filmGenres = Array.isArray(film.genres) ? film.genres : [];
-    if (activeGenres.length && !activeGenres.some((genre) => filmGenres.includes(genre))) return false;
-    if (!query) return true;
-    const titleAndYear = `${film.title || ''} ${film.year || ''}`.toLocaleLowerCase();
-    const overview = (film.overview || '').toLocaleLowerCase();
-    const sourceLists = (film.lists || []).map(listLabel).join(' ').toLocaleLowerCase();
-    const genres = (Array.isArray(film.genres) ? film.genres : []).join(' ').toLocaleLowerCase();
-    return titleAndYear.includes(query) || overview.includes(query) || sourceLists.includes(query) || genres.includes(query);
+    return matchesSearchAndGenres(film, query);
   });
   matching.sort((left, right) => (query ? searchPriority(left, query) - searchPriority(right, query) : 0) || compareFilms(left, right));
   const highlighted = activeFilter === 'all' && activeSort === 'rank' && !query && activeGenres.length === 0 ? matching.slice(0, 3) : [];
@@ -461,8 +474,6 @@ async function loadSnapshot() {
     const unwatchedCount = snapshot.unwatched_count ?? films.filter((film) => !film.watched).length;
     const watchedCount = Math.max(0, rankedTotal - unwatchedCount);
     document.querySelector('#unwatched-total').textContent = unwatchedCount.toLocaleString();
-    document.querySelector('#unwatched-tab-count').textContent = (snapshot.displayed_unwatched_count ?? films.filter((film) => !film.watched).length).toLocaleString();
-    document.querySelector('#watched-tab-count').textContent = (films.length - (snapshot.displayed_unwatched_count ?? films.filter((film) => !film.watched).length)).toLocaleString();
     document.querySelector('#watched-total').textContent = watchedCount.toLocaleString();
     document.querySelector('#progress-film-total').textContent = rankedTotal.toLocaleString();
     const progress = document.querySelector('#watch-progress');
