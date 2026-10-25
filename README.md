@@ -1,4 +1,4 @@
-# Reelrank
+# ReelRank
 
 Find films that appear most often across the public lists you’ve liked on Letterboxd. Enter your username; no export file is needed.
 

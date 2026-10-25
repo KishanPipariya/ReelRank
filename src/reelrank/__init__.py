@@ -503,7 +503,7 @@ def write_snapshot(snapshot: dict, output: Path) -> None:
 
 
 def refresh_snapshot_cli() -> None:
-    parser = argparse.ArgumentParser(description="Refresh the static Reelrank web demo snapshot.")
+    parser = argparse.ArgumentParser(description="Refresh the static ReelRank web demo snapshot.")
     parser.add_argument("--username", default="intelkishan", help="Letterboxd username (default: intelkishan)")
     parser.add_argument(
         "--output",

@@ -307,7 +307,7 @@ async function loadSnapshot() {
     const config = await configResponse.json();
     const configuredUsername = typeof config.letterboxd_username === 'string' ? config.letterboxd_username.trim() : '';
     if (!configuredUsername) throw new Error('Site configuration does not include a Letterboxd username');
-    setupTitle.textContent = `Preparing @${configuredUsername}'s Reelrank`;
+    setupTitle.textContent = `Preparing @${configuredUsername}'s ReelRank`;
     setupCopy.textContent = 'Checking the latest snapshot. The first refresh can take a few minutes while public lists and watched films are gathered.';
 
     const response = await fetch('/data/snapshot.json', { cache: 'no-store' });
@@ -351,7 +351,7 @@ async function loadSnapshot() {
     footerProfileLink.href = profileUrl;
     footerProfileLink.textContent = `${username} on Letterboxd ↗`;
     footerProfileLink.setAttribute('aria-label', `Letterboxd profile for ${username}, opens in a new tab`);
-    document.title = `Reelrank — ${username}`;
+    document.title = `ReelRank — ${username}`;
     document.querySelector('#tmdb-credit').hidden = !(snapshot.tmdb_match_count > 0);
     rankedTotal = snapshot.film_count ?? films.length;
     document.querySelector('#film-total').textContent = rankedTotal.toLocaleString();
