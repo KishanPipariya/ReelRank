@@ -231,6 +231,17 @@ function makeLink(label, href, className = '') {
   return link;
 }
 
+function genreChipFor(genre) {
+  const tag = document.createElement('button');
+  tag.type = 'button';
+  tag.className = 'genre-tag';
+  tag.textContent = genre;
+  tag.setAttribute('aria-label', `Filter by ${genre}`);
+  tag.setAttribute('aria-pressed', String(activeGenres.includes(genre)));
+  tag.addEventListener('click', () => toggleGenre(genre));
+  return tag;
+}
+
 function cardFor(film, index) {
   const rankNumber = films.indexOf(film) + 1;
   const card = document.createElement('article');
@@ -315,23 +326,28 @@ function cardFor(film, index) {
     genreTags.className = 'genre-tags';
     genreTags.setAttribute('role', 'group');
     genreTags.setAttribute('aria-label', `Genres: ${genres.join(', ')}`);
-    genres.slice(0, 2).forEach((genre) => {
-      const tag = document.createElement('button');
-      tag.type = 'button';
-      tag.className = 'genre-tag';
-      tag.textContent = genre;
-      tag.setAttribute('aria-label', `Filter by ${genre}`);
-      tag.setAttribute('aria-pressed', String(activeGenres.includes(genre)));
-      tag.addEventListener('click', () => toggleGenre(genre));
-      genreTags.append(tag);
-    });
+    genres.slice(0, 2).forEach((genre) => genreTags.append(genreChipFor(genre)));
     if (genres.length > 2) {
-      const more = document.createElement('span');
+      const hiddenGenres = genres.slice(2);
+      const hiddenTags = hiddenGenres.map((genre) => {
+        const tag = genreChipFor(genre);
+        tag.classList.add('genre-extra-tag');
+        return tag;
+      });
+      const more = document.createElement('button');
+      more.type = 'button';
       more.className = 'genre-tag genre-tag-more';
-      more.textContent = `+${genres.length - 2}`;
-      more.title = genres.slice(2).join(', ');
-      more.setAttribute('aria-label', `${genres.length - 2} more genres: ${genres.slice(2).join(', ')}`);
+      more.textContent = `+${hiddenGenres.length}`;
+      more.setAttribute('aria-expanded', 'false');
+      more.setAttribute('aria-label', `Show ${hiddenGenres.length} more ${hiddenGenres.length === 1 ? 'genre' : 'genres'}`);
+      more.addEventListener('click', () => {
+        const expanded = genreTags.classList.toggle('is-expanded');
+        more.textContent = expanded ? '−' : `+${hiddenGenres.length}`;
+        more.setAttribute('aria-expanded', String(expanded));
+        more.setAttribute('aria-label', expanded ? 'Hide additional genres' : `Show ${hiddenGenres.length} more ${hiddenGenres.length === 1 ? 'genre' : 'genres'}`);
+      });
       genreTags.append(more);
+      hiddenTags.forEach((tag) => genreTags.append(tag));
     }
     info.append(genreTags);
   }
