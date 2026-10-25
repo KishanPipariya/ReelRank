@@ -10,6 +10,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -280,7 +281,7 @@ def filter_unwatched(results: list[MovieResult], watched: set[tuple[str, str]]) 
 
 
 def _tmdb_metadata_key(movie: Movie) -> str:
-    normalized_title = re.sub(r"[^a-z0-9]+", " ", movie.title.casefold()).strip()
+    normalized_title = _normalize_tmdb_title(movie.title) or movie.title.casefold().strip()
     return f"{normalized_title}|{movie.year}"
 
 
@@ -303,6 +304,102 @@ def _write_tmdb_metadata_cache(cache_path: Path, cache: dict[str, dict | None]) 
     temporary = cache_path.with_name(f".{cache_path.name}.tmp")
     temporary.write_text(json.dumps(cache, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     temporary.replace(cache_path)
+
+
+def _normalize_tmdb_title(value: str) -> str:
+    """Normalize punctuation and accents while preserving non-Latin letters."""
+    normalized = unicodedata.normalize("NFKD", value.casefold())
+    result: list[str] = []
+    previous_base_is_latin = False
+    for character in normalized:
+        if unicodedata.category(character).startswith("M"):
+            # Latin diacritics are usually spelling variants for matching;
+            # keep combining marks in other scripts because they can change
+            # the letter or pronunciation.
+            if not previous_base_is_latin:
+                result.append(character)
+        elif character.isalnum():
+            result.append(character)
+            previous_base_is_latin = unicodedata.name(character, "").startswith("LATIN ")
+        else:
+            previous_base_is_latin = False
+    return "".join(result)
+
+
+def _select_tmdb_candidate(
+    movie: Movie,
+    candidates: list[dict],
+    alternate_title: str | None = None,
+) -> dict | None:
+    """Choose a confidently matching TMDB result, rejecting unresolved ties."""
+    target = _normalize_tmdb_title(movie.title)
+    alternate = _normalize_tmdb_title(alternate_title or "")
+    if not target:
+        return None
+
+    short_title = len(target) <= 4
+    exact_year_threshold = 0.95 if short_title else 0.75
+    scored: list[tuple[int, float, int, dict]] = []
+    for candidate in candidates:
+        names = {
+            _normalize_tmdb_title(name)
+            for name in (candidate.get("title", ""), candidate.get("original_title", ""))
+            if isinstance(name, str)
+        }
+        names.discard("")
+        targets = {target}
+        if alternate:
+            targets.add(alternate)
+        if not names:
+            continue
+        score = max(
+            difflib.SequenceMatcher(None, candidate_name, target_name).ratio()
+            for candidate_name in names
+            for target_name in targets
+        )
+
+        candidate_year = (candidate.get("release_date") or "")[:4]
+        has_both_years = movie.year.isdigit() and candidate_year.isdigit()
+        year_delta = abs(int(movie.year) - int(candidate_year)) if has_both_years else None
+        if year_delta is not None:
+            if year_delta > 1:
+                continue
+            year_tier = 2 if year_delta == 0 else 1
+            minimum_score = exact_year_threshold if year_delta == 0 else 0.9
+        else:
+            # A missing date is not evidence of a year match. Require a very
+            # strong title match; short titles need a usable year to be safe.
+            if short_title:
+                continue
+            year_tier = 0
+            minimum_score = 0.95
+
+        if alternate and score < 0.9:
+            continue
+        if score < minimum_score:
+            continue
+        scored.append((year_tier, score, -(year_delta or 0), candidate))
+
+    if not scored:
+        return None
+
+    scored.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
+    best_tier, best_score, _, best = scored[0]
+    tied = [
+        candidate
+        for tier, score, _, candidate in scored
+        if tier == best_tier and best_score - score <= 0.02
+    ]
+    distinct = {
+        (
+            candidate.get("id"),
+            _normalize_tmdb_title(candidate.get("title", "")),
+            _normalize_tmdb_title(candidate.get("original_title", "")),
+            (candidate.get("release_date") or "")[:4],
+        )
+        for candidate in tied
+    }
+    return best if len(distinct) == 1 else None
 
 
 def _fetch_tmdb_movie_genres(client: curl_requests.Session, api_key: str) -> dict[int, str]:
@@ -346,7 +443,7 @@ def create_snapshot(username: str) -> dict:
         featured_results = results[:500]
         metadata: dict[int, dict | None] = {}
         tmdb_match_count = 0
-        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v1.json"
+        tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v2.json"
         tmdb_cache = _load_tmdb_metadata_cache(tmdb_cache_path)
         missing_metadata: list[tuple[int, MovieResult, str]] = []
         for index, result in enumerate(featured_results):
@@ -378,9 +475,11 @@ def create_snapshot(username: str) -> dict:
                         raise ValueError("TMDB rejected TMDB_API_KEY; check the API key configured for this job")
                     response.raise_for_status()
                     candidates = response.json().get("results", [])
+                    fallback_title = None
                     if not candidates and "," in result.movie.title:
                         short_title = result.movie.title.split(",", 1)[0].strip()
                         if short_title:
+                            fallback_title = short_title
                             response = client.get(
                                 "https://api.themoviedb.org/3/search/movie",
                                 params={
@@ -396,27 +495,8 @@ def create_snapshot(username: str) -> dict:
                     if not candidates:
                         return index, cache_key, None, False
 
-                    def title_score(candidate: dict) -> tuple[int, float, int, int]:
-                        target = re.sub(r"[^a-z0-9]+", "", result.movie.title.casefold())
-                        names = (candidate.get("title", ""), candidate.get("original_title", ""))
-                        score = max(
-                            difflib.SequenceMatcher(
-                                None,
-                                target,
-                                re.sub(r"[^a-z0-9]+", "", name.casefold()),
-                            ).ratio()
-                            for name in names
-                        )
-                        candidate_year = (candidate.get("release_date") or "")[:4]
-                        has_both_years = result.movie.year.isdigit() and candidate_year.isdigit()
-                        year_delta = abs(int(result.movie.year) - int(candidate_year)) if has_both_years else 0
-                        within_year_tolerance = int(not has_both_years or year_delta <= 1)
-                        exact_year = int(not has_both_years or year_delta == 0)
-                        return within_year_tolerance, score, exact_year, -year_delta
-
-                    best = max(candidates, key=title_score)
-                    year_match, score, exact_year, _ = title_score(best)
-                    if not year_match or score < 0.55 or (not exact_year and score < 0.9):
+                    best = _select_tmdb_candidate(result.movie, candidates, fallback_title)
+                    if best is None:
                         return index, cache_key, None, False
                     poster_path = best.get("poster_path") or ""
                     backdrop_path = best.get("backdrop_path") or ""
