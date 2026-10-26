@@ -193,7 +193,7 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .active-view-tools[hidden] { display: none; }
 .active-genre-filters { display: flex; flex-wrap: wrap; gap: 6px; }
 .active-genre-filters[hidden] { display: none; }
-.collection-display-bar { min-height: 38px; position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; }
+.collection-display-bar { min-height: 38px; position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 12px; margin: 0; }
 .director-filmography { min-width: 0; flex: 1 1 auto; display: grid; gap: 8px; margin: 0; color: var(--muted); font-size: 11px; }
 .director-filmography[hidden] { display: none; }
 .director-filmography-heading { min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 10px; }
@@ -632,7 +632,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .country-index-empty { grid-column: 1 / -1; }
   .country-index-toggle { align-self: flex-start; }
   .catalogue-actions { gap: 6px; margin-top: 16px; }
-  .collection-display-bar { align-items: flex-start; flex-direction: column; margin: 0; }
+  .collection-display-bar { align-items: stretch; margin: 0; }
   .collection-display-actions { align-items: flex-start; justify-content: flex-start; }
   .collection-view-tools { gap: 8px; }
   .print-programme-control { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr); justify-content: stretch; gap: 7px; }
