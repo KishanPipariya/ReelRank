@@ -213,28 +213,15 @@
                 <p id="programme-note-copy"></p>
               </aside>
             </div>
-            <details id="saved-views" class="saved-views">
-              <summary>Saved views &amp; local settings</summary>
-              <div class="saved-presets saved-views-panel">
-                <label for="preset-name">Save current filters</label>
-                <input id="preset-name" maxlength="48" placeholder="Preset name" />
-                <button id="preset-save" class="print-programme-button" type="button">Save view</button>
-                <label for="preset-list">Saved views</label>
-                <select id="preset-list"><option value="">Choose a saved view</option></select>
-                <div class="saved-view-actions"><button id="preset-apply" class="print-programme-button" type="button">Apply</button><button id="preset-delete" class="print-programme-button" type="button">Delete</button></div>
-                <div class="saved-view-actions"><button id="preset-export" class="print-programme-button" type="button">Export saved views</button><button id="preset-import-trigger" class="print-programme-button" type="button">Import saved views</button><input id="preset-import-file" type="file" accept="application/json,.json" hidden /></div>
-                <button id="reset-posters" class="print-programme-button" type="button">Reset poster choices</button>
-                <button id="clear-preferences" class="print-programme-button" type="button">Clear local preferences</button>
-                <p id="preset-status" role="status" aria-live="polite"></p>
-              </div>
-            </details>
           </section>
           <section class="catalogue-actions" aria-label="Catalogue display and sharing">
             <div id="active-view-tools" class="active-view-tools" hidden>
               <div id="active-genre-filters" class="active-genre-filters" aria-label="Active filters" hidden></div>
               <div id="active-director-filters" class="active-genre-filters" aria-label="Active director filters" hidden></div>
               <div id="active-source-list-filters" class="active-genre-filters" aria-label="Active source list filters" hidden></div>
-              <button id="clear-search-state" class="clear-search-state" type="button">Clear search &amp; reset view</button>
+              <button id="clear-search-state" class="clear-search-state" type="button" aria-label="Clear search and filters, reset sort and layout">
+                <span aria-hidden="true">×</span> Clear all
+              </button>
             </div>
             <div class="collection-display-bar">
               <div id="director-filmography" class="director-filmography" hidden></div>
@@ -248,6 +235,37 @@
                     <summary>Score key</summary>
                     <p class="score-key-copy">The score counts liked lists that include a film. In Poster Wall, the bar compares it with the highest score in the current results.</p>
                   </details>
+                </div>
+                <div class="collection-utility-controls">
+                  <details id="saved-views" class="utility-disclosure">
+                    <summary>Saved views</summary>
+                    <div class="utility-disclosure-panel saved-view-panel">
+                      <label for="preset-name">Save current filters</label>
+                      <div class="saved-view-save-row">
+                        <input id="preset-name" maxlength="48" placeholder="Preset name" />
+                        <button id="preset-save" class="print-programme-button" type="button">Save view</button>
+                      </div>
+                      <label for="preset-list">Choose a saved view</label>
+                      <div class="saved-view-select-row">
+                        <select id="preset-list"><option value="">Choose a saved view</option></select>
+                        <div class="saved-view-actions"><button id="preset-apply" class="print-programme-button" type="button">Apply</button><button id="preset-delete" class="print-programme-button" type="button">Delete</button></div>
+                      </div>
+                    </div>
+                  </details>
+                  <details id="local-settings" class="utility-disclosure">
+                    <summary>Settings</summary>
+                    <div class="utility-disclosure-panel local-settings-panel">
+                      <p>Local settings for this browser</p>
+                      <div class="local-settings-actions">
+                        <button id="preset-export" class="print-programme-button" type="button">Export saved views</button>
+                        <button id="preset-import-trigger" class="print-programme-button" type="button">Import saved views</button>
+                        <input id="preset-import-file" type="file" accept="application/json,.json" hidden />
+                      </div>
+                      <button id="reset-posters" class="print-programme-button" type="button">Reset poster choices</button>
+                      <button id="clear-preferences" class="print-programme-button" type="button">Clear local preferences</button>
+                    </div>
+                  </details>
+                  <p id="preset-status" class="preset-status" role="status" aria-live="polite"></p>
                 </div>
                 <a id="ranking-download" class="print-programme-button ranking-download" href="#" hidden>Download catalogue CSV</a>
                 <div class="print-programme-control">

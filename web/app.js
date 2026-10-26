@@ -1648,6 +1648,9 @@ backToFiltersButton.addEventListener('click', () => {
 window.addEventListener('scroll', updateBackToFiltersVisibility, { passive: true });
 document.addEventListener('click', (event) => {
   if (catalogFilters.open && !catalogFilters.contains(event.target)) catalogFilters.open = false;
+  document.querySelectorAll('.utility-disclosure[open]').forEach((disclosure) => {
+    if (!disclosure.contains(event.target)) disclosure.open = false;
+  });
 });
 document.addEventListener('keydown', (event) => {
   if (filmDetailDialog.open || posterViewerDialog.open) return;
@@ -1661,6 +1664,13 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     sourceListFilter.open = false;
     sourceListFilter.querySelector('summary').focus();
+    return;
+  }
+  const openUtilityDisclosure = document.querySelector('.utility-disclosure[open]');
+  if (event.key === 'Escape' && openUtilityDisclosure) {
+    event.preventDefault();
+    openUtilityDisclosure.open = false;
+    openUtilityDisclosure.querySelector('summary').focus();
     return;
   }
   if (event.key === 'Escape' && catalogFilters.open) {
