@@ -212,7 +212,7 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .print-programme-button:hover { border-color: var(--forest); background: var(--surface-soft); }
 .print-programme-control { display: inline-flex; align-items: center; gap: 7px; }
 .print-programme-control label { color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
-.print-format-select { width: 145px; min-height: 35px; padding: 0 7px; border: 1px solid var(--line); background: var(--surface); color: var(--control-ink); font-family: var(--mono); font-size: 8px; }
+.print-format-select { width: 154px; min-height: 35px; padding: 0 4px; border: 1px solid var(--line); background: var(--surface); color: var(--control-ink); font-family: var(--mono); font-size: 8px; }
 .print-programme { display: none; }
 .film-grid[hidden], .film-ledger-view[hidden] { display: none; }
 .film-ledger-scroll { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); background: var(--surface); scrollbar-width: thin; }
@@ -624,8 +624,9 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .collection-display-bar { align-items: flex-start; flex-direction: column; margin: 0; }
   .collection-display-actions { align-items: flex-start; justify-content: flex-start; }
   .collection-view-tools { gap: 8px; }
-  .print-programme-control { width: 100%; justify-content: flex-end; gap: 7px; }
-  .print-format-select { min-width: 0; flex: 0 1 145px; }
+  .print-programme-control { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr); justify-content: stretch; gap: 7px; }
+  .print-programme-control > .print-programme-button { grid-column: 1 / -1; justify-self: start; }
+  .print-format-select { width: 100%; min-width: 0; }
   .score-key { position: static; }
   .score-key-copy { right: 0; left: auto; }
   .genre-filter { width: 100%; }
