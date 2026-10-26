@@ -47,14 +47,62 @@ function validateAgainstSchema(value, schema, path = 'snapshot') {
   }
 }
 
+function isHttpsLetterboxdUrl(value, pathPattern) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:'
+      && ['letterboxd.com', 'www.letterboxd.com'].includes(url.hostname)
+      && !url.port
+      && !url.username
+      && !url.password
+      && !url.search
+      && !url.hash
+      && pathPattern.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
 export function validateSnapshot(snapshot) {
   const supportedVersion = snapshotSchema.properties.schema_version.const;
   if (!snapshot || snapshot.schema_version !== supportedVersion) {
     throw new Error(`Unsupported snapshot schema version: ${snapshot?.schema_version ?? 'missing'}`);
   }
   validateAgainstSchema(snapshot, snapshotSchema);
+  let profilePath;
+  try { profilePath = decodeURIComponent(new URL(snapshot.profile_url).pathname).replace(/\/+$/, '').toLocaleLowerCase(); }
+  catch { profilePath = ''; }
+  if (!isHttpsLetterboxdUrl(snapshot.profile_url, /^\/[^/]+\/?$/)
+      || profilePath !== `/${snapshot.username.trim().replace(/^\/+|\/+$/g, '').toLocaleLowerCase()}`) {
+    throw new Error('Snapshot profile_url must be the HTTPS Letterboxd profile for its username');
+  }
+  if (!/(?:Z|[+-]\d{2}:\d{2})$/i.test(snapshot.refreshed_at) || !Number.isFinite(Date.parse(snapshot.refreshed_at))) {
+    throw new Error('Snapshot refreshed_at must be an ISO 8601 timestamp with a timezone');
+  }
+  if (Array.isArray(snapshot.source_lists)) {
+    if (new Set(snapshot.source_lists).size !== snapshot.source_lists.length) {
+      throw new Error('Snapshot source_lists cannot contain duplicates');
+    }
+    if (snapshot.source_lists.some((url) => !isHttpsLetterboxdUrl(url, /^\/[^/]+\/list\/[^/]+\/?$/))) {
+      throw new Error('Snapshot source_lists must contain HTTPS Letterboxd list URLs');
+    }
+  }
   if (!Array.isArray(snapshot.films) || snapshot.films.some((film) => !Array.isArray(film.lists) && !Array.isArray(film.list_ids))) {
     throw new Error('Snapshot films must include lists or list_ids');
+  }
+  for (const [index, film] of snapshot.films.entries()) {
+    if (film.letterboxd_url && !isHttpsLetterboxdUrl(film.letterboxd_url, /^\/film\/[^/]+\/?$/)) {
+      throw new Error(`snapshot.films[${index}].letterboxd_url must be an HTTPS Letterboxd film URL`);
+    }
+    if (Array.isArray(film.lists)) {
+      if (new Set(film.lists).size !== film.lists.length) throw new Error(`snapshot.films[${index}].lists cannot contain duplicates`);
+      if (film.lists.some((url) => !isHttpsLetterboxdUrl(url, /^\/[^/]+\/list\/[^/]+\/?$/))) {
+        throw new Error(`snapshot.films[${index}].lists must contain HTTPS Letterboxd list URLs`);
+      }
+    }
+    if (Array.isArray(film.list_ids) && new Set(film.list_ids).size !== film.list_ids.length) {
+      throw new Error(`snapshot.films[${index}].list_ids cannot contain duplicates`);
+    }
   }
   if (snapshot.films.some((film) => Array.isArray(film.list_ids)
       && (!Array.isArray(snapshot.source_lists) || film.list_ids.some((id) => !Number.isSafeInteger(id) || id < 0 || id >= snapshot.source_lists.length)))) {

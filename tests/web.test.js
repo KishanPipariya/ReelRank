@@ -70,6 +70,24 @@ test('snapshot contract rejects invalid TMDB identifiers and inconsistent counts
   assert.throws(() => validateSnapshot(invalidVersion), /Unsupported snapshot schema version/);
 });
 
+test('snapshot validation rejects unsafe profile, film, and list URLs and invalid edition times', () => {
+  const externalProfile = structuredClone(fixture);
+  externalProfile.profile_url = 'https://example.com/viewer/';
+  assert.throws(() => validateSnapshot(externalProfile), /profile_url/);
+
+  const externalList = structuredClone(fixture);
+  externalList.films[0].lists = ['https://example.com/user/list/favorites/'];
+  assert.throws(() => validateSnapshot(externalList), /HTTPS Letterboxd list URLs/);
+
+  const externalFilm = structuredClone(fixture);
+  externalFilm.films[0].letterboxd_url = 'https://example.com/film/arrival/';
+  assert.throws(() => validateSnapshot(externalFilm), /HTTPS Letterboxd film URL/);
+
+  const invalidEdition = structuredClone(fixture);
+  invalidEdition.refreshed_at = 'yesterday';
+  assert.throws(() => validateSnapshot(invalidEdition), /refreshed_at/);
+});
+
 test('snapshot metadata provenance fields use the documented values', () => {
   const enriched = structuredClone(fixture);
   enriched.films[0].metadata_source = 'letterboxd';
@@ -128,6 +146,9 @@ test('compact source list IDs validate while old per-film list arrays remain sup
   const missingTable = structuredClone(compact);
   delete missingTable.source_lists;
   assert.throws(() => validateSnapshot(missingTable), /source list IDs/);
+  const duplicateIds = structuredClone(compact);
+  duplicateIds.films[0].list_ids = [0, 0];
+  assert.throws(() => validateSnapshot(duplicateIds), /list_ids cannot contain duplicates/);
 });
 
 test('catalog sorting uses stable rank as its tie breaker and puts unknown years last', () => {

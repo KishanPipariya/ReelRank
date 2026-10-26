@@ -178,6 +178,34 @@ def test_fetch_list_raises_when_a_next_page_repeats_only_seen_movies():
         letterboxd.fetch_list(Client(), "https://letterboxd.com/user/list/favorites/", max_pages=3)
 
 
+def test_fetch_list_refuses_external_pagination_without_following_it():
+    class Response:
+        url = "https://letterboxd.com/user/list/favorites/"
+        text = '''<li class="poster-container"><div data-film-name="Arrival"><a href="/film/arrival/"></a></div></li>
+          <a class="next" href="https://example.com/next">Next</a>'''
+
+        def raise_for_status(self):
+            pass
+
+    class Client:
+        requests = 0
+
+        def get(self, _url):
+            self.requests += 1
+            return Response()
+
+    client = Client()
+    with pytest.raises(PaginationStalled, match="pointed outside Letterboxd"):
+        letterboxd.fetch_list(client, "https://letterboxd.com/user/list/favorites/")
+    assert client.requests == 1
+
+
+def test_username_is_encoded_as_a_single_profile_path_segment():
+    assert letterboxd._username_url("viewer?admin") == "https://letterboxd.com/viewer%3Fadmin/"
+    with pytest.raises(ValueError, match="not a profile URL"):
+        letterboxd._username_url("https://letterboxd.com/viewer/")
+
+
 def test_fetch_user_list_urls_raises_at_page_limit():
     class Response:
         url = "https://letterboxd.com/user/likes/lists/"
@@ -284,6 +312,23 @@ def test_snapshot_schema_rejects_boolean_schema_version():
     fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
     fixture["schema_version"] = True
     with pytest.raises(ValueError, match="schema_version"):
+        snapshot.validate_snapshot(fixture)
+
+
+def test_snapshot_validation_rejects_unsafe_urls_and_invalid_edition_time():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["profile_url"] = "https://example.com/viewer/"
+    with pytest.raises(ValueError, match="profile_url"):
+        snapshot.validate_snapshot(fixture)
+
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["refreshed_at"] = "yesterday"
+    with pytest.raises(ValueError, match="refreshed_at"):
+        snapshot.validate_snapshot(fixture)
+
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["films"][0]["lists"] = ["https://example.com/user/list/favorites/"]
+    with pytest.raises(ValueError, match="HTTPS Letterboxd list URLs"):
         snapshot.validate_snapshot(fixture)
 
 

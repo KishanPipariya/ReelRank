@@ -8,9 +8,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   python:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -31,6 +36,7 @@ jobs:
 
   browser:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -52,13 +58,20 @@ jobs:
 
       - name: Run browser accessibility checks
         run: |
+          set -euo pipefail
           python3 -m http.server 4173 --directory web >/tmp/reelrank-site.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          server_ready=false
           for attempt in $(seq 1 30); do
-            if curl --silent --fail http://127.0.0.1:4173/site-config.json >/dev/null; then break; fi
+            if curl --silent --fail http://127.0.0.1:4173/site-config.json >/dev/null; then server_ready=true; break; fi
             sleep 1
           done
+          if [[ "$server_ready" != true ]]; then
+            cat /tmp/reelrank-site.log
+            echo "Static preview server did not become ready." >&2
+            exit 1
+          fi
           npm run check:browser
 
       - name: Upload desktop and mobile visual review screenshots

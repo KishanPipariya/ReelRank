@@ -11,7 +11,9 @@ from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from importlib.resources import files
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
+from .fileio import atomic_write_text
 from .http import ThreadLocalSessionPool, create_http_session
 from .letterboxd import _username_url, fetch_user_list_urls, fetch_user_watched_movies, movie_is_watched, rank_movies
 from .metadata import resolve_movie_metadata
@@ -33,14 +35,48 @@ def validate_snapshot(snapshot: object) -> dict:
         version = snapshot.get("schema_version") if isinstance(snapshot, dict) else None
         raise ValueError(f"Unsupported snapshot schema version {version!r}; expected {SNAPSHOT_SCHEMA_VERSION}")
     _validate_schema(snapshot, _snapshot_schema())
+    username = snapshot["username"].strip().strip("/")
+    profile = urlparse(snapshot["profile_url"])
+    if (
+        profile.scheme != "https"
+        or profile.hostname not in {"letterboxd.com", "www.letterboxd.com"}
+        or profile.port not in (None, 443)
+        or profile.username is not None
+        or profile.password is not None
+        or profile.query
+        or profile.fragment
+        or unquote(profile.path).rstrip("/").casefold() != f"/{username}".casefold()
+    ):
+        raise ValueError("Snapshot profile_url must be the HTTPS Letterboxd profile for its username")
+    try:
+        refreshed_at = datetime.fromisoformat(snapshot["refreshed_at"].replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ValueError("Snapshot refreshed_at must be an ISO 8601 timestamp with a timezone") from error
+    if refreshed_at.tzinfo is None:
+        raise ValueError("Snapshot refreshed_at must be an ISO 8601 timestamp with a timezone")
+
     films = snapshot.get("films")
     source_lists = snapshot.get("source_lists")
+    if isinstance(source_lists, list):
+        if len(set(source_lists)) != len(source_lists):
+            raise ValueError("Snapshot source_lists cannot contain duplicates")
+        if any(not _is_letterboxd_list_url(url) for url in source_lists):
+            raise ValueError("Snapshot source_lists must contain HTTPS Letterboxd list URLs")
     for index, film in enumerate(films):
         if "lists" not in film and "list_ids" not in film:
             raise ValueError(f"snapshot.films[{index}] must include lists or list_ids")
+        if film["letterboxd_url"] and not _is_letterboxd_film_url(film["letterboxd_url"]):
+            raise ValueError(f"snapshot.films[{index}].letterboxd_url must be an HTTPS Letterboxd film URL")
+        if "lists" in film:
+            if len(set(film["lists"])) != len(film["lists"]):
+                raise ValueError(f"snapshot.films[{index}].lists cannot contain duplicates")
+            if any(not _is_letterboxd_list_url(url) for url in film["lists"]):
+                raise ValueError(f"snapshot.films[{index}].lists must contain HTTPS Letterboxd list URLs")
         if "list_ids" in film:
             if not isinstance(source_lists, list) or any(not _is_nonnegative_integer(item) or item >= len(source_lists) for item in film["list_ids"]):
                 raise ValueError(f"snapshot.films[{index}].list_ids references an unavailable source list")
+            if len(set(film["list_ids"])) != len(film["list_ids"]):
+                raise ValueError(f"snapshot.films[{index}].list_ids cannot contain duplicates")
     if snapshot["displayed_film_count"] != len(films) or snapshot["displayed_film_count"] > snapshot["film_count"]:
         raise ValueError("Snapshot displayed_film_count must match films and not exceed film_count")
     if snapshot["unwatched_count"] > snapshot["film_count"]:
@@ -54,6 +90,40 @@ def validate_snapshot(snapshot: object) -> dict:
     if snapshot["displayed_unwatched_count"] != actual_displayed_unwatched:
         raise ValueError("Snapshot displayed_unwatched_count does not match the film records")
     return snapshot
+
+
+def _is_letterboxd_list_url(value: str) -> bool:
+    try:
+        parsed = urlparse(value)
+        return (
+            parsed.scheme == "https"
+            and parsed.hostname in {"letterboxd.com", "www.letterboxd.com"}
+            and parsed.port in (None, 443)
+            and parsed.username is None
+            and parsed.password is None
+            and not parsed.query
+            and not parsed.fragment
+            and re.fullmatch(r"/[^/]+/list/[^/]+/?", parsed.path) is not None
+        )
+    except ValueError:
+        return False
+
+
+def _is_letterboxd_film_url(value: str) -> bool:
+    try:
+        parsed = urlparse(value)
+        return (
+            parsed.scheme == "https"
+            and parsed.hostname in {"letterboxd.com", "www.letterboxd.com"}
+            and parsed.port in (None, 443)
+            and parsed.username is None
+            and parsed.password is None
+            and not parsed.query
+            and not parsed.fragment
+            and re.fullmatch(r"/film/[^/]+/?", parsed.path) is not None
+        )
+    except ValueError:
+        return False
 
 
 @lru_cache(maxsize=1)
@@ -302,14 +372,10 @@ def create_snapshot(username: str) -> dict:
 def write_snapshot(snapshot: dict, output: Path) -> None:
     """Write the snapshot and sidecar files using atomic file replacements."""
     validate_snapshot(snapshot)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    temporary = output.with_name(f".{output.name}.tmp")
     gallery_name = Path(snapshot.get("poster_gallery_url", "/data/poster-galleries.json")).name
     gallery_output = output.parent / gallery_name
-    gallery_temporary = gallery_output.with_name(f".{gallery_output.name}.tmp")
     ranking_name = Path(snapshot.get("ranking_csv_url", "")).name
     ranking_output = output.parent / ranking_name if ranking_name else None
-    ranking_temporary = ranking_output.with_name(f".{ranking_output.name}.tmp") if ranking_output else None
     private_fields = {"_poster_galleries", "_full_ranking", "_watched"}
     public_snapshot = {key: value for key, value in snapshot.items() if key not in private_fields}
     gallery_payload = snapshot.get("_poster_galleries") or {
@@ -319,35 +385,31 @@ def write_snapshot(snapshot: dict, output: Path) -> None:
     }
     full_ranking = snapshot.get("_full_ranking")
     watched = snapshot.get("_watched", set())
-    try:
-        gallery_temporary.write_text(json.dumps(gallery_payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
-        temporary.write_text(json.dumps(public_snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        if ranking_temporary is not None:
-            if not isinstance(full_ranking, list) or len(full_ranking) != snapshot["film_count"]:
-                raise ValueError("Snapshot declares a full-ranking CSV but contains no full ranking data")
-            from .letterboxd import movie_is_watched
+    ranking_csv = None
+    if ranking_output is not None:
+        if not isinstance(full_ranking, list) or len(full_ranking) != snapshot["film_count"]:
+            raise ValueError("Snapshot declares a full-ranking CSV but contains no full ranking data")
+        from .letterboxd import movie_is_watched
 
-            csv_buffer = io.StringIO(newline="")
-            writer = csv.writer(csv_buffer)
-            writer.writerow(["Rank", "Title", "Year", "Watched", "Liked in lists", "Letterboxd URI", "List URLs"])
-            if isinstance(full_ranking, list):
-                for rank, result in enumerate(full_ranking, start=1):
-                    writer.writerow([
-                        _spreadsheet_safe_cell(rank),
-                        _spreadsheet_safe_cell(result.movie.title),
-                        _spreadsheet_safe_cell(result.movie.year),
-                        _spreadsheet_safe_cell("yes" if movie_is_watched(result.movie, watched) else "no"),
-                        _spreadsheet_safe_cell(result.liked_in),
-                        _spreadsheet_safe_cell(result.movie.uri),
-                        _spreadsheet_safe_cell(" ".join(result.lists)),
-                    ])
-            ranking_temporary.write_text(csv_buffer.getvalue(), encoding="utf-8")
-        gallery_temporary.replace(gallery_output)
-        if ranking_temporary is not None and ranking_output is not None:
-            ranking_temporary.replace(ranking_output)
-        temporary.replace(output)
-    finally:
-        temporary.unlink(missing_ok=True)
-        gallery_temporary.unlink(missing_ok=True)
-        if ranking_temporary is not None:
-            ranking_temporary.unlink(missing_ok=True)
+        csv_buffer = io.StringIO(newline="")
+        writer = csv.writer(csv_buffer)
+        writer.writerow(["Rank", "Title", "Year", "Watched", "Liked in lists", "Letterboxd URI", "List URLs"])
+        for rank, result in enumerate(full_ranking, start=1):
+            writer.writerow([
+                _spreadsheet_safe_cell(rank),
+                _spreadsheet_safe_cell(result.movie.title),
+                _spreadsheet_safe_cell(result.movie.year),
+                _spreadsheet_safe_cell("yes" if movie_is_watched(result.movie, watched) else "no"),
+                _spreadsheet_safe_cell(result.liked_in),
+                _spreadsheet_safe_cell(result.movie.uri),
+                _spreadsheet_safe_cell(" ".join(result.lists)),
+            ])
+        ranking_csv = csv_buffer.getvalue()
+
+    atomic_write_text(
+        gallery_output,
+        json.dumps(gallery_payload, ensure_ascii=False, separators=(",", ":")) + "\n",
+    )
+    if ranking_output is not None and ranking_csv is not None:
+        atomic_write_text(ranking_output, ranking_csv)
+    atomic_write_text(output, json.dumps(public_snapshot, ensure_ascii=False, indent=2) + "\n")

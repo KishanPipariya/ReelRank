@@ -17,6 +17,7 @@ from curl_cffi import requests as curl_requests
 from curl_cffi.requests.errors import RequestsError
 from rich.progress import Progress
 
+from .fileio import atomic_write_text
 from .letterboxd import _movie_key
 from .models import Movie, MovieResult
 
@@ -51,10 +52,7 @@ def _load_tmdb_metadata_cache(cache_path: Path) -> dict[str, dict | None]:
     return cache
 
 def _write_tmdb_metadata_cache(cache_path: Path, cache: dict[str, dict | None]) -> None:
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = cache_path.with_name(f".{cache_path.name}.tmp")
-    temporary.write_text(json.dumps(cache, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
-    temporary.replace(cache_path)
+    atomic_write_text(cache_path, json.dumps(cache, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 def _normalize_tmdb_title(value: str) -> str:
     """Normalize punctuation and accents while preserving non-Latin letters."""

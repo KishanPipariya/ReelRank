@@ -1,22 +1,40 @@
 from __future__ import annotations
 
 import csv
+import io
 import re
 from collections import defaultdict
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from urllib.parse import urljoin, urlparse, urlunparse
+from urllib.parse import quote, urljoin, urlparse, urlunparse
 
 from bs4 import BeautifulSoup
 from curl_cffi import requests as curl_requests
 from rich.progress import Progress
 
 from .errors import PaginationLimitReached, PaginationStalled
+from .fileio import atomic_write_text
 from .http import ThreadLocalSessionPool, create_http_session
 from .models import Movie, MovieResult
 
 Session = curl_requests.Session
+_LETTERBOXD_HOSTS = {"letterboxd.com", "www.letterboxd.com", "boxd.it", "www.boxd.it"}
+
+
+def _is_letterboxd_url(url: str) -> bool:
+    try:
+        parsed = urlparse(url)
+        return (
+            parsed.scheme == "https"
+            and parsed.hostname is not None
+            and parsed.hostname.lower() in _LETTERBOXD_HOSTS
+            and parsed.port in (None, 443)
+            and parsed.username is None
+            and parsed.password is None
+        )
+    except ValueError:
+        return False
 
 def _clean_title(value: str) -> str:
     value = re.sub(r"\s+Poster$", "", value, flags=re.IGNORECASE)
@@ -33,7 +51,7 @@ def _canonical_letterboxd_url(url: str) -> str:
     same path works on ``letterboxd.com``.
     """
     parsed = urlparse(url)
-    if parsed.netloc.lower() in {"boxd.it", "www.boxd.it"}:
+    if parsed.hostname and parsed.hostname.lower() in _LETTERBOXD_HOSTS:
         return urlunparse(parsed._replace(scheme="https", netloc="letterboxd.com"))
     return url
 
@@ -51,7 +69,8 @@ def _movie_from_item(item, base_url: str) -> Movie | None:
     film_href = (link.get("href") if link else "") or source.get("data-item-link", "")
     if film_href and "/film/" in film_href:
         parsed = urlparse(urljoin(base_url, film_href))
-        uri = f"https://letterboxd.com{parsed.path.rstrip('/')}/"
+        if parsed.scheme == "https" and parsed.hostname and parsed.hostname.lower() in _LETTERBOXD_HOSTS:
+            uri = f"https://letterboxd.com{parsed.path.rstrip('/')}/"
 
     title = ""
     year = ""
@@ -115,13 +134,17 @@ def fetch_list(client: Session, list_url: str, max_pages: int = 100) -> list[Mov
     movies: list[Movie] = []
     seen: set[str] = set()
     visited_pages: set[str] = set()
-    page_url: str | None = list_url
+    page_url: str | None = _canonical_letterboxd_url(list_url)
     for _ in range(max_pages):
         if page_url is None or page_url in visited_pages:
             break
+        if not _is_letterboxd_url(page_url):
+            raise ValueError(f"Refusing to fetch a non-Letterboxd list page: {page_url}")
         visited_pages.add(page_url)
         response = client.get(page_url)
         response.raise_for_status()
+        if not _is_letterboxd_url(str(response.url)):
+            raise PaginationStalled("List pagination redirected outside Letterboxd; refusing to continue.")
         # Use the final redirected URL as the base for pagination. This turns
         # relative links from boxd.it short URLs into canonical Letterboxd URLs.
         page_movies, next_url = parse_list_page(response.text, str(response.url))
@@ -137,6 +160,8 @@ def fetch_list(client: Session, list_url: str, max_pages: int = 100) -> list[Mov
             raise PaginationStalled(f"List pagination stopped advancing at {page_url}.")
         if next_url in visited_pages:
             raise PaginationStalled(f"List pagination repeated {next_url}.")
+        if next_url is not None and not _is_letterboxd_url(next_url):
+            raise PaginationStalled("List pagination pointed outside Letterboxd; refusing to continue.")
         if not added:
             break
         page_url = next_url
@@ -151,9 +176,9 @@ def _username_url(username: str) -> str:
     username = username.strip().strip("/")
     if not username:
         raise ValueError("Please provide a Letterboxd username")
-    if "/" in username or username.startswith("http"):
+    if "/" in username or username.startswith(("http://", "https://")):
         raise ValueError("Enter your Letterboxd username, not a profile URL")
-    return f"https://letterboxd.com/{username}/"
+    return f"https://letterboxd.com/{quote(username, safe='')}/"
 
 def fetch_user_list_urls(client: Session, username: str, max_pages: int = 100) -> list[str]:
     """Fetch the public lists liked by a Letterboxd user."""
@@ -169,6 +194,8 @@ def fetch_user_list_urls(client: Session, username: str, max_pages: int = 100) -
         visited_pages.add(page_url)
         response = client.get(page_url)
         response.raise_for_status()
+        if not _is_letterboxd_url(str(response.url)):
+            raise PaginationStalled("Liked-list pagination redirected outside Letterboxd; refusing to continue.")
         soup = BeautifulSoup(response.text, "html.parser")
         for link in soup.select('a[href*="/list/"]'):
             href = link.get("href", "")
@@ -182,6 +209,8 @@ def fetch_user_list_urls(client: Session, username: str, max_pages: int = 100) -
                     seen_lists.add(list_url)
         next_link = soup.select_one('a.next[href], a[rel="next"][href]')
         next_url = _canonical_letterboxd_url(urljoin(str(response.url), next_link["href"])) if next_link else None
+        if next_url is not None and not _is_letterboxd_url(next_url):
+            raise PaginationStalled("Liked-list pagination pointed outside Letterboxd; refusing to continue.")
         if next_url in visited_pages:
             raise PaginationStalled(f"Liked-list pagination repeated {next_url}.")
         page_url = next_url
@@ -247,17 +276,18 @@ def rank_movies(
     return sorted(results, key=lambda result: (-result.liked_in, result.movie.title.lower(), result.movie.year))
 
 def write_csv(results: list[MovieResult], output: Path) -> None:
-    with output.open("w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-        writer.writerow(["Title", "Year", "Liked in lists", "Letterboxd URI", "List URLs"])
-        for result in results:
-            writer.writerow([
-                result.movie.title,
-                result.movie.year,
-                result.liked_in,
-                result.movie.uri,
-                " ".join(result.lists),
-            ])
+    buffer = io.StringIO(newline="")
+    writer = csv.writer(buffer)
+    writer.writerow(["Title", "Year", "Liked in lists", "Letterboxd URI", "List URLs"])
+    for result in results:
+        writer.writerow([
+            result.movie.title,
+            result.movie.year,
+            result.liked_in,
+            result.movie.uri,
+            " ".join(result.lists),
+        ])
+    atomic_write_text(output, buffer.getvalue())
 
 def filter_unwatched(results: list[MovieResult], watched: set[tuple[str, str] | str]) -> list[MovieResult]:
     """Remove movies present in the user's watched films.

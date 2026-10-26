@@ -48,8 +48,6 @@ async function checkCatalogueSectionFlow(page, label) {
       })(),
       pageWidth: document.documentElement.scrollWidth,
       viewportWidth: innerWidth,
-      responsiveWidth: matchMedia('(max-width: 920px)').matches,
-      filtersPosition: getComputedStyle(document.querySelector('.catalog-filters-panel')).position,
       overflowing: [...document.querySelectorAll('body *')]
         .filter((element) => element.getBoundingClientRect().right > innerWidth + 1)
         .slice(0, 8)
@@ -64,7 +62,7 @@ async function checkCatalogueSectionFlow(page, label) {
   check(layout.collectionScope.includes('title, original title, director, year, genre, synopsis, and source list')
     && layout.searchHelp.includes('title, original title, director, year, genre, synopsis, and source list'), `${label} uses matching search coverage in visible and accessible descriptions.`);
   check(layout.bounds.every((section, index) => section.height > 0 && (index === 0 || layout.bounds[index - 1].bottom <= section.top + 1)), `${label} catalogue sections are visible and do not overlap (${JSON.stringify(layout.bounds)}).`);
-  check(layout.pageWidth <= layout.viewportWidth, `${label} catalogue sections do not create horizontal page overflow (${layout.pageWidth}px > ${layout.viewportWidth}px; responsive=${layout.responsiveWidth}, panel=${layout.filtersPosition}; ${layout.overflowing.join(', ')}).`);
+  check(layout.pageWidth <= layout.viewportWidth, `${label} catalogue sections do not create horizontal page overflow (${layout.pageWidth}px > ${layout.viewportWidth}px; ${layout.overflowing.join(', ')}).`);
 }
 
 async function scan(page, name) {
