@@ -35,7 +35,8 @@ async function checkCatalogueSectionFlow(page, label) {
       searchHelp,
       collectionScope,
       contextInControls: document.querySelector('.collection-context').parentElement.matches('.catalogue-controls'),
-      savedViewsInControls: document.querySelector('#saved-views').parentElement.matches('.catalogue-controls'),
+      savedViewsWithDisplayTools: document.querySelector('#saved-views').closest('.catalogue-actions') !== null
+        && document.querySelector('#local-settings').closest('.catalogue-actions') !== null,
       summaryInContext: document.querySelector('#programme-note').parentElement.matches('.collection-context'),
       summaryOutsideSavedViews: !document.querySelector('#programme-note').closest('#saved-views'),
       posterWallInResults: document.querySelector('#film-grid').parentElement.matches('.catalogue-results'),
@@ -50,7 +51,7 @@ async function checkCatalogueSectionFlow(page, label) {
     };
   });
 
-  check(layout.contextInControls && layout.savedViewsInControls, `${label} keeps search context and saved settings inside the catalogue-controls section.`);
+  check(layout.contextInControls && layout.savedViewsWithDisplayTools, `${label} keeps search context in catalogue controls and saved views with display tools.`);
   check(layout.summaryInContext && layout.summaryOutsideSavedViews, `${label} keeps the selection summary with catalogue context and outside the saved-views disclosure.`);
   check(layout.posterWallInResults && layout.posterToggleInViewTools, `${label} separates poster results from display controls.`);
   check(layout.featuredBeforePosterWall, `${label} keeps the featured-film section clear of the poster wall.`);
