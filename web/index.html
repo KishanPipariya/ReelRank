@@ -158,7 +158,7 @@
                 <section class="decade-retrospective" aria-labelledby="decade-retrospective-title">
                   <div class="decade-retrospective-heading">
                     <p class="eyebrow">Browse by</p>
-                    <h3 id="decade-retrospective-title">Decade, running time &amp; country</h3>
+                  <h3 id="decade-retrospective-title">Decade, running time, country &amp; language</h3>
                   </div>
                   <div id="decade-options" class="decade-options" role="group" aria-label="Filter films by release decade"></div>
                   <div id="runtime-filter" class="runtime-filter" hidden>
@@ -181,6 +181,16 @@
                     <p id="country-index-empty" class="country-index-empty" role="status" hidden>No countries match that search.</p>
                     <button id="country-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Browse all countries</button>
                   </div>
+                  <div id="language-index" class="country-index language-index">
+                    <p id="language-index-heading" class="country-index-heading">Leading languages</p>
+                    <label id="language-index-search-control" class="country-index-search-control" hidden>
+                      <span class="sr-only">Search all original languages</span>
+                      <input id="language-index-search" type="search" placeholder="Find a language" autocomplete="off" />
+                    </label>
+                    <div id="language-index-options" class="country-index-options language-index-options" role="group" aria-label="Filter by original language"></div>
+                    <p id="language-index-empty" class="country-index-empty" role="status" hidden>No languages match that search.</p>
+                    <button id="language-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Browse all languages</button>
+                  </div>
                 </section>
                   </div>
                 </details>
@@ -194,14 +204,10 @@
                     <option value="year-oldest">Year: oldest</option>
                   </select>
                 </label>
-                <label class="sort-control language-control" for="language-filter">
-                  <span class="sr-only">Filter by original language</span>
-                  <select id="language-filter" aria-label="Filter by original language"><option value="">Any original language</option></select>
-                </label>
               </div>
             </div>
             <div class="collection-context">
-              <p id="collection-scope" class="collection-scope">Search titles, directors, years, genres, synopses, and source lists.</p>
+              <p id="collection-scope" class="collection-scope">Search titles, directors, years, genres, synopses, and source lists. Filter by genre, director, source list, original language, country, decade, or running time.</p>
               <aside id="programme-note" class="programme-note" aria-label="Summary of this selection" hidden>
                 <span class="programme-note-kicker">In this selection</span>
                 <p id="programme-note-copy"></p>

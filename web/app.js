@@ -49,6 +49,13 @@ const countryIndexHeading = document.querySelector('.country-index-heading');
 const countryIndexSearch = document.querySelector('#country-index-search');
 const countryIndexSearchControl = document.querySelector('#country-index-search-control');
 const countryIndexEmpty = document.querySelector('#country-index-empty');
+const languageIndex = document.querySelector('#language-index');
+const languageIndexOptions = document.querySelector('#language-index-options');
+const languageIndexHeading = document.querySelector('#language-index-heading');
+const languageIndexToggle = document.querySelector('#language-index-toggle');
+const languageIndexSearch = document.querySelector('#language-index-search');
+const languageIndexSearchControl = document.querySelector('#language-index-search-control');
+const languageIndexEmpty = document.querySelector('#language-index-empty');
 const directorFilmography = document.querySelector('#director-filmography');
 const printProgrammeTitle = document.querySelector('#print-programme-title');
 const printProgrammeUsername = document.querySelector('#print-programme-username');
@@ -73,7 +80,6 @@ const searchFieldsCopy = 'title, original title, director, year, genre, synopsis
 searchHelp.textContent = `Search by ${searchFieldsCopy}. Press slash to focus search. Press Escape to clear it.`;
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
-const languageFilter = document.querySelector('#language-filter');
 const countryIndexOptions = document.querySelector('#country-index-options');
 const decadeOptions = document.querySelector('#decade-options');
 const runtimeFilter = document.querySelector('#runtime-filter');
@@ -147,6 +153,7 @@ let currentMatchCount = 0;
 let currentMatchingFilms = [];
 let currentHighestScore = 1;
 let countryAtlasSize = 0;
+let languageAtlasSize = 0;
 let snapshotRefreshedAt = '';
 let posterGalleryUrl = '/data/poster-galleries.json';
 let sourceListsForDownload = [];
@@ -175,17 +182,43 @@ function updateCountryIndexVisibility() {
   countryIndexEmpty.hidden = !expanded || visibleCount > 0;
 }
 
+function setLanguageIndexExpanded(expanded) {
+  languageIndex.classList.toggle('is-expanded', expanded);
+  languageIndexOptions.classList.toggle('is-expanded', expanded);
+  languageIndexSearchControl.hidden = !expanded;
+  if (!expanded) languageIndexSearch.value = '';
+  languageIndexHeading.textContent = expanded ? 'Original languages' : 'Leading languages';
+  languageIndexToggle.setAttribute('aria-expanded', String(expanded));
+  languageIndexToggle.textContent = expanded ? 'Show leading six' : `Browse all ${languageAtlasSize}`;
+  updateLanguageIndexVisibility();
+}
+
+function updateLanguageIndexVisibility() {
+  const expanded = languageIndexOptions.classList.contains('is-expanded');
+  const query = languageIndexSearch.value.trim().toLocaleLowerCase();
+  let visibleCount = 0;
+  languageIndexOptions.querySelectorAll('[data-language]').forEach((button, index) => {
+    const inLeadingSix = index < 6;
+    const matchesSearch = button.dataset.languageLabel.includes(query);
+    button.hidden = (!expanded && !inLeadingSix) || !matchesSearch;
+    if (!button.hidden) visibleCount += 1;
+  });
+  languageIndexEmpty.hidden = !expanded || visibleCount > 0;
+}
+
 const filterControls = createFilterControls({
   state,
   sources: () => availableSourceLists,
   elements: {
-    sortSelect, languageFilter, countryIndexOptions, countryIndexSearch, posterDisplayButton, ledgerDisplayButton,
+    sortSelect, countryIndexOptions, countryIndexSearch, languageIndexOptions, languageIndexSearch,
+    posterDisplayButton, ledgerDisplayButton,
     decadeOptions, runtimeOptions, genreOptions, genreFilterSummary, clearGenresButton, selectedGenres,
     sourceListOptions, sourceListFilterSummary, catalogFilterCount, clearSourceListsButton, selectedSourceLists,
     activeViewTools, activeGenreFilters, activeDirectorFilters, activeSourceListFilters, searchInput,
   },
   actions: {
-    toggleGenre, toggleDirector, toggleSourceList, setCountry, setLanguage, languageLabel, setDecade, setRuntime, setCountryIndexExpanded,
+    toggleGenre, toggleDirector, toggleSourceList, setCountry, setLanguage, languageLabel, setDecade, setRuntime,
+    setCountryIndexExpanded, setLanguageIndexExpanded,
   },
 });
 const { syncControls } = filterControls;
@@ -408,6 +441,10 @@ function setLanguage(language) {
   state.language = language;
   state.visibleLimit = 40;
   syncControls(); updateUrlState(); render();
+}
+
+function toggleLanguage(language) {
+  setLanguage(state.language === language ? '' : language);
 }
 
 function toggleCountry(country) {
@@ -641,27 +678,54 @@ function matchesSearchAndGenres(
 }
 
 function languageLabel(code) {
-  if (!code) return 'Unknown language';
+  if (!code || code === 'unknown') return 'Unknown language';
   try { const name = new Intl.DisplayNames(['en'], { type: 'language' }).of(code); return name && name.toLocaleLowerCase() !== code.toLocaleLowerCase() ? name : `Unknown (${code})`; }
   catch { return `Unknown (${code})`; }
 }
 
 function renderLanguageOptions() {
-  const counts = new Map();
+  const totalCounts = new Map();
+  films.forEach((film) => {
+    const code = String(film.original_language || '').trim() || 'unknown';
+    totalCounts.set(code, (totalCounts.get(code) || 0) + 1);
+  });
+
+  const contextCounts = new Map();
   const query = searchInput.value.trim().toLocaleLowerCase();
   films.forEach((film) => {
     if (!matchesWatchFilter(film) || !matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { language: '' })) return;
-    const code = String(film.original_language || '').trim(); const key = code || '__unknown__'; counts.set(key, (counts.get(key) || 0) + 1);
+    const code = String(film.original_language || '').trim() || 'unknown';
+    contextCounts.set(code, (contextCounts.get(code) || 0) + 1);
   });
-  const allCodes = new Set(films.map((film) => String(film.original_language || '').trim() || '__unknown__'));
-  const current = state.language;
-  languageFilter.replaceChildren(new Option('Any original language', ''));
-  [...allCodes].map((code) => [code, counts.get(code) || 0]).sort((a,b) => languageLabel(a[0] === '__unknown__' ? '' : a[0]).localeCompare(languageLabel(b[0] === '__unknown__' ? '' : b[0]))).forEach(([code,count]) => {
-    const value = code === '__unknown__' ? 'unknown' : code;
-    languageFilter.add(new Option(`${languageLabel(code === '__unknown__' ? '' : code)} (${count})`, value));
-  });
-  languageFilter.value = [...languageFilter.options].some((option) => option.value === current) ? current : '';
-  if (languageFilter.value !== current) state.language = '';
+
+  const atlas = [...totalCounts]
+    .map(([code, total]) => ({ code, total, label: languageLabel(code) }))
+    .sort((left, right) => right.total - left.total || left.label.localeCompare(right.label));
+  languageAtlasSize = atlas.length;
+  if (!atlas.some((language) => language.code === state.language)) state.language = '';
+  languageIndex.hidden = atlas.length === 0;
+  languageIndexToggle.hidden = atlas.length <= 6;
+  languageIndexOptions.replaceChildren(...atlas.map((language, index) => {
+    const count = contextCounts.get(language.code) || 0;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'country-index-option';
+    button.hidden = index >= 6;
+    button.dataset.language = language.code;
+    button.dataset.languageLabel = language.label.toLocaleLowerCase();
+    button.setAttribute('aria-pressed', String(language.code === state.language));
+    button.setAttribute('aria-label', `Filter by original language ${language.label}, ${count} ${count === 1 ? 'film' : 'films'}`);
+    const name = document.createElement('span');
+    name.textContent = language.label;
+    const total = document.createElement('small');
+    total.textContent = count.toLocaleString();
+    button.append(name, total);
+    button.addEventListener('click', () => toggleLanguage(language.code));
+    return button;
+  }));
+  const selectedIndex = atlas.findIndex((language) => language.code === state.language);
+  const wasExpanded = languageIndexOptions.classList.contains('is-expanded');
+  setLanguageIndexExpanded(selectedIndex >= 6 || wasExpanded);
 }
 
 function matchesWatchFilter(film) {
@@ -1435,7 +1499,7 @@ async function loadSnapshot() {
   editionDate.textContent = formatEditionDate(snapshot.refreshed_at);
   editionDate.title = formatDate(snapshot.refreshed_at);
     const displayed = snapshot.displayed_film_count ?? films.length;
-    collectionScope.textContent = `Search all ${displayed.toLocaleString()} films by ${searchFieldsCopy}. Filter by liked list, production country, or decade.`;
+    collectionScope.textContent = `Search all ${displayed.toLocaleString()} films by ${searchFieldsCopy}. Filter by genre, director, source list, original language, production country, decade, or running time.`;
     document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
     document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
     siteShell.hidden = false;
@@ -1519,9 +1583,6 @@ sortSelect.addEventListener('change', () => {
   updateUrlState();
   render();
 });
-languageFilter.addEventListener('change', () => {
-  setLanguage(languageFilter.value);
-});
 genreSearchInput.addEventListener('input', updateGenreOptionVisibility);
 clearSearchStateButton.addEventListener('click', () => resetCatalogView({ clearQueryText: true, resetSort: true, resetView: true }));
 clearGenresButton.addEventListener('click', () => {
@@ -1543,6 +1604,10 @@ countryIndexToggle.addEventListener('click', () => {
   setCountryIndexExpanded(countryIndexToggle.getAttribute('aria-expanded') !== 'true');
 });
 countryIndexSearch.addEventListener('input', updateCountryIndexVisibility);
+languageIndexToggle.addEventListener('click', () => {
+  setLanguageIndexExpanded(languageIndexToggle.getAttribute('aria-expanded') !== 'true');
+});
+languageIndexSearch.addEventListener('input', updateLanguageIndexVisibility);
 posterDisplayButton.addEventListener('click', () => setView('posters'));
 ledgerDisplayButton.addEventListener('click', () => setView('ledger'));
 printProgrammeButton.addEventListener('click', printProgramme);
@@ -1581,6 +1646,9 @@ backToFiltersButton.addEventListener('click', () => {
   document.querySelector('#collection-controls').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 window.addEventListener('scroll', updateBackToFiltersVisibility, { passive: true });
+document.addEventListener('click', (event) => {
+  if (catalogFilters.open && !catalogFilters.contains(event.target)) catalogFilters.open = false;
+});
 document.addEventListener('keydown', (event) => {
   if (filmDetailDialog.open || posterViewerDialog.open) return;
   if (event.key === 'Escape' && genreFilter.open) {

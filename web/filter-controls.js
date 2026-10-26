@@ -87,13 +87,20 @@ export function createFilterControls({ state, sources, elements, actions }) {
 
   function syncControls() {
     elements.sortSelect.value = state.sort;
-    elements.languageFilter.value = state.language || '';
     elements.countryIndexOptions.querySelectorAll('[data-country]').forEach((button) => {
       const selected = button.dataset.country === state.country;
       button.setAttribute('aria-pressed', String(selected));
       if (selected && button.hidden) {
         elements.countryIndexSearch.value = '';
         actions.setCountryIndexExpanded(true);
+      }
+    });
+    elements.languageIndexOptions.querySelectorAll('[data-language]').forEach((button) => {
+      const selected = button.dataset.language === state.language;
+      button.setAttribute('aria-pressed', String(selected));
+      if (selected && button.hidden) {
+        elements.languageIndexSearch.value = '';
+        actions.setLanguageIndexExpanded(true);
       }
     });
     elements.posterDisplayButton.classList.toggle('is-active', state.view === 'posters');

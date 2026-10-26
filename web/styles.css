@@ -144,6 +144,7 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .decade-option-count { color: var(--muted); font-family: var(--mono); font-size: 9px; }
 .decade-option[aria-pressed='true'] .decade-option-count { color: var(--filter-active-count); }
 .country-index { display: flex; align-items: center; gap: 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.language-index[hidden] { display: none; }
 .country-index.is-expanded { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; }
 .country-index-heading { flex: 0 0 auto; margin: 0; color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
 .country-index.is-expanded .country-index-heading { grid-column: 1; }
@@ -285,6 +286,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .catalog-filters-panel .decade-retrospective { grid-column: 1 / -1; margin: 0; padding: 10px 0 0; border-top: 1px solid var(--line); border-bottom: 0; background: none; }
 .catalog-filters-panel .decade-retrospective-heading .eyebrow { color: var(--muted); }
 .catalog-filters-panel .country-index { align-items: flex-start; flex-direction: column; gap: 6px; }
+.catalog-filters-panel .language-index { margin-top: 10px; }
 .catalog-filters-panel .country-index-options { flex-wrap: wrap; overflow-x: visible; }
 .catalog-filters-panel .country-index-options.is-expanded { max-height: 180px; overflow-y: auto; }
 .genre-filter { position: relative; flex: 0 0 auto; }
@@ -881,7 +883,6 @@ button.film-detail-external-link { padding: 0; border: 0; background: transparen
   .film-card .film-year { font-size: 10px; }
 }
 /* Native film-detail anchors */
-.language-control { max-width: 15rem; }
 .poster-link, .featured-film-poster, .ledger-poster { text-decoration: none; }
 @media (max-width: 640px) {
   .catalog-filters-panel { width: min(100%, calc(100vw - 36px)); max-width: calc(100vw - 36px); box-sizing: border-box; }
