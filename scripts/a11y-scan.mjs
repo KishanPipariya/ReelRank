@@ -35,8 +35,8 @@ async function checkCatalogueSectionFlow(page, label) {
       searchHelp,
       collectionScope,
       contextInControls: document.querySelector('.collection-context').parentElement.matches('.catalogue-controls'),
-      savedViewsWithDisplayTools: document.querySelector('#saved-views').closest('.catalogue-actions') !== null
-        && document.querySelector('#local-settings').closest('.catalogue-actions') !== null,
+      savedViewsWithExplorePanel: document.querySelector('#saved-views').closest('#catalog-filters') !== null
+        && document.querySelector('#local-settings').closest('#catalog-filters') !== null,
       summaryInContext: document.querySelector('#programme-note').parentElement.matches('.collection-context'),
       summaryOutsideSavedViews: !document.querySelector('#programme-note').closest('#saved-views'),
       posterWallInResults: document.querySelector('#film-grid').parentElement.matches('.catalogue-results'),
@@ -51,7 +51,7 @@ async function checkCatalogueSectionFlow(page, label) {
     };
   });
 
-  check(layout.contextInControls && layout.savedViewsWithDisplayTools, `${label} keeps search context in catalogue controls and saved views with display tools.`);
+  check(layout.contextInControls && layout.savedViewsWithExplorePanel, `${label} keeps primary search context visible and secondary tools inside Explore.`);
   check(layout.summaryInContext && layout.summaryOutsideSavedViews, `${label} keeps the selection summary with catalogue context and outside the saved-views disclosure.`);
   check(layout.posterWallInResults && layout.posterToggleInViewTools, `${label} separates poster results from display controls.`);
   check(layout.featuredBeforePosterWall, `${label} keeps the featured-film section clear of the poster wall.`);
@@ -155,7 +155,7 @@ async function checkCatalogInteractions(page) {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.locator('#catalog-filters > summary').click();
-  check(await page.locator('#catalog-filters').evaluate((element) => element.open), 'Filters panel opens before using its facet controls.');
+  check(await page.locator('#catalog-filters').evaluate((element) => element.open), 'Explore opens before using its facet controls.');
   await page.locator('#runtime-options [data-runtime="under-90"]').click();
   check(new URL(page.url()).searchParams.get('runtime') === 'under-90', 'Runtime selection is reflected in the URL.');
   check(await page.locator('#heading-count').textContent() === '01', 'Under-90-minute selection returns the matching film.');
@@ -170,7 +170,7 @@ async function checkCatalogInteractions(page) {
   await page.locator('#ledger-display-button').click();
   check(await page.locator('#film-ledger-view').isVisible(), 'Ledger control displays the ledger.');
   check(new URL(page.url()).searchParams.get('view') === 'ledger', 'View selection is reflected in the URL.');
-  check(!(await page.locator('#catalog-filters').evaluate((element) => element.open)), 'Clicking the ledger control dismisses the Filters panel.');
+  check(!(await page.locator('#catalog-filters').evaluate((element) => element.open)), 'Clicking the ledger control dismisses Explore.');
   await page.locator('#poster-display-button').click();
   check(await page.locator('#film-grid').isVisible(), 'Poster wall control restores the poster grid.');
   await page.locator('#catalog-filters > summary').click();
@@ -331,11 +331,13 @@ async function checkSavedPreferences() {
   await page.waitForSelector('#site-shell:not([hidden])');
   check(await page.locator('#film-ledger-view').isVisible(), 'A saved Ledger preference applies on a bare home visit.');
   await page.locator('#poster-display-button').click();
+  await page.locator('#catalog-filters > summary').click();
   await page.locator('#programme-share > summary').click();
   const link = new URL(await page.locator('#programme-share-url').inputValue());
   check(link.searchParams.get('view') === 'posters', 'A shared default Poster Wall programme overrides a recipient Ledger preference.');
   await page.goto(link.href, { waitUntil: 'domcontentloaded' });
   check(await page.locator('#film-grid').isVisible(), 'An explicit shared Poster Wall layout wins over stored preferences.');
+  await page.locator('#catalog-filters > summary').click();
   await page.locator('#programme-share > summary').click();
   await page.locator('#saved-views > summary').click();
   await page.locator('#saved-views').scrollIntoViewIfNeeded();
@@ -379,6 +381,7 @@ async function checkSavedPreferences() {
   await page.getByRole('button', { name: 'Reset poster for Arrival to the catalogue original' }).click();
   check(await page.locator('.film-detail-poster .poster-fallback-title').textContent() === 'Arrival', 'Film details can reset one poster to its catalogue original.');
   await page.locator('#film-detail-close').click();
+  await page.locator('#catalog-filters > summary').click();
   await page.locator('#local-settings > summary').click();
   await page.locator('#reset-posters').click();
   check(await page.locator('#preset-status').textContent().then((text) => text.includes('Poster choices reset')), 'Global poster reset reports its outcome.');
@@ -391,6 +394,10 @@ async function checkSavedPreferences() {
 
 async function checkRetryLoading() {
   const { context, page } = await openSite();
+  // openSite waits only for DOMContentLoaded. Make sure its initial snapshot
+  // request has finished before replacing the route, or CI can race the
+  // first request against this recovery scenario's one-shot failure.
+  await page.waitForSelector('#site-shell:not([hidden])');
   let attempts = 0;
   await page.unroute('**/data/snapshot.json');
   await page.route('**/data/snapshot.json', (route) => {
@@ -439,6 +446,7 @@ async function checkProgrammeSharing() {
     const { context, page } = await openSite({ viewport: { width, height: 900 }, colorScheme: width === 320 ? 'dark' : 'light', reducedMotion: 'reduce', path: '/?genre=Drama&filter=unwatched&sort=title&view=ledger' });
     await page.locator('#film-ledger-view').waitFor({ state: 'visible' });
     await page.locator('#search-input').fill('film');
+    await page.locator('#catalog-filters > summary').click();
     await page.locator('#programme-share > summary').click();
     await page.waitForFunction(() => new URL(document.querySelector('#programme-share-url').value).searchParams.get('q') === 'film');
     const link = await page.locator('#programme-share-url').inputValue();
@@ -523,11 +531,11 @@ async function checkKeyboardAndReflow() {
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
-    check(await page.evaluate(() => document.activeElement.matches('#catalog-filters > summary')), 'Tab reaches the Filters panel.');
+    check(await page.evaluate(() => document.activeElement.matches('#catalog-filters > summary')), 'Tab reaches the Explore panel.');
     await page.keyboard.press('Enter');
-    check(await page.locator('#catalog-filters').evaluate((element) => element.open), 'Enter opens the Filters panel.');
+    check(await page.locator('#catalog-filters').evaluate((element) => element.open), 'Enter opens the Explore panel.');
     await page.keyboard.press('Tab');
-    check(await page.evaluate(() => document.activeElement.matches('#genre-filter > summary')), 'Tab reaches the genre disclosure inside the Filters panel.');
+    check(await page.evaluate(() => document.activeElement.matches('#genre-filter > summary')), 'Tab reaches the genre disclosure inside Explore.');
     await page.keyboard.press('Enter');
     check(await page.locator('#genre-filter').evaluate((element) => element.open), 'Enter opens the genre disclosure.');
     await page.keyboard.press('Tab');
