@@ -1393,6 +1393,105 @@ function render() {
   resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription ? `, ${filterDescription}` : ''}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
 }
 
+function showDemoState(configuredUsername, snapshotUsername) {
+  const matches = snapshotUsername.toLocaleLowerCase() === configuredUsername.toLocaleLowerCase();
+  const requested = new URLSearchParams(window.location.search).get('demo') === '1';
+  if (!matches) {
+    const demoUrl = new URL(window.location.href);
+    demoUrl.searchParams.set('demo', '1');
+    demoPreviewLink.href = demoUrl.href;
+    demoPreviewLink.textContent = `Preview sample data from @${snapshotUsername}`;
+    demoPreviewLink.hidden = false;
+    setupCopy.textContent = `The snapshot for @${configuredUsername} is still being prepared. Your site will appear here when its username matches the generated snapshot.`;
+    if (!requested) return false;
+  }
+  if (requested || !matches) {
+    document.querySelector('#demo-banner-copy').textContent = matches
+      ? `Demo preview of @${snapshotUsername}'s public snapshot.`
+      : `Demo preview: showing @${snapshotUsername}'s public data. @${configuredUsername}'s site is still being prepared.`;
+    demoBanner.hidden = false;
+    const exitDemoUrl = new URL(window.location.href);
+    exitDemoUrl.searchParams.delete('demo');
+    document.querySelector('#exit-demo-link').href = exitDemoUrl.href;
+  }
+  return true;
+}
+
+function initializeSnapshot(snapshot) {
+  const snapshotUsername = snapshot.username.trim();
+  films = snapshot.films;
+  renderLanguageOptions();
+  films.forEach((film) => originalPosterByFilm.set(film, film.poster_url));
+  const posterChoices = readPreferences().posterChoices || {};
+  films.forEach((film) => {
+    const choice = Number.isSafeInteger(film.tmdb_id) ? posterChoices[String(film.tmdb_id)] : '';
+    if (typeof choice === 'string' && choice.startsWith('https://image.tmdb.org/t/p/')) film.poster_url = choice;
+  });
+  films.forEach((film) => { film._sourceListUrls = [...new Set((Array.isArray(film.list_ids) && Array.isArray(snapshot.source_lists)
+    ? film.list_ids.map((id) => snapshot.source_lists[id]).filter((url) => typeof url === 'string')
+    : Array.isArray(film.lists) ? film.lists : []).map(sourceListUrl).filter(Boolean))]; });
+  rankByFilm.clear();
+  films.forEach((film, index) => rankByFilm.set(film, index));
+  snapshotRefreshedAt = snapshot.refreshed_at;
+  sourceListsForDownload = Array.isArray(snapshot.source_lists) ? snapshot.source_lists : [];
+  const rankingDownload = document.querySelector('#ranking-download');
+  rankingDownload.hidden = false;
+  if (snapshot.ranking_csv_url) {
+    rankingDownload.href = snapshot.ranking_csv_url;
+    rankingDownload.download = '';
+    rankingDownload.textContent = `Download all ${(snapshot.film_count ?? films.length).toLocaleString()} films (CSV)`;
+  } else {
+    rankingDownload.href = '#';
+    rankingDownload.removeAttribute('download');
+    rankingDownload.textContent = `Download displayed ${films.length.toLocaleString()} films (CSV)`;
+  }
+  posterGalleryUrl = snapshot.poster_gallery_url || '/data/poster-galleries.json';
+  const colophon = editionColophonFor(films);
+  document.querySelector('#edition-leading-decade').textContent = colophon.decade;
+  document.querySelector('#edition-leading-country').textContent = colophon.country;
+  buildGenreFilter();
+  const username = snapshotUsername;
+  const profileUrl = safeUrl(snapshot.profile_url, ['letterboxd.com']) || `https://letterboxd.com/${encodeURIComponent(username)}/`;
+  const profileLink = document.querySelector('#profile-link');
+  profileLink.href = profileUrl;
+  profileLink.setAttribute('aria-label', `Letterboxd profile for ${username}, opens in a new tab`);
+  document.querySelector('#profile-username').textContent = username;
+  document.querySelector('#profile-stamp').textContent = username;
+  const footerProfileLink = document.querySelector('#footer-profile-link');
+  footerProfileLink.href = profileUrl;
+  footerProfileLink.textContent = `${username} on Letterboxd ↗`;
+  footerProfileLink.setAttribute('aria-label', `Letterboxd profile for ${username}, opens in a new tab`);
+  document.title = `ReelRank — ${username}`;
+  document.querySelector('#tmdb-credit').hidden = !(snapshot.tmdb_match_count > 0);
+  rankedTotal = snapshot.film_count ?? films.length;
+  document.querySelector('#film-total').textContent = rankedTotal.toLocaleString();
+  document.querySelector('#list-total').textContent = snapshot.list_count ?? '—';
+  const unwatchedCount = snapshot.unwatched_count ?? films.filter((film) => !film.watched).length;
+  const watchedCount = Math.max(0, rankedTotal - unwatchedCount);
+  document.querySelector('#unwatched-total').textContent = unwatchedCount.toLocaleString();
+  document.querySelector('#watched-total').textContent = watchedCount.toLocaleString();
+  document.querySelector('#progress-film-total').textContent = rankedTotal.toLocaleString();
+  const progress = document.querySelector('#watch-progress');
+  progress.max = rankedTotal || 1;
+  progress.value = watchedCount;
+  const progressPercent = rankedTotal ? Math.round((watchedCount / rankedTotal) * 100) : 0;
+  document.querySelector('#watch-progress-percent').textContent = `${progressPercent}% watched`;
+  progress.setAttribute('aria-label', `${watchedCount.toLocaleString()} of ${rankedTotal.toLocaleString()} films watched (${progressPercent} percent)`);
+  const editionDate = document.querySelector('#refreshed-label');
+  editionDate.textContent = formatEditionDate(snapshot.refreshed_at);
+  editionDate.title = formatDate(snapshot.refreshed_at);
+  const displayed = snapshot.displayed_film_count ?? films.length;
+  collectionScope.textContent = `Search all ${displayed.toLocaleString()} films by ${searchFieldsCopy}. Filter by genre, director, source list, original language, production country, decade, or running time.`;
+  document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
+  document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
+  siteShell.hidden = false;
+  render();
+  updateEditionFreshness(document.querySelector('#edition-stale-notice'), snapshotRefreshedAt);
+  setupState.hidden = true;
+  retryButton.hidden = true;
+  restoreFilmFromUrl();
+}
+
 async function loadSnapshot() {
   let failedResource = 'configuration';
   let snapshotFailureKind = 'request';
@@ -1403,10 +1502,10 @@ async function loadSnapshot() {
     const configuredUsername = typeof config.letterboxd_username === 'string' ? config.letterboxd_username.trim() : '';
     publicSiteUrl = typeof config.public_site_url === 'string' ? config.public_site_url.trim() : '';
     if (!configuredUsername) throw new Error('Site configuration does not include a Letterboxd username');
+
     failedResource = 'catalogue';
     setupTitle.textContent = `Preparing @${configuredUsername}'s ReelRank`;
     setupCopy.textContent = 'Loading the configured profile and its catalogue edition…';
-
     const response = await fetch('/data/snapshot.json', { cache: 'default' });
     if (!response.ok) throw new Error(`Snapshot request failed: ${response.status}`);
     snapshotFailureKind = 'json';
@@ -1414,100 +1513,8 @@ async function loadSnapshot() {
     snapshotFailureKind = 'schema';
     const snapshot = validateSnapshot(snapshotData);
     snapshotFailureKind = 'initialization';
-    const snapshotUsername = snapshot.username.trim();
-    const snapshotMatchesConfig = snapshotUsername.toLocaleLowerCase() === configuredUsername.toLocaleLowerCase();
-    const demoRequested = new URLSearchParams(window.location.search).get('demo') === '1';
-    if (!snapshotMatchesConfig) {
-      const demoUrl = new URL(window.location.href);
-      demoUrl.searchParams.set('demo', '1');
-      demoPreviewLink.href = demoUrl.href;
-      demoPreviewLink.textContent = `Preview sample data from @${snapshotUsername}`;
-      demoPreviewLink.hidden = false;
-      setupCopy.textContent = `The snapshot for @${configuredUsername} is still being prepared. Your site will appear here when its username matches the generated snapshot.`;
-      if (!demoRequested) return;
-      document.querySelector('#demo-banner-copy').textContent = `Demo preview: showing @${snapshotUsername}'s public data. @${configuredUsername}'s site is still being prepared.`;
-      demoBanner.hidden = false;
-      const exitDemoUrl = new URL(window.location.href);
-      exitDemoUrl.searchParams.delete('demo');
-      document.querySelector('#exit-demo-link').href = exitDemoUrl.href;
-    } else if (demoRequested) {
-      document.querySelector('#demo-banner-copy').textContent = `Demo preview of @${snapshotUsername}'s public snapshot.`;
-      demoBanner.hidden = false;
-      const exitDemoUrl = new URL(window.location.href);
-      exitDemoUrl.searchParams.delete('demo');
-      document.querySelector('#exit-demo-link').href = exitDemoUrl.href;
-    }
-    films = snapshot.films;
-    renderLanguageOptions();
-    films.forEach((film) => originalPosterByFilm.set(film, film.poster_url));
-    const posterChoices = readPreferences().posterChoices || {};
-    films.forEach((film) => {
-      const choice = Number.isSafeInteger(film.tmdb_id) ? posterChoices[String(film.tmdb_id)] : '';
-      if (typeof choice === 'string' && choice.startsWith('https://image.tmdb.org/t/p/')) film.poster_url = choice;
-    });
-    films.forEach((film) => { film._sourceListUrls = [...new Set((Array.isArray(film.list_ids) && Array.isArray(snapshot.source_lists)
-      ? film.list_ids.map((id) => snapshot.source_lists[id]).filter((url) => typeof url === 'string')
-      : Array.isArray(film.lists) ? film.lists : []).map(sourceListUrl).filter(Boolean))]; });
-    rankByFilm.clear();
-    films.forEach((film, index) => rankByFilm.set(film, index));
-    snapshotRefreshedAt = snapshot.refreshed_at;
-    sourceListsForDownload = Array.isArray(snapshot.source_lists) ? snapshot.source_lists : [];
-    const rankingDownload = document.querySelector('#ranking-download');
-    rankingDownload.hidden = false;
-    if (snapshot.ranking_csv_url) {
-      rankingDownload.href = snapshot.ranking_csv_url;
-      rankingDownload.download = '';
-      rankingDownload.textContent = `Download all ${(snapshot.film_count ?? films.length).toLocaleString()} films (CSV)`;
-    } else {
-      rankingDownload.href = '#';
-      rankingDownload.removeAttribute('download');
-      rankingDownload.textContent = `Download displayed ${films.length.toLocaleString()} films (CSV)`;
-    }
-    posterGalleryUrl = snapshot.poster_gallery_url || '/data/poster-galleries.json';
-    const colophon = editionColophonFor(films);
-    document.querySelector('#edition-leading-decade').textContent = colophon.decade;
-    document.querySelector('#edition-leading-country').textContent = colophon.country;
-    buildGenreFilter();
-    const username = snapshotUsername;
-    const profileUrl = safeUrl(snapshot.profile_url, ['letterboxd.com']) || `https://letterboxd.com/${encodeURIComponent(username)}/`;
-    const profileLink = document.querySelector('#profile-link');
-    profileLink.href = profileUrl;
-    profileLink.setAttribute('aria-label', `Letterboxd profile for ${username}, opens in a new tab`);
-    document.querySelector('#profile-username').textContent = username;
-    document.querySelector('#profile-stamp').textContent = username;
-    const footerProfileLink = document.querySelector('#footer-profile-link');
-    footerProfileLink.href = profileUrl;
-    footerProfileLink.textContent = `${username} on Letterboxd ↗`;
-    footerProfileLink.setAttribute('aria-label', `Letterboxd profile for ${username}, opens in a new tab`);
-    document.title = `ReelRank — ${username}`;
-    document.querySelector('#tmdb-credit').hidden = !(snapshot.tmdb_match_count > 0);
-    rankedTotal = snapshot.film_count ?? films.length;
-    document.querySelector('#film-total').textContent = rankedTotal.toLocaleString();
-    document.querySelector('#list-total').textContent = snapshot.list_count ?? '—';
-    const unwatchedCount = snapshot.unwatched_count ?? films.filter((film) => !film.watched).length;
-    const watchedCount = Math.max(0, rankedTotal - unwatchedCount);
-    document.querySelector('#unwatched-total').textContent = unwatchedCount.toLocaleString();
-    document.querySelector('#watched-total').textContent = watchedCount.toLocaleString();
-    document.querySelector('#progress-film-total').textContent = rankedTotal.toLocaleString();
-    const progress = document.querySelector('#watch-progress');
-    progress.max = rankedTotal || 1;
-    progress.value = watchedCount;
-    const progressPercent = rankedTotal ? Math.round((watchedCount / rankedTotal) * 100) : 0;
-    document.querySelector('#watch-progress-percent').textContent = `${progressPercent}% watched`;
-    progress.setAttribute('aria-label', `${watchedCount.toLocaleString()} of ${rankedTotal.toLocaleString()} films watched (${progressPercent} percent)`);
-  const editionDate = document.querySelector('#refreshed-label');
-  editionDate.textContent = formatEditionDate(snapshot.refreshed_at);
-  editionDate.title = formatDate(snapshot.refreshed_at);
-    const displayed = snapshot.displayed_film_count ?? films.length;
-    collectionScope.textContent = `Search all ${displayed.toLocaleString()} films by ${searchFieldsCopy}. Filter by genre, director, source list, original language, production country, decade, or running time.`;
-    document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
-    document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
-    siteShell.hidden = false;
-    render();
-    updateEditionFreshness(document.querySelector('#edition-stale-notice'), snapshotRefreshedAt);
-    setupState.hidden = true;
-    retryButton.hidden = true;
-    restoreFilmFromUrl();
+    if (!showDemoState(configuredUsername, snapshot.username.trim())) return;
+    initializeSnapshot(snapshot);
   } catch (error) {
     siteShell.hidden = true;
     setupState.hidden = false;
