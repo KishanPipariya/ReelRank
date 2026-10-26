@@ -169,8 +169,10 @@ async function checkCatalogInteractions(page) {
   await page.locator('#ledger-display-button').click();
   check(await page.locator('#film-ledger-view').isVisible(), 'Ledger control displays the ledger.');
   check(new URL(page.url()).searchParams.get('view') === 'ledger', 'View selection is reflected in the URL.');
+  check(!(await page.locator('#catalog-filters').evaluate((element) => element.open)), 'Clicking the ledger control dismisses the Filters panel.');
   await page.locator('#poster-display-button').click();
   check(await page.locator('#film-grid').isVisible(), 'Poster wall control restores the poster grid.');
+  await page.locator('#catalog-filters > summary').click();
   await page.locator('#country-index-options .country-index-option[aria-pressed="true"]').click();
   await page.locator('#sort-select').selectOption('rank');
   await page.locator('.film-detail-trigger:visible').first().click();
@@ -198,6 +200,7 @@ async function checkCatalogInteractions(page) {
   check(await page.locator('#film-detail-dialog').evaluate((dialog) => dialog.open), 'Browser Forward restores the detail dialog.');
   await page.locator('#film-detail-close').click();
   await page.waitForFunction(() => !new URL(location.href).searchParams.has('film'));
+  await page.locator('#catalog-filters > summary').click();
   await page.locator('#runtime-options [data-runtime="90-120"]').click();
   await page.locator('#sort-select').selectOption('title');
   await page.locator('.film-detail-trigger:visible').first().click();

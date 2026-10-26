@@ -107,7 +107,7 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 /* Catalogue sections own their spacing; keep child sections in normal document flow. */
 .catalogue-controls { display: grid; gap: 16px; }
 .collection-heading { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin: 0; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
-.collection-context { display: grid; gap: 6px; margin: 0; }
+.collection-context { display: grid; gap: 10px; margin: 0; }
 .collection-scope { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .saved-views { margin: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .saved-views > summary { padding: .8rem 1rem; cursor: pointer; font-weight: 650; }
@@ -321,7 +321,7 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .genre-empty-state { margin: 8px 0 0; color: var(--muted); font-size: 10px; }
 .genre-empty-state[hidden] { display: none; }
 .film-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 38px var(--space-5); }
-.programme-note { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 9px; margin: 0; }
+.programme-note { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: 4px 12px; margin: 0; padding: 10px 12px; border-left: 2px solid var(--orange); background: var(--surface-soft); }
 .programme-note[hidden] { display: none; }
 .programme-note-kicker { color: var(--rust-ink); font-family: var(--mono); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 .programme-note p { margin: 0; color: var(--muted); font-family: var(--mono); font-size: 9px; line-height: 1.5; }
@@ -633,8 +633,8 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .genre-filter-toggle { justify-content: space-between; }
   .catalog-filters-panel { width: 100%; max-height: none; position: static; grid-template-columns: minmax(0, 1fr); margin-top: 7px; padding: 10px; }
   .catalog-filters-panel .decade-retrospective { grid-column: auto; }
-  .collection-context { gap: 7px; margin: 0; }
-  .programme-note { gap: 3px 8px; }
+  .collection-context { gap: 10px; margin: 0; }
+  .programme-note { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 4px; padding: 9px 10px; }
   .search-box { width: 100%; max-width: none; }
   .search-box input { font-size: 16px; }
   .filter-tabs { justify-content: space-between; }
