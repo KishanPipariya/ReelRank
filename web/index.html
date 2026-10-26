@@ -82,218 +82,224 @@
         </section>
 
         <section id="collection" class="collection" aria-labelledby="collection-title">
-          <div class="collection-heading" id="collection-controls">
-            <div>
-              <p class="eyebrow section-eyebrow">Collected from your likes</p>
-              <h2 id="collection-title" tabindex="-1">Across your lists <span id="heading-count">—</span></h2>
-            </div>
-            <div class="collection-tools">
-              <div class="search-box">
-                <span class="search-icon" aria-hidden="true">⌕</span>
-                <label class="sr-only" for="search-input">Find a film or filmmaker</label>
-                <input id="search-input" type="search" placeholder="Find a film or filmmaker" autocomplete="off" aria-keyshortcuts="/" aria-describedby="search-help" />
-                <button id="clear-query" class="clear-query" type="button" hidden aria-label="Clear search">Clear</button>
-                <kbd>/</kbd>
+          <section class="catalogue-controls" aria-label="Catalogue search and filters">
+            <div class="collection-heading" id="collection-controls">
+              <div>
+                <p class="eyebrow section-eyebrow">Collected from your likes</p>
+                <h2 id="collection-title" tabindex="-1">Across your lists <span id="heading-count">—</span></h2>
               </div>
-              <span id="search-help" class="sr-only">Search titles, original titles, directors, years, genres, synopses, and source lists. Press slash to focus search. Press Escape to clear it.</span>
-              <div class="filter-tabs" role="group" aria-label="Filter films">
-                <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
-                <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count">—</span></button>
-                <button class="filter-button" type="button" data-filter="watched" aria-pressed="false">Watched <span id="watched-tab-count">—</span></button>
-              </div>
-              <details id="catalog-filters" class="catalog-filters">
-                <summary class="catalog-filters-toggle">
-                  <span>Filters</span>
-                  <span id="catalog-filter-count" class="catalog-filter-count" hidden></span>
-                </summary>
-                <div class="catalog-filters-panel">
-              <details id="genre-filter" class="genre-filter" hidden>
-                <summary class="genre-filter-toggle">
-                  <span>Genres</span>
-                  <span id="genre-filter-summary" class="genre-filter-summary">Any</span>
-                </summary>
-                <div class="genre-filter-menu">
-                  <div class="selected-genres-heading">
-                    <span>Selected</span>
-                    <div class="genre-menu-actions">
-                      <button id="clear-genres" class="clear-genres" type="button" hidden>Clear</button>
-                      <button id="close-genres" class="close-genres" type="button">Close</button>
-                    </div>
+              <div class="collection-tools">
+                <div class="search-box">
+                  <span class="search-icon" aria-hidden="true">⌕</span>
+                  <label class="sr-only" for="search-input">Find a film or filmmaker</label>
+                  <input id="search-input" type="search" placeholder="Find a film or filmmaker" autocomplete="off" aria-keyshortcuts="/" aria-describedby="search-help" />
+                  <button id="clear-query" class="clear-query" type="button" hidden aria-label="Clear search">Clear</button>
+                  <kbd>/</kbd>
+                </div>
+                <span id="search-help" class="sr-only"></span>
+                <div class="filter-tabs" role="group" aria-label="Filter films">
+                  <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
+                  <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count">—</span></button>
+                  <button class="filter-button" type="button" data-filter="watched" aria-pressed="false">Watched <span id="watched-tab-count">—</span></button>
+                </div>
+                <details id="catalog-filters" class="catalog-filters">
+                  <summary class="catalog-filters-toggle">
+                    <span>Filters</span>
+                    <span id="catalog-filter-count" class="catalog-filter-count" hidden></span>
+                  </summary>
+                  <div class="catalog-filters-panel">
+                    <details id="genre-filter" class="genre-filter" hidden>
+                      <summary class="genre-filter-toggle">
+                        <span>Genres</span>
+                        <span id="genre-filter-summary" class="genre-filter-summary">Any</span>
+                      </summary>
+                      <div class="genre-filter-menu">
+                        <div class="selected-genres-heading">
+                          <span>Selected</span>
+                          <div class="genre-menu-actions">
+                            <button id="clear-genres" class="clear-genres" type="button" hidden>Clear</button>
+                            <button id="close-genres" class="close-genres" type="button">Close</button>
+                          </div>
+                        </div>
+                        <div id="selected-genres" class="selected-genres" role="group" aria-label="Selected genres"></div>
+                        <label class="genre-search-box">
+                          <span class="sr-only">Search genres</span>
+                          <input id="genre-search" type="search" placeholder="Search genres" autocomplete="off" />
+                        </label>
+                        <p class="genre-filter-help">Selections apply immediately. Films match any selected genre.</p>
+                        <div id="genre-options" class="genre-options" role="group" aria-label="Available genres"></div>
+                        <p id="genre-empty-state" class="genre-empty-state" hidden>No genres match that search.</p>
                   </div>
-                  <div id="selected-genres" class="selected-genres" role="group" aria-label="Selected genres"></div>
-                  <label class="genre-search-box">
-                    <span class="sr-only">Search genres</span>
-                    <input id="genre-search" type="search" placeholder="Search genres" autocomplete="off" />
-                  </label>
-                  <p class="genre-filter-help">Selections apply immediately. Films match any selected genre.</p>
-                  <div id="genre-options" class="genre-options" role="group" aria-label="Available genres"></div>
-                  <p id="genre-empty-state" class="genre-empty-state" hidden>No genres match that search.</p>
-                </div>
-              </details>
-              <details id="source-list-filter" class="genre-filter source-list-filter" hidden>
-                <summary class="genre-filter-toggle">
-                  <span>Source lists</span>
-                  <span id="source-list-filter-summary" class="genre-filter-summary">Any</span>
-                </summary>
-                <div class="genre-filter-menu source-list-menu">
-                  <div class="selected-genres-heading">
-                    <span>Selected lists</span>
-                    <div class="genre-menu-actions">
-                      <button id="clear-source-lists" class="clear-genres" type="button" hidden>Clear</button>
-                      <button id="close-source-lists" class="close-genres" type="button">Close</button>
-                    </div>
-                  </div>
-                  <div id="selected-source-lists" class="selected-genres" role="group" aria-label="Selected source lists"></div>
-                  <label class="genre-search-box">
-                    <span class="sr-only">Search source lists</span>
-                    <input id="source-list-search" type="search" placeholder="Search source lists" autocomplete="off" />
-                  </label>
-                  <p class="genre-filter-help">Films match any selected list. Counts reflect the other active filters.</p>
-                  <div id="source-list-options" class="genre-options" role="group" aria-label="Filter films by source list"></div>
-                  <p id="source-list-empty" class="genre-empty-state" hidden>No source lists match that search.</p>
-                </div>
-              </details>
-              <section class="decade-retrospective" aria-labelledby="decade-retrospective-title">
-                <div class="decade-retrospective-heading">
-                  <p class="eyebrow">Browse by</p>
-                  <h3 id="decade-retrospective-title">Decade, running time &amp; country</h3>
-                </div>
-                <div id="decade-options" class="decade-options" role="group" aria-label="Filter films by release decade"></div>
-                <div id="runtime-filter" class="runtime-filter" hidden>
-                  <span class="runtime-filter-label">Running time</span>
-                  <div id="runtime-options" class="runtime-options" role="group" aria-label="Filter films by running time" aria-describedby="runtime-filter-note">
-                    <button class="runtime-option" type="button" data-runtime="" aria-pressed="true">Any length</button>
-                    <button class="runtime-option" type="button" data-runtime="under-90" aria-pressed="false">Under 90 min</button>
-                    <button class="runtime-option" type="button" data-runtime="90-120" aria-pressed="false">90–120 min</button>
-                    <button class="runtime-option" type="button" data-runtime="over-120" aria-pressed="false">Over 120 min</button>
-                    <span id="runtime-filter-note" class="runtime-filter-note">Choosing a running time excludes films with unknown runtimes.</span>
-                  </div>
-                </div>
-                <div class="country-index">
-                  <p class="country-index-heading">Production country</p>
-                  <label id="country-index-search-control" class="country-index-search-control" hidden>
-                    <span class="sr-only">Search all production countries</span>
-                    <input id="country-index-search" type="search" placeholder="Find a country" autocomplete="off" />
-                  </label>
-                  <div id="country-index-options" class="country-index-options" role="group" aria-label="Filter by production country"></div>
-                  <p id="country-index-empty" class="country-index-empty" role="status" hidden>No countries match that search.</p>
-                  <button id="country-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Browse all countries</button>
-                </div>
-              </section>
-                </div>
-              </details>
-              <label class="sort-control">
-                <span class="sr-only">Sort films</span>
-                <select id="sort-select" aria-label="Sort films">
-                  <option value="rank">Rank</option>
-                  <option value="relevance" disabled>Relevance (search results)</option>
-                  <option value="title">Title A–Z</option>
-                  <option value="year-newest">Year: newest</option>
-                  <option value="year-oldest">Year: oldest</option>
-                </select>
-              </label>
-              <label class="sort-control language-control" for="language-filter">
-                <span class="sr-only">Filter by original language</span>
-                <select id="language-filter" aria-label="Filter by original language"><option value="">Any original language</option></select>
-              </label>
-            </div>
-          </div>
-          <div class="collection-context">
-            <p id="collection-scope" class="collection-scope">Search titles, directors, years, genres, synopses, and source lists.</p>
-            <aside id="programme-note" class="programme-note" aria-label="Summary of this selection" hidden>
-              <span class="programme-note-kicker">In this selection</span>
-              <p id="programme-note-copy"></p>
-            </aside>
-          </div>
-          <details id="saved-views" class="saved-views">
-            <summary>Saved views &amp; local settings</summary>
-            <div class="saved-presets saved-views-panel">
-              <label for="preset-name">Save current filters</label>
-              <input id="preset-name" maxlength="48" placeholder="Preset name" />
-              <button id="preset-save" class="print-programme-button" type="button">Save view</button>
-              <label for="preset-list">Saved views</label>
-              <select id="preset-list"><option value="">Choose a saved view</option></select>
-              <div class="saved-view-actions"><button id="preset-apply" class="print-programme-button" type="button">Apply</button><button id="preset-delete" class="print-programme-button" type="button">Delete</button></div>
-              <div class="saved-view-actions"><button id="preset-export" class="print-programme-button" type="button">Export saved views</button><button id="preset-import-trigger" class="print-programme-button" type="button">Import saved views</button><input id="preset-import-file" type="file" accept="application/json,.json" hidden /></div>
-              <button id="reset-posters" class="print-programme-button" type="button">Reset poster choices</button>
-              <button id="clear-preferences" class="print-programme-button" type="button">Clear local preferences</button>
-              <p id="preset-status" role="status" aria-live="polite"></p>
-            </div>
-          </details>
-          <div id="active-view-tools" class="active-view-tools" hidden>
-            <div id="active-genre-filters" class="active-genre-filters" aria-label="Active filters" hidden></div>
-            <div id="active-director-filters" class="active-genre-filters" aria-label="Active director filters" hidden></div>
-            <div id="active-source-list-filters" class="active-genre-filters" aria-label="Active source list filters" hidden></div>
-            <button id="clear-search-state" class="clear-search-state" type="button">Clear search &amp; reset view</button>
-          </div>
-          <div class="collection-display-bar">
-            <div id="director-filmography" class="director-filmography" hidden></div>
-            <div class="collection-display-actions">
-              <div class="collection-view-tools">
-                <div class="collection-view-control" role="group" aria-label="Choose film layout">
-                  <button id="poster-display-button" class="collection-view-button is-active" type="button" aria-pressed="true">Poster wall</button>
-                  <button id="ledger-display-button" class="collection-view-button" type="button" aria-pressed="false">Ledger</button>
-                </div>
-                <details class="score-key">
-                  <summary>Score key</summary>
-                  <p class="score-key-copy">The score counts liked lists that include a film. In Poster Wall, the bar compares it with the highest score in the current results.</p>
                 </details>
+                <details id="source-list-filter" class="genre-filter source-list-filter" hidden>
+                  <summary class="genre-filter-toggle">
+                    <span>Source lists</span>
+                    <span id="source-list-filter-summary" class="genre-filter-summary">Any</span>
+                  </summary>
+                  <div class="genre-filter-menu source-list-menu">
+                    <div class="selected-genres-heading">
+                      <span>Selected lists</span>
+                      <div class="genre-menu-actions">
+                        <button id="clear-source-lists" class="clear-genres" type="button" hidden>Clear</button>
+                        <button id="close-source-lists" class="close-genres" type="button">Close</button>
+                      </div>
+                    </div>
+                    <div id="selected-source-lists" class="selected-genres" role="group" aria-label="Selected source lists"></div>
+                    <label class="genre-search-box">
+                      <span class="sr-only">Search source lists</span>
+                      <input id="source-list-search" type="search" placeholder="Search source lists" autocomplete="off" />
+                    </label>
+                    <p class="genre-filter-help">Films match any selected list. Counts reflect the other active filters.</p>
+                    <div id="source-list-options" class="genre-options" role="group" aria-label="Filter films by source list"></div>
+                    <p id="source-list-empty" class="genre-empty-state" hidden>No source lists match that search.</p>
+                  </div>
+                </details>
+                <section class="decade-retrospective" aria-labelledby="decade-retrospective-title">
+                  <div class="decade-retrospective-heading">
+                    <p class="eyebrow">Browse by</p>
+                    <h3 id="decade-retrospective-title">Decade, running time &amp; country</h3>
+                  </div>
+                  <div id="decade-options" class="decade-options" role="group" aria-label="Filter films by release decade"></div>
+                  <div id="runtime-filter" class="runtime-filter" hidden>
+                    <span class="runtime-filter-label">Running time</span>
+                    <div id="runtime-options" class="runtime-options" role="group" aria-label="Filter films by running time" aria-describedby="runtime-filter-note">
+                      <button class="runtime-option" type="button" data-runtime="" aria-pressed="true">Any length</button>
+                      <button class="runtime-option" type="button" data-runtime="under-90" aria-pressed="false">Under 90 min</button>
+                      <button class="runtime-option" type="button" data-runtime="90-120" aria-pressed="false">90–120 min</button>
+                      <button class="runtime-option" type="button" data-runtime="over-120" aria-pressed="false">Over 120 min</button>
+                      <span id="runtime-filter-note" class="runtime-filter-note">Choosing a running time excludes films with unknown runtimes.</span>
+                    </div>
+                  </div>
+                  <div class="country-index">
+                    <p class="country-index-heading">Production country</p>
+                    <label id="country-index-search-control" class="country-index-search-control" hidden>
+                      <span class="sr-only">Search all production countries</span>
+                      <input id="country-index-search" type="search" placeholder="Find a country" autocomplete="off" />
+                    </label>
+                    <div id="country-index-options" class="country-index-options" role="group" aria-label="Filter by production country"></div>
+                    <p id="country-index-empty" class="country-index-empty" role="status" hidden>No countries match that search.</p>
+                    <button id="country-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Browse all countries</button>
+                  </div>
+                </section>
+                  </div>
+                </details>
+                <label class="sort-control">
+                  <span class="sr-only">Sort films</span>
+                  <select id="sort-select" aria-label="Sort films">
+                    <option value="rank">Rank</option>
+                    <option value="relevance" disabled>Relevance (search results)</option>
+                    <option value="title">Title A–Z</option>
+                    <option value="year-newest">Year: newest</option>
+                    <option value="year-oldest">Year: oldest</option>
+                  </select>
+                </label>
+                <label class="sort-control language-control" for="language-filter">
+                  <span class="sr-only">Filter by original language</span>
+                  <select id="language-filter" aria-label="Filter by original language"><option value="">Any original language</option></select>
+                </label>
               </div>
-              <div class="print-programme-control">
-                <label for="print-format-select">Print as</label>
-                <select id="print-format-select" class="print-format-select">
-                  <option value="compact">Compact catalogue</option>
-                  <option value="reader">Reader’s edition</option>
-                </select>
-                <button id="print-programme-button" class="print-programme-button" type="button">Print programme</button>
+            </div>
+            <div class="collection-context">
+              <p id="collection-scope" class="collection-scope">Search titles, directors, years, genres, synopses, and source lists.</p>
+              <aside id="programme-note" class="programme-note" aria-label="Summary of this selection" hidden>
+                <span class="programme-note-kicker">In this selection</span>
+                <p id="programme-note-copy"></p>
+              </aside>
+            </div>
+            <details id="saved-views" class="saved-views">
+              <summary>Saved views &amp; local settings</summary>
+              <div class="saved-presets saved-views-panel">
+                <label for="preset-name">Save current filters</label>
+                <input id="preset-name" maxlength="48" placeholder="Preset name" />
+                <button id="preset-save" class="print-programme-button" type="button">Save view</button>
+                <label for="preset-list">Saved views</label>
+                <select id="preset-list"><option value="">Choose a saved view</option></select>
+                <div class="saved-view-actions"><button id="preset-apply" class="print-programme-button" type="button">Apply</button><button id="preset-delete" class="print-programme-button" type="button">Delete</button></div>
+                <div class="saved-view-actions"><button id="preset-export" class="print-programme-button" type="button">Export saved views</button><button id="preset-import-trigger" class="print-programme-button" type="button">Import saved views</button><input id="preset-import-file" type="file" accept="application/json,.json" hidden /></div>
+                <button id="reset-posters" class="print-programme-button" type="button">Reset poster choices</button>
+                <button id="clear-preferences" class="print-programme-button" type="button">Clear local preferences</button>
+                <p id="preset-status" role="status" aria-live="polite"></p>
               </div>
-            </div>
-          </div>
-          <details id="programme-share" class="programme-share">
-            <summary>Share programme</summary>
-            <div class="programme-share-panel">
-              <p id="programme-share-description" class="programme-share-description"></p>
-              <p class="programme-share-help">Opens this selection with the same filters, sorting, and layout. Results follow the current catalogue.</p>
-              <label for="programme-share-url">Programme link</label>
-              <input id="programme-share-url" type="url" readonly />
-              <button id="programme-share-copy" class="print-programme-button" type="button">Copy programme link</button>
-              <p id="programme-share-status" class="programme-share-status" role="status" aria-live="polite"></p>
-            </div>
-          </details>
-          <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>
-            <div class="top-billed-heading">
-              <p id="top-billed-eyebrow" class="eyebrow section-eyebrow">Opening credits</p>
-              <h3 id="top-billed-title">Most listed</h3>
-            </div>
-            <div id="top-billed-feature" class="top-billed-feature"></div>
-            <div id="top-billed-grid" class="top-billed-grid"></div>
+            </details>
           </section>
+          <section class="catalogue-actions" aria-label="Catalogue display and sharing">
+            <div id="active-view-tools" class="active-view-tools" hidden>
+              <div id="active-genre-filters" class="active-genre-filters" aria-label="Active filters" hidden></div>
+              <div id="active-director-filters" class="active-genre-filters" aria-label="Active director filters" hidden></div>
+              <div id="active-source-list-filters" class="active-genre-filters" aria-label="Active source list filters" hidden></div>
+              <button id="clear-search-state" class="clear-search-state" type="button">Clear search &amp; reset view</button>
+            </div>
+            <div class="collection-display-bar">
+              <div id="director-filmography" class="director-filmography" hidden></div>
+              <div class="collection-display-actions">
+                <div class="collection-view-tools">
+                  <div class="collection-view-control" role="group" aria-label="Choose film layout">
+                    <button id="poster-display-button" class="collection-view-button is-active" type="button" aria-pressed="true">Poster wall</button>
+                    <button id="ledger-display-button" class="collection-view-button" type="button" aria-pressed="false">Ledger</button>
+                  </div>
+                  <details class="score-key">
+                    <summary>Score key</summary>
+                    <p class="score-key-copy">The score counts liked lists that include a film. In Poster Wall, the bar compares it with the highest score in the current results.</p>
+                  </details>
+                </div>
+                <div class="print-programme-control">
+                  <label for="print-format-select">Print as</label>
+                  <select id="print-format-select" class="print-format-select">
+                    <option value="compact">Compact catalogue</option>
+                    <option value="reader">Reader’s edition</option>
+                  </select>
+                  <button id="print-programme-button" class="print-programme-button" type="button">Print programme</button>
+                </div>
+              </div>
+            </div>
+            <details id="programme-share" class="programme-share">
+              <summary>Share programme</summary>
+              <div class="programme-share-panel">
+                <p id="programme-share-description" class="programme-share-description"></p>
+                <p class="programme-share-help">Opens this selection with the same filters, sorting, and layout. Results follow the current catalogue.</p>
+                <label for="programme-share-url">Programme link</label>
+                <input id="programme-share-url" type="url" readonly />
+                <button id="programme-share-copy" class="print-programme-button" type="button">Copy programme link</button>
+                <p id="programme-share-status" class="programme-share-status" role="status" aria-live="polite"></p>
+              </div>
+            </details>
+          </section>
+          <section class="catalogue-results" aria-label="Catalogue results">
+            <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>
+              <div class="top-billed-heading">
+                <p id="top-billed-eyebrow" class="eyebrow section-eyebrow">Opening credits</p>
+                <h3 id="top-billed-title">Most listed</h3>
+              </div>
+              <div id="top-billed-feature" class="top-billed-feature"></div>
+              <div id="top-billed-grid" class="top-billed-grid"></div>
+            </section>
 
-          <div id="status-message" class="status-message" role="status">
-            <span class="status-message-kicker" aria-hidden="true">Programme note</span>
-            <p id="status-message-copy">Loading your snapshot…</p>
-            <div id="empty-result-actions" class="empty-result-actions" hidden>
-              <button id="empty-clear-query" class="clear-search-state" type="button" hidden>Clear search</button>
-              <button id="empty-clear-filters" class="clear-search-state" type="button" hidden>Clear filters</button>
+            <div id="status-message" class="status-message" role="status">
+              <span class="status-message-kicker" aria-hidden="true">Programme note</span>
+              <p id="status-message-copy">Loading your snapshot…</p>
+              <div id="empty-result-actions" class="empty-result-actions" hidden>
+                <button id="empty-clear-query" class="clear-search-state" type="button" hidden>Clear search</button>
+                <button id="empty-clear-filters" class="clear-search-state" type="button" hidden>Clear filters</button>
+              </div>
             </div>
-          </div>
-          <p id="results-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
-          <div id="film-grid" class="film-grid"></div>
-          <div id="film-ledger-view" class="film-ledger-view" hidden>
-            <div class="film-ledger-scroll" tabindex="0" aria-label="Film catalogue table; scroll horizontally to see all columns">
-              <table class="film-ledger-table">
-                <caption class="sr-only">Films in the current catalogue view</caption>
-                <thead>
-                  <tr><th scope="col">Catalogue</th><th scope="col">Film</th><th scope="col">Director</th><th scope="col">Production</th><th scope="col">List appearances</th></tr>
-                </thead>
-                <tbody id="film-ledger-rows"></tbody>
-              </table>
+            <p id="results-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+            <div id="film-grid" class="film-grid"></div>
+            <div id="film-ledger-view" class="film-ledger-view" hidden>
+              <div class="film-ledger-scroll" tabindex="0" aria-label="Film catalogue table; scroll horizontally to see all columns">
+                <table class="film-ledger-table">
+                  <caption class="sr-only">Films in the current catalogue view</caption>
+                  <thead>
+                    <tr><th scope="col">Catalogue</th><th scope="col">Film</th><th scope="col">Director</th><th scope="col">Production</th><th scope="col">List appearances</th></tr>
+                  </thead>
+                  <tbody id="film-ledger-rows"></tbody>
+                </table>
+              </div>
             </div>
-          </div>
-          <button id="load-more" class="load-more" type="button" hidden>Show more films</button>
-          <p id="selection-end" class="selection-end" hidden></p>
-          <button id="back-to-filters" class="back-to-filters" type="button" hidden>Back to filters ↑</button>
-          <p id="collection-footnote" class="collection-footnote">Film and poster details link back to Letterboxd. This page reflects public profile data.</p>
+            <button id="load-more" class="load-more" type="button" hidden>Show more films</button>
+            <p id="selection-end" class="selection-end" hidden></p>
+            <button id="back-to-filters" class="back-to-filters" type="button" hidden>Back to filters ↑</button>
+            <p id="collection-footnote" class="collection-footnote">Film and poster details link back to Letterboxd. This page reflects public profile data.</p>
+          </section>
         </section>
       </main>
 

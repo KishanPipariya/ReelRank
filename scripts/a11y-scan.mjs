@@ -20,6 +20,46 @@ function check(condition, message) {
   if (!condition) throw new Error(`Accessibility interaction check failed: ${message}`);
 }
 
+async function checkCatalogueSectionFlow(page, label) {
+  const layout = await page.evaluate(() => {
+    const selectors = ['.catalogue-controls', '.catalogue-actions', '.catalogue-results'];
+    const bounds = selectors.map((selector) => {
+      const element = document.querySelector(selector);
+      const rect = element.getBoundingClientRect();
+      return { selector, top: rect.top, bottom: rect.bottom, height: rect.height };
+    });
+    const searchHelp = document.querySelector('#search-help').textContent;
+    const collectionScope = document.querySelector('#collection-scope').textContent;
+    return {
+      bounds,
+      searchHelp,
+      collectionScope,
+      contextInControls: document.querySelector('.collection-context').parentElement.matches('.catalogue-controls'),
+      savedViewsInControls: document.querySelector('#saved-views').parentElement.matches('.catalogue-controls'),
+      summaryInContext: document.querySelector('#programme-note').parentElement.matches('.collection-context'),
+      summaryOutsideSavedViews: !document.querySelector('#programme-note').closest('#saved-views'),
+      posterWallInResults: document.querySelector('#film-grid').parentElement.matches('.catalogue-results'),
+      posterToggleInViewTools: document.querySelector('#poster-display-button').closest('.catalogue-actions') !== null,
+      featuredBeforePosterWall: (() => {
+        const feature = document.querySelector('#top-billed');
+        const firstPoster = document.querySelector('#film-grid > .film-card');
+        return feature.hidden || !firstPoster || feature.getBoundingClientRect().bottom <= firstPoster.getBoundingClientRect().top + 1;
+      })(),
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: innerWidth,
+    };
+  });
+
+  check(layout.contextInControls && layout.savedViewsInControls, `${label} keeps search context and saved settings inside the catalogue-controls section.`);
+  check(layout.summaryInContext && layout.summaryOutsideSavedViews, `${label} keeps the selection summary with catalogue context and outside the saved-views disclosure.`);
+  check(layout.posterWallInResults && layout.posterToggleInViewTools, `${label} separates poster results from display controls.`);
+  check(layout.featuredBeforePosterWall, `${label} keeps the featured-film section clear of the poster wall.`);
+  check(layout.collectionScope.includes('title, original title, director, year, genre, synopsis, and source list')
+    && layout.searchHelp.includes('title, original title, director, year, genre, synopsis, and source list'), `${label} uses matching search coverage in visible and accessible descriptions.`);
+  check(layout.bounds.every((section, index) => section.height > 0 && (index === 0 || layout.bounds[index - 1].bottom <= section.top + 1)), `${label} catalogue sections are visible and do not overlap (${JSON.stringify(layout.bounds)}).`);
+  check(layout.pageWidth <= layout.viewportWidth, `${label} catalogue sections do not create horizontal page overflow.`);
+}
+
 async function scan(page, name) {
   try {
     if (!(await page.evaluate(() => Boolean(window.axe)))) await page.addScriptTag({ path: axePath });
@@ -275,6 +315,11 @@ async function checkBrokenPosterFallback() {
 
 async function checkSavedPreferences() {
   const { context, page } = await openSite({ localPreferences: { view: 'ledger' }, compactSnapshot: true });
+  await page.route('**/chosen-poster.jpg', (route) => route.fulfill({
+    status: 200,
+    contentType: 'image/png',
+    body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Fe8AAAAASUVORK5CYII=', 'base64'),
+  }));
   await page.route('**/data/poster-galleries.json', (route) => route.fulfill({ json: {
     snapshot_refreshed_at: snapshot.refreshed_at,
     galleries: { '329865': [{ path: '/chosen-poster.jpg', language: 'fr' }] },
@@ -318,6 +363,7 @@ async function checkSavedPreferences() {
   await page.locator('.poster-viewer-option').first().click();
   await page.locator('#poster-viewer-close').click();
   await page.locator('#film-detail-close').click();
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has('film'));
   check((await page.locator('.film-card').filter({ hasText: 'Arrival' }).first().locator('.poster-image').getAttribute('src'))?.includes('chosen-poster.jpg'), 'Choosing an alternate poster updates the visible catalogue art.');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#site-shell:not([hidden])');
@@ -500,6 +546,7 @@ async function checkKeyboardAndReflow() {
 
     for (const [width, label] of [[720, '200% zoom equivalent'], [360, '400% zoom equivalent'], [320, 'narrow mobile']]) {
       await page.setViewportSize({ width, height: 900 });
+      await checkCatalogueSectionFlow(page, label);
       const metrics = await page.evaluate(() => ({ documentWidth: document.documentElement.scrollWidth, viewportWidth: window.innerWidth, overflowing: [...document.querySelectorAll('body *')].filter((element) => element.getBoundingClientRect().right > innerWidth + 1).slice(0, 8).map((element) => `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ''}.${element.className?.baseVal || element.className || ''}:${Math.round(element.getBoundingClientRect().right)}`) }));
       check(metrics.documentWidth <= metrics.viewportWidth, `${label} has no horizontal page overflow (${metrics.documentWidth}px > ${metrics.viewportWidth}px; ${metrics.overflowing.join(', ')}).`);
       console.log(`${label}: no horizontal overflow at ${width}px CSS viewport.`);
@@ -532,6 +579,7 @@ try {
     await page.waitForSelector('#site-shell:not([hidden])');
     await page.waitForSelector('.film-card');
     await scan(page, name);
+    await checkCatalogueSectionFlow(page, name);
     await checkFeaturedVisualLayout(page, name);
     await checkDetailPresentation(page, name);
     if (name === 'desktop') {
