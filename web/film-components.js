@@ -1,3 +1,5 @@
+import { filmDetailUrl } from './film-navigation.js';
+
 export function posterFallbackFor(film, className = 'poster-fallback') {
   const cover = document.createElement('div');
   cover.className = className;
@@ -15,8 +17,19 @@ export function posterFallbackFor(film, className = 'poster-fallback') {
   return cover;
 }
 
+export function responsivePosterAttrs(image, url, sizes = '(max-width: 640px) 42vw, 220px') {
+  try {
+    const parsed = new URL(url);
+    const match = parsed.hostname === 'image.tmdb.org' && parsed.pathname.match(/^\/t\/p\/w\d+(\/[^/]+)$/);
+    if (!match) return;
+    const source = (size) => `https://image.tmdb.org/t/p/w${size}${match[1]}`;
+    image.srcset = [92, 154, 185, 342, 500, 780].map((size) => `${source(size)} ${size}w`).join(', ');
+    image.sizes = sizes;
+  } catch {}
+}
+
 export function cardFor(film, index, dependencies) {
-  const { films, state, safeUrl, makeLink, directorCreditFor, countryRuntimeMetaFor, scoreMeterFor, genreChipFor, filmDetailButtonFor } = dependencies;
+  const { films, state, safeUrl, makeLink, directorCreditFor, countryRuntimeMetaFor, scoreMeterFor, genreChipFor, filmDetailButtonFor, getFilmDetailUrl = (item) => filmDetailUrl(window.location.href, item) } = dependencies;
   const rankNumber = films.indexOf(film) + 1;
   const card = document.createElement('article');
   card.className = 'film-card';
@@ -24,21 +37,24 @@ export function cardFor(film, index, dependencies) {
 
   const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
   const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
-  const poster = document.createElement(filmUrl ? 'a' : 'div');
+  const poster = document.createElement('a');
+  const detailUrl = getFilmDetailUrl(film);
+  poster.href = detailUrl.href;
   poster.className = 'poster-link';
-  if (filmUrl) {
-    poster.href = filmUrl;
-    poster.target = '_blank';
-    poster.rel = 'noreferrer';
-    poster.setAttribute('aria-label', `Open poster for ${film.title}, overall rank ${rankNumber}, ${film.watched ? 'watched' : 'unwatched'}, on Letterboxd, opens in a new tab`);
-  }
+  poster.setAttribute('aria-label', `Read details for ${film.title}, overall rank ${rankNumber}`);
+  poster.addEventListener('click', (event) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault(); dependencies.openFilmDetails(film);
+  });
 
   if (posterUrl) {
     const image = document.createElement('img');
     image.className = 'poster-image';
     image.src = posterUrl;
+    responsivePosterAttrs(image, posterUrl);
     image.alt = `Poster for ${film.title}`;
-    image.loading = state.filter === 'watched' ? 'eager' : 'lazy';
+    image.loading = index < 3 ? 'eager' : 'lazy';
+    image.decoding = 'async';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
       image.replaceWith(posterFallbackFor(film));
@@ -133,8 +149,11 @@ export function cardFor(film, index, dependencies) {
   return card;
 }
 
-export function updateFilmCard(card, film, index, state, rankNumber, highestScore = 1) {
+export function updateFilmCard(card, film, index, state, rankNumber, highestScore = 1, getFilmDetailUrl = (item) => filmDetailUrl(window.location.href, item)) {
   card.style.animationDelay = `${Math.min(index * 22, 220)}ms`;
+  const detailHref = getFilmDetailUrl(film).href;
+  card.querySelector('.poster-link')?.setAttribute('href', detailHref);
+  card.querySelector('.film-detail-trigger')?.setAttribute('href', detailHref);
   const rank = card.querySelector('.rank-chip');
   rank.textContent = state.sort === 'rank' ? `No. ${rankNumber}` : `Overall ${rankNumber}`;
   rank.setAttribute('aria-label', state.sort === 'rank' ? `Catalogue number ${rankNumber}` : `Overall rank ${rankNumber}`);
@@ -153,7 +172,6 @@ export function updateFilmCard(card, film, index, state, rankNumber, highestScor
     scoreMeter.style.setProperty('--score-share', `${Math.max(0, Math.min(100, (score / Math.max(1, highestScore)) * 100))}%`);
   }
   card.querySelectorAll('.poster-image').forEach((image) => {
-    image.loading = state.filter === 'watched' ? 'eager' : 'lazy';
+    image.loading = index < 3 ? 'eager' : 'lazy';
   });
 }
-

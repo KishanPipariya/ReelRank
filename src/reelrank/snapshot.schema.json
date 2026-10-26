@@ -7,19 +7,21 @@
     "username": { "type": "string", "minLength": 1, "pattern": "\\S" },
     "profile_url": { "type": "string", "minLength": 1, "pattern": "\\S" },
     "refreshed_at": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "poster_gallery_url": { "type": "string", "pattern": "^/data/poster-galleries-[A-Za-z0-9T_Z.-]+\\.json$" },
     "list_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
     "film_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
     "displayed_film_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
     "unwatched_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
     "displayed_unwatched_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
     "tmdb_match_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
-    "films": { "type": "array", "items": { "$ref": "#/$defs/film" } }
+    "films": { "type": "array", "items": { "$ref": "#/$defs/film" } },
+    "source_lists": { "$ref": "#/$defs/stringArray" }
   },
   "$defs": {
     "stringArray": { "type": "array", "items": { "type": "string" } },
     "film": {
       "type": "object",
-      "required": ["title", "year", "letterboxd_title", "letterboxd_year", "letterboxd_url", "poster_url", "backdrop_url", "overview", "tmdb_url", "watched", "liked_in", "genres", "lists"],
+      "required": ["title", "year", "letterboxd_title", "letterboxd_year", "letterboxd_url", "poster_url", "backdrop_url", "overview", "tmdb_url", "watched", "liked_in", "genres"],
       "properties": {
         "title": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "year": { "type": "string" },
@@ -34,6 +36,7 @@
         "liked_in": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
         "genres": { "$ref": "#/$defs/stringArray" },
         "lists": { "$ref": "#/$defs/stringArray" },
+        "list_ids": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 } },
         "directors": { "$ref": "#/$defs/stringArray" },
         "countries": { "$ref": "#/$defs/stringArray" },
         "original_title": { "type": "string" },

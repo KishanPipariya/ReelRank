@@ -192,10 +192,27 @@ def fetch_user_list_urls(client: Session, username: str, max_pages: int = 100) -
             )
     return list_urls
 
-def fetch_user_watched_movies(client: Session, username: str, max_pages: int = 100) -> set[tuple[str, str]]:
+def fetch_user_watched_movies(client: Session, username: str, max_pages: int = 100) -> set[tuple[str, str] | str]:
     """Fetch all films marked watched on a user's public Films page."""
     movies = fetch_list(client, urljoin(_username_url(username), "films/"), max_pages=max_pages)
-    return {(movie.title.casefold(), movie.year) for movie in movies if movie.title}
+    watched: set[tuple[str, str] | str] = set()
+    for movie in movies:
+        if movie.uri:
+            watched.add(_movie_key(movie))
+        if movie.title:
+            watched.add((movie.title.casefold(), movie.year))
+    return watched
+
+
+def movie_is_watched(movie: Movie, watched: set[tuple[str, str] | str]) -> bool:
+    """Match watched status by canonical film URL, falling back to title/year."""
+    if movie.uri and _movie_key(movie) in watched:
+        return True
+    title = movie.title.casefold()
+    year = movie.year
+    if title and re.fullmatch(r"\d{4}", year) and (title, year) in watched:
+        return True
+    return False
 
 def rank_movies(
     list_urls: list[str],
@@ -242,7 +259,7 @@ def write_csv(results: list[MovieResult], output: Path) -> None:
                 " ".join(result.lists),
             ])
 
-def filter_unwatched(results: list[MovieResult], watched: set[tuple[str, str]]) -> list[MovieResult]:
+def filter_unwatched(results: list[MovieResult], watched: set[tuple[str, str] | str]) -> list[MovieResult]:
     """Remove movies present in the user's watched films.
 
     Matching uses title and year because both profile pages and liked-list
@@ -251,5 +268,5 @@ def filter_unwatched(results: list[MovieResult], watched: set[tuple[str, str]]) 
     return [
         result
         for result in results
-        if (result.movie.title.casefold(), result.movie.year) not in watched
+        if not movie_is_watched(result.movie, watched)
     ]

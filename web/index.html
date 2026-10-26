@@ -19,6 +19,8 @@
         <p class="eyebrow section-eyebrow">Site setup</p>
         <h1 id="setup-title">Preparing your ReelRank</h1>
         <p id="setup-copy" role="status" aria-live="polite">Checking the configured Letterboxd profile and snapshot…</p>
+        <button id="retry-loading" type="button" hidden>Retry loading</button>
+        <noscript><p>ReelRank needs JavaScript enabled to load and filter the film catalogue.</p></noscript>
         <p class="setup-public-note">Your site uses public liked lists, list membership, watched status, and source-list links.</p>
         <a id="demo-preview-link" class="setup-demo-link" href="?demo=1" hidden>Preview clearly labelled sample data</a>
       </div>
@@ -184,13 +186,33 @@
                 <span class="sr-only">Sort films</span>
                 <select id="sort-select" aria-label="Sort films">
                   <option value="rank">Rank</option>
+                  <option value="relevance" disabled>Relevance (search results)</option>
                   <option value="title">Title A–Z</option>
                   <option value="year-newest">Year: newest</option>
                   <option value="year-oldest">Year: oldest</option>
                 </select>
               </label>
+              <label class="sort-control language-control" for="language-filter">
+                <span class="sr-only">Filter by original language</span>
+                <select id="language-filter" aria-label="Filter by original language"><option value="">Any original language</option></select>
+              </label>
             </div>
           </div>
+          <details id="saved-views" class="saved-views">
+            <summary>Saved views &amp; local settings</summary>
+            <div class="saved-presets saved-views-panel">
+              <label for="preset-name">Save current filters</label>
+              <input id="preset-name" maxlength="48" placeholder="Preset name" />
+              <button id="preset-save" class="print-programme-button" type="button">Save view</button>
+              <label for="preset-list">Saved views</label>
+              <select id="preset-list"><option value="">Choose a saved view</option></select>
+              <div class="saved-view-actions"><button id="preset-apply" class="print-programme-button" type="button">Apply</button><button id="preset-delete" class="print-programme-button" type="button">Delete</button></div>
+              <div class="saved-view-actions"><button id="preset-export" class="print-programme-button" type="button">Export saved views</button><button id="preset-import-trigger" class="print-programme-button" type="button">Import saved views</button><input id="preset-import-file" type="file" accept="application/json,.json" hidden /></div>
+              <button id="reset-posters" class="print-programme-button" type="button">Reset poster choices</button>
+              <button id="clear-preferences" class="print-programme-button" type="button">Clear local preferences</button>
+              <p id="preset-status" role="status" aria-live="polite"></p>
+            </div>
+          </details>
           <p id="collection-scope" class="collection-scope">Search titles, directors, years, genres, synopses, and source lists.</p>
           <div id="active-view-tools" class="active-view-tools" hidden>
             <div id="active-genre-filters" class="active-genre-filters" aria-label="Active filters" hidden></div>

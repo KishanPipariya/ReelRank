@@ -813,3 +813,63 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .programme-share-status:empty { display: none; }
 @media (max-width: 600px) { .programme-share-panel input { font-size: 16px; } }
 @media print { .programme-share { display: none; } }
+.poster-link { width: 100%; padding: 0; color: inherit; cursor: pointer; }
+.featured-film-poster { padding: 0; color: inherit; cursor: pointer; }
+.ledger-poster { padding: 0; color: inherit; cursor: pointer; }
+.saved-presets { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.saved-presets label { grid-column: 1 / -1; color: var(--muted); font-family: var(--mono); font-size: 10px; }
+.saved-presets input, .saved-presets select, .film-detail-share-url { min-width: 0; min-height: 36px; padding: 6px 9px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
+.saved-presets p { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 11px; }
+.film-detail-share-url { width: min(100%, 480px); font-family: var(--mono); font-size: 10px; }
+.film-detail-links { align-items: center; }
+button.film-detail-external-link { padding: 0; border: 0; background: transparent; text-decoration: underline; cursor: pointer; }
+/* Keep compact catalogue labels readable on small displays. */
+.snapshot-label, .edition-colophon-heading, .edition-colophon-item > span,
+.country-index-heading, .country-index-option small, .country-index-toggle,
+.runtime-filter-label, .runtime-filter-note, .score-key summary,
+.print-programme-control label, .print-format-select,
+.film-ledger-table thead th, .ledger-catalogue-number, .ledger-film-year,
+.director-filmography-label, .director-filmography-details,
+.genre-filter-help, .genre-option small, .programme-note-kicker, .programme-note p {
+  font-size: max(9px, 0.75rem);
+}
+@media (max-width: 640px) {
+  .saved-presets { grid-template-columns: 1fr 1fr; }
+  .saved-presets > button { width: 100%; }
+  .snapshot-label, .edition-colophon-heading, .edition-colophon-item > span,
+  .country-index-heading, .country-index-option small, .country-index-toggle,
+  .runtime-filter-label, .runtime-filter-note, .score-key summary,
+  .print-programme-control label, .print-format-select,
+  .film-ledger-table thead th, .ledger-catalogue-number, .ledger-film-year,
+  .director-filmography-label, .director-filmography-details,
+  .genre-filter-help, .genre-option small, .programme-note-kicker, .programme-note p {
+    font-size: max(10px, 0.8rem);
+  }
+}
+.film-card .director-credit { font-size: 11px; }
+.film-card .cinephile-meta { font-size: 10px; }
+.film-card .film-count { font-size: 10px; }
+.film-card .genre-tag { font-size: 10px; }
+.film-card .film-detail-trigger { font-size: 10px; }
+@media (max-width: 640px) {
+  .film-card .director-credit { font-size: 12px; }
+  .film-card .cinephile-meta { font-size: 11px; }
+  .film-card .film-count, .film-card .film-detail-trigger { font-size: 11px; }
+  .film-card .genre-tag { font-size: 11px; }
+  .film-card .film-year { font-size: 10px; }
+}
+/* Saved views and native film-detail anchors */
+.saved-views { margin: 1rem 0 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.saved-views > summary { padding: .8rem 1rem; cursor: pointer; font-weight: 650; }
+.saved-views-panel { padding: 0 1rem 1rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; align-items: end; }
+.saved-views-panel > label, .saved-views-panel > p { grid-column: 1 / -1; }
+.saved-view-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.language-control { max-width: 15rem; }
+.poster-link, .featured-film-poster, .ledger-poster { text-decoration: none; }
+@media (max-width: 640px) { .saved-views-panel { grid-template-columns: 1fr; } .saved-views-panel > * { grid-column: 1; } .saved-view-actions { display: grid; grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) {
+  .catalog-filters-panel { width: min(100%, calc(100vw - 36px)); max-width: calc(100vw - 36px); box-sizing: border-box; }
+  .catalog-filters-panel > .genre-filter { width: 100%; min-width: 0; }
+  .catalog-filters-panel .genre-filter-menu { min-width: 0; overflow-x: hidden; }
+  .selected-genres-heading, .genre-menu-actions { flex-wrap: wrap; }
+}

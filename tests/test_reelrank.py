@@ -91,6 +91,9 @@ def test_snapshot_without_tmdb_uses_letterboxd_poster(monkeypatch, tmp_path):
     assert generated_snapshot["username"] == "new-viewer"
     assert generated_snapshot["tmdb_match_count"] == 0
     assert generated_snapshot["films"][0]["poster_url"] == "https://a.ltrbxd.com/poster.jpg"
+    assert generated_snapshot["source_lists"] == result.lists
+    assert generated_snapshot["films"][0]["list_ids"] == [0]
+    assert "lists" not in generated_snapshot["films"][0]
 
 
 def test_filter_unwatched_uses_title_and_year():
@@ -102,6 +105,20 @@ def test_filter_unwatched_uses_title_and_year():
     remaining = filter_unwatched(results, {("arrival", "2016")})
 
     assert [result.movie.title for result in remaining] == ["Moonlight"]
+
+
+def test_movie_is_watched_requires_year_for_title_fallback_but_keeps_uri_match():
+    watched = {"https://letterboxd.com/film/watched-film/", ("same title", "")}
+    for invalid_year in ("", "   ", "unknown", "20X0"):
+        movie = Movie("Same title", invalid_year, "https://letterboxd.com/film/different-film/")
+        assert not letterboxd.movie_is_watched(movie, watched | {("same title", invalid_year)})
+
+    valid_movie = Movie("Same title", "2020", "https://letterboxd.com/film/different-film/")
+    assert letterboxd.movie_is_watched(valid_movie, watched | {("same title", "2020")})
+    assert letterboxd.movie_is_watched(
+        Movie("Same title", "", "https://letterboxd.com/film/different-film/"),
+        watched | {"https://letterboxd.com/film/different-film/"},
+    )
 
 
 def test_fetch_list_raises_instead_of_silently_truncating():

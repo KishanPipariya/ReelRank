@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildSearchText, compareFilms, filmDecade, matchesFilm } from '../web/catalog.js';
-import { validateSnapshot } from '../web/snapshot.js';
+import { buildSearchText, compareFilms, compareRelevance, filmDecade, matchesFilm, relevanceScore } from '../web/catalog.js';
+import { snapshotLoadErrorMessage, validateSnapshot } from '../web/snapshot.js';
 import { parseUrlState, urlForState } from '../web/url-state.js';
+import { createLocalPreferences, parsePresetImport } from '../web/local-preferences.js';
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/snapshot-minimal.json', import.meta.url), 'utf8'));
 const browserSchema = JSON.parse(await readFile(new URL('../web/snapshot.schema.json', import.meta.url), 'utf8'));
@@ -11,6 +12,13 @@ const packageSchema = JSON.parse(await readFile(new URL('../src/reelrank/snapsho
 
 test('Python package and browser use the same snapshot schema', () => {
   assert.deepEqual(browserSchema, packageSchema);
+});
+
+test('snapshot load errors distinguish unreachable, invalid JSON, and invalid catalogue data', () => {
+  assert.match(snapshotLoadErrorMessage('request'), /could not load.*present and reachable/);
+  assert.match(snapshotLoadErrorMessage('json'), /could not read its JSON/);
+  assert.match(snapshotLoadErrorMessage('schema'), /supported catalogue format/);
+  assert.match(snapshotLoadErrorMessage('initialization'), /loaded the catalogue but could not prepare the site/);
 });
 
 test('snapshot contract accepts optional TMDB enrichment fields when omitted', () => {
@@ -83,6 +91,26 @@ test('catalog search index includes metadata and source list labels', () => {
   assert.equal(matchesFilm(film, { query: 'villeneuve' }, [], [], searchable), true);
 });
 
+test('catalog search folds Latin accents and punctuation and matches words in any order', () => {
+  const amelie = { title: 'Amélie', year: '2001', original_title: 'Le Fabuleux Destin d’Amélie Poulain', overview: '', genres: [], directors: ['Jean-Pierre Jeunet'] };
+  assert.equal(matchesFilm(amelie, { query: 'amelie' }), true);
+  const kurosawa = { title: 'Seven Samurai', year: '1954', overview: '', genres: [], directors: ['Akira Kurosawa'] };
+  assert.equal(matchesFilm(kurosawa, { query: 'kurosawa 1954' }), true);
+  const japanese = { title: 'となりのトトロ', year: '1988', overview: '', genres: [], directors: [] };
+  assert.equal(matchesFilm(japanese, { query: 'となりのトトロ' }), true);
+});
+
+test('compact source list IDs validate while old per-film list arrays remain supported', () => {
+  const compact = structuredClone(fixture);
+  compact.source_lists = ['https://letterboxd.com/user/list/favorites/'];
+  compact.films[0].list_ids = [0];
+  delete compact.films[0].lists;
+  assert.equal(validateSnapshot(compact), compact);
+  const missingTable = structuredClone(compact);
+  delete missingTable.source_lists;
+  assert.throws(() => validateSnapshot(missingTable), /source list IDs/);
+});
+
 test('catalog sorting uses stable rank as its tie breaker and puts unknown years last', () => {
   const first = { title: 'Zebra', year: '2000' };
   const second = { title: 'Alpha', year: '2000' };
@@ -91,6 +119,40 @@ test('catalog sorting uses stable rank as its tie breaker and puts unknown years
   assert.deepEqual([first, second].sort((a, b) => compareFilms(a, b, 'year-newest', ranks)), [first, second]);
   assert.deepEqual([unknown, second].sort((a, b) => compareFilms(a, b, 'year-newest', ranks)), [second, unknown]);
   assert.deepEqual([first, second].sort((a, b) => compareFilms(a, b, 'title', ranks)), [second, first]);
+});
+
+test('relevance prioritizes exact and title hits, then director hits, with stable rank ties', () => {
+  const exact = { title: 'Amélie', year: '2001' };
+  const title = { title: 'The Amelie Story', year: '1999' };
+  const director = { title: 'Another Film', directors: ['Jean-Pierre Jeunet'], year: '2001' };
+  const synopsis = { title: 'A Different Film', overview: 'Amelie appears in the story', year: '2001' };
+  const rank = new Map([[exact, 4], [title, 3], [director, 2], [synopsis, 1]]);
+  assert.deepEqual([exact, title, director, synopsis].sort((a,b) => compareRelevance(a,b,'amelie',rank)), [exact,title,synopsis,director]);
+  assert.equal(relevanceScore(director, 'jean 2001'), 2);
+  assert.equal(relevanceScore({ title: 'Amélie' }, 'amelie'), 0);
+  assert.equal(relevanceScore({ title: 'Pi', year: '1998' }, 'pi 1998'), 0, 'short exact titles remain exact when paired with their year');
+  assert.equal(relevanceScore({ title: 'Up', year: '2009' }, 'up 1990'), 1, 'short exact titles remain title hits when the year differs');
+  assert.equal(relevanceScore({ title: 'The Other', directors: ['A Actor'] }, 'a'), 3, 'short generic director terms do not gain relevance weight');
+  const tiedA = { title: 'Amelie (A)', year: '2000' }; const tiedB = { title: 'Amelie (B)', year: '2000' };
+  const tieRank = new Map([[tiedA, 7], [tiedB, 2]]);
+  assert.deepEqual([tiedA, tiedB].sort((a,b) => compareRelevance(a,b,'amelie',tieRank)), [tiedB, tiedA]);
+});
+
+test('original language filter supports known and unknown language codes', () => {
+  const known = { original_language: 'fr' };
+  const unknown = {};
+  assert.equal(matchesFilm(known, { language: 'fr' }), true);
+  assert.equal(matchesFilm(unknown, { language: 'fr' }), false);
+  assert.equal(matchesFilm(unknown, { language: 'unknown' }), true);
+});
+
+test('local preferences tolerate storage errors and imports reject malformed preset shapes', () => {
+  const prefs = createLocalPreferences({ getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); }, removeItem() { throw new Error('blocked'); } });
+  assert.deepEqual(prefs.read(), {});
+  assert.equal(prefs.save({ view: 'ledger' }), false);
+  assert.equal(prefs.clear(), false);
+  assert.equal(parsePresetImport({ presets: [{ name: 'Safe', state: { query: 'film', __proto__: { pollute: true }, visibleLimit: 999 } }] })[0].state.visibleLimit, undefined);
+  assert.equal(parsePresetImport({ presets: [{ name: '', state: {} }] }), null);
 });
 
 test('URL state parsing removes duplicate facets and ignores unsupported options', () => {
@@ -117,6 +179,16 @@ test('URL state serialization preserves unrelated parameters and supports repeat
   assert.equal(parseUrlState(url.search).runtime, '90-120');
 });
 
+test('URL state round trips language and relevance sort without losing other facets', () => {
+  const parsed = parseUrlState('?q=amelie&sort=relevance&language=fr&country=France');
+  assert.equal(parsed.sort, 'relevance');
+  assert.equal(parsed.language, 'fr');
+  const url = urlForState('https://example.test/?demo=1', parsed, parsed.query);
+  assert.equal(url.searchParams.get('language'), 'fr');
+  assert.equal(url.searchParams.get('sort'), 'relevance');
+  assert.equal(url.searchParams.get('demo'), '1');
+});
+
 test('shared programmes describe facets and restore the full view without unrelated URL state', async () => {
   const { programmeShare } = await import('../web/programme-share.js');
   const state = parseUrlState('?country=Japan&decade=1960&filter=unwatched&genre=Drama&director=Akira+Kurosawa&list=https%3A%2F%2Fletterboxd.com%2Flist%2Fexample%2F&runtime=under-90&sort=year-oldest&view=ledger');
@@ -127,5 +199,15 @@ test('shared programmes describe facets and restore the full view without unrela
   assert.equal(new URL(share.url).searchParams.get('demo'), '1');
   assert.equal(new URL(share.url).searchParams.has('tracking'), false);
   assert.equal(new URL(share.url).hash, '');
-  assert.equal(programmeShare('https://example.com/', parseUrlState(''), '').description, 'All films');
+  const defaultProgramme = programmeShare('https://example.com/', parseUrlState(''), '');
+  assert.equal(defaultProgramme.description, 'All films');
+  assert.equal(new URL(defaultProgramme.url).searchParams.get('view'), 'posters');
+});
+
+test('shared programme language labels tolerate invalid codes in incoming URLs', async () => {
+  const { programmeShare } = await import('../web/programme-share.js');
+  const state = { ...parseUrlState(''), language: '!!!' };
+  const result = programmeShare('https://example.test/?language=!!!', state, '');
+  assert.match(result.description, /Unknown \(!!!\)/);
+  assert.equal(new URL(result.url).searchParams.get('language'), '!!!');
 });

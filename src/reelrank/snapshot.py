@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import re
@@ -10,7 +11,7 @@ from importlib.resources import files
 from pathlib import Path
 
 from .http import ThreadLocalSessionPool, create_http_session
-from .letterboxd import _username_url, fetch_user_list_urls, fetch_user_watched_movies, rank_movies
+from .letterboxd import _username_url, fetch_user_list_urls, fetch_user_watched_movies, movie_is_watched, rank_movies
 from .metadata import resolve_movie_metadata
 from .models import Movie, MovieResult
 from .tmdb import (
@@ -31,6 +32,13 @@ def validate_snapshot(snapshot: object) -> dict:
         raise ValueError(f"Unsupported snapshot schema version {version!r}; expected {SNAPSHOT_SCHEMA_VERSION}")
     _validate_schema(snapshot, _snapshot_schema())
     films = snapshot.get("films")
+    source_lists = snapshot.get("source_lists")
+    for index, film in enumerate(films):
+        if "lists" not in film and "list_ids" not in film:
+            raise ValueError(f"snapshot.films[{index}] must include lists or list_ids")
+        if "list_ids" in film:
+            if not isinstance(source_lists, list) or any(not _is_nonnegative_integer(item) or item >= len(source_lists) for item in film["list_ids"]):
+                raise ValueError(f"snapshot.films[{index}].list_ids references an unavailable source list")
     if snapshot["displayed_film_count"] != len(films) or snapshot["displayed_film_count"] > snapshot["film_count"]:
         raise ValueError("Snapshot displayed_film_count must match films and not exceed film_count")
     if snapshot["unwatched_count"] > snapshot["film_count"]:
@@ -199,7 +207,7 @@ def create_snapshot(username: str) -> dict:
     films = []
     for index, result in enumerate(featured_results):
         movie = result.movie
-        is_watched = (movie.title.casefold(), movie.year) in watched
+        is_watched = movie_is_watched(movie, watched)
         tmdb = metadata.get(index) or {}
         tmdb_id = tmdb.get("tmdb_id")
         poster_gallery = tmdb.get("poster_gallery")
@@ -240,20 +248,30 @@ def create_snapshot(username: str) -> dict:
             }
         )
 
+    source_lists = list(dict.fromkeys(url for film in films for url in film["lists"]))
+    source_list_index = {url: index for index, url in enumerate(source_lists)}
+    for film in films:
+        film["list_ids"] = [source_list_index[url] for url in film.pop("lists")]
+
     snapshot = {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "username": username,
         "profile_url": _username_url(username),
         "refreshed_at": generated_at_text,
+        "poster_gallery_url": (
+            f"/data/poster-galleries-{generated_at.strftime('%Y%m%dT%H%M%SZ')}-"
+            f"{hashlib.sha256(json.dumps(poster_galleries, sort_keys=True).encode()).hexdigest()[:12]}.json"
+        ),
         "list_count": len(list_urls),
         "film_count": len(results),
         "displayed_film_count": len(films),
         "unwatched_count": sum(
-            (result.movie.title.casefold(), result.movie.year) not in watched for result in results
+            not movie_is_watched(result.movie, watched) for result in results
         ),
         "displayed_unwatched_count": sum(not film["watched"] for film in films),
         "tmdb_match_count": tmdb_match_count,
         "films": films,
+        "source_lists": source_lists,
         "_poster_galleries": {
             "schema_version": 1,
             "snapshot_refreshed_at": generated_at_text,
@@ -267,7 +285,8 @@ def write_snapshot(snapshot: dict, output: Path) -> None:
     validate_snapshot(snapshot)
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_name(f".{output.name}.tmp")
-    gallery_output = output.parent / "poster-galleries.json"
+    gallery_name = Path(snapshot.get("poster_gallery_url", "/data/poster-galleries.json")).name
+    gallery_output = output.parent / gallery_name
     gallery_temporary = gallery_output.with_name(f".{gallery_output.name}.tmp")
     public_snapshot = {key: value for key, value in snapshot.items() if key != "_poster_galleries"}
     gallery_payload = snapshot.get("_poster_galleries") or {

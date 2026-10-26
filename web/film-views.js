@@ -1,4 +1,4 @@
-import { posterFallbackFor } from './film-components.js';
+import { posterFallbackFor, responsivePosterAttrs } from './film-components.js';
 
 export function createFilmViews(dependencies) {
   const {
@@ -9,15 +9,26 @@ export function createFilmViews(dependencies) {
     posterViewerDialog, posterViewerImage, posterViewerTitle, posterViewerCaption,
     posterViewerZoom, posterViewerClose, posterViewerStatus, posterViewerGallery,
     getSnapshotRefreshedAt,
+    getPosterGalleryUrl,
+    rememberPosterChoice,
+    resetPosterChoice,
+    onFilmDetailChange,
+    getFilmShareUrl,
   } = dependencies;
 let posterAccentRequest = 0;
 let posterGalleryRequest = 0;
 let posterGalleryDataPromise;
+const featuredFilmByFilm = new WeakMap();
+function posterVariant(url, size) {
+  try { const parsed = new URL(url); if (parsed.hostname !== 'image.tmdb.org') return url; return url.replace(/\/t\/p\/w\d+(?=\/)/, `/t/p/${size}`); }
+  catch { return url; }
+}
 
 function openPosterViewer(film, posterUrl, showGallery = false) {
   const request = ++posterGalleryRequest;
   posterViewerTitle.textContent = `${film.title} poster`;
   posterViewerCaption.textContent = [film.title, film.year].filter(Boolean).join(' · ');
+  posterViewerCaption.dataset.posterUrl = posterUrl || '';
   if (posterUrl) {
     posterViewerImage.src = posterUrl;
     posterViewerImage.alt = `${film.title} poster`;
@@ -41,11 +52,19 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
     return;
   }
   if (!posterGalleryDataPromise) {
-    posterGalleryDataPromise = fetch('/data/poster-galleries.json', { cache: 'force-cache' })
+    posterGalleryDataPromise = fetch(getPosterGalleryUrl(), { cache: 'force-cache' })
       .then((response) => response.ok ? response.json() : null)
       .catch(() => null);
   }
-  const payload = await posterGalleryDataPromise;
+  let payload = await posterGalleryDataPromise;
+  if (!payload) posterGalleryDataPromise = undefined;
+  if (request !== posterGalleryRequest) return;
+  if (payload && payload.snapshot_refreshed_at !== getSnapshotRefreshedAt()) {
+    payload = await fetch(getPosterGalleryUrl(), { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() : null)
+      .catch(() => null);
+    posterGalleryDataPromise = payload ? Promise.resolve(payload) : undefined;
+  }
   if (request !== posterGalleryRequest) return;
   if (!payload || payload.snapshot_refreshed_at !== getSnapshotRefreshedAt()) {
     posterViewerStatus.textContent = 'Alternate posters are not included in this catalogue edition.';
@@ -58,7 +77,7 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
     records.forEach((record) => {
       if (typeof record?.path !== 'string' || !record.path.startsWith('/')) return;
       const url = safeUrl(`https://image.tmdb.org/t/p/w500${record.path}`, ['image.tmdb.org']);
-      if (!url || url === currentPosterUrl || currentPosterUrl.endsWith(record.path) || posters.some((poster) => poster.url === url)) return;
+      if (!url || url === currentPosterUrl || (currentPosterUrl && currentPosterUrl.endsWith(record.path)) || posters.some((poster) => poster.url === url)) return;
       posters.push({ url, language: typeof record.language === 'string' ? record.language : '', current: false });
     });
   }
@@ -84,12 +103,18 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
     label.textContent = poster.current ? 'Current' : language;
     button.append(image, label);
     button.addEventListener('click', () => {
-      posterViewerImage.src = poster.url;
+    posterViewerImage.src = poster.url;
+      posterViewerCaption.dataset.posterUrl = poster.url;
       posterViewerImage.alt = `${film.title} poster`;
       posterViewerImage.classList.remove('is-zoomed');
       posterViewerZoom.setAttribute('aria-pressed', 'false');
       posterViewerZoom.textContent = 'View at actual size';
       posterViewerCaption.textContent = [film.title, film.year, language, `${index + 1} of ${posters.length}`].filter(Boolean).join(' · ');
+      if (Number.isSafeInteger(film.tmdb_id)) {
+        const saved = rememberPosterChoice(film, poster.url);
+        if (saved === false) posterViewerStatus.textContent = 'Could not save this poster choice in this browser.';
+        else posterViewerStatus.textContent = 'Poster choice saved on this device.';
+      }
       posterViewerGallery.querySelectorAll('.poster-viewer-option').forEach((option) => {
         option.setAttribute('aria-pressed', String(option === button));
       });
@@ -104,6 +129,8 @@ posterViewerZoom.addEventListener('click', () => {
   posterViewerZoom.setAttribute('aria-pressed', String(zoomed));
   posterViewerZoom.textContent = zoomed ? 'Fit to screen' : 'View at actual size';
   posterViewerImage.classList.toggle('is-zoomed', zoomed);
+  const selected = posterViewerCaption.dataset.posterUrl || posterViewerGallery.querySelector('[aria-pressed="true"] img')?.src || '';
+  if (selected) posterViewerImage.src = posterVariant(selected, zoomed ? 'original' : '500');
 });
 posterViewerClose.addEventListener('click', () => posterViewerDialog.close());
 posterViewerDialog.addEventListener('click', (event) => {
@@ -174,6 +201,7 @@ function openFilmDetails(film) {
 }
 
 function renderFilmDetails(film, retainFocus = false) {
+  onFilmDetailChange(film);
   const films = getFilms();
   const currentFilms = getCurrentMatchingFilms();
   filmDetailContent.replaceChildren();
@@ -190,6 +218,7 @@ function renderFilmDetails(film, retainFocus = false) {
     poster.addEventListener('click', () => openPosterViewer(film, posterUrl));
     const image = document.createElement('img');
     image.src = posterUrl;
+    responsivePosterAttrs(image, posterUrl, '(max-width: 640px) 30vw, 180px');
     image.alt = '';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
@@ -214,6 +243,13 @@ function renderFilmDetails(film, retainFocus = false) {
     galleryButton.addEventListener('click', () => openPosterViewer(film, posterUrl, true));
     posterColumn.append(galleryButton);
   }
+  const resetPosterButton = document.createElement('button');
+  resetPosterButton.type = 'button'; resetPosterButton.className = 'film-detail-gallery-button';
+  resetPosterButton.textContent = 'Reset poster';
+  resetPosterButton.setAttribute('aria-label', `Reset poster for ${film.title} to the catalogue original`);
+  const resetStatus = document.createElement('span'); resetStatus.className = 'sr-only'; resetStatus.setAttribute('role', 'status'); resetStatus.setAttribute('aria-live', 'polite');
+  resetPosterButton.addEventListener('click', () => { resetStatus.textContent = resetPosterChoice(film) ? 'Poster reset to the catalogue original.' : 'Could not save the poster reset in this browser.'; });
+  posterColumn.append(resetPosterButton, resetStatus);
   const copy = document.createElement('div');
   copy.className = 'film-detail-copy';
   const rank = films.indexOf(film) + 1;
@@ -344,6 +380,19 @@ function renderFilmDetails(film, retainFocus = false) {
   if (tmdbUrl) links.append(makeLink('Film data on TMDB ↗', tmdbUrl, 'film-detail-external-link'));
   const letterboxdUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
   if (letterboxdUrl) links.append(makeLink('Open on Letterboxd ↗', letterboxdUrl, 'film-detail-external-link'));
+  const shareUrl = getFilmShareUrl(film);
+  const shareInput = document.createElement('input');
+  shareInput.className = 'film-detail-share-url';
+  shareInput.type = 'url'; shareInput.readOnly = true; shareInput.value = shareUrl;
+  shareInput.setAttribute('aria-label', `Share link for ${film.title}`);
+  const copyLink = document.createElement('button');
+  copyLink.type = 'button'; copyLink.className = 'film-detail-external-link'; copyLink.textContent = 'Copy film link';
+  const copyStatus = document.createElement('span'); copyStatus.className = 'sr-only'; copyStatus.setAttribute('role', 'status'); copyStatus.setAttribute('aria-live', 'polite');
+  copyLink.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(shareInput.value); copyStatus.textContent = 'Film link copied.'; }
+    catch { shareInput.focus(); shareInput.select(); copyStatus.classList.remove('sr-only'); copyStatus.textContent = 'Select and copy the film link above.'; }
+  });
+  links.append(shareInput, copyLink, copyStatus);
   copy.append(links);
   layout.append(posterColumn, copy);
   filmDetailContent.append(layout);
@@ -376,18 +425,17 @@ function ledgerRowFor(film) {
   const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
   const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
   if (posterUrl) {
-    const poster = document.createElement(filmUrl ? 'a' : 'span');
+    const poster = document.createElement('a');
+    poster.href = filmDetailButtonFor(film).href;
     poster.className = 'ledger-poster';
-    if (filmUrl) {
-      poster.href = filmUrl;
-      poster.target = '_blank';
-      poster.rel = 'noreferrer';
-      poster.setAttribute('aria-label', `Open ${film.title} on Letterboxd, opens in a new tab`);
-    }
+    poster.setAttribute('aria-label', `Read details for ${film.title}`);
+    poster.addEventListener('click', (event) => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); filmDetailButtonFor(film).click(); });
     const image = document.createElement('img');
     image.src = posterUrl;
+    responsivePosterAttrs(image, posterUrl, '34px');
     image.alt = '';
     image.loading = 'lazy';
+    image.decoding = 'async';
     image.referrerPolicy = 'no-referrer';
     poster.append(image);
     filmLayout.append(poster);
@@ -472,6 +520,19 @@ function ledgerRowsFor(shownFilms) {
 
 
 function featuredFilmFor(film) {
+  const cached = featuredFilmByFilm.get(film);
+  if (cached) {
+    cached.querySelectorAll('.genre-tag[data-genre]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(state.genres.includes(button.dataset.genre)));
+    });
+    cached.querySelectorAll('.director-filter[data-director]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(state.directors.includes(button.dataset.director)));
+    });
+    cached.querySelectorAll('.country-filter-button[data-country]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(state.country === button.dataset.country));
+    });
+    return cached;
+  }
   const films = getFilms();
   const rankNumber = films.indexOf(film) + 1;
   const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
@@ -486,24 +547,24 @@ function featuredFilmFor(film) {
     backdrop.src = backdropUrl;
     backdrop.alt = '';
     backdrop.setAttribute('aria-hidden', 'true');
-    backdrop.loading = 'eager';
+    backdrop.loading = 'lazy';
+    backdrop.decoding = 'async';
     backdrop.referrerPolicy = 'no-referrer';
     feature.append(backdrop);
   }
 
-  const poster = document.createElement(filmUrl ? 'a' : 'div');
+  const poster = document.createElement('a');
+  poster.href = filmDetailButtonFor(film).href;
   poster.className = 'featured-film-poster';
-  if (filmUrl) {
-    poster.href = filmUrl;
-    poster.target = '_blank';
-    poster.rel = 'noreferrer';
-    poster.setAttribute('aria-label', `Open poster for ${film.title}, overall rank ${rankNumber}, ${film.watched ? 'watched' : 'unwatched'}, on Letterboxd, opens in a new tab`);
-  }
+  poster.setAttribute('aria-label', `Read details for ${film.title}, overall rank ${rankNumber}`);
+  poster.addEventListener('click', (event) => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); filmDetailButtonFor(film).click(); });
   if (posterUrl) {
     const image = document.createElement('img');
     image.src = posterUrl;
+    responsivePosterAttrs(image, posterUrl, '(max-width: 640px) 32vw, 360px');
     image.alt = `Poster for ${film.title}`;
     image.loading = 'eager';
+    image.decoding = 'async';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
       image.replaceWith(posterFallbackFor(film));
@@ -575,9 +636,19 @@ function featuredFilmFor(film) {
   copy.append(count);
   copy.append(filmDetailButtonFor(film));
   feature.append(copy);
+  featuredFilmByFilm.set(film, feature);
   return feature;
 }
 
+function updatePosterForFilm(film, url) {
+  const feature = featuredFilmByFilm.get(film);
+  const image = feature?.querySelector('.featured-film-poster img');
+  if (image && url) { image.src = url; responsivePosterAttrs(image, url, '(max-width: 640px) 32vw, 360px'); }
+  else if (image) image.replaceWith(posterFallbackFor(film, 'featured-film-poster poster-fallback'));
+  const detailImage = filmDetailContent.querySelector('.film-detail-poster img');
+  if (detailImage && url) { detailImage.src = url; responsivePosterAttrs(detailImage, url, '(max-width: 640px) 30vw, 180px'); }
+  else if (detailImage) detailImage.replaceWith(posterFallbackFor(film, 'film-detail-poster poster-fallback'));
+}
 
-  return { openFilmDetails, ledgerRowsFor, featuredFilmFor };
+  return { openFilmDetails, ledgerRowsFor, featuredFilmFor, updatePosterForFilm };
 }

@@ -5,6 +5,10 @@ import { chromium } from 'playwright-core';
 const require = createRequire(import.meta.url);
 const axePath = require.resolve('axe-core/axe.min.js');
 const baseUrl = process.env.SITE_URL || 'http://127.0.0.1:4173';
+const requestedScenario = process.argv.find((arg) => arg.startsWith('--scenario='))?.split('=')[1] || process.argv[2] || 'all';
+const scenarios = new Set(['all', 'catalogue', 'sharing', 'preferences', 'recovery', 'accessibility', 'reflow']);
+if (!scenarios.has(requestedScenario)) throw new Error(`Unknown browser scenario "${requestedScenario}". Choose: ${[...scenarios].join(', ')}`);
+const runs = (...names) => requestedScenario === 'all' || names.includes(requestedScenario);
 const snapshot = JSON.parse(await readFile('tests/fixtures/browser-snapshot.json', 'utf8'));
 const visualLayout = JSON.parse(await readFile('tests/fixtures/visual-layout-baselines.json', 'utf8'));
 const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
@@ -139,6 +143,21 @@ async function checkCatalogInteractions(page) {
   check(await page.evaluate(() => document.activeElement.id === 'film-detail-next'), 'Film navigation keeps focus on a usable adjacent control when it reaches the first film.');
   await page.locator('#film-detail-close').click();
   check(!(await page.locator('#film-detail-dialog').evaluate((dialog) => dialog.open)), 'Programme notes dialog closes from its close control.');
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has('film'));
+  await page.locator('.poster-link:visible').first().click();
+  check(await page.locator('#film-detail-dialog').evaluate((dialog) => dialog.open), 'Poster buttons open film details.');
+  check(Boolean(new URL(page.url()).searchParams.get('film')), 'Opening details adds a stable film identifier to the URL.');
+  check(await page.getByRole('link', { name: /Open on Letterboxd/ }).count() === 1, 'Film details retain the explicit Letterboxd link.');
+  await page.locator('#film-detail-next').click();
+  check(new URL(page.url()).searchParams.get('film') === await page.locator('#film-detail-content input[aria-label^="Share link"]').inputValue().then((url) => new URL(url).searchParams.get('film')), 'Detail navigation and copy link use the current film.');
+  await page.goBack();
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has('film'));
+  check(!(await page.locator('#film-detail-dialog').evaluate((dialog) => dialog.open)), 'Browser Back closes the detail dialog.');
+  await page.goForward();
+  await page.waitForFunction(() => new URL(location.href).searchParams.has('film'));
+  check(await page.locator('#film-detail-dialog').evaluate((dialog) => dialog.open), 'Browser Forward restores the detail dialog.');
+  await page.locator('#film-detail-close').click();
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has('film'));
   await page.locator('#runtime-options [data-runtime="90-120"]').click();
   await page.locator('#sort-select').selectOption('title');
   await page.locator('.film-detail-trigger:visible').first().click();
@@ -151,6 +170,53 @@ async function checkCatalogInteractions(page) {
   check(await page.locator('#film-detail-next').isDisabled(), 'Next is disabled at the end of the filtered results.');
   check(await page.evaluate(() => document.activeElement.id === 'film-detail-previous'), 'Reaching the last film keeps focus on an enabled navigation control.');
   await page.keyboard.press('Escape');
+}
+
+async function checkHistoryPosition() {
+  const { context, page } = await openSite({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+  try {
+    const longSnapshot = structuredClone(snapshot);
+    const model = longSnapshot.films[0];
+    for (let index = 0; index < 50; index += 1) longSnapshot.films.push({ ...structuredClone(model), title: `History fixture ${String(index + 1).padStart(2, '0')}`, original_title: `History fixture ${index + 1}`, letterboxd_title: `History fixture ${index + 1}`, letterboxd_url: `https://letterboxd.com/film/history-fixture-${index + 1}/`, tmdb_id: 700000 + index, watched: true, liked_in: 1 });
+    longSnapshot.film_count = longSnapshot.displayed_film_count = longSnapshot.films.length;
+    longSnapshot.unwatched_count = longSnapshot.displayed_unwatched_count = snapshot.films.filter((film) => !film.watched).length;
+    await page.route('**/data/snapshot.json', (route) => route.fulfill({ json: longSnapshot }));
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+    await page.locator('#load-more').click();
+    const target = page.locator('.film-card:visible').filter({ hasText: 'History fixture 02' }).locator('.poster-link');
+    await target.waitFor();
+    await target.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+    const before = await page.evaluate(() => scrollY);
+    const originalHref = await target.getAttribute('href');
+    await target.click();
+    check(new URL(page.url()).searchParams.has('film'), 'The detail anchor opens a real film URL.');
+    await page.goBack();
+    await page.locator('#film-detail-dialog').waitFor({ state: 'hidden' });
+    check(await page.locator('.film-card:visible').filter({ hasText: 'History fixture 02' }).count() === 1, 'Back restores results beyond the first 40 films.');
+    check(Math.abs(await page.evaluate(() => scrollY) - before) < 5, 'Back restores browsing position after closing details.');
+    await page.goForward();
+    await page.locator('#film-detail-title').waitFor();
+    check((await page.locator('#film-detail-title').textContent()).includes('History fixture 02'), 'Forward reopens the same detail.');
+    await page.locator('#film-detail-close').click();
+    await page.waitForFunction(() => !new URL(location.href).searchParams.has('film'));
+    check(await page.evaluate(() => !new URL(location.href).searchParams.has('film')), 'Manual close removes the film URL.');
+    check(await page.evaluate(() => document.activeElement.classList.contains('poster-link')), 'Manual close restores focus to the triggering poster link.');
+    await page.goto(new URL(originalHref, baseUrl).href, { waitUntil: 'domcontentloaded' });
+    await page.locator('#film-detail-title').waitFor();
+    await page.locator('#film-detail-close').click();
+    await page.locator('#film-detail-dialog').waitFor({ state: 'hidden' });
+    await page.waitForFunction(() => !new URL(location.href).searchParams.has('film'));
+    check(await page.evaluate(() => document.activeElement.id === 'collection-title'), 'A directly opened film restores focus to the collection heading when closed.');
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+    await page.locator('#load-more').click();
+    await page.locator('.film-card:visible').filter({ hasText: 'History fixture 03' }).scrollIntoViewIfNeeded();
+    const expandedPosition = await page.evaluate(() => scrollY);
+    await page.evaluate(() => { const select = document.querySelector('#sort-select'); select.value = 'title'; select.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.goBack();
+    check(await page.locator('.film-card:visible').count() > 44, 'Back after a sort restores the expanded result limit.');
+    check(Math.abs(await page.evaluate(() => scrollY) - expandedPosition) < 5, 'Back after a sort restores the expanded browsing position.');
+  } catch (error) { await saveDiagnostics(page, 'history-position-failure'); throw error; }
+  finally { await context.close(); }
 }
 
 async function checkDetailPresentation(page, label) {
@@ -189,6 +255,8 @@ async function checkDetailPresentation(page, label) {
   await scan(page, `${label} film details`);
   await page.locator('#film-detail-dialog').screenshot({ path: `/tmp/reelrank-details-${label.replaceAll(' ', '-')}.png`, animations: 'disabled' });
   await page.locator('#film-detail-close').click();
+  await page.locator('#film-detail-dialog').waitFor({ state: 'hidden' });
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has('film'));
 }
 
 async function checkBrokenPosterFallback() {
@@ -205,9 +273,91 @@ async function checkBrokenPosterFallback() {
   await context.close();
 }
 
+async function checkSavedPreferences() {
+  const { context, page } = await openSite({ localPreferences: { view: 'ledger' }, compactSnapshot: true });
+  await page.route('**/data/poster-galleries.json', (route) => route.fulfill({ json: {
+    snapshot_refreshed_at: snapshot.refreshed_at,
+    galleries: { '329865': [{ path: '/chosen-poster.jpg', language: 'fr' }] },
+  } }));
+  await page.waitForSelector('#site-shell:not([hidden])');
+  check(await page.locator('#film-ledger-view').isVisible(), 'A saved Ledger preference applies on a bare home visit.');
+  await page.locator('#poster-display-button').click();
+  await page.locator('#programme-share > summary').click();
+  const link = new URL(await page.locator('#programme-share-url').inputValue());
+  check(link.searchParams.get('view') === 'posters', 'A shared default Poster Wall programme overrides a recipient Ledger preference.');
+  await page.goto(link.href, { waitUntil: 'domcontentloaded' });
+  check(await page.locator('#film-grid').isVisible(), 'An explicit shared Poster Wall layout wins over stored preferences.');
+  await page.locator('#programme-share > summary').click();
+  await page.locator('#saved-views > summary').click();
+  await page.locator('#saved-views').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '/tmp/reelrank-saved-views-desktop.png', animations: 'disabled' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('#saved-views').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '/tmp/reelrank-saved-views-mobile.png', animations: 'disabled' });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.locator('#preset-name').fill('A saved view');
+  await page.locator('#preset-save').click();
+  check(await page.locator('#preset-list option').count() === 2, 'Users can save named filter presets.');
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('#preset-export').click();
+  const exportFile = await downloadPromise;
+  const exportContents = await readFile(await exportFile.path());
+  await page.locator('#preset-list').selectOption('');
+  await page.locator('#preset-apply').click();
+  check((await page.locator('#preset-status').textContent()).includes('Choose a preset'), 'Empty preset selections do not apply the first saved item.');
+  await page.locator('#preset-list').selectOption('0');
+  await page.locator('#preset-apply').click();
+  check((await page.locator('#preset-status').textContent()).includes('Applied'), 'Users can apply a saved preset.');
+  await page.locator('#preset-delete').click();
+  check(await page.locator('#preset-list option').count() === 1, 'Users can delete a saved preset.');
+  await page.locator('#preset-import-file').setInputFiles({ name: exportFile.suggestedFilename(), mimeType: 'application/json', buffer: exportContents });
+  check(await page.locator('#preset-list option').count() === 2, 'Users can import an exported saved view.');
+  await page.locator('.film-card:visible').filter({ hasText: 'Arrival' }).first().locator('.film-detail-trigger').click();
+  check(await page.locator('.film-note-sources a').count() > 0, 'Compact list IDs retain linked source provenance in film details.');
+  await page.getByRole('button', { name: 'Browse posters for Arrival' }).click();
+  await page.locator('.poster-viewer-option').first().click();
+  await page.locator('#poster-viewer-close').click();
+  await page.locator('#film-detail-close').click();
+  check((await page.locator('.film-card').filter({ hasText: 'Arrival' }).first().locator('.poster-image').getAttribute('src'))?.includes('chosen-poster.jpg'), 'Choosing an alternate poster updates the visible catalogue art.');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#site-shell:not([hidden])');
+  check((await page.locator('.film-card').filter({ hasText: 'Arrival' }).first().locator('.poster-image').getAttribute('src'))?.includes('chosen-poster.jpg'), 'A selected alternate poster persists after reload.');
+  await page.locator('.film-card').filter({ hasText: 'Arrival' }).first().locator('.film-detail-trigger').click();
+  await page.getByRole('button', { name: 'Reset poster for Arrival to the catalogue original' }).click();
+  check(await page.locator('.film-detail-poster .poster-fallback-title').textContent() === 'Arrival', 'Film details can reset one poster to its catalogue original.');
+  await page.locator('#film-detail-close').click();
+  await page.locator('#saved-views > summary').click();
+  await page.locator('#reset-posters').click();
+  check(await page.locator('#preset-status').textContent().then((text) => text.includes('Poster choices reset')), 'Global poster reset reports its outcome.');
+  check(await page.locator('#preset-list option').count() === 2, 'Poster reset preserves saved views.');
+  await page.locator('#clear-preferences').click();
+  check(await page.locator('#preset-status').textContent().then((text) => text.includes('Local preferences cleared')), 'Clear local preferences reports its outcome.');
+  check(await page.evaluate(() => localStorage.getItem('reelrank.preferences.v1')) === null, 'Clear local preferences removes only ReelRank preferences.');
+  await context.close();
+}
+
+async function checkRetryLoading() {
+  const { context, page } = await openSite();
+  let attempts = 0;
+  await page.unroute('**/data/snapshot.json');
+  await page.route('**/data/snapshot.json', (route) => {
+    attempts += 1;
+    return attempts === 1 ? route.fulfill({ status: 503 }) : route.fulfill({ json: snapshot });
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('#retry-loading:visible').waitFor();
+  await page.locator('#retry-loading').click();
+  await page.waitForSelector('#site-shell:not([hidden])');
+  check(attempts === 2, 'Retry loading makes a fresh request and restores the catalogue after a transient failure.');
+  await context.close();
+}
+
 async function openSite(options = {}) {
-  const { configUsername, path, ...contextOptions } = options;
+  const { configUsername, path, localPreferences, compactSnapshot = false, ...contextOptions } = options;
   const context = await browser.newContext(contextOptions);
+  if (localPreferences) await context.addInitScript((value) => {
+    if (localStorage.getItem('reelrank.preferences.v1') === null) localStorage.setItem('reelrank.preferences.v1', JSON.stringify(value));
+  }, localPreferences);
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
   tracedContexts.add(context);
   const page = await context.newPage();
@@ -216,9 +366,16 @@ async function openSite(options = {}) {
     contentType: 'application/json',
     body: JSON.stringify({ letterboxd_username: configUsername || snapshot.username }),
   }));
+  const siteSnapshot = compactSnapshot ? (() => {
+    const result = structuredClone(snapshot);
+    result.source_lists = [...new Set(result.films.flatMap((film) => film.lists || []))];
+    const listIndex = new Map(result.source_lists.map((url, index) => [url, index]));
+    result.films.forEach((film) => { film.list_ids = (film.lists || []).map((url) => listIndex.get(url)); delete film.lists; });
+    return result;
+  })() : snapshot;
   await page.route('**/data/snapshot.json', (route) => route.fulfill({
     contentType: 'application/json',
-    body: JSON.stringify(snapshot),
+    body: JSON.stringify(siteSnapshot),
   }));
   await page.goto(`${baseUrl}${path || '/'}`, { waitUntil: 'domcontentloaded' });
   return { context, page };
@@ -230,16 +387,20 @@ async function checkProgrammeSharing() {
     await page.locator('#film-ledger-view').waitFor({ state: 'visible' });
     await page.locator('#search-input').fill('film');
     await page.locator('#programme-share > summary').click();
+    await page.waitForFunction(() => new URL(document.querySelector('#programme-share-url').value).searchParams.get('q') === 'film');
     const link = await page.locator('#programme-share-url').inputValue();
     const shared = new URL(link);
-    check(shared.searchParams.get('q') === 'film', 'Share link includes the live search query.');
+    check(shared.searchParams.get('q') === 'film', `Share link includes the live search query (${link}).`);
     check(shared.searchParams.get('genre') === 'Drama' && shared.searchParams.get('filter') === 'unwatched', 'Share link includes selected facets.');
     check(shared.searchParams.get('view') === 'ledger' && shared.searchParams.get('sort') === 'title', 'Share link includes sorting and layout.');
     await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copiedProgramme = text; } } }));
     await page.locator('#programme-share-copy').click();
     await page.waitForFunction(() => document.querySelector('#programme-share-status').textContent.includes('copied'));
     check(await page.evaluate((url) => window.copiedProgramme === url, link), 'Copy contains only the programme URL.');
-    await page.locator('#clear-query').click();
+    await page.locator('#search-input').fill('');
+    await page.locator('#programme-share > summary').click();
+    await page.locator('#programme-share > summary').click();
+    await page.waitForFunction(() => document.querySelector('#programme-share-status').textContent === '');
     check(await page.locator('#programme-share-status').textContent() === '', 'Changing the selection clears stale copy feedback.');
     check(!new URL(await page.locator('#programme-share-url').inputValue()).searchParams.has('q'), 'Open share panel follows selection changes.');
     await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('Clipboard unavailable'); } } }));
@@ -296,8 +457,8 @@ async function checkKeyboardAndReflow() {
     check(await page.locator('#clear-query').isVisible(), 'A query has a visible clear action.');
     check(await page.locator('#empty-clear-query').isVisible(), 'Empty search results offer local recovery.');
     check(await page.locator('#selection-end').isHidden(), 'Empty results do not show an end-of-selection marker.');
-    await page.locator('#empty-clear-query').click();
-    check(await page.locator('#search-input').inputValue() === '', 'Empty-state recovery clears the query.');
+    await page.locator('#empty-clear-query').evaluate((button) => button.click());
+    check(await page.locator('#search-input').inputValue() === '', `Empty-state recovery clears the query (${JSON.stringify(await page.locator('#search-input').inputValue())}).`);
     check(await page.locator('#selection-end').isVisible(), 'A fully displayed selection has a closing marker.');
     await page.locator('#search-input').fill(query);
     await page.keyboard.press('Escape');
@@ -339,8 +500,8 @@ async function checkKeyboardAndReflow() {
 
     for (const [width, label] of [[720, '200% zoom equivalent'], [360, '400% zoom equivalent'], [320, 'narrow mobile']]) {
       await page.setViewportSize({ width, height: 900 });
-      const metrics = await page.evaluate(() => ({ documentWidth: document.documentElement.scrollWidth, viewportWidth: window.innerWidth }));
-      check(metrics.documentWidth <= metrics.viewportWidth, `${label} has no horizontal page overflow (${metrics.documentWidth}px > ${metrics.viewportWidth}px).`);
+      const metrics = await page.evaluate(() => ({ documentWidth: document.documentElement.scrollWidth, viewportWidth: window.innerWidth, overflowing: [...document.querySelectorAll('body *')].filter((element) => element.getBoundingClientRect().right > innerWidth + 1).slice(0, 8).map((element) => `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ''}.${element.className?.baseVal || element.className || ''}:${Math.round(element.getBoundingClientRect().right)}`) }));
+      check(metrics.documentWidth <= metrics.viewportWidth, `${label} has no horizontal page overflow (${metrics.documentWidth}px > ${metrics.viewportWidth}px; ${metrics.overflowing.join(', ')}).`);
       console.log(`${label}: no horizontal overflow at ${width}px CSS viewport.`);
     }
 
@@ -366,6 +527,7 @@ try {
     ['mobile', { viewport: { width: 390, height: 844 }, colorScheme: 'light', reducedMotion: 'reduce' }],
     ['dark mode', { viewport: { width: 1440, height: 1000 }, colorScheme: 'dark', reducedMotion: 'reduce' }],
   ]) {
+    if (!runs('accessibility', 'catalogue') || (requestedScenario === 'catalogue' && name !== 'desktop')) continue;
     const { context, page } = await openSite(options);
     await page.waitForSelector('#site-shell:not([hidden])');
     await page.waitForSelector('.film-card');
@@ -385,10 +547,13 @@ try {
     await context.close();
   }
 
-  await checkProgrammeSharing();
-  await checkKeyboardAndReflow();
-  await checkBrokenPosterFallback();
+  if (runs('catalogue')) await checkHistoryPosition();
+  if (runs('sharing')) await checkProgrammeSharing();
+  if (runs('preferences')) await checkSavedPreferences();
+  if (runs('recovery')) { await checkRetryLoading(); await checkBrokenPosterFallback(); }
+  if (runs('accessibility', 'reflow')) await checkKeyboardAndReflow();
 
+  if (runs('accessibility')) {
   const { context: setupContext, page: setupPage } = await openSite({
     viewport: { width: 320, height: 800 },
     colorScheme: 'light',
@@ -415,6 +580,7 @@ try {
   }
   await scan(demoPage, 'labelled demo preview');
   await demoContext.close();
+  }
 } catch (error) {
   await saveDiagnostics(activePage, 'browser-check-failure');
   throw error;

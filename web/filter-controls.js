@@ -54,10 +54,10 @@ export function createFilterControls({ state, sources, elements, actions }) {
 
   function renderActiveViewFilters() {
     const hasActiveView = Boolean(elements.searchInput.value.trim()) || state.filter !== 'all' || state.sort !== 'rank'
-      || state.genres.length || state.directors.length || state.sourceLists.length || state.country || state.decade !== '' || state.runtime;
+      || state.genres.length || state.directors.length || state.sourceLists.length || state.country || state.language || state.decade !== '' || state.runtime;
     elements.activeViewTools.hidden = !hasActiveView;
     elements.activeGenreFilters.replaceChildren();
-    elements.activeGenreFilters.hidden = state.genres.length === 0 && !state.country && state.decade === '' && !state.runtime;
+    elements.activeGenreFilters.hidden = state.genres.length === 0 && !state.country && !state.language && state.decade === '' && !state.runtime;
     state.genres.forEach((genre) => appendFacetChip(elements.activeGenreFilters, genre, `Remove ${genre} genre filter`, () => actions.toggleGenre(genre)));
     elements.activeDirectorFilters.replaceChildren();
     elements.activeDirectorFilters.hidden = state.directors.length === 0;
@@ -77,6 +77,7 @@ export function createFilterControls({ state, sources, elements, actions }) {
       }
     });
     if (state.country) appendFacetChip(elements.activeGenreFilters, `Country: ${state.country}`, 'Remove production country filter', () => actions.setCountry(''));
+    if (state.language) appendFacetChip(elements.activeGenreFilters, `Language: ${actions.languageLabel(state.language)}`, 'Remove original language filter', () => actions.setLanguage(''));
     if (state.decade !== '') appendFacetChip(elements.activeGenreFilters, `${state.decade}s`, 'Remove decade filter', () => actions.setDecade(''));
     if (state.runtime) {
       const label = state.runtime === 'under-90' ? 'Under 90 min' : state.runtime === '90-120' ? '90–120 min' : 'Over 120 min';
@@ -86,6 +87,7 @@ export function createFilterControls({ state, sources, elements, actions }) {
 
   function syncControls() {
     elements.sortSelect.value = state.sort;
+    elements.languageFilter.value = state.language || '';
     elements.countryIndexOptions.querySelectorAll('[data-country]').forEach((button) => {
       const selected = button.dataset.country === state.country;
       button.setAttribute('aria-pressed', String(selected));
@@ -118,9 +120,10 @@ export function createFilterControls({ state, sources, elements, actions }) {
     elements.sourceListFilterSummary.textContent = labels.length === 0 ? 'Any' : labels.length === 1 ? labels[0] : `${labels.length} selected`;
     const activeFilterCount = state.genres.length + state.directors.length + state.sourceLists.length
       + Number(Boolean(state.country)) + Number(state.decade !== '') + Number(Boolean(state.runtime));
-    elements.catalogFilterCount.hidden = activeFilterCount === 0;
-    elements.catalogFilterCount.textContent = activeFilterCount ? String(activeFilterCount) : '';
-    elements.catalogFilterCount.setAttribute('aria-label', `${activeFilterCount} active ${activeFilterCount === 1 ? 'filter' : 'filters'}`);
+    const totalActiveFilterCount = activeFilterCount + Number(Boolean(state.language));
+    elements.catalogFilterCount.hidden = totalActiveFilterCount === 0;
+    elements.catalogFilterCount.textContent = totalActiveFilterCount ? String(totalActiveFilterCount) : '';
+    elements.catalogFilterCount.setAttribute('aria-label', `${totalActiveFilterCount} active ${totalActiveFilterCount === 1 ? 'filter' : 'filters'}`);
     elements.clearSourceListsButton.hidden = state.sourceLists.length === 0;
     renderSelectedSourceLists();
     renderActiveViewFilters();
