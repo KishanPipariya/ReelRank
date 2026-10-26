@@ -7,9 +7,12 @@ import { createFilterControls } from './filter-controls.js';
 import { createFilmViews } from './film-views.js';
 import { countCountriesAndDecades, countGenres, countSourceLists } from './facet-counts.js';
 import { createProgrammePrinter } from './print-programme.js';
-import { createLocalPreferences, parsePresetImport } from './local-preferences.js';
+import { createLocalPreferences } from './local-preferences.js';
 import { compareRelevance } from './catalog.js';
 import { createFilmNavigation, filmDetailUrl } from './film-navigation.js';
+import { updateEditionFreshness } from './edition-freshness.js';
+import { downloadCatalogueCsv } from './catalogue-download.js';
+import { bindSavedViewControls } from './saved-views.js';
 
 const clearQueryButton = document.querySelector('#clear-query');
 const emptyResultActions = document.querySelector('#empty-result-actions');
@@ -146,6 +149,7 @@ let currentHighestScore = 1;
 let countryAtlasSize = 0;
 let snapshotRefreshedAt = '';
 let posterGalleryUrl = '/data/poster-galleries.json';
+let sourceListsForDownload = [];
 
 function setCountryIndexExpanded(expanded) {
   countryIndex.classList.toggle('is-expanded', expanded);
@@ -1226,71 +1230,17 @@ programmeShareCopy.addEventListener('click', async () => {
   }
 });
 
-const presetName = document.querySelector('#preset-name');
-const presetList = document.querySelector('#preset-list');
-const presetStatus = document.querySelector('#preset-status');
-function savedPresets() { const items = readPreferences().presets; return Array.isArray(items) ? items.filter((x) => x && typeof x.name === 'string' && x.state) : []; }
-function renderPresets() {
-  const current = presetList.value;
-  presetList.replaceChildren(new Option('Choose a preset', ''));
-  savedPresets().forEach((preset, index) => presetList.add(new Option(preset.name, String(index))));
-  if ([...presetList.options].some((item) => item.value === current)) presetList.value = current;
-}
-function capturePresetState() {
-  return { query: searchInput.value.trim(), filter: state.filter, sort: state.sort, genres: [...state.genres], directors: [...state.directors], sourceLists: [...state.sourceLists], country: state.country, language: state.language, decade: state.decade, runtime: state.runtime, view: state.view };
-}
-document.querySelector('#preset-save').addEventListener('click', () => {
-  const name = presetName.value.trim();
-  if (!name) { presetStatus.textContent = 'Enter a name for this preset.'; presetName.focus(); return; }
-  const presets = savedPresets().filter((preset) => preset.name.toLocaleLowerCase() !== name.toLocaleLowerCase());
-  presets.push({ name, state: capturePresetState() });
-  savePreferences({ presets }); renderPresets(); presetStatus.textContent = `Saved “${name}”.`;
+bindSavedViewControls({
+  readPreferences, savePreferences, clearPreferences: preferences.clear,
+  state, searchInput, syncControls, updateUrlState, render,
+  getFilms: () => films, originalPosterByFilm, filmCardByFilm, filmViews,
 });
-document.querySelector('#preset-apply').addEventListener('click', () => {
-  if (!presetList.value) { presetStatus.textContent = 'Choose a preset to apply.'; return; }
-  const preset = savedPresets()[Number(presetList.value)];
-  if (!preset) return;
-  Object.assign(state, preset.state); searchInput.value = state.query || ''; state.visibleLimit = 40; syncControls(); updateUrlState(); render(); presetStatus.textContent = `Applied “${preset.name}”.`;
+
+document.querySelector('#ranking-download').addEventListener('click', (event) => {
+  if (event.currentTarget.hasAttribute('download')) return;
+  event.preventDefault();
+  downloadCatalogueCsv(films, sourceListsForDownload, 'reelrank-top-500.csv');
 });
-document.querySelector('#preset-delete').addEventListener('click', () => {
-  if (!presetList.value) { presetStatus.textContent = 'Choose a preset to delete.'; return; }
-  const index = Number(presetList.value); const presets = savedPresets();
-  if (!Number.isInteger(index) || !presets[index]) return;
-  const [removed] = presets.splice(index, 1); savePreferences({ presets }); renderPresets(); presetStatus.textContent = `Deleted “${removed.name}”.`;
-});
-document.querySelector('#preset-export').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify({ version: 1, presets: savedPresets() }, null, 2)], { type: 'application/json' });
-  const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'reelrank-saved-views.json'; link.click(); URL.revokeObjectURL(link.href);
-  presetStatus.textContent = `Exported ${savedPresets().length} saved ${savedPresets().length === 1 ? 'view' : 'views'}.`;
-});
-document.querySelector('#preset-import-trigger').addEventListener('click', () => document.querySelector('#preset-import-file').click());
-document.querySelector('#preset-import-file').addEventListener('change', async (event) => {
-  const file = event.target.files?.[0]; if (!file) return;
-  try {
-    const imported = parsePresetImport(JSON.parse(await file.text()));
-    if (!imported) throw new Error('shape');
-    const merged = [...savedPresets()];
-    imported.forEach((item) => { const old = merged.findIndex((saved) => saved.name.toLocaleLowerCase() === item.name.toLocaleLowerCase()); if (old >= 0) merged.splice(old, 1); merged.push(item); });
-    if (!savePreferences({ presets: merged.slice(-100) })) { presetStatus.textContent = 'Could not save imported views in this browser.'; return; }
-    renderPresets(); presetStatus.textContent = `Imported ${imported.length} saved ${imported.length === 1 ? 'view' : 'views'}.`;
-  } catch { presetStatus.textContent = 'That file is not a valid ReelRank saved views export.'; }
-  event.target.value = '';
-});
-document.querySelector('#reset-posters').addEventListener('click', () => {
-  if (!savePreferences({ posterChoices: {} })) { presetStatus.textContent = 'Could not save the poster reset in this browser.'; return; }
-  films.forEach((film) => { const original = originalPosterByFilm.get(film); if (original === undefined) delete film.poster_url; else film.poster_url = original; filmCardByFilm.delete(film); filmViews.updatePosterForFilm(film, film.poster_url); });
-  render(); presetStatus.textContent = 'Poster choices reset to the catalogue originals.';
-});
-document.querySelector('#clear-preferences').addEventListener('click', () => {
-  const cleared = preferences.clear(); presetStatus.textContent = cleared ? 'Local preferences cleared. Saved views and poster choices were removed.' : 'Could not clear local preferences in this browser.';
-  if (cleared) {
-    renderPresets();
-    if (!new URLSearchParams(window.location.search).has('view') && state.view !== 'posters') { state.view = 'posters'; syncControls(); updateUrlState({ replace: true }); }
-    films.forEach((film) => { const original = originalPosterByFilm.get(film); if (original === undefined) delete film.poster_url; else film.poster_url = original; filmCardByFilm.delete(film); filmViews.updatePosterForFilm(film, film.poster_url); });
-    render();
-  }
-});
-renderPresets();
 
 function render() {
   updateProgrammeShare();
@@ -1393,7 +1343,7 @@ async function loadSnapshot() {
     setupTitle.textContent = `Preparing @${configuredUsername}'s ReelRank`;
     setupCopy.textContent = 'Loading the configured profile and its catalogue edition…';
 
-    const response = await fetch('/data/snapshot.json', { cache: 'no-store' });
+    const response = await fetch('/data/snapshot.json', { cache: 'default' });
     if (!response.ok) throw new Error(`Snapshot request failed: ${response.status}`);
     snapshotFailureKind = 'json';
     const snapshotData = await response.json();
@@ -1437,6 +1387,18 @@ async function loadSnapshot() {
     rankByFilm.clear();
     films.forEach((film, index) => rankByFilm.set(film, index));
     snapshotRefreshedAt = snapshot.refreshed_at;
+    sourceListsForDownload = Array.isArray(snapshot.source_lists) ? snapshot.source_lists : [];
+    const rankingDownload = document.querySelector('#ranking-download');
+    rankingDownload.hidden = false;
+    if (snapshot.ranking_csv_url) {
+      rankingDownload.href = snapshot.ranking_csv_url;
+      rankingDownload.download = '';
+      rankingDownload.textContent = `Download all ${(snapshot.film_count ?? films.length).toLocaleString()} films (CSV)`;
+    } else {
+      rankingDownload.href = '#';
+      rankingDownload.removeAttribute('download');
+      rankingDownload.textContent = `Download displayed ${films.length.toLocaleString()} films (CSV)`;
+    }
     posterGalleryUrl = snapshot.poster_gallery_url || '/data/poster-galleries.json';
     const colophon = editionColophonFor(films);
     document.querySelector('#edition-leading-decade').textContent = colophon.decade;
@@ -1478,6 +1440,7 @@ async function loadSnapshot() {
     document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
     siteShell.hidden = false;
     render();
+    updateEditionFreshness(document.querySelector('#edition-stale-notice'), snapshotRefreshedAt);
     setupState.hidden = true;
     retryButton.hidden = true;
     restoreFilmFromUrl();

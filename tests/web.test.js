@@ -5,6 +5,8 @@ import { buildSearchText, compareFilms, compareRelevance, filmDecade, matchesFil
 import { snapshotLoadErrorMessage, validateSnapshot } from '../web/snapshot.js';
 import { parseUrlState, urlForState } from '../web/url-state.js';
 import { createLocalPreferences, parsePresetImport } from '../web/local-preferences.js';
+import { catalogueCsv } from '../web/catalogue-download.js';
+import { editionFreshness } from '../web/edition-freshness.js';
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/snapshot-minimal.json', import.meta.url), 'utf8'));
 const browserSchema = JSON.parse(await readFile(new URL('../web/snapshot.schema.json', import.meta.url), 'utf8'));
@@ -19,6 +21,23 @@ test('snapshot load errors distinguish unreachable, invalid JSON, and invalid ca
   assert.match(snapshotLoadErrorMessage('json'), /could not read its JSON/);
   assert.match(snapshotLoadErrorMessage('schema'), /supported catalogue format/);
   assert.match(snapshotLoadErrorMessage('initialization'), /loaded the catalogue but could not prepare the site/);
+});
+
+test('edition freshness turns stale at 30 days and ignores future timestamps', () => {
+  const now = Date.parse('2026-10-26T00:00:00Z');
+  assert.deepEqual(editionFreshness('2026-09-26T00:00:00Z', now), { stale: true, ageDays: 30 });
+  assert.deepEqual(editionFreshness('2026-10-01T00:00:00Z', now), { stale: false, ageDays: 25 });
+  assert.deepEqual(editionFreshness('2026-10-27T00:00:00Z', now), { stale: false, ageDays: 0 });
+  assert.deepEqual(editionFreshness('invalid', now), { stale: false, ageDays: null });
+});
+
+test('catalogue CSV handles quoted titles and neutralizes spreadsheet formulas', () => {
+  const csv = catalogueCsv([{
+    title: 'Arrival', letterboxd_title: '=SUM(1,1)', year: '2016', letterboxd_year: '2016',
+    watched: true, liked_in: 3, letterboxd_url: 'https://letterboxd.com/film/arrival/', list_ids: [0],
+  }], ['https://letterboxd.com/user/list/favorites/']);
+  assert.match(csv, /"1","'=SUM\(1,1\)","2016","yes","3"/);
+  assert.match(csv, /"https:\/\/letterboxd\.com\/user\/list\/favorites\/"/);
 });
 
 test('snapshot contract accepts optional TMDB enrichment fields when omitted', () => {

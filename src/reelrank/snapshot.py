@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import csv
 import hashlib
+import io
 import json
 import math
 import re
@@ -72,6 +74,13 @@ def _is_schema_integer(value: object) -> bool:
     if isinstance(value, float):
         return math.isfinite(value) and value.is_integer()
     return True
+
+
+def _spreadsheet_safe_cell(value: object) -> object:
+    """Prevent untrusted text fields from being interpreted as spreadsheet formulas."""
+    if isinstance(value, str) and re.match(r"^[\x00-\x20]*[=+\-@]", value):
+        return f"'{value}"
+    return value
 
 
 def _validate_schema(value: object, schema: dict, root: dict | None = None, path: str = "snapshot") -> None:
@@ -253,6 +262,13 @@ def create_snapshot(username: str) -> dict:
     for film in films:
         film["list_ids"] = [source_list_index[url] for url in film.pop("lists")]
 
+    ranking_signature = [
+        [result.movie.uri, result.movie.title, result.movie.year, result.liked_in, movie_is_watched(result.movie, watched)]
+        for result in results
+    ]
+    ranking_digest = hashlib.sha256(
+        json.dumps(ranking_signature, ensure_ascii=False, separators=(",", ":")).encode()
+    ).hexdigest()[:12]
     snapshot = {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "username": username,
@@ -262,6 +278,7 @@ def create_snapshot(username: str) -> dict:
             f"/data/poster-galleries-{generated_at.strftime('%Y%m%dT%H%M%SZ')}-"
             f"{hashlib.sha256(json.dumps(poster_galleries, sort_keys=True).encode()).hexdigest()[:12]}.json"
         ),
+        "ranking_csv_url": f"/data/ranking-{generated_at.strftime('%Y%m%dT%H%M%SZ')}-{ranking_digest}.csv",
         "list_count": len(list_urls),
         "film_count": len(results),
         "displayed_film_count": len(films),
@@ -277,28 +294,60 @@ def create_snapshot(username: str) -> dict:
             "snapshot_refreshed_at": generated_at_text,
             "galleries": poster_galleries,
         },
+        "_full_ranking": results,
+        "_watched": watched,
     }
     return validate_snapshot(snapshot)
 
 def write_snapshot(snapshot: dict, output: Path) -> None:
-    """Write the snapshot and poster gallery sidecar using atomic file replacements."""
+    """Write the snapshot and sidecar files using atomic file replacements."""
     validate_snapshot(snapshot)
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_name(f".{output.name}.tmp")
     gallery_name = Path(snapshot.get("poster_gallery_url", "/data/poster-galleries.json")).name
     gallery_output = output.parent / gallery_name
     gallery_temporary = gallery_output.with_name(f".{gallery_output.name}.tmp")
-    public_snapshot = {key: value for key, value in snapshot.items() if key != "_poster_galleries"}
+    ranking_name = Path(snapshot.get("ranking_csv_url", "")).name
+    ranking_output = output.parent / ranking_name if ranking_name else None
+    ranking_temporary = ranking_output.with_name(f".{ranking_output.name}.tmp") if ranking_output else None
+    private_fields = {"_poster_galleries", "_full_ranking", "_watched"}
+    public_snapshot = {key: value for key, value in snapshot.items() if key not in private_fields}
     gallery_payload = snapshot.get("_poster_galleries") or {
         "schema_version": 1,
         "snapshot_refreshed_at": snapshot["refreshed_at"],
         "galleries": {},
     }
+    full_ranking = snapshot.get("_full_ranking")
+    watched = snapshot.get("_watched", set())
     try:
         gallery_temporary.write_text(json.dumps(gallery_payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
         temporary.write_text(json.dumps(public_snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if ranking_temporary is not None:
+            if not isinstance(full_ranking, list) or len(full_ranking) != snapshot["film_count"]:
+                raise ValueError("Snapshot declares a full-ranking CSV but contains no full ranking data")
+            from .letterboxd import movie_is_watched
+
+            csv_buffer = io.StringIO(newline="")
+            writer = csv.writer(csv_buffer)
+            writer.writerow(["Rank", "Title", "Year", "Watched", "Liked in lists", "Letterboxd URI", "List URLs"])
+            if isinstance(full_ranking, list):
+                for rank, result in enumerate(full_ranking, start=1):
+                    writer.writerow([
+                        _spreadsheet_safe_cell(rank),
+                        _spreadsheet_safe_cell(result.movie.title),
+                        _spreadsheet_safe_cell(result.movie.year),
+                        _spreadsheet_safe_cell("yes" if movie_is_watched(result.movie, watched) else "no"),
+                        _spreadsheet_safe_cell(result.liked_in),
+                        _spreadsheet_safe_cell(result.movie.uri),
+                        _spreadsheet_safe_cell(" ".join(result.lists)),
+                    ])
+            ranking_temporary.write_text(csv_buffer.getvalue(), encoding="utf-8")
         gallery_temporary.replace(gallery_output)
+        if ranking_temporary is not None and ranking_output is not None:
+            ranking_temporary.replace(ranking_output)
         temporary.replace(output)
     finally:
         temporary.unlink(missing_ok=True)
         gallery_temporary.unlink(missing_ok=True)
+        if ranking_temporary is not None:
+            ranking_temporary.unlink(missing_ok=True)

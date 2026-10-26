@@ -238,6 +238,24 @@ def test_snapshot_schema_accepts_shared_fixture_without_optional_tmdb_fields():
     assert snapshot.validate_snapshot(fixture) == fixture
 
 
+def test_snapshot_writer_exports_full_ranking_without_private_payload(tmp_path):
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    film = Movie("=SUM(1,1)", "2016", "https://letterboxd.com/film/arrival/")
+    fixture["ranking_csv_url"] = "/data/ranking-20261025T000000Z-0123456789ab.csv"
+    fixture["_full_ranking"] = [MovieResult(film, 3, ["https://letterboxd.com/user/list/favorites/"])]
+    fixture["_watched"] = {"https://letterboxd.com/film/arrival/"}
+
+    output = tmp_path / "data" / "snapshot.json"
+    snapshot.write_snapshot(fixture, output)
+
+    public_snapshot = json.loads(output.read_text(encoding="utf-8"))
+    assert "_full_ranking" not in public_snapshot
+    assert "_watched" not in public_snapshot
+    csv_text = (output.parent / "ranking-20261025T000000Z-0123456789ab.csv").read_text(encoding="utf-8")
+    assert "Rank,Title,Year,Watched,Liked in lists,Letterboxd URI,List URLs" in csv_text
+    assert "1,\"'=SUM(1,1)\",2016,yes,3," in csv_text
+
+
 def test_python_and_browser_snapshot_schemas_are_identical():
     package_schema = json.loads((Path(snapshot.__file__).parent / "snapshot.schema.json").read_text())
     browser_schema = json.loads((Path(__file__).parent.parent / "web" / "snapshot.schema.json").read_text())

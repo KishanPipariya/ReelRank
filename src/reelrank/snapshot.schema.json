@@ -8,6 +8,7 @@
     "profile_url": { "type": "string", "minLength": 1, "pattern": "\\S" },
     "refreshed_at": { "type": "string", "minLength": 1, "pattern": "\\S" },
     "poster_gallery_url": { "type": "string", "pattern": "^/data/poster-galleries-[A-Za-z0-9T_Z.-]+\\.json$" },
+    "ranking_csv_url": { "type": "string", "pattern": "^/data/ranking-[A-Za-z0-9T_Z.-]+\\.csv$" },
     "list_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
     "film_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
     "displayed_film_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
