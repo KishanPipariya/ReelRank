@@ -347,10 +347,12 @@ async function checkSavedPreferences() {
   await page.locator('#preset-name').fill('A saved view');
   await page.locator('#preset-save').click();
   check(await page.locator('#preset-list option').count() === 2, 'Users can save named filter presets.');
+  await page.locator('#local-settings > summary').click();
   const downloadPromise = page.waitForEvent('download');
   await page.locator('#preset-export').click();
   const exportFile = await downloadPromise;
   const exportContents = await readFile(await exportFile.path());
+  await page.locator('#saved-views > summary').click();
   await page.locator('#preset-list').selectOption('');
   await page.locator('#preset-apply').click();
   check((await page.locator('#preset-status').textContent()).includes('Choose a preset'), 'Empty preset selections do not apply the first saved item.');
@@ -359,6 +361,7 @@ async function checkSavedPreferences() {
   check((await page.locator('#preset-status').textContent()).includes('Applied'), 'Users can apply a saved preset.');
   await page.locator('#preset-delete').click();
   check(await page.locator('#preset-list option').count() === 1, 'Users can delete a saved preset.');
+  await page.locator('#local-settings > summary').click();
   await page.locator('#preset-import-file').setInputFiles({ name: exportFile.suggestedFilename(), mimeType: 'application/json', buffer: exportContents });
   check(await page.locator('#preset-list option').count() === 2, 'Users can import an exported saved view.');
   await page.locator('.film-card:visible').filter({ hasText: 'Arrival' }).first().locator('.film-detail-trigger').click();
@@ -376,7 +379,7 @@ async function checkSavedPreferences() {
   await page.getByRole('button', { name: 'Reset poster for Arrival to the catalogue original' }).click();
   check(await page.locator('.film-detail-poster .poster-fallback-title').textContent() === 'Arrival', 'Film details can reset one poster to its catalogue original.');
   await page.locator('#film-detail-close').click();
-  await page.locator('#saved-views > summary').click();
+  await page.locator('#local-settings > summary').click();
   await page.locator('#reset-posters').click();
   check(await page.locator('#preset-status').textContent().then((text) => text.includes('Poster choices reset')), 'Global poster reset reports its outcome.');
   check(await page.locator('#preset-list option').count() === 2, 'Poster reset preserves saved views.');
