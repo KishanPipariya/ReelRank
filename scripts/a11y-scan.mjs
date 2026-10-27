@@ -142,6 +142,16 @@ async function checkCatalogInteractions(page) {
   const retainedExpandedCard = page.locator('.film-card:visible:has(.genre-tag-more) .genre-tags.is-expanded').first();
   check(await retainedExpandedCard.count() === 1, 'Film genre expansion survives a catalog rerender.');
   await page.locator('#clear-search-state').click();
+  await page.goto(`${baseUrl}/?genre=Drama&genre=Crime`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#site-shell:not([hidden])');
+  await page.locator('#catalog-filters > summary').click();
+  await page.locator('#genre-filter > summary').click();
+  await page.locator('#selected-genres').getByRole('button', { name: 'Remove Drama genre filter' }).click();
+  check(await page.locator('#catalog-filters').evaluate((element) => element.open), 'Removing one selected genre keeps the catalogue filter panel open.');
+  check(await page.locator('#genre-filter').evaluate((element) => element.open), 'Removing one selected genre keeps the genre disclosure open.');
+  check(await page.locator('#selected-genres button').count() === 1 && await page.locator('#selected-genres button').textContent() === 'Crime ×', 'Removing one genre leaves the other selected genre intact.');
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#site-shell:not([hidden])');
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.locator('#sort-select').selectOption('title');
   const directorCard = page.locator('.film-card:visible').filter({ hasText: 'Portrait of a Lady on Fire' });

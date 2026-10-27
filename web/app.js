@@ -1640,8 +1640,9 @@ closeSourceListsButton.addEventListener('click', () => {
   sourceListFilter.querySelector('summary').focus();
 });
 document.addEventListener('pointerdown', (event) => {
-  if (genreFilter.open && !genreFilter.contains(event.target)) genreFilter.open = false;
-  if (sourceListFilter.open && !sourceListFilter.contains(event.target)) sourceListFilter.open = false;
+  const eventPath = event.composedPath();
+  if (genreFilter.open && !eventPath.includes(genreFilter)) genreFilter.open = false;
+  if (sourceListFilter.open && !eventPath.includes(sourceListFilter)) sourceListFilter.open = false;
 });
 loadMoreButton.addEventListener('click', () => {
   state.visibleLimit += 40;
@@ -1654,9 +1655,10 @@ backToFiltersButton.addEventListener('click', () => {
 });
 window.addEventListener('scroll', updateBackToFiltersVisibility, { passive: true });
 document.addEventListener('click', (event) => {
-  if (catalogFilters.open && !catalogFilters.contains(event.target)) catalogFilters.open = false;
+  const eventPath = event.composedPath();
+  if (catalogFilters.open && !eventPath.includes(catalogFilters)) catalogFilters.open = false;
   document.querySelectorAll('.utility-disclosure[open]').forEach((disclosure) => {
-    if (!disclosure.contains(event.target)) disclosure.open = false;
+    if (!eventPath.includes(disclosure)) disclosure.open = false;
   });
 });
 document.addEventListener('keydown', (event) => {
