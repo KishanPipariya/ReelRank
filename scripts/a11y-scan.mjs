@@ -575,6 +575,33 @@ async function checkKeyboardAndReflow() {
       console.log(`${label}: no horizontal overflow at ${width}px CSS viewport.`);
     }
 
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('#country-index-toggle').click();
+    const mobileFilterMetrics = await page.evaluate(() => {
+      const country = document.querySelector('#country-index-options .country-index-option');
+      const countryName = country?.querySelector('span');
+      const language = document.querySelector('#language-index-options .country-index-option');
+      const runtime = document.querySelector('#runtime-options .runtime-option');
+      const decade = document.querySelector('#decade-options .decade-option');
+      const decadeCount = decade?.querySelector('.decade-option-count');
+      return {
+        countryFont: country ? parseFloat(getComputedStyle(country).fontSize) : 0,
+        countryHeight: country?.getBoundingClientRect().height || 0,
+        countryNameWraps: countryName ? getComputedStyle(countryName).whiteSpace === 'normal' : false,
+        languageFont: language ? parseFloat(getComputedStyle(language).fontSize) : 0,
+        runtimeFont: runtime ? parseFloat(getComputedStyle(runtime).fontSize) : 0,
+        runtimeHeight: runtime?.getBoundingClientRect().height || 0,
+        decadeFont: decade ? parseFloat(getComputedStyle(decade.querySelector('.decade-option-label')).fontSize) : 0,
+        decadeCountFont: decadeCount ? parseFloat(getComputedStyle(decadeCount).fontSize) : 0,
+        decadeHeight: decade?.getBoundingClientRect().height || 0,
+        decadeHintVisible: getComputedStyle(document.querySelector('.decade-scroll-hint')).display !== 'none',
+      };
+    });
+    check(mobileFilterMetrics.countryFont >= 12 && mobileFilterMetrics.countryHeight >= 42 && mobileFilterMetrics.countryNameWraps, `Expanded country labels are readable and wrap (${JSON.stringify(mobileFilterMetrics)}).`);
+    check(mobileFilterMetrics.languageFont >= 12, `Language options use readable mobile text (${mobileFilterMetrics.languageFont}px).`);
+    check(mobileFilterMetrics.runtimeFont >= 12 && mobileFilterMetrics.runtimeHeight >= 42, `Runtime options use readable mobile text and targets (${JSON.stringify(mobileFilterMetrics)}).`);
+    check(mobileFilterMetrics.decadeFont >= 12 && mobileFilterMetrics.decadeCountFont >= 11 && mobileFilterMetrics.decadeHeight >= 42 && mobileFilterMetrics.decadeHintVisible, `Decade options have readable labels, targets, and a mobile scroll cue (${JSON.stringify(mobileFilterMetrics)}).`);
+
     await page.locator('#genre-filter > summary').click();
     const menuBounds = await page.locator('#genre-filter .genre-filter-menu').evaluate((element) => {
       const bounds = element.getBoundingClientRect();

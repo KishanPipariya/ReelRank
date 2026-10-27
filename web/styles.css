@@ -143,6 +143,7 @@ h1 em { color: var(--green); font-family: var(--serif); font-weight: 500; letter
 .decade-retrospective-heading .eyebrow::before { margin-right: 6px; color: var(--orange); content: '✳'; }
 .decade-retrospective-heading h3 { margin: 0; color: var(--muted); font-family: var(--serif); font-size: 14px; font-weight: 500; font-style: italic; }
 .decade-options { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 5px; scrollbar-width: thin; }
+.decade-scroll-hint { display: none; }
 .decade-option { min-width: 79px; min-height: 39px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface); color: var(--control-ink); cursor: pointer; text-align: left; transition: border-color .16s ease, background .16s ease, color .16s ease; }
 .decade-option-all { min-width: 102px; }
 .decade-option:hover { border-color: var(--forest); }
@@ -634,11 +635,20 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
   .decade-retrospective { margin-bottom: 20px; padding-inline: 10px; }
   .decade-retrospective-heading { flex-wrap: wrap; gap: 4px 9px; }
   .decade-options { margin-inline: -2px; }
+  .decade-option { min-height: 42px; }
+  .decade-option-label { font-size: 12px; }
+  .decade-option-count { font-size: 11px; }
+  .decade-scroll-hint { display: block; margin: 2px 0 0; color: var(--muted); font-size: 11px; }
   .country-index { align-items: flex-start; flex-direction: column; gap: 6px; }
   .country-index.is-expanded { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; }
   .country-index.is-expanded .country-index-heading { grid-column: 1; }
   .country-index-options { width: 100%; margin-inline: -2px; }
   .country-index-options.is-expanded { max-height: 220px; }
+  .country-index-options.is-expanded { display: grid; grid-template-columns: minmax(0, 1fr); overflow-x: hidden; }
+  .country-index-option { min-height: 42px; align-items: center; font-size: 12px; }
+  .country-index-options.is-expanded .country-index-option { width: 100%; min-width: 0; box-sizing: border-box; }
+  .country-index-options.is-expanded .country-index-option span { max-width: none; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
+  .runtime-option { min-height: 42px; padding: 8px 11px; font-size: 12px; }
   .country-index-search-control { grid-column: 1 / -1; width: 100%; }
   .country-index-empty { grid-column: 1 / -1; }
   .country-index-toggle { align-self: flex-start; }
