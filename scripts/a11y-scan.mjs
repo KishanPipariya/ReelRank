@@ -153,8 +153,12 @@ async function checkCatalogInteractions(page) {
   await page.goto(`${baseUrl}/?list=${encodeURIComponent(longListUrl)}`, { waitUntil: 'domcontentloaded' });
   const sourceFilterChip = page.locator('#active-source-list-filters .active-source-list-chip');
   await sourceFilterChip.waitFor();
-  const sourceChipHeight = await sourceFilterChip.evaluate((chip) => chip.getBoundingClientRect().height);
-  check(sourceChipHeight <= 30, `Long source-list filter chip remains a single compact line (${sourceChipHeight}px).`);
+  const sourceChipLayout = await sourceFilterChip.evaluate((chip) => ({
+    height: chip.getBoundingClientRect().height,
+    fontSize: Number.parseFloat(getComputedStyle(chip).fontSize),
+    whiteSpace: getComputedStyle(chip).whiteSpace,
+  }));
+  check(sourceChipLayout.height >= 32 && sourceChipLayout.fontSize >= 12 && sourceChipLayout.whiteSpace === 'normal', `Long source-list filter chip wraps at readable size (${JSON.stringify(sourceChipLayout)}).`);
   check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Long source-list filter chip does not cause mobile overflow.');
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.setViewportSize({ width: 1440, height: 900 });

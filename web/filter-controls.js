@@ -119,12 +119,11 @@ export function createFilterControls({ state, sources, elements, actions }) {
       button.setAttribute('aria-pressed', String(selected));
     });
     elements.genreOptions.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = state.genres.includes(input.value); });
-    elements.genreFilterSummary.textContent = state.genres.length ? `${state.genres[0]}${state.genres.length > 1 ? ` +${state.genres.length - 1}` : ''}` : 'Any';
+    elements.genreFilterSummary.textContent = state.genres.length ? `${state.genres.length} selected` : 'Any';
     elements.clearGenresButton.hidden = state.genres.length === 0;
     renderSelectedGenres();
     elements.sourceListOptions.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = state.sourceLists.includes(input.value); });
-    const labels = state.sourceLists.map((url) => sources().find((item) => item.url === url)?.label).filter(Boolean);
-    elements.sourceListFilterSummary.textContent = labels.length === 0 ? 'Any' : labels.length === 1 ? labels[0] : `${labels.length} selected`;
+    elements.sourceListFilterSummary.textContent = state.sourceLists.length ? `${state.sourceLists.length} selected` : 'Any';
     const activeFilterCount = state.genres.length + state.directors.length + state.sourceLists.length
       + Number(Boolean(state.country)) + Number(state.decade !== '') + Number(Boolean(state.runtime));
     const totalActiveFilterCount = activeFilterCount + Number(Boolean(state.language));

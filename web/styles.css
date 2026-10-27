@@ -916,4 +916,26 @@ button.film-detail-external-link { padding: 0; border: 0; background: transparen
   .catalog-filters-panel > .genre-filter { width: 100%; min-width: 0; }
   .catalog-filters-panel .genre-filter-menu { min-width: 0; overflow-x: hidden; }
   .selected-genres-heading, .genre-menu-actions { flex-wrap: wrap; }
+  .genre-filter-toggle { min-height: 42px; font-size: 13px; }
+  .genre-filter-summary { max-width: 120px; font-size: 12px; }
+  .genre-filter-menu { display: flex; max-height: min(70vh, 560px); flex-direction: column; }
+  .selected-genres-heading { font-size: 11px; }
+  .selected-genres { max-height: 120px; overflow-y: auto; }
+  .selected-genres-empty { font-size: 12px; }
+  .selected-genre-chip { max-width: 100%; min-height: 32px; padding: 6px 9px; font-size: 12px; line-height: 1.25; text-align: left; overflow-wrap: anywhere; }
+  .clear-genres, .close-genres { min-height: 32px; font-size: 12px; }
+  .genre-search-box { min-height: 42px; flex: 0 0 auto; }
+  .genre-search-box input { font-size: 16px; }
+  .genre-filter-help { font-size: 11px; }
+  .genre-options { max-height: min(42vh, 360px); overscroll-behavior: contain; }
+  #source-list-options { grid-template-columns: 1fr; }
+  .genre-option { min-height: 42px; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 9px; padding: 7px 4px; font-size: 12px; line-height: 1.35; }
+  .genre-option input { width: 18px; height: 18px; }
+  .genre-option span { white-space: normal; overflow-wrap: anywhere; }
+  .genre-option small { color: var(--control-ink); font-size: 10px; }
+  .active-genre-chip { min-height: 32px; padding: 6px 9px; font-size: 12px; line-height: 1.25; }
+  .active-source-list-chip { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+}
+@media (max-width: 430px) {
+  #genre-options { grid-template-columns: 1fr; }
 }
