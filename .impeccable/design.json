@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-29T07:41:42Z",
+  "generatedAt": "2026-10-29T12:52:05Z",
   "title": "Design System: ReelRank",
   "extensions": {
     "colorMeta": {
@@ -348,58 +348,153 @@
           "#f1a17c",
           "#ffe9e0"
         ]
+      },
+      "signal-wash": {
+        "role": "neutral",
+        "displayName": "Signal Wash",
+        "canonical": "#e8ece3",
+        "tonalRamp": [
+          "#272923",
+          "#414b34",
+          "#5b6a48",
+          "#75895d",
+          "#8fa276",
+          "#a8b795",
+          "#c1cbb3",
+          "#f2f3f2"
+        ]
+      },
+      "signal-rule": {
+        "role": "neutral",
+        "displayName": "Signal Rule",
+        "canonical": "#d2d9cc",
+        "tonalRamp": [
+          "#262824",
+          "#3f4937",
+          "#58664c",
+          "#718462",
+          "#8b9d7b",
+          "#a5b399",
+          "#bfc9b6",
+          "#f2f3f2"
+        ]
+      },
+      "signal-value": {
+        "role": "primary",
+        "displayName": "Signal Value",
+        "canonical": "#243d31",
+        "tonalRamp": [
+          "#222a26",
+          "#304f40",
+          "#42705a",
+          "#559074",
+          "#6faa8d",
+          "#8fbda7",
+          "#afd0c0",
+          "#f2f3f2"
+        ]
+      },
+      "night-signal-wash": {
+        "role": "neutral",
+        "displayName": "Night Signal Wash",
+        "canonical": "#1d251f",
+        "tonalRamp": [
+          "#242825",
+          "#38473c",
+          "#4e6454",
+          "#65816c",
+          "#7e9a85",
+          "#9bb1a0",
+          "#b8c7bb",
+          "#f2f3f2"
+        ]
+      },
+      "night-signal-rule": {
+        "role": "neutral",
+        "displayName": "Night Signal Rule",
+        "canonical": "#344137",
+        "tonalRamp": [
+          "#252825",
+          "#39463c",
+          "#4f6354",
+          "#66806c",
+          "#809985",
+          "#9cb0a0",
+          "#b8c6bb",
+          "#f2f2f2"
+        ]
+      },
+      "night-signal-value": {
+        "role": "secondary",
+        "displayName": "Night Signal Value",
+        "canonical": "#c3d89c",
+        "tonalRamp": [
+          "#282d20",
+          "#485a26",
+          "#658032",
+          "#82a541",
+          "#9bbe5a",
+          "#b1cd7f",
+          "#c8dba4",
+          "#f3f3f1"
+        ]
       }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Literary Display",
-        "purpose": "Large hero headlines and expressive film titles."
+        "displayName": "Display",
+        "purpose": "Large editorial headings, led by the catalogue hero."
       },
       "headline": {
-        "displayName": "Catalogue Headline",
-        "purpose": "Section headings and featured-film titles."
+        "displayName": "Headline",
+        "purpose": "Collection and catalogue section headings."
       },
       "body": {
-        "displayName": "Reading Text",
-        "purpose": "Descriptions and comfortable interface copy."
+        "displayName": "Body",
+        "purpose": "Film descriptions, instructions, and reading copy."
       },
       "label": {
-        "displayName": "Catalogue Mono",
-        "purpose": "Counts, filters, metadata, and compact uppercase labels."
+        "displayName": "Catalogue label",
+        "purpose": "Counts, controls, provenance, and edition metadata."
       }
     },
     "shadows": [
       {
         "name": "setup-card",
         "value": "0 18px 55px #24251d10",
-        "purpose": "Soft lift for the first-run/setup card."
+        "purpose": "Soft lift for first-run and recovery content."
       },
       {
         "name": "utility-panel",
         "value": "0 12px 32px #1519152e",
-        "purpose": "Separate open utility menus from the catalogue."
+        "purpose": "Separate open filter and catalogue utility menus from results."
       },
       {
         "name": "detail-dialog",
         "value": "0 24px 90px #10140f66",
-        "purpose": "Layer film details above the dimmed page."
+        "purpose": "Layer film details above the dimmed catalogue."
+      },
+      {
+        "name": "poster-viewer",
+        "value": "0 24px 90px #10140f88",
+        "purpose": "Raise the full poster viewer above the catalogue."
       }
     ],
     "motion": [
       {
         "name": "control-transition",
         "value": ".16s ease to .18s ease",
-        "purpose": "Short color and border changes on controls."
+        "purpose": "Short state changes on controls."
       },
       {
         "name": "country-expansion",
         "value": ".24s cubic-bezier(.2, .7, .3, 1)",
-        "purpose": "Reveal additional country metadata."
+        "purpose": "Reveal additional production-country metadata."
       },
       {
-        "name": "film-arrive",
-        "value": ".35s ease",
-        "purpose": "Subtle entrance for catalogue film rows."
+        "name": "catalogue-entry",
+        "value": ".48s cubic-bezier(.16, 1, .3, 1); stagger capped at 180ms",
+        "purpose": "Brief entrance for newly paged films only; omitted when reduced motion is preferred."
       }
     ],
     "breakpoints": [
@@ -431,64 +526,64 @@
   },
   "components": [
     {
-      "name": "Masthead",
+      "name": "Masthead navigation",
       "kind": "nav",
       "refersTo": "navigation",
-      "description": "Compact identity and profile navigation at the top of the catalogue.",
-      "html": "<nav class=\"ds-nav\"><a class=\"ds-wordmark\" href=\"#\">ReelRank</a><a class=\"ds-profile\" href=\"#\">Letterboxd profile ↗</a></nav>",
-      "css": ".ds-nav { height: 80px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); color: var(--ink); font-family: var(--sans); } .ds-wordmark { font-size: 21px; font-weight: 700; letter-spacing: -.055em; text-decoration: none; } .ds-profile { color: var(--control-ink); font: 11px var(--mono); text-decoration: none; } .ds-wordmark:focus-visible, .ds-profile:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; } @media (prefers-color-scheme: dark) { .ds-wordmark:focus-visible, .ds-profile:focus-visible { outline-color: #c3df93; } }"
+      "description": "Compact brand and profile navigation at the top of the catalogue.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Site\"><a class=\"ds-wordmark\" href=\"#\"><span class=\"ds-wordmark-mark\">R</span><span>ReelRank</span></a><a class=\"ds-profile\" href=\"#\">Letterboxd profile ↗</a></nav>",
+      "css": ".ds-nav { height: 68px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); color: var(--ink); font-family: var(--sans); } .ds-wordmark { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-size: 21px; font-weight: 700; letter-spacing: -.055em; text-decoration: none; } .ds-wordmark-mark { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--forest); border-radius: 50%; color: var(--forest); font: italic 500 18px var(--serif); } .ds-profile { color: var(--control-ink); font: 12px var(--mono); text-decoration: none; } .ds-nav a:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; } @media (max-width: 700px) { .ds-nav { height: 66px; } } @media (min-width: 921px) and (max-height: 800px) { .ds-nav { height: 56px; } }"
     },
     {
       "name": "Selected Filter",
       "kind": "button",
       "refersTo": "button-filter-active",
-      "description": "A compact active state for watched-status filtering.",
-      "html": "<button class=\"ds-filter\" type=\"button\" aria-pressed=\"true\">Unwatched</button>",
-      "css": ".ds-filter { min-height: 30px; padding: 0 12px; border: 0; border-radius: 2px; background: var(--filter-active); color: var(--filter-active-ink); cursor: pointer; font: 11px var(--sans); transition: background .18s ease, color .18s ease; } .ds-filter:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; } @media (prefers-color-scheme: dark) { .ds-filter:focus-visible { outline-color: #c3df93; } }"
+      "description": "The selected watched-status or catalogue filter.",
+      "html": "<button class=\"ds-filter\" type=\"button\" aria-pressed=\"true\">Watched</button>",
+      "css": ".ds-filter { min-height: 30px; padding: 0 12px; border: 0; border-radius: 2px; background: var(--filter-active); color: var(--filter-active-ink); cursor: pointer; font: 12px var(--sans); transition: background .18s ease, color .18s ease; } .ds-filter:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; } @media (prefers-color-scheme: dark) { .ds-filter:focus-visible { outline-color: #c3df93; } }"
     },
     {
       "name": "Catalogue Search",
       "kind": "input",
       "refersTo": "input-search",
-      "description": "A quiet single-line search field with a clear keyboard focus ring.",
-      "html": "<label class=\"ds-search\"><span>⌕</span><input type=\"search\" placeholder=\"Find a film or filmmaker\" aria-label=\"Find a film or filmmaker\" /><kbd>/</kbd></label>",
-      "css": ".ds-search { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface); color: var(--ink); font-family: var(--sans); } .ds-search span, .ds-search kbd { color: var(--muted); } .ds-search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--ink); font: 11px var(--sans); } .ds-search input::placeholder { color: var(--muted); opacity: 1; } .ds-search:focus-within { outline: 3px solid #bd6446; outline-offset: 3px; }"
+      "description": "Film search with a slash-key hint and a visible focus ring.",
+      "html": "<label class=\"ds-search\"><span class=\"ds-search-icon\" aria-hidden=\"true\">⌕</span><input type=\"search\" placeholder=\"Search these films\" aria-label=\"Search these films\" /><kbd>/</kbd></label>",
+      "css": ".ds-search { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface); color: var(--ink); font-family: var(--sans); } .ds-search:focus-within { outline: 3px solid #bd6446; outline-offset: 3px; } .ds-search-icon, .ds-search kbd { color: var(--muted); } .ds-search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--ink); font: 14px var(--sans); } .ds-search kbd { font: 12px var(--mono); } @media (prefers-color-scheme: dark) { .ds-search:focus-within { outline-color: #c3df93; } }"
     },
     {
       "name": "Genre Chip",
       "kind": "chip",
       "refersTo": "chip-genre",
-      "description": "A filterable genre tag with a clear pressed state.",
+      "description": "A compact genre filter with a clear selected state.",
       "html": "<button class=\"ds-chip\" type=\"button\" aria-pressed=\"false\">Drama</button>",
-      "css": ".ds-chip { min-height: 24px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-soft); color: var(--control-ink); cursor: pointer; font: 9px var(--sans); } .ds-chip:hover, .ds-chip[aria-pressed='true'] { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); } .ds-chip:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; }"
+      "css": ".ds-chip { min-height: 24px; max-width: 100%; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-soft); color: var(--control-ink); cursor: pointer; font: 12px/1.25 var(--sans); } .ds-chip:hover, .ds-chip[aria-pressed=\"true\"] { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); } .ds-chip:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; } @media (prefers-color-scheme: dark) { .ds-chip:focus-visible { outline-color: #c3df93; } }"
     },
     {
       "name": "Setup Card",
       "kind": "card",
       "refersTo": "setup-card",
-      "description": "The centered first-run and recovery panel for a profile-specific site.",
-      "html": "<section class=\"ds-setup\"><strong>ReelRank</strong><h2>Preparing your ReelRank</h2><p>Checking the configured Letterboxd profile and snapshot…</p><a href=\"#\">Preview sample data</a></section>",
-      "css": ".ds-setup { width: min(620px, 100%); padding: clamp(26px, 6vw, 54px); border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: 0 18px 55px #24251d10; font-family: var(--sans); } .ds-setup strong { display: block; margin-bottom: 32px; font-size: 21px; } .ds-setup h2 { margin: 0; font: 500 clamp(38px, 7vw, 60px)/1.05 var(--serif); letter-spacing: -.055em; } .ds-setup p { color: var(--muted); font-size: 14px; line-height: 1.7; } .ds-setup a { color: var(--forest); font: 11px var(--mono); text-underline-offset: 4px; } .ds-setup a:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; }"
+      "description": "Centered first-run and recovery content for a profile-specific site.",
+      "html": "<section class=\"ds-setup\"><strong>ReelRank</strong><h2>Preparing your ReelRank</h2><p>Checking the configured Letterboxd profile and snapshot…</p></section>",
+      "css": ".ds-setup { width: min(620px, 100%); padding: clamp(26px, 6vw, 54px); border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: 0 18px 55px #24251d10; font-family: var(--sans); } .ds-setup strong { display: block; margin-bottom: 32px; font-size: 21px; } .ds-setup h2 { margin: 0; font: 500 clamp(38px, 7vw, 60px)/1 var(--serif); letter-spacing: -.04em; } .ds-setup p { margin: 20px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }"
     },
     {
       "name": "Catalogue Hero",
       "kind": "custom",
       "refersTo": "hero-panel",
-      "description": "The featured catalogue introduction with a subtle inset frame and a direct action into the film collection.",
-      "html": "<section class=\"ds-hero\"><div class=\"ds-hero-copy\"><h1>The films that<br /><em>keep showing up.</em></h1><p class=\"ds-hero-tagline\">Your liked lists, brought together</p><a class=\"ds-hero-browse\" href=\"#collection-title\">Browse the catalogue</a></div><span class=\"ds-hero-stamp\" aria-hidden=\"true\">A personal film almanac</span></section>",
-      "css": ".ds-hero { min-height: 336px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; padding: 34px 8.2%; background: var(--forest); color: #f6f3e9; font-family: var(--sans); } .ds-hero::before { position: absolute; inset: 14px; border: 1px solid #d4e6c72b; content: ''; pointer-events: none; } .ds-hero-copy { position: relative; z-index: 1; } .ds-hero h1 { margin: 0; font: 500 clamp(34px, 7vw, 78px)/.99 var(--sans); letter-spacing: -.065em; } .ds-hero em { color: var(--green); font: italic 500 1em var(--serif); } .ds-hero-tagline { margin: 10px 0 16px; color: #c6d7b0; font: 12px/1.4 var(--mono); } .ds-hero-browse { min-height: 42px; display: inline-flex; align-items: center; padding: 0 14px; border: 1px solid var(--green); background: var(--green); color: #243d31; font: 12px var(--mono); text-decoration: none; } .ds-hero-browse:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; } .ds-hero-stamp { max-width: 158px; color: #c3d89c; font: italic 21px var(--serif); text-align: center; }"
+      "description": "Evergreen catalogue introduction with an editorial headline, edition notes, and almanac stamp.",
+      "html": "<section class=\"ds-hero\"><div class=\"ds-hero-copy\"><h1>The films that keep <em>showing up.</em></h1><p class=\"ds-hero-description\">A signal from the public Letterboxd lists you like. Films rise as they appear across more lists.</p><a class=\"ds-hero-link\" href=\"#\">How the ranking works ↗</a><p class=\"ds-edition\">Catalogue edition · 29 Oct 2026</p><p class=\"ds-notes\">Most common <strong>2010s</strong> · <strong>United States of America</strong></p></div><div class=\"ds-stamp\" aria-hidden=\"true\"><span>A personal</span><strong>film<br>almanac</strong><small>LB · INTELKISHAN</small></div></section>",
+      "css": ".ds-hero { min-height: 176px; position: relative; display: flex; align-items: center; justify-content: space-between; gap: clamp(16px, 3vw, 32px); overflow: hidden; padding: 20px 7%; background: var(--forest); color: #f6f3e9; font-family: var(--sans); } .ds-hero::before { position: absolute; z-index: 1; inset: 14px; border: 1px solid #d4e6c72b; content: \"\"; pointer-events: none; } .ds-hero::after { position: absolute; z-index: 0; inset: 0; background: radial-gradient(ellipse at 76% 48%, #e8876030 0, #e8876014 23%, transparent 57%), radial-gradient(ellipse at 10% 0%, #b5d67a16 0, transparent 48%); content: \"\"; pointer-events: none; } .ds-hero-copy { min-width: 0; position: relative; z-index: 2; max-width: 840px; display: flex; flex: 1 1 0; flex-direction: column; align-items: flex-start; gap: 12px; } .ds-hero h1 { margin: 0; font: 500 clamp(54px, 5vw, 64px)/.98 var(--serif); letter-spacing: -.04em; } .ds-hero h1 em { color: var(--green); } .ds-hero-description { max-width: 840px; margin: 0; color: #d2d7cc; font-size: 14px; line-height: 1.45; } .ds-hero-link { color: #f0a07b; font: 12px var(--mono); text-decoration-color: #f0a07b99; text-underline-offset: 4px; } .ds-hero-link:hover { color: #ffc19e; text-decoration-thickness: 2px; } .ds-hero-link:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; } .ds-edition, .ds-notes { margin: 0; color: #bbc5b7; font: 12px var(--mono); } .ds-notes { padding: 8px 8px 4px 0; border-top: 1px solid #d4e6c72b; border-bottom: 1px solid #d4e6c72b; } .ds-notes strong { color: #c3d89c; font-family: var(--serif); } .ds-stamp { position: relative; z-index: 1; width: 176px; height: 176px; flex: 0 0 auto; opacity: 1; display: flex; flex-direction: column; justify-content: center; border: 1px solid #d4e6c755; border-radius: 50%; color: #c8d5c1; text-align: center; transform: rotate(5deg); } .ds-stamp strong { margin: 8px 0; color: #c3d89c; font: italic 24px/1.03 var(--serif); } .ds-stamp span, .ds-stamp small { font: 8px var(--mono); letter-spacing: .15em; text-transform: uppercase; } @media (min-width: 921px) and (max-height: 800px) { .ds-hero { min-height: 0; padding-block: 22px; } .ds-hero h1 { font-size: clamp(54px, 4.7vw, 60px); } .ds-stamp { width: 156px; height: 156px; } } @media (max-width: 920px) { .ds-hero { padding-inline: 6%; } } @media (max-width: 700px) { .ds-hero { min-height: 250px; padding: 18px 22px; } .ds-hero h1 { font-size: clamp(36px, 9vw, 48px); line-height: 1.02; } .ds-stamp { display: none; } }"
     },
     {
       "name": "Programme Note",
       "kind": "custom",
       "description": "A quiet editorial annotation with a terracotta edge.",
       "html": "<aside class=\"ds-note\"><strong>PROGRAMME NOTE</strong><p>Films are ranked by appearances across liked lists.</p></aside>",
-      "css": ".ds-note { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: 4px 12px; margin: 0; padding: 10px 12px; border-left: 2px solid var(--orange); background: var(--surface-soft); color: var(--muted); font: 9px/1.5 var(--mono); } .ds-note strong { color: var(--rust-ink); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; } .ds-note p { margin: 0; }"
+      "css": ".ds-note { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: 4px 12px; margin: 0; padding: 10px 12px; border-left: 2px solid var(--orange); background: var(--surface-soft); color: var(--muted); font: 12px/1.5 var(--mono); } .ds-note strong { color: var(--rust-ink); font-size: 12px; letter-spacing: .08em; } .ds-note p { margin: 0; }"
     }
   ],
   "narrative": {
     "northStar": "The Personal Film Almanac",
-    "overview": "ReelRank feels like a cinephile’s home: warm, comfortable, and organized around a personal catalogue. Its visual language pairs a lived-in paper palette with evergreen framing, serif film titles, and small mono labels that make rankings and provenance easy to scan.\n\nThe interface balances a poster wall’s immediacy with a ledger’s precision. Film artwork leads the browsing view; the ledger makes a large catalogue easier to compare. The same editorial rhythm carries into compact controls, expandable details, and a dedicated dark palette.",
+    "overview": "ReelRank feels like a cinephile’s home: warm, comfortable, and organized around a personal catalogue. Its visual language pairs a lived-in paper palette with evergreen framing, serif film titles, and small mono labels that make rankings and provenance easy to scan.\n\nThe interface balances a poster wall’s immediacy with a ledger’s precision. Film artwork leads the browsing view; the ledger makes a large catalogue easier to compare. A softly tinted signal band groups ranking counts and watched progress, keeping provenance and status visible without competing with the hero. The same editorial rhythm carries into compact controls, expandable details, and a dedicated dark palette.",
     "keyCharacteristics": [
       "Warm paper surfaces and deep evergreen framing",
       "Playfair Display headlines alongside DM Sans reading text and DM Mono metadata",
@@ -519,9 +614,9 @@
       "Do keep the catalogue flat at rest and use shadows for raised menus and dialogs."
     ],
     "donts": [
-      "Don't turn catalogue rows into generic rounded cards; the poster wall and ledger have distinct, intentional structures.",
-      "Don't spread terracotta across broad surfaces; it is an accent to the paper-and-evergreen palette.",
-      "Don't remove the visible focus treatment from interactive controls."
+      "Don’t turn catalogue rows into generic rounded cards; the poster wall and ledger have distinct, intentional structures.",
+      "Don’t spread terracotta across broad surfaces; it is an accent to the paper-and-evergreen palette.",
+      "Don’t remove the visible focus treatment from interactive controls."
     ]
   }
 }
