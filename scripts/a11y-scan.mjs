@@ -20,6 +20,25 @@ function check(condition, message) {
   if (!condition) throw new Error(`Accessibility interaction check failed: ${message}`);
 }
 
+async function openDisclosure(page, selector) {
+  const disclosure = page.locator(selector);
+  if (!(await disclosure.evaluate((element) => element.open))) {
+    await disclosure.locator(':scope > summary').click();
+  }
+}
+
+async function openProgrammeShare(page) {
+  await openDisclosure(page, '#catalogue-tools');
+  await openDisclosure(page, '#share-output');
+  await openDisclosure(page, '#programme-share');
+}
+
+async function openFilterFacet(page, selector) {
+  await openDisclosure(page, '#catalog-filters');
+  await openDisclosure(page, '.more-filters');
+  await openDisclosure(page, selector);
+}
+
 async function checkCatalogueSectionFlow(page, label) {
   const layout = await page.evaluate(() => {
     const selectors = ['.catalogue-controls', '.catalogue-actions', '.catalogue-results'];
@@ -35,8 +54,10 @@ async function checkCatalogueSectionFlow(page, label) {
       searchHelp,
       collectionScope,
       contextInControls: document.querySelector('.collection-context').parentElement.matches('.catalogue-controls'),
-      savedViewsWithExplorePanel: document.querySelector('#saved-views').closest('#catalog-filters') !== null
-        && document.querySelector('#local-settings').closest('#catalog-filters') !== null,
+      savedViewsWithToolsPanel: document.querySelector('#saved-views').closest('#catalogue-tools') !== null
+        && document.querySelector('#local-settings').closest('#catalogue-tools') !== null
+        && document.querySelector('#saved-views').closest('#catalog-filters') === null
+        && document.querySelector('#local-settings').closest('#catalog-filters') === null,
       summaryInContext: document.querySelector('#programme-note').parentElement.matches('.collection-context'),
       summaryOutsideSavedViews: !document.querySelector('#programme-note').closest('#saved-views'),
       posterWallInResults: document.querySelector('#film-grid').parentElement.matches('.catalogue-results'),
@@ -55,12 +76,15 @@ async function checkCatalogueSectionFlow(page, label) {
     };
   });
 
-  check(layout.contextInControls && layout.savedViewsWithExplorePanel, `${label} keeps primary search context visible and secondary tools inside Explore.`);
+  check(layout.contextInControls && layout.savedViewsWithToolsPanel, `${label} keeps primary search context visible and saved preferences inside Catalogue tools.`);
   check(layout.summaryInContext && layout.summaryOutsideSavedViews, `${label} keeps the selection summary with catalogue context and outside the saved-views disclosure.`);
   check(layout.posterWallInResults && layout.posterToggleInViewTools, `${label} separates poster results from display controls.`);
   check(layout.featuredBeforePosterWall, `${label} keeps the featured-film section clear of the poster wall.`);
-  check(layout.collectionScope.includes('title, original title, director, year, genre, synopsis, and source list')
-    && layout.searchHelp.includes('title, original title, director, year, genre, synopsis, and source list'), `${label} uses matching search coverage in visible and accessible descriptions.`);
+  check(layout.collectionScope.includes('Search title, year, director, genre, synopsis, and source lists in')
+    && layout.searchHelp.includes('Results follow the selected sort')
+    && layout.searchHelp.includes('Press slash to focus search')
+    && layout.searchHelp.includes('Escape to clear it')
+    && !layout.searchHelp.includes('title, year, director'), `${label} explains search coverage once and keeps the accessible hint focused on search controls.`);
   check(layout.bounds.every((section, index) => section.height > 0 && (index === 0 || layout.bounds[index - 1].bottom <= section.top + 1)), `${label} catalogue sections are visible and do not overlap (${JSON.stringify(layout.bounds)}).`);
   check(layout.pageWidth <= layout.viewportWidth, `${label} catalogue sections do not create horizontal page overflow (${layout.pageWidth}px > ${layout.viewportWidth}px; ${layout.overflowing.join(', ')}).`);
 }
@@ -172,26 +196,28 @@ async function checkCatalogInteractions(page) {
   check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Long source-list filter chip does not cause mobile overflow.');
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.locator('#catalog-filters > summary').click();
+  await openFilterFacet(page, '.runtime-filter-group');
   check(await page.locator('#catalog-filters').evaluate((element) => element.open), 'Explore opens before using its facet controls.');
   await page.locator('#runtime-options [data-runtime="under-90"]').click();
   check(new URL(page.url()).searchParams.get('runtime') === 'under-90', 'Runtime selection is reflected in the URL.');
-  check(await page.locator('#heading-count').textContent() === '01', 'Under-90-minute selection returns the matching film.');
+  check(await page.locator('#matching-films-count').textContent() === '1 film', 'Under-90-minute selection returns the matching film.');
   check(await page.locator('#active-genre-filters').getByRole('button', { name: 'Remove runtime filter: Under 90 min' }).count() === 1, 'Runtime selection has a named removable filter chip.');
   await page.locator('#runtime-options [data-runtime="90-120"]').click();
-  check(await page.locator('#heading-count').textContent() === '03', '90–120-minute selection respects inclusive boundaries.');
+  check(await page.locator('#matching-films-count').textContent() === '3 films', '90–120-minute selection respects inclusive boundaries.');
   await page.locator('#runtime-options [data-runtime=""]').click();
   await page.locator('#sort-select').selectOption('title');
+  await openFilterFacet(page, '.more-filter-group:has(#country-index-options)');
   await page.locator('#country-index-options .country-index-option:visible').first().click();
   check(Boolean(new URL(page.url()).searchParams.get('country')), 'Country selection is reflected in the URL.');
   check(await page.locator('#country-index-options .country-index-option[aria-pressed="true"]').count() === 1, 'Country filter selection has one active state.');
+  await page.locator('#catalog-filters > summary').click();
+  check(!(await page.locator('#catalog-filters').evaluate((element) => element.open)), 'Closing Refine results restores access to display controls.');
   await page.locator('#ledger-display-button').click();
   check(await page.locator('#film-ledger-view').isVisible(), 'Ledger control displays the ledger.');
   check(new URL(page.url()).searchParams.get('view') === 'ledger', 'View selection is reflected in the URL.');
-  check(!(await page.locator('#catalog-filters').evaluate((element) => element.open)), 'Clicking the ledger control dismisses Explore.');
   await page.locator('#poster-display-button').click();
   check(await page.locator('#film-grid').isVisible(), 'Poster wall control restores the poster grid.');
-  await page.locator('#catalog-filters > summary').click();
+  await openFilterFacet(page, '.more-filter-group:has(#country-index-options)');
   await page.locator('#country-index-options .country-index-option[aria-pressed="true"]').click();
   await page.locator('#sort-select').selectOption('rank');
   await page.locator('.film-detail-trigger:visible').first().click();
@@ -219,7 +245,7 @@ async function checkCatalogInteractions(page) {
   check(await page.locator('#film-detail-dialog').evaluate((dialog) => dialog.open), 'Browser Forward restores the detail dialog.');
   await page.locator('#film-detail-close').click();
   await page.waitForFunction(() => !new URL(location.href).searchParams.has('film'));
-  await page.locator('#catalog-filters > summary').click();
+  await openFilterFacet(page, '.runtime-filter-group');
   await page.locator('#runtime-options [data-runtime="90-120"]').click();
   await page.locator('#sort-select').selectOption('title');
   await page.locator('.film-detail-trigger:visible').first().click();
@@ -349,15 +375,13 @@ async function checkSavedPreferences() {
   await page.waitForSelector('#site-shell:not([hidden])');
   check(await page.locator('#film-ledger-view').isVisible(), 'A saved Ledger preference applies on a bare home visit.');
   await page.locator('#poster-display-button').click();
-  await page.locator('#catalog-filters > summary').click();
-  await page.locator('#programme-share > summary').click();
+  await openProgrammeShare(page);
   const link = new URL(await page.locator('#programme-share-url').inputValue());
   check(link.searchParams.get('view') === 'posters', 'A shared default Poster Wall programme overrides a recipient Ledger preference.');
   await page.goto(link.href, { waitUntil: 'domcontentloaded' });
   check(await page.locator('#film-grid').isVisible(), 'An explicit shared Poster Wall layout wins over stored preferences.');
-  await page.locator('#catalog-filters > summary').click();
-  await page.locator('#programme-share > summary').click();
-  await page.locator('#saved-views > summary').click();
+  await openProgrammeShare(page);
+  await openDisclosure(page, '#saved-views');
   await page.locator('#saved-views').scrollIntoViewIfNeeded();
   await page.screenshot({ path: '/tmp/reelrank-saved-views-desktop.png', animations: 'disabled' });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -367,12 +391,13 @@ async function checkSavedPreferences() {
   await page.locator('#preset-name').fill('A saved view');
   await page.locator('#preset-save').click();
   check(await page.locator('#preset-list option').count() === 2, 'Users can save named filter presets.');
-  await page.locator('#local-settings > summary').click();
+  await openDisclosure(page, '#saved-views');
+  await openDisclosure(page, '.saved-view-portability');
   const downloadPromise = page.waitForEvent('download');
   await page.locator('#preset-export').click();
   const exportFile = await downloadPromise;
   const exportContents = await readFile(await exportFile.path());
-  await page.locator('#saved-views > summary').click();
+  await openDisclosure(page, '#saved-views');
   await page.locator('#preset-list').selectOption('');
   await page.locator('#preset-apply').click();
   check((await page.locator('#preset-status').textContent()).includes('Choose a preset'), 'Empty preset selections do not apply the first saved item.');
@@ -381,7 +406,8 @@ async function checkSavedPreferences() {
   check((await page.locator('#preset-status').textContent()).includes('Applied'), 'Users can apply a saved preset.');
   await page.locator('#preset-delete').click();
   check(await page.locator('#preset-list option').count() === 1, 'Users can delete a saved preset.');
-  await page.locator('#local-settings > summary').click();
+  await openDisclosure(page, '#saved-views');
+  await openDisclosure(page, '.saved-view-portability');
   await page.locator('#preset-import-file').setInputFiles({ name: exportFile.suggestedFilename(), mimeType: 'application/json', buffer: exportContents });
   check(await page.locator('#preset-list option').count() === 2, 'Users can import an exported saved view.');
   await page.locator('.film-card:visible').filter({ hasText: 'Arrival' }).first().locator('.film-detail-trigger').click();
@@ -399,8 +425,8 @@ async function checkSavedPreferences() {
   await page.getByRole('button', { name: 'Reset poster for Arrival to the catalogue original' }).click();
   check(await page.locator('.film-detail-poster .poster-fallback-title').textContent() === 'Arrival', 'Film details can reset one poster to its catalogue original.');
   await page.locator('#film-detail-close').click();
-  await page.locator('#catalog-filters > summary').click();
-  await page.locator('#local-settings > summary').click();
+  await openDisclosure(page, '#catalogue-tools');
+  await openDisclosure(page, '#local-settings');
   await page.locator('#reset-posters').click();
   check(await page.locator('#preset-status').textContent().then((text) => text.includes('Poster choices reset')), 'Global poster reset reports its outcome.');
   check(await page.locator('#preset-list option').count() === 2, 'Poster reset preserves saved views.');
@@ -464,8 +490,7 @@ async function checkProgrammeSharing() {
     const { context, page } = await openSite({ viewport: { width, height: 900 }, colorScheme: width === 320 ? 'dark' : 'light', reducedMotion: 'reduce', path: '/?genre=Drama&filter=unwatched&sort=title&view=ledger' });
     await page.locator('#film-ledger-view').waitFor({ state: 'visible' });
     await page.locator('#search-input').fill('film');
-    await page.locator('#catalog-filters > summary').click();
-    await page.locator('#programme-share > summary').click();
+    await openProgrammeShare(page);
     await page.waitForFunction(() => new URL(document.querySelector('#programme-share-url').value).searchParams.get('q') === 'film');
     const link = await page.locator('#programme-share-url').inputValue();
     const shared = new URL(link);
@@ -507,7 +532,7 @@ async function checkKeyboardAndReflow() {
     await page.waitForSelector('#site-shell:not([hidden])');
     await page.waitForSelector('.film-card');
 
-    check(await page.getByLabel('Find a film or filmmaker', { exact: true }).count() === 1, 'Search field has an accessible name.');
+    check(await page.getByLabel(/^Search these \d+ films$/, { exact: true }).count() === 1, 'Search field has a collection-specific accessible name.');
     check(await page.getByLabel('Sort films').count() === 1, 'Sort control has an accessible name.');
     check(await page.getByRole('group', { name: 'Filter films', exact: true }).count() === 1, 'Watched filters have a labelled group.');
     check(await page.locator('#results-announcement').getAttribute('aria-live') === 'polite', 'Results use a polite live region.');
@@ -586,31 +611,33 @@ async function checkKeyboardAndReflow() {
     }
 
     await page.setViewportSize({ width: 390, height: 844 });
+    await openFilterFacet(page, '.more-filter-group:has(#country-index-options)');
     await page.locator('#country-index-toggle').click();
-    const mobileFilterMetrics = await page.evaluate(() => {
+    const countryAndDecadeMetrics = await page.evaluate(() => {
       const country = document.querySelector('#country-index-options .country-index-option');
       const countryName = country?.querySelector('span');
-      const language = document.querySelector('#language-index-options .country-index-option');
-      const runtime = document.querySelector('#runtime-options .runtime-option');
       const decade = document.querySelector('#decade-options .decade-option');
       const decadeCount = decade?.querySelector('.decade-option-count');
       return {
         countryFont: country ? parseFloat(getComputedStyle(country).fontSize) : 0,
         countryHeight: country?.getBoundingClientRect().height || 0,
         countryNameWraps: countryName ? getComputedStyle(countryName).whiteSpace === 'normal' : false,
-        languageFont: language ? parseFloat(getComputedStyle(language).fontSize) : 0,
-        runtimeFont: runtime ? parseFloat(getComputedStyle(runtime).fontSize) : 0,
-        runtimeHeight: runtime?.getBoundingClientRect().height || 0,
         decadeFont: decade ? parseFloat(getComputedStyle(decade.querySelector('.decade-option-label')).fontSize) : 0,
         decadeCountFont: decadeCount ? parseFloat(getComputedStyle(decadeCount).fontSize) : 0,
         decadeHeight: decade?.getBoundingClientRect().height || 0,
         decadeHintVisible: getComputedStyle(document.querySelector('.decade-scroll-hint')).display !== 'none',
       };
     });
-    check(mobileFilterMetrics.countryFont >= 12 && mobileFilterMetrics.countryHeight >= 42 && mobileFilterMetrics.countryNameWraps, `Expanded country labels are readable and wrap (${JSON.stringify(mobileFilterMetrics)}).`);
-    check(mobileFilterMetrics.languageFont >= 12, `Language options use readable mobile text (${mobileFilterMetrics.languageFont}px).`);
-    check(mobileFilterMetrics.runtimeFont >= 12 && mobileFilterMetrics.runtimeHeight >= 42, `Runtime options use readable mobile text and targets (${JSON.stringify(mobileFilterMetrics)}).`);
-    check(mobileFilterMetrics.decadeFont >= 12 && mobileFilterMetrics.decadeCountFont >= 11 && mobileFilterMetrics.decadeHeight >= 42 && mobileFilterMetrics.decadeHintVisible, `Decade options have readable labels, targets, and a mobile scroll cue (${JSON.stringify(mobileFilterMetrics)}).`);
+    check(countryAndDecadeMetrics.countryFont >= 12 && countryAndDecadeMetrics.countryHeight >= 42 && countryAndDecadeMetrics.countryNameWraps, `Expanded country labels are readable and wrap (${JSON.stringify(countryAndDecadeMetrics)}).`);
+    check(countryAndDecadeMetrics.decadeFont >= 12 && countryAndDecadeMetrics.decadeCountFont >= 11 && countryAndDecadeMetrics.decadeHeight >= 42 && countryAndDecadeMetrics.decadeHintVisible, `Decade options have readable labels, targets, and a mobile scroll cue (${JSON.stringify(countryAndDecadeMetrics)}).`);
+
+    await openFilterFacet(page, '.more-filter-group:has(#language-index-options)');
+    const languageFont = await page.locator('#language-index-options .country-index-option').first().evaluate((option) => parseFloat(getComputedStyle(option).fontSize));
+    check(languageFont >= 12, `Language options use readable mobile text (${languageFont}px).`);
+
+    await openFilterFacet(page, '.runtime-filter-group');
+    const runtimeMetrics = await page.locator('#runtime-options .runtime-option').first().evaluate((option) => ({ fontSize: parseFloat(getComputedStyle(option).fontSize), height: option.getBoundingClientRect().height }));
+    check(runtimeMetrics.fontSize >= 12 && runtimeMetrics.height >= 42, `Runtime options use readable mobile text and targets (${JSON.stringify(runtimeMetrics)}).`);
 
     await page.locator('#genre-filter > summary').click();
     const menuBounds = await page.locator('#genre-filter .genre-filter-menu').evaluate((element) => {
