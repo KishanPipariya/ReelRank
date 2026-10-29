@@ -1,0 +1,527 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-29T07:41:42Z",
+  "title": "Design System: ReelRank",
+  "extensions": {
+    "colorMeta": {
+      "warm-paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "#f3f0e9",
+        "tonalRamp": [
+          "#0c0b08",
+          "#23211e",
+          "#3d3a35",
+          "#58554f",
+          "#74716b",
+          "#928f88",
+          "#bab7b0",
+          "#f0eeea"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#22251f",
+        "tonalRamp": [
+          "#0a0c09",
+          "#20221e",
+          "#393c35",
+          "#535750",
+          "#6f736c",
+          "#8d9189",
+          "#b5b9b1",
+          "#edefeb"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Soft Graphite",
+        "canonical": "#5f655c",
+        "tonalRamp": [
+          "#0a0c09",
+          "#1f231d",
+          "#373c34",
+          "#52574f",
+          "#6e746b",
+          "#8b9188",
+          "#b3bab0",
+          "#edefeb"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Parchment Rule",
+        "canonical": "#dedbd2",
+        "tonalRamp": [
+          "#0c0b08",
+          "#23221d",
+          "#3d3a33",
+          "#58554e",
+          "#747169",
+          "#928f87",
+          "#bab7af",
+          "#f0eeea"
+        ]
+      },
+      "porcelain": {
+        "role": "neutral",
+        "displayName": "Porcelain",
+        "canonical": "#f8f6f1",
+        "tonalRamp": [
+          "#0c0b08",
+          "#23211e",
+          "#3c3a36",
+          "#575551",
+          "#73716d",
+          "#918f8a",
+          "#b9b7b2",
+          "#f0eeea"
+        ]
+      },
+      "stone-paper": {
+        "role": "neutral",
+        "displayName": "Stone Paper",
+        "canonical": "#ebe8df",
+        "tonalRamp": [
+          "#0c0b08",
+          "#23221d",
+          "#3d3a33",
+          "#58554e",
+          "#74716a",
+          "#928f87",
+          "#bab7af",
+          "#f0eeea"
+        ]
+      },
+      "control-ink": {
+        "role": "neutral",
+        "displayName": "Control Graphite",
+        "canonical": "#575d54",
+        "tonalRamp": [
+          "#0a0c09",
+          "#1f231d",
+          "#373d34",
+          "#51574e",
+          "#6e746a",
+          "#8b9188",
+          "#b3bab0",
+          "#ecefeb"
+        ]
+      },
+      "deep-evergreen": {
+        "role": "primary",
+        "displayName": "Deep Evergreen",
+        "canonical": "#243d31",
+        "tonalRamp": [
+          "#050d09",
+          "#15261e",
+          "#284135",
+          "#425c4f",
+          "#5e796b",
+          "#7b9788",
+          "#a3bfb0",
+          "#e6f2eb"
+        ]
+      },
+      "soft-lichen": {
+        "role": "secondary",
+        "displayName": "Soft Lichen",
+        "canonical": "#b5d67a",
+        "tonalRamp": [
+          "#080e00",
+          "#1b2600",
+          "#304200",
+          "#475f00",
+          "#617d1e",
+          "#7e9c41",
+          "#a5c56a",
+          "#e6f5d0"
+        ]
+      },
+      "muted-terracotta": {
+        "role": "tertiary",
+        "displayName": "Muted Terracotta",
+        "canonical": "#e88760",
+        "tonalRamp": [
+          "#1a0400",
+          "#3d1100",
+          "#652200",
+          "#8e3507",
+          "#af532c",
+          "#d0724b",
+          "#fd9a72",
+          "#ffe9e1"
+        ]
+      },
+      "terracotta-ink": {
+        "role": "tertiary",
+        "displayName": "Burnished Rust",
+        "canonical": "#984a33",
+        "tonalRamp": [
+          "#1b0300",
+          "#3f0f02",
+          "#681e05",
+          "#873b24",
+          "#a85840",
+          "#c9765d",
+          "#f59e84",
+          "#ffe9e3"
+        ]
+      },
+      "filter-cream": {
+        "role": "neutral",
+        "displayName": "Filter Cream",
+        "canonical": "#f5f3eb",
+        "tonalRamp": [
+          "#0c0b08",
+          "#23221e",
+          "#3c3b34",
+          "#57554f",
+          "#73726b",
+          "#918f88",
+          "#b9b7b0",
+          "#f0eeea"
+        ]
+      },
+      "hero-cream": {
+        "role": "neutral",
+        "displayName": "Hero Cream",
+        "canonical": "#f6f3e9",
+        "tonalRamp": [
+          "#0c0b08",
+          "#23221c",
+          "#3d3a33",
+          "#58554d",
+          "#747169",
+          "#928f86",
+          "#bab7ae",
+          "#f0eeea"
+        ]
+      },
+      "night-paper": {
+        "role": "neutral",
+        "displayName": "Night Paper",
+        "canonical": "#151915",
+        "tonalRamp": [
+          "#0a0c0a",
+          "#202320",
+          "#373c37",
+          "#525752",
+          "#6e736e",
+          "#8c918b",
+          "#b4b9b4",
+          "#ecf0ec"
+        ]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Text",
+        "canonical": "#ecece2",
+        "tonalRamp": [
+          "#0b0b09",
+          "#22221d",
+          "#3b3b33",
+          "#56564d",
+          "#727269",
+          "#909087",
+          "#b8b8ae",
+          "#efefea"
+        ]
+      },
+      "night-muted": {
+        "role": "neutral",
+        "displayName": "Night Muted Text",
+        "canonical": "#a4aa9c",
+        "tonalRamp": [
+          "#0a0c08",
+          "#20231b",
+          "#383d31",
+          "#52584b",
+          "#6e7467",
+          "#8c9284",
+          "#b4baac",
+          "#edf0e9"
+        ]
+      },
+      "night-hairline": {
+        "role": "neutral",
+        "displayName": "Night Rule",
+        "canonical": "#353c34",
+        "tonalRamp": [
+          "#0a0c09",
+          "#1f231e",
+          "#363d35",
+          "#50584f",
+          "#6c746b",
+          "#8a9289",
+          "#b2bab0",
+          "#ecf0eb"
+        ]
+      },
+      "night-surface": {
+        "role": "neutral",
+        "displayName": "Night Surface",
+        "canonical": "#1e241f",
+        "tonalRamp": [
+          "#090c0a",
+          "#1f231f",
+          "#363c37",
+          "#505752",
+          "#6d746e",
+          "#8a918b",
+          "#b2bab3",
+          "#ecf0ec"
+        ]
+      },
+      "night-soft-surface": {
+        "role": "neutral",
+        "displayName": "Night Soft Surface",
+        "canonical": "#222922",
+        "tonalRamp": [
+          "#090c09",
+          "#1e231e",
+          "#353d35",
+          "#505850",
+          "#6c746c",
+          "#899289",
+          "#b1bab1",
+          "#ecf0ec"
+        ]
+      },
+      "night-control": {
+        "role": "neutral",
+        "displayName": "Night Control Text",
+        "canonical": "#c0c5b9",
+        "tonalRamp": [
+          "#0a0c08",
+          "#20231c",
+          "#383c32",
+          "#53574d",
+          "#6f7369",
+          "#8c9186",
+          "#b5b9ae",
+          "#edefea"
+        ]
+      },
+      "night-evergreen": {
+        "role": "primary",
+        "displayName": "Night Evergreen",
+        "canonical": "#263d32",
+        "tonalRamp": [
+          "#060d09",
+          "#16251e",
+          "#294035",
+          "#445c50",
+          "#5f786c",
+          "#7d9689",
+          "#a4bfb1",
+          "#e6f2ec"
+        ]
+      },
+      "night-filter-ink": {
+        "role": "neutral",
+        "displayName": "Night Filter Text",
+        "canonical": "#182219",
+        "tonalRamp": [
+          "#090c09",
+          "#1d241d",
+          "#333e34",
+          "#4d594e",
+          "#69756a",
+          "#879388",
+          "#aebcaf",
+          "#ebf0eb"
+        ]
+      },
+      "night-terracotta": {
+        "role": "tertiary",
+        "displayName": "Night Terracotta",
+        "canonical": "#f0a07b",
+        "tonalRamp": [
+          "#190500",
+          "#3c1400",
+          "#622500",
+          "#853e19",
+          "#a55b38",
+          "#c57955",
+          "#f1a17c",
+          "#ffe9e0"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Literary Display",
+        "purpose": "Large hero headlines and expressive film titles."
+      },
+      "headline": {
+        "displayName": "Catalogue Headline",
+        "purpose": "Section headings and featured-film titles."
+      },
+      "body": {
+        "displayName": "Reading Text",
+        "purpose": "Descriptions and comfortable interface copy."
+      },
+      "label": {
+        "displayName": "Catalogue Mono",
+        "purpose": "Counts, filters, metadata, and compact uppercase labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "setup-card",
+        "value": "0 18px 55px #24251d10",
+        "purpose": "Soft lift for the first-run/setup card."
+      },
+      {
+        "name": "utility-panel",
+        "value": "0 12px 32px #1519152e",
+        "purpose": "Separate open utility menus from the catalogue."
+      },
+      {
+        "name": "detail-dialog",
+        "value": "0 24px 90px #10140f66",
+        "purpose": "Layer film details above the dimmed page."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": ".16s ease to .18s ease",
+        "purpose": "Short color and border changes on controls."
+      },
+      {
+        "name": "country-expansion",
+        "value": ".24s cubic-bezier(.2, .7, .3, 1)",
+        "purpose": "Reveal additional country metadata."
+      },
+      {
+        "name": "film-arrive",
+        "value": ".35s ease",
+        "purpose": "Subtle entrance for catalogue film rows."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "tiny",
+        "value": "380px"
+      },
+      {
+        "name": "narrow",
+        "value": "430px"
+      },
+      {
+        "name": "mobile-dialog",
+        "value": "600px"
+      },
+      {
+        "name": "mobile-layout",
+        "value": "700px"
+      },
+      {
+        "name": "tablet",
+        "value": "920px"
+      },
+      {
+        "name": "catalogue-tools",
+        "value": "1100px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Masthead",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Compact identity and profile navigation at the top of the catalogue.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-wordmark\" href=\"#\">ReelRank</a><a class=\"ds-profile\" href=\"#\">Letterboxd profile ↗</a></nav>",
+      "css": ".ds-nav { height: 80px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); color: var(--ink); font-family: var(--sans); } .ds-wordmark { font-size: 21px; font-weight: 700; letter-spacing: -.055em; text-decoration: none; } .ds-profile { color: var(--control-ink); font: 11px var(--mono); text-decoration: none; } .ds-wordmark:focus-visible, .ds-profile:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; } @media (prefers-color-scheme: dark) { .ds-wordmark:focus-visible, .ds-profile:focus-visible { outline-color: #c3df93; } }"
+    },
+    {
+      "name": "Selected Filter",
+      "kind": "button",
+      "refersTo": "button-filter-active",
+      "description": "A compact active state for watched-status filtering.",
+      "html": "<button class=\"ds-filter\" type=\"button\" aria-pressed=\"true\">Unwatched</button>",
+      "css": ".ds-filter { min-height: 30px; padding: 0 12px; border: 0; border-radius: 2px; background: var(--filter-active); color: var(--filter-active-ink); cursor: pointer; font: 11px var(--sans); transition: background .18s ease, color .18s ease; } .ds-filter:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; } @media (prefers-color-scheme: dark) { .ds-filter:focus-visible { outline-color: #c3df93; } }"
+    },
+    {
+      "name": "Catalogue Search",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "A quiet single-line search field with a clear keyboard focus ring.",
+      "html": "<label class=\"ds-search\"><span>⌕</span><input type=\"search\" placeholder=\"Find a film or filmmaker\" aria-label=\"Find a film or filmmaker\" /><kbd>/</kbd></label>",
+      "css": ".ds-search { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface); color: var(--ink); font-family: var(--sans); } .ds-search span, .ds-search kbd { color: var(--muted); } .ds-search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--ink); font: 11px var(--sans); } .ds-search input::placeholder { color: var(--muted); opacity: 1; } .ds-search:focus-within { outline: 3px solid #bd6446; outline-offset: 3px; }"
+    },
+    {
+      "name": "Genre Chip",
+      "kind": "chip",
+      "refersTo": "chip-genre",
+      "description": "A filterable genre tag with a clear pressed state.",
+      "html": "<button class=\"ds-chip\" type=\"button\" aria-pressed=\"false\">Drama</button>",
+      "css": ".ds-chip { min-height: 24px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-soft); color: var(--control-ink); cursor: pointer; font: 9px var(--sans); } .ds-chip:hover, .ds-chip[aria-pressed='true'] { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); } .ds-chip:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; }"
+    },
+    {
+      "name": "Setup Card",
+      "kind": "card",
+      "refersTo": "setup-card",
+      "description": "The centered first-run and recovery panel for a profile-specific site.",
+      "html": "<section class=\"ds-setup\"><strong>ReelRank</strong><h2>Preparing your ReelRank</h2><p>Checking the configured Letterboxd profile and snapshot…</p><a href=\"#\">Preview sample data</a></section>",
+      "css": ".ds-setup { width: min(620px, 100%); padding: clamp(26px, 6vw, 54px); border: 1px solid var(--line); background: var(--surface); color: var(--ink); box-shadow: 0 18px 55px #24251d10; font-family: var(--sans); } .ds-setup strong { display: block; margin-bottom: 32px; font-size: 21px; } .ds-setup h2 { margin: 0; font: 500 clamp(38px, 7vw, 60px)/1.05 var(--serif); letter-spacing: -.055em; } .ds-setup p { color: var(--muted); font-size: 14px; line-height: 1.7; } .ds-setup a { color: var(--forest); font: 11px var(--mono); text-underline-offset: 4px; } .ds-setup a:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; }"
+    },
+    {
+      "name": "Catalogue Hero",
+      "kind": "custom",
+      "refersTo": "hero-panel",
+      "description": "The featured catalogue introduction with a subtle inset frame and a direct action into the film collection.",
+      "html": "<section class=\"ds-hero\"><div class=\"ds-hero-copy\"><h1>The films that<br /><em>keep showing up.</em></h1><p class=\"ds-hero-tagline\">Your liked lists, brought together</p><a class=\"ds-hero-browse\" href=\"#collection-title\">Browse the catalogue</a></div><span class=\"ds-hero-stamp\" aria-hidden=\"true\">A personal film almanac</span></section>",
+      "css": ".ds-hero { min-height: 336px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; padding: 34px 8.2%; background: var(--forest); color: #f6f3e9; font-family: var(--sans); } .ds-hero::before { position: absolute; inset: 14px; border: 1px solid #d4e6c72b; content: ''; pointer-events: none; } .ds-hero-copy { position: relative; z-index: 1; } .ds-hero h1 { margin: 0; font: 500 clamp(34px, 7vw, 78px)/.99 var(--sans); letter-spacing: -.065em; } .ds-hero em { color: var(--green); font: italic 500 1em var(--serif); } .ds-hero-tagline { margin: 10px 0 16px; color: #c6d7b0; font: 12px/1.4 var(--mono); } .ds-hero-browse { min-height: 42px; display: inline-flex; align-items: center; padding: 0 14px; border: 1px solid var(--green); background: var(--green); color: #243d31; font: 12px var(--mono); text-decoration: none; } .ds-hero-browse:focus-visible { outline: 3px solid #bd6446; outline-offset: 3px; } .ds-hero-stamp { max-width: 158px; color: #c3d89c; font: italic 21px var(--serif); text-align: center; }"
+    },
+    {
+      "name": "Programme Note",
+      "kind": "custom",
+      "description": "A quiet editorial annotation with a terracotta edge.",
+      "html": "<aside class=\"ds-note\"><strong>PROGRAMME NOTE</strong><p>Films are ranked by appearances across liked lists.</p></aside>",
+      "css": ".ds-note { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; gap: 4px 12px; margin: 0; padding: 10px 12px; border-left: 2px solid var(--orange); background: var(--surface-soft); color: var(--muted); font: 9px/1.5 var(--mono); } .ds-note strong { color: var(--rust-ink); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; } .ds-note p { margin: 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Personal Film Almanac",
+    "overview": "ReelRank feels like a cinephile’s home: warm, comfortable, and organized around a personal catalogue. Its visual language pairs a lived-in paper palette with evergreen framing, serif film titles, and small mono labels that make rankings and provenance easy to scan.\n\nThe interface balances a poster wall’s immediacy with a ledger’s precision. Film artwork leads the browsing view; the ledger makes a large catalogue easier to compare. The same editorial rhythm carries into compact controls, expandable details, and a dedicated dark palette.",
+    "keyCharacteristics": [
+      "Warm paper surfaces and deep evergreen framing",
+      "Playfair Display headlines alongside DM Sans reading text and DM Mono metadata",
+      "Poster-led browsing balanced by a compact, sortable ledger",
+      "Mostly flat surfaces with depth reserved for overlays"
+    ],
+    "rules": [
+      {
+        "name": "The Accent Restraint Rule",
+        "body": "Keep terracotta and lichen as accents around evergreen structure; don’t let them replace the quiet paper and forest base.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three-Face Rule",
+        "body": "Use Playfair Display for expressive hierarchy, DM Sans for reading, and DM Mono for compact catalogue data; don’t add a fourth type family.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-by-Default Rule",
+        "body": "Keep resting catalogue surfaces flat; reserve stronger depth for controls that open above surrounding content.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep poster artwork as the leading image in poster-wall mode.",
+      "Do preserve the light and dark themes through the system color-scheme preference.",
+      "Do use mono type for compact metadata and serif type for film titles and editorial headings.",
+      "Do keep the catalogue flat at rest and use shadows for raised menus and dialogs."
+    ],
+    "donts": [
+      "Don't turn catalogue rows into generic rounded cards; the poster wall and ledger have distinct, intentional structures.",
+      "Don't spread terracotta across broad surfaces; it is an accent to the paper-and-evergreen palette.",
+      "Don't remove the visible focus treatment from interactive controls."
+    ]
+  }
+}

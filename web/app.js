@@ -75,13 +75,19 @@ const posterViewerClose = document.querySelector('#poster-viewer-close');
 const posterViewerStatus = document.querySelector('#poster-viewer-status');
 const posterViewerGallery = document.querySelector('#poster-viewer-gallery');
 const searchInput = document.querySelector('#search-input');
+const searchScopeLabel = document.querySelector('label[for="search-input"]');
 const searchHelp = document.querySelector('#search-help');
 const searchFieldsCopy = 'title, original title, director, year, genre, synopsis, and source list';
 searchHelp.textContent = `Search by ${searchFieldsCopy}. Press slash to focus search. Press Escape to clear it.`;
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
+const sortSummary = document.querySelector('#sort-summary');
 const countryIndexOptions = document.querySelector('#country-index-options');
 const decadeOptions = document.querySelector('#decade-options');
+const decadeIndexToggle = document.querySelector('#decade-index-toggle');
+const decadeIndexSearch = document.querySelector('#decade-index-search');
+const decadeIndexSearchControl = document.querySelector('#decade-index-search-control');
+const decadeIndexEmpty = document.querySelector('#decade-index-empty');
 const runtimeFilter = document.querySelector('#runtime-filter');
 const runtimeOptions = document.querySelector('#runtime-options');
 const genreFilter = document.querySelector('#genre-filter');
@@ -125,7 +131,13 @@ const originalPosterByFilm = new WeakMap();
 const rankByFilm = new Map();
 const preferences = createLocalPreferences();
 const readPreferences = preferences.read;
-const savePreferences = preferences.save;
+let invalidatePreferencesUndo = () => {};
+const savePreferences = (patch) => {
+  const saved = preferences.save(patch);
+  if (saved) invalidatePreferencesUndo();
+  return saved;
+};
+const replacePreferences = preferences.replace;
 const storedPreferences = readPreferences();
 const urlParamsAtStart = new URLSearchParams(window.location.search);
 const urlHasState = ['q', 'filter', 'sort', 'genre', 'director', 'list', 'country', 'language', 'decade', 'runtime', 'view'].some((key) => urlParamsAtStart.has(key));
@@ -154,6 +166,7 @@ let currentMatchingFilms = [];
 let currentHighestScore = 1;
 let countryAtlasSize = 0;
 let languageAtlasSize = 0;
+let leadingDecades = [];
 let snapshotRefreshedAt = '';
 let posterGalleryUrl = '/data/poster-galleries.json';
 let sourceListsForDownload = [];
@@ -191,6 +204,30 @@ function setLanguageIndexExpanded(expanded) {
   languageIndexToggle.setAttribute('aria-expanded', String(expanded));
   languageIndexToggle.textContent = expanded ? 'Show leading six' : `Browse all ${languageAtlasSize}`;
   updateLanguageIndexVisibility();
+}
+
+function setDecadeIndexExpanded(expanded) {
+  decadeOptions.classList.toggle('is-expanded', expanded);
+  decadeIndexSearchControl.hidden = !expanded;
+  if (!expanded) decadeIndexSearch.value = '';
+  decadeIndexToggle.setAttribute('aria-expanded', String(expanded));
+  decadeIndexToggle.textContent = expanded ? 'Show leading decades' : `Browse all ${availableDecades.length} decades`;
+  updateDecadeIndexVisibility();
+}
+
+function updateDecadeIndexVisibility() {
+  const expanded = decadeOptions.classList.contains('is-expanded');
+  const query = decadeIndexSearch.value.trim().toLocaleLowerCase();
+  let visibleCount = 0;
+  decadeOptions.querySelectorAll('[data-decade]').forEach((button) => {
+    const value = button.dataset.decade;
+    const isLeading = value === '' || leadingDecades.includes(Number(value));
+    const isSelected = button.getAttribute('aria-pressed') === 'true';
+    const label = value === '' ? 'all eras' : `${value}s`;
+    button.hidden = (!expanded && !isLeading && !isSelected) || (query && !label.toLocaleLowerCase().includes(query));
+    if (!button.hidden) visibleCount += 1;
+  });
+  decadeIndexEmpty.hidden = !expanded || visibleCount > 0;
 }
 
 function updateLanguageIndexVisibility() {
@@ -303,6 +340,10 @@ function buildCatalogFilters() {
   });
   const decades = [...decadeCounts.keys()].sort((a, b) => a - b);
   availableDecades = decades;
+  leadingDecades = [...decades]
+    .sort((a, b) => decadeCounts.get(b) - decadeCounts.get(a) || b - a)
+    .slice(0, 3)
+    .sort((a, b) => a - b);
   const countryAtlas = [...countryCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]));
   countryAtlasSize = countryAtlas.length;
   countryIndexOptions.replaceChildren(...countryAtlas.map(([country, count], index) => {
@@ -339,7 +380,10 @@ function buildCatalogFilters() {
   }));
   state.country = countries.includes(state.country) ? state.country : '';
   state.decade = decades.includes(Number(state.decade)) ? Number(state.decade) : '';
+  decadeIndexToggle.hidden = decades.length <= 3;
+  setDecadeIndexExpanded(Boolean(state.decade && !leadingDecades.includes(state.decade)));
   runtimeFilter.hidden = !films.some((film) => Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0);
+  runtimeFilter.closest('.runtime-filter-group').hidden = runtimeFilter.hidden;
   if (runtimeFilter.hidden) state.runtime = '';
   const selectedCountryIndex = countryAtlas.findIndex(([country]) => country === state.country);
   setCountryIndexExpanded(selectedCountryIndex >= 6);
@@ -1294,8 +1338,9 @@ programmeShareCopy.addEventListener('click', async () => {
   }
 });
 
-bindSavedViewControls({
-  readPreferences, savePreferences, clearPreferences: preferences.clear,
+invalidatePreferencesUndo = bindSavedViewControls({
+  readPreferences, savePreferences, replacePreferences, clearPreferences: preferences.clear,
+  readUndo: preferences.readUndo, saveUndo: preferences.saveUndo, clearUndo: preferences.clearUndo,
   state, searchInput, syncControls, updateUrlState, render,
   getFilms: () => films, originalPosterByFilm, filmCardByFilm, filmViews,
 });
@@ -1313,6 +1358,7 @@ function render() {
   const relevanceOption = sortSelect.querySelector('option[value="relevance"]');
   if (relevanceOption) relevanceOption.disabled = !query;
   sortSelect.value = state.sort;
+  sortSummary.textContent = sortSelect.options[sortSelect.selectedIndex]?.text ?? 'Rank';
   clearQueryButton.hidden = !query;
   filterControls.renderActiveViewFilters();
   renderDirectorFilmography();
@@ -1481,7 +1527,10 @@ function initializeSnapshot(snapshot) {
   editionDate.textContent = formatEditionDate(snapshot.refreshed_at);
   editionDate.title = formatDate(snapshot.refreshed_at);
   const displayed = snapshot.displayed_film_count ?? films.length;
-  collectionScope.textContent = `Search all ${displayed.toLocaleString()} films by ${searchFieldsCopy}. Filter by genre, director, source list, original language, production country, decade, or running time.`;
+  const displayedCount = displayed.toLocaleString();
+  searchScopeLabel.textContent = `Search these ${displayedCount} films`;
+  searchInput.placeholder = `Search these ${displayedCount} films`;
+  collectionScope.textContent = `Search is limited to the ${displayedCount} films shown here. Match by ${searchFieldsCopy}. Filter by genre, director, source list, original language, production country, decade, or running time.`;
   document.querySelector('#watch-progress-scope').textContent = `Progress covers all ${rankedTotal.toLocaleString()} ranked films; the catalog shows the top ${displayed.toLocaleString()}.`;
   document.querySelector('#collection-footnote').textContent = `Showing the top ${displayed.toLocaleString()} of ${rankedTotal.toLocaleString()} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
   siteShell.hidden = false;
@@ -1615,6 +1664,10 @@ languageIndexToggle.addEventListener('click', () => {
   setLanguageIndexExpanded(languageIndexToggle.getAttribute('aria-expanded') !== 'true');
 });
 languageIndexSearch.addEventListener('input', updateLanguageIndexVisibility);
+decadeIndexToggle.addEventListener('click', () => {
+  setDecadeIndexExpanded(decadeIndexToggle.getAttribute('aria-expanded') !== 'true');
+});
+decadeIndexSearch.addEventListener('input', updateDecadeIndexVisibility);
 posterDisplayButton.addEventListener('click', () => setView('posters'));
 ledgerDisplayButton.addEventListener('click', () => setView('ledger'));
 printProgrammeButton.addEventListener('click', printProgramme);
@@ -1644,6 +1697,13 @@ document.addEventListener('pointerdown', (event) => {
   if (genreFilter.open && !eventPath.includes(genreFilter)) genreFilter.open = false;
   if (sourceListFilter.open && !eventPath.includes(sourceListFilter)) sourceListFilter.open = false;
 });
+const catalogueToolsDisclosure = document.querySelector('#catalogue-tools');
+const savedViewsGroup = document.querySelector('#saved-views');
+catalogueToolsDisclosure.addEventListener('toggle', () => {
+  if (catalogueToolsDisclosure.open && !document.querySelector('.catalogue-tool-group[open]')) {
+    savedViewsGroup.open = true;
+  }
+});
 loadMoreButton.addEventListener('click', () => {
   state.visibleLimit += 40;
   filmNavigation.rememberPosition();
@@ -1657,8 +1717,9 @@ window.addEventListener('scroll', updateBackToFiltersVisibility, { passive: true
 document.addEventListener('click', (event) => {
   const eventPath = event.composedPath();
   if (catalogFilters.open && !eventPath.includes(catalogFilters)) catalogFilters.open = false;
-  document.querySelectorAll('.utility-disclosure[open]').forEach((disclosure) => {
-    if (!eventPath.includes(disclosure)) disclosure.open = false;
+  const presetStatusRegion = document.querySelector('#preset-status');
+  document.querySelectorAll('.catalogue-tool-group[open]').forEach((disclosure) => {
+    if (!eventPath.includes(disclosure) && !eventPath.includes(presetStatusRegion)) disclosure.open = false;
   });
 });
 document.addEventListener('keydown', (event) => {
@@ -1675,11 +1736,23 @@ document.addEventListener('keydown', (event) => {
     sourceListFilter.querySelector('summary').focus();
     return;
   }
-  const openUtilityDisclosure = document.querySelector('.utility-disclosure[open]');
-  if (event.key === 'Escape' && openUtilityDisclosure) {
+  if (event.key === 'Escape' && programmeShareDetails.open) {
     event.preventDefault();
-    openUtilityDisclosure.open = false;
-    openUtilityDisclosure.querySelector('summary').focus();
+    programmeShareDetails.open = false;
+    programmeShareDetails.querySelector('summary').focus();
+    return;
+  }
+  const openCatalogueToolGroup = document.querySelector('.catalogue-tool-group[open]');
+  if (event.key === 'Escape' && openCatalogueToolGroup) {
+    event.preventDefault();
+    openCatalogueToolGroup.open = false;
+    openCatalogueToolGroup.querySelector('summary').focus();
+    return;
+  }
+  if (event.key === 'Escape' && catalogueToolsDisclosure.open) {
+    event.preventDefault();
+    catalogueToolsDisclosure.open = false;
+    catalogueToolsDisclosure.querySelector('summary').focus();
     return;
   }
   if (event.key === 'Escape' && catalogFilters.open) {

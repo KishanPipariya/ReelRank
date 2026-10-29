@@ -1,4 +1,5 @@
 export const preferenceKey = 'reelrank.preferences.v1';
+export const preferenceUndoKey = 'reelrank.preferences.undo.v1';
 
 const presetStateKeys = ['query', 'filter', 'sort', 'view', 'genres', 'directors', 'sourceLists', 'country', 'language', 'decade', 'runtime'];
 
@@ -37,8 +38,41 @@ export function createLocalPreferences(storage) {
   function getStorage() { return storage || globalThis.localStorage; }
   function read() { try { return validatePreferences(JSON.parse(getStorage().getItem(preferenceKey) || '{}')); } catch { return {}; } }
   function save(patch) { try { getStorage().setItem(preferenceKey, JSON.stringify({ ...read(), ...patch })); return true; } catch { return false; } }
+  function replace(value) { try { getStorage().setItem(preferenceKey, JSON.stringify(validatePreferences(value))); return true; } catch { return false; } }
   function clear() { try { getStorage().removeItem(preferenceKey); return true; } catch { return false; } }
-  return { read, save, clear };
+  function readUndo() {
+    try {
+      const value = JSON.parse(getStorage().getItem(preferenceUndoKey) || 'null');
+      if (!value || value.version !== 1 || !['saved-views', 'local-settings'].includes(value.group)
+        || typeof value.label !== 'string' || typeof value.undoneMessage !== 'string'
+        || !value.before || typeof value.before !== 'object' || Array.isArray(value.before)
+        || !value.expected || typeof value.expected !== 'object' || Array.isArray(value.expected)) return null;
+      return {
+        version: 1,
+        before: validatePreferences(value.before),
+        expected: validatePreferences(value.expected),
+        label: value.label.slice(0, 120),
+        undoneMessage: value.undoneMessage.slice(0, 160),
+        group: value.group,
+      };
+    } catch { return null; }
+  }
+  function saveUndo(record) {
+    try {
+      const safe = {
+        version: 1,
+        before: validatePreferences(record?.before),
+        expected: validatePreferences(record?.expected),
+        label: String(record?.label || 'Undo').slice(0, 120),
+        undoneMessage: String(record?.undoneMessage || 'Change undone.').slice(0, 160),
+        group: record?.group === 'local-settings' ? 'local-settings' : 'saved-views',
+      };
+      getStorage().setItem(preferenceUndoKey, JSON.stringify(safe));
+      return true;
+    } catch { return false; }
+  }
+  function clearUndo() { try { getStorage().removeItem(preferenceUndoKey); return true; } catch { return false; } }
+  return { read, save, replace, clear, readUndo, saveUndo, clearUndo };
 }
 
 export function parsePresetImport(value) {

@@ -11,7 +11,7 @@ export function updateEditionFreshness(element, refreshedAt, now = Date.now()) {
   const freshness = editionFreshness(refreshedAt, now);
   element.hidden = !freshness.stale;
   if (freshness.stale) {
-    element.textContent = `This edition is ${freshness.ageDays} days old. Its catalogue may no longer reflect recent changes.`;
+    element.querySelector('#edition-stale-age').textContent = `This snapshot is ${freshness.ageDays} days old.`;
   }
   return freshness;
 }
