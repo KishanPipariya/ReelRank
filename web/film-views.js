@@ -3,7 +3,7 @@ import { posterFallbackFor, responsivePosterAttrs } from './film-components.js';
 export function createFilmViews(dependencies) {
   const {
     getFilms, state, safeUrl, makeLink, directorCreditFor, countryRuntimeMetaFor,
-    scoreMeterFor, genreChipFor, filmDetailButtonFor, toggleDirector, toggleGenre,
+    genreChipFor, filmDetailButtonFor, filmAppearanceCountFor, toggleDirector, toggleGenre,
     originalFilmFactsFor, sourceListNotesFor, filmProgrammeNotesFor,
     filmDetailContent, filmDetailDialog, getCurrentMatchingFilms,
     posterViewerDialog, posterViewerImage, posterViewerTitle, posterViewerCaption,
@@ -195,9 +195,16 @@ function samplePosterAccent(posterUrl, request) {
   sampler.src = posterUrl;
 }
 
-function openFilmDetails(film) {
+function openFilmDetails(film, { focusProvenance = false } = {}) {
   renderFilmDetails(film);
   if (!filmDetailDialog.open) filmDetailDialog.showModal();
+  if (focusProvenance) requestAnimationFrame(() => {
+    const provenance = filmDetailContent.querySelector('.film-note-sources');
+    if (provenance) {
+      provenance.focus({ preventScroll: true });
+      provenance.scrollIntoView({ block: 'start' });
+    }
+  });
 }
 
 function renderFilmDetails(film, retainFocus = false) {
@@ -484,13 +491,7 @@ function ledgerRowFor(film) {
 
   const countCell = document.createElement('td');
   countCell.className = 'ledger-appearance-cell';
-  const count = document.createElement('strong');
-  const likedListCount = Number(film.liked_in) || 0;
-  count.textContent = likedListCount.toLocaleString();
-  const countLabel = document.createElement('span');
-  countLabel.textContent = likedListCount === 1 ? 'list' : 'lists';
-  countCell.append(count, countLabel);
-  countCell.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
+  countCell.append(filmAppearanceCountFor(film, 'ledger-film-count'));
 
   row.append(catalogueCell, filmCell, directorCell, productionCell, countCell);
   return row;
@@ -590,7 +591,7 @@ function featuredFilmFor(film) {
   copy.className = 'featured-film-copy';
   const label = document.createElement('p');
   label.className = 'featured-film-label';
-  label.textContent = `Programme selection · Overall rank ${rankNumber}`;
+  label.textContent = `Selection · Overall rank ${rankNumber}`;
   copy.append(label);
   const title = document.createElement('h4');
   if (filmUrl) title.append(makeLink(film.title, filmUrl, 'featured-film-title'));
@@ -626,14 +627,7 @@ function featuredFilmFor(film) {
     genres.forEach((genre) => genreTags.append(genreChipFor(genre)));
     copy.append(genreTags);
   }
-  const count = document.createElement('p');
-  count.className = 'featured-film-count';
-  const countValue = document.createElement('strong');
-  const likedListCount = Number(film.liked_in) || 0;
-  countValue.textContent = likedListCount.toLocaleString();
-  count.append(countValue, ` ${likedListCount === 1 ? 'list appearance' : 'list appearances'}`, scoreMeterFor(film, 'featured-score-meter'));
-  count.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
-  copy.append(count);
+  copy.append(filmAppearanceCountFor(film, 'featured-film-count'));
   copy.append(filmDetailButtonFor(film));
   feature.append(copy);
   featuredFilmByFilm.set(film, feature);

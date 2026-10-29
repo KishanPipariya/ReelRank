@@ -12,5 +12,8 @@ node_modules/
 .env
 !.env.example
 .reelrank-cache/
+# Local agent skill bundles are workstation tooling, not site assets.
+/.agents/
 *.csv
+!web/data/ranking-*.csv
 .DS_Store

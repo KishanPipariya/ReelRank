@@ -19,7 +19,7 @@ export function createProgrammePrinter(dependencies) {
       ? 'ReelRank · Reader’s edition'
       : 'ReelRank · Catalogue edition';
     const filmsForProgramme = [...currentMatchingFilms].sort((left, right) => compareFilms(left, right, 'year-oldest'));
-    printProgrammeTitle.textContent = topBilledTitle.textContent || 'ReelRank programme';
+    printProgrammeTitle.textContent = topBilledTitle.textContent || 'ReelRank film selection';
     printProgrammeUsername.textContent = profileUsername.textContent;
     printProgrammeDate.textContent = formatEditionDate(snapshotRefreshedAt);
     printProgrammeDate.dateTime = snapshotRefreshedAt;
@@ -41,7 +41,7 @@ export function createProgrammePrinter(dependencies) {
     if (!filmsForProgramme.length) {
       const empty = document.createElement('p');
       empty.className = 'print-programme-empty';
-      empty.textContent = 'No films match this programme.';
+      empty.textContent = 'No films match this selection.';
       printProgrammeFilms.append(empty);
       return;
     }

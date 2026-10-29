@@ -45,13 +45,9 @@
       <main id="main-content" tabindex="-1">
         <section class="hero" aria-labelledby="hero-title">
           <div class="hero-copy">
-            <h1 id="hero-title">The films that<br />keep <em>showing up.</em></h1>
-            <p class="hero-tagline">Your liked lists, brought together</p>
-            <p class="hero-description">A little signal from the public Letterboxd lists your profile likes. Films rise as they appear across more of those lists.</p>
-            <div class="hero-actions">
-              <a class="hero-browse-link" href="#collection-title">Browse the catalogue</a>
-              <a class="hero-story-link" href="https://kishan.pipaliya.com/2026/10/06/a-custom-recommendation-system-for-letterboxd/" target="_blank" rel="noreferrer" aria-label="Read how the ranking algorithm works and where it came from, opens in a new tab">How the ranking works ↗</a>
-            </div>
+            <h1 id="hero-title">The films that keep <em>showing up.</em></h1>
+            <p class="hero-description">A signal from the public Letterboxd lists you like. Films rise as they appear across more lists.</p>
+            <a class="hero-story-link" href="https://kishan.pipaliya.com/2026/10/06/a-custom-recommendation-system-for-letterboxd/" target="_blank" rel="noreferrer" aria-label="Read how the ranking algorithm works and where it came from, opens in a new tab">How the ranking works ↗</a>
             <div class="hero-meta">
               <span class="snapshot-label">Catalogue edition</span>
               <span class="meta-separator" aria-hidden="true">·</span>
@@ -62,10 +58,10 @@
               <span><span id="edition-stale-age"></span> Browsing and filters still work with this saved catalogue; recent changes may not be included.</span>
             </p>
             <div id="edition-colophon" class="edition-colophon" aria-label="Catalogue notes">
-              <span class="edition-colophon-heading">In this edition</span>
-              <span class="edition-colophon-item"><strong id="edition-leading-decade">—</strong><span>leading decade</span></span>
+              <span class="edition-colophon-heading">Most common</span>
+              <strong id="edition-leading-decade">—</strong>
               <span class="edition-colophon-separator" aria-hidden="true">·</span>
-              <span class="edition-colophon-item"><strong id="edition-leading-country">—</strong><span>leading production country</span></span>
+              <strong id="edition-leading-country">—</strong>
             </div>
           </div>
           <div class="hero-stamp" aria-hidden="true">
@@ -82,11 +78,10 @@
           <div class="summary-item"><strong id="list-total">—</strong><span>liked lists scanned</span></div>
           <div class="summary-divider"></div>
           <div class="summary-item"><strong id="unwatched-total">—</strong><span>still to watch</span></div>
-          <p class="summary-note">Ranked by list appearances <span>↗</span></p>
+          <p class="summary-note">Ranked by how many liked lists include each film</p>
           <div class="watch-progress">
             <div class="watch-progress-heading" id="watch-progress-copy"><span id="watch-progress-label">Films watched</span><span><strong id="watched-total">—</strong> of <span id="progress-film-total">—</span> · <span id="watch-progress-percent">—</span></span></div>
             <progress id="watch-progress" max="1" value="0" aria-labelledby="watch-progress-copy"></progress>
-            <span class="watch-progress-scope" id="watch-progress-scope">Progress covers all ranked films; catalog shows the top 500.</span>
           </div>
         </section>
 
@@ -94,7 +89,7 @@
           <section class="catalogue-controls" aria-label="Catalogue search and exploration">
             <div class="collection-heading" id="collection-controls">
               <div>
-                <h2 id="collection-title" tabindex="-1">Across your lists <span id="heading-count">—</span></h2>
+                <h2 id="collection-title" tabindex="-1">Across your lists</h2>
                 <p class="collection-subtitle">Collected from your likes</p>
               </div>
               <div class="collection-tools">
@@ -112,11 +107,12 @@
                   <button class="filter-button" type="button" data-filter="watched" aria-pressed="false">Watched <span id="watched-tab-count">—</span></button>
                 </div>
                 <details id="catalog-filters" class="catalog-filters">
-                  <summary class="catalog-filters-toggle" aria-label="Filters">
-                    <span>Filters</span>
+                  <summary class="catalog-filters-toggle" aria-label="Refine results">
+                    <span>Refine results</span>
                     <span id="catalog-filter-count" class="catalog-filter-count" hidden></span>
                   </summary>
                   <div class="catalog-filters-panel">
+                    <p id="metadata-filter-scope" class="metadata-filter-scope"></p>
                     <section class="catalog-filter-quick-picks" aria-label="Quick picks">
                     <details id="genre-filter" class="genre-filter" hidden>
                       <summary class="genre-filter-toggle">
@@ -136,8 +132,9 @@
                           <span class="sr-only">Search genres</span>
                           <input id="genre-search" type="search" placeholder="Search genres" autocomplete="off" />
                         </label>
-                        <p class="genre-filter-help">Selections apply immediately. Films match any selected genre.</p>
-                        <div id="genre-options" class="genre-options" role="group" aria-label="Available genres"></div>
+                        <p class="genre-filter-help">Top genres are ordered by film count. Search any genre or show all; films match any selected genre.</p>
+                        <div id="genre-options" class="genre-options" role="group" aria-label="Filter films by genre"></div>
+                        <button id="genre-options-toggle" class="facet-show-all" type="button" aria-expanded="false" hidden></button>
                         <p id="genre-empty-state" class="genre-empty-state" hidden>No genres match that search.</p>
                       </div>
                     </details>
@@ -150,16 +147,18 @@
                         </label>
                         <div id="decade-options" class="decade-options" role="group" aria-label="Filter films by release decade" aria-describedby="decade-index-help"></div>
                         <p id="decade-index-empty" class="country-index-empty" role="status" hidden>No decades match that search.</p>
-                        <button id="decade-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Browse all decades</button>
+                        <button id="decade-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Show all decades</button>
                         <p id="decade-index-help" class="decade-scroll-hint">Choose a decade to show films from that era.</p>
                       </div>
                     </section>
                     </section>
                     <details class="more-filters">
-                      <summary>More filters</summary>
+                      <summary aria-label="More ways to narrow">More ways to narrow</summary>
+                      <p class="more-filters-note">Open one section at a time to narrow by a specific detail.</p>
                       <div class="more-filter-groups">
-                        <section class="more-filter-group" aria-labelledby="people-lists-heading">
-                          <h3 id="people-lists-heading">People &amp; lists</h3>
+                        <details class="more-filter-group">
+                          <summary id="people-lists-heading" aria-label="Director and source list filters">Director &amp; source list</summary>
+                          <div class="more-filter-content">
                           <p class="director-filter-hint"><strong>Director</strong><br />Choose a director from a film’s credits to filter the catalogue.</p>
                           <details id="source-list-filter" class="genre-filter source-list-filter" hidden>
                   <summary class="genre-filter-toggle">
@@ -179,37 +178,49 @@
                       <span class="sr-only">Search source lists</span>
                       <input id="source-list-search" type="search" placeholder="Search source lists" autocomplete="off" />
                     </label>
-                    <p class="genre-filter-help">Films match any selected list. Counts reflect the other active filters.</p>
+                    <p class="genre-filter-help">Top lists are ordered by film count. Search any list or show all; films match any selected list.</p>
                     <div id="source-list-options" class="genre-options" role="group" aria-label="Filter films by source list"></div>
+                    <button id="source-list-options-toggle" class="facet-show-all" type="button" aria-expanded="false" hidden></button>
                     <p id="source-list-empty" class="genre-empty-state" hidden>No source lists match that search.</p>
                   </div>
                           </details>
-                        </section>
-                        <section class="more-filter-group" aria-labelledby="place-language-heading">
-                          <h3 id="place-language-heading">Place &amp; language</h3>
+                          </div>
+                        </details>
+                        <details class="more-filter-group">
+                          <summary aria-label="Production country filter">Production country</summary>
+                          <div class="more-filter-content">
+                          <p id="country-index-help" class="facet-index-note">Four common choices appear first. Show all to search the full country list.</p>
                           <div class="country-index">
-                            <p class="country-index-heading">Production country</p>
+                            <p class="country-index-heading">Choose a country</p>
                             <label id="country-index-search-control" class="country-index-search-control" hidden>
                               <span class="sr-only">Search all production countries</span>
                               <input id="country-index-search" type="search" placeholder="Find a country" autocomplete="off" />
                             </label>
-                            <div id="country-index-options" class="country-index-options" role="group" aria-label="Filter by production country"></div>
+                            <div id="country-index-options" class="country-index-options" role="group" aria-label="Filter by production country" aria-describedby="country-index-help"></div>
                             <p id="country-index-empty" class="country-index-empty" role="status" hidden>No countries match that search.</p>
-                            <button id="country-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Browse all countries</button>
+                            <button id="country-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Show all countries</button>
                           </div>
+                          </div>
+                        </details>
+                        <details class="more-filter-group">
+                          <summary aria-label="Original language filter">Original language</summary>
+                          <div class="more-filter-content">
+                          <p id="language-index-help" class="facet-index-note">Four common choices appear first. Show all to search the full language list.</p>
                           <div id="language-index" class="country-index language-index">
-                            <p id="language-index-heading" class="country-index-heading">Original language</p>
+                            <p id="language-index-heading" class="country-index-heading">Choose a language</p>
                             <label id="language-index-search-control" class="country-index-search-control" hidden>
                               <span class="sr-only">Search all original languages</span>
                               <input id="language-index-search" type="search" placeholder="Find a language" autocomplete="off" />
                             </label>
-                            <div id="language-index-options" class="country-index-options language-index-options" role="group" aria-label="Filter by original language"></div>
+                            <div id="language-index-options" class="country-index-options language-index-options" role="group" aria-label="Filter by original language" aria-describedby="language-index-help"></div>
                             <p id="language-index-empty" class="country-index-empty" role="status" hidden>No languages match that search.</p>
-                            <button id="language-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Browse all languages</button>
+                            <button id="language-index-toggle" class="country-index-toggle" type="button" aria-expanded="false">Show all languages</button>
                           </div>
-                        </section>
-                        <section class="more-filter-group runtime-filter-group" aria-labelledby="running-time-heading">
-                          <h3 id="running-time-heading">Running time</h3>
+                          </div>
+                        </details>
+                        <details class="more-filter-group runtime-filter-group">
+                          <summary aria-label="Running time filter">Running time</summary>
+                          <div class="more-filter-content">
                           <div id="runtime-filter" class="runtime-filter" hidden>
                     <span class="runtime-filter-label">Running time</span>
                     <div id="runtime-options" class="runtime-options" role="group" aria-label="Filter films by running time" aria-describedby="runtime-filter-note">
@@ -220,7 +231,8 @@
                       <span id="runtime-filter-note" class="runtime-filter-note">Choosing a running time excludes films with unknown runtimes.</span>
                     </div>
                           </div>
-                        </section>
+                          </div>
+                        </details>
                       </div>
                     </details>
                   </div>
@@ -228,14 +240,15 @@
                 <details id="catalogue-tools" class="catalogue-tools-disclosure">
                   <summary class="catalog-filters-toggle">
                     <span>Catalogue tools</span>
-                    <span class="catalogue-tools-sort-summary">Sort: <span id="sort-summary">Rank</span></span>
                   </summary>
                   <div class="catalogue-tools-panel">
+                    <p class="catalogue-tools-intro">Save views, share or print a selection, download the catalogue, and change display settings.</p>
                     <div id="preset-status" class="preset-status" role="status" aria-live="polite"></div>
                     <div class="catalogue-tool-groups">
-                      <details id="saved-views" class="catalogue-tool-group saved-view-group" open>
-                        <summary>Save &amp; revisit</summary>
+                      <details id="saved-views" class="catalogue-tool-group saved-view-group">
+                        <summary>Saved views</summary>
                         <div class="catalogue-tool-group-panel saved-view-panel">
+                          <p>Save this search, filters, sort, and layout in this browser. Choose a saved view and apply it to return to that catalogue view.</p>
                           <label for="preset-name">Save current filters</label>
                           <div class="saved-view-save-row">
                             <input id="preset-name" maxlength="48" placeholder="Preset name" />
@@ -258,32 +271,17 @@
                           </details>
                         </div>
                       </details>
-                      <details id="browse-order" class="catalogue-tool-group browse-order-group">
-                        <summary>Browse order</summary>
-                        <div class="catalogue-tool-group-panel browse-order-panel">
-                          <label class="sort-control" for="sort-select">
-                            <span>Sort films</span>
-                            <select id="sort-select" aria-label="Sort films">
-                              <option value="rank">Rank</option>
-                              <option value="relevance" disabled>Relevance (search results)</option>
-                              <option value="title">Title A–Z</option>
-                              <option value="year-newest">Year: newest</option>
-                              <option value="year-oldest">Year: oldest</option>
-                            </select>
-                          </label>
-                        </div>
-                      </details>
                       <details id="share-output" class="catalogue-tool-group">
-                        <summary>Share &amp; output</summary>
+                        <summary>Share, export &amp; print</summary>
                         <div class="catalogue-tool-group-panel share-output-panel">
                           <details id="programme-share" class="programme-share">
-                            <summary>Share programme</summary>
+                            <summary>Share this view</summary>
                             <div class="programme-share-panel">
                               <p id="programme-share-description" class="programme-share-description"></p>
                               <p class="programme-share-help">Opens this selection with the same filters, sorting, and layout. Results follow the current catalogue.</p>
-                              <label for="programme-share-url">Programme link</label>
+                              <label for="programme-share-url">View link</label>
                               <input id="programme-share-url" type="url" readonly />
-                              <button id="programme-share-copy" class="print-programme-button" type="button">Copy programme link</button>
+                              <button id="programme-share-copy" class="print-programme-button" type="button">Copy view link</button>
                               <p id="programme-share-status" class="programme-share-status" role="status" aria-live="polite"></p>
                             </div>
                           </details>
@@ -295,13 +293,14 @@
                                 <option value="compact">Compact catalogue</option>
                                 <option value="reader">Reader’s edition</option>
                               </select>
-                              <button id="print-programme-button" class="print-programme-button" type="button">Print programme</button>
+                              <p>Prints films matching your current search and filters, arranged by release year.</p>
+                              <button id="print-programme-button" class="print-programme-button" type="button">Print selection</button>
                             </div>
                           </div>
                         </div>
                       </details>
                       <details id="local-settings" class="catalogue-tool-group">
-                        <summary>Browser settings</summary>
+                        <summary>This browser’s settings</summary>
                         <div class="catalogue-tool-group-panel local-settings-panel">
                           <p>These preferences are stored in this browser.</p>
                           <button id="reset-posters" class="print-programme-button" type="button">Reset poster choices</button>
@@ -314,7 +313,9 @@
               </div>
             </div>
             <div class="collection-context">
-              <p id="collection-scope" class="collection-scope">Search titles, directors, years, genres, synopses, and source lists. Filter by genre, director, source list, original language, country, decade, or running time.</p>
+              <p id="collection-scope" class="collection-scope">Search titles, years, and source lists across the full ranking. Refine by available film details.</p>
+              <p id="catalogue-data-status" class="catalogue-data-status" role="status" aria-live="polite"></p>
+              <button id="retry-ranking-load" class="retry-ranking-load" type="button" hidden>Retry full-catalogue load</button>
               <aside id="programme-note" class="programme-note" aria-label="Summary of this selection" hidden>
                 <span class="programme-note-kicker">In this selection</span>
                 <p id="programme-note-copy"></p>
@@ -334,13 +335,27 @@
               <div id="director-filmography" class="director-filmography" hidden></div>
               <div class="collection-display-actions">
                 <div class="collection-view-tools">
+                  <span id="matching-films-count" class="matching-films-count" aria-live="polite"></span>
+                  <label class="sort-control toolbar-sort-control" for="sort-select">
+                    <span>Sort</span>
+                    <select id="sort-select" aria-label="Sort films">
+                      <option value="rank">Rank</option>
+                      <option value="relevance" disabled>Relevance (search results)</option>
+                      <option value="title">Title A–Z</option>
+                      <optgroup label="Release year">
+                        <option value="year-newest">Newest first</option>
+                        <option value="year-oldest">Oldest first</option>
+                      </optgroup>
+                    </select>
+                  </label>
                   <div class="collection-view-control" role="group" aria-label="Choose film layout">
                     <button id="poster-display-button" class="collection-view-button is-active" type="button" aria-pressed="true">Poster wall</button>
-                    <button id="ledger-display-button" class="collection-view-button" type="button" aria-pressed="false">Ledger</button>
+                    <button id="ledger-display-button" class="collection-view-button" type="button" aria-pressed="false">Table view</button>
                   </div>
+                  <span class="score-count-explainer">Each film’s count is the number of liked lists it appears in.</span>
                   <details class="score-key">
-                    <summary>Score key</summary>
-                    <p class="score-key-copy">The score counts liked lists that include a film. In Poster Wall, the bar compares it with the highest score in the current results.</p>
+                    <summary>Score bars</summary>
+                    <p class="score-key-copy">Each film’s bar compares its list appearances with the highest count in the current results.</p>
                   </details>
                 </div>
               </div>
@@ -350,14 +365,14 @@
             <section id="top-billed" class="top-billed" aria-labelledby="top-billed-title" hidden>
               <div class="top-billed-heading">
                 <h3 id="top-billed-title">Most listed</h3>
-                <p id="top-billed-eyebrow" class="top-billed-context">Opening credits</p>
+                <p id="top-billed-eyebrow" class="top-billed-context">Highest list counts</p>
               </div>
               <div id="top-billed-feature" class="top-billed-feature"></div>
               <div id="top-billed-grid" class="top-billed-grid"></div>
             </section>
 
             <div id="status-message" class="status-message" role="status">
-              <span class="status-message-kicker" aria-hidden="true">Programme note</span>
+              <span class="status-message-kicker" aria-hidden="true">Catalogue status</span>
               <p id="status-message-copy">Loading your snapshot…</p>
               <div id="empty-result-actions" class="empty-result-actions" hidden>
                 <button id="empty-clear-query" class="clear-search-state" type="button" hidden>Clear search</button>
@@ -379,7 +394,7 @@
             </div>
             <button id="load-more" class="load-more" type="button" hidden>Show more films</button>
             <p id="selection-end" class="selection-end" hidden></p>
-            <button id="back-to-filters" class="back-to-filters" type="button" hidden>Back to filters ↑</button>
+            <button id="back-to-filters" class="back-to-filters" type="button" aria-label="Return to search and filters" hidden>Filters</button>
             <p id="collection-footnote" class="collection-footnote">Film and poster details link back to Letterboxd. This page reflects public profile data.</p>
           </section>
         </section>
@@ -413,10 +428,10 @@
       <div id="poster-viewer-gallery" class="poster-viewer-gallery" role="group" aria-label="Choose a poster" hidden></div>
       <button id="poster-viewer-zoom" class="poster-viewer-zoom" type="button" aria-pressed="false">View at actual size</button>
     </dialog>
-    <main id="print-programme" class="print-programme" hidden aria-label="Printable ReelRank programme">
+    <main id="print-programme" class="print-programme" hidden aria-label="Printable film selection">
       <header class="print-programme-header">
         <p id="print-programme-kicker" class="print-programme-kicker">ReelRank · Catalogue edition</p>
-        <h1 id="print-programme-title">Film programme</h1>
+        <h1 id="print-programme-title">Film selection</h1>
         <p class="print-programme-edition"><span id="print-programme-username"></span><span aria-hidden="true"> · </span><time id="print-programme-date"></time></p>
         <p id="print-programme-context" class="print-programme-context"></p>
         <p class="print-programme-method">Catalogue numbers preserve overall rank. Scores count how many liked lists include each film.</p>

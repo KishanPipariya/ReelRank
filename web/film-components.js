@@ -29,11 +29,10 @@ export function responsivePosterAttrs(image, url, sizes = '(max-width: 640px) 42
 }
 
 export function cardFor(film, index, dependencies) {
-  const { films, state, safeUrl, makeLink, directorCreditFor, countryRuntimeMetaFor, scoreMeterFor, genreChipFor, filmDetailButtonFor, getFilmDetailUrl = (item) => filmDetailUrl(window.location.href, item) } = dependencies;
+  const { films, state, safeUrl, makeLink, directorCreditFor, countryRuntimeMetaFor, genreChipFor, filmDetailButtonFor, filmAppearanceCountFor, getFilmDetailUrl = (item) => filmDetailUrl(window.location.href, item) } = dependencies;
   const rankNumber = films.indexOf(film) + 1;
   const card = document.createElement('article');
   card.className = 'film-card';
-  card.style.animationDelay = `${Math.min(index * 22, 220)}ms`;
 
   const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
   const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
@@ -101,16 +100,7 @@ export function cardFor(film, index, dependencies) {
   const cinephileMeta = countryRuntimeMetaFor(film, 'cinephile-meta');
   if (cinephileMeta) info.append(cinephileMeta);
 
-  const count = document.createElement('p');
-  count.className = 'film-count';
-  const countValue = document.createElement('strong');
-  const likedListCount = Number(film.liked_in) || 0;
-  countValue.textContent = likedListCount.toLocaleString();
-  const countLabel = document.createElement('span');
-  countLabel.textContent = likedListCount === 1 ? 'list appearance' : 'list appearances';
-  count.append(countValue, countLabel, scoreMeterFor(film, 'film-score-meter'));
-  count.setAttribute('aria-label', `Overall list-appearance score: ${likedListCount.toLocaleString()}`);
-  info.append(count);
+  info.append(filmAppearanceCountFor(film, 'film-count'));
 
   const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre) : [])];
   if (genres.length) {
@@ -150,7 +140,6 @@ export function cardFor(film, index, dependencies) {
 }
 
 export function updateFilmCard(card, film, index, state, rankNumber, highestScore = 1, getFilmDetailUrl = (item) => filmDetailUrl(window.location.href, item)) {
-  card.style.animationDelay = `${Math.min(index * 22, 220)}ms`;
   const detailHref = getFilmDetailUrl(film).href;
   card.querySelector('.poster-link')?.setAttribute('href', detailHref);
   card.querySelector('.film-detail-trigger')?.setAttribute('href', detailHref);

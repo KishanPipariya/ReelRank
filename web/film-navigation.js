@@ -26,7 +26,7 @@ export function createFilmNavigation({ browserWindow, getState, getFilms, getDia
     browserWindow.history.replaceState(entryMetadata(browserWindow.history.state, visibleLimit, browserWindow.scrollY), '', browserWindow.location.href);
   }
 
-  function openFromUi(film) {
+  function openFromUi(film, options = {}) {
     clickedTrigger = browserWindow.document.activeElement;
     const url = filmDetailUrl(browserWindow.location.href, film);
     activeFilm = url.searchParams.get('film');
@@ -35,7 +35,7 @@ export function createFilmNavigation({ browserWindow, getState, getFilms, getDia
     const metadata = entryMetadata(browserWindow.history.state, state.visibleLimit, browserWindow.scrollY);
     metadata.reelrank.filmDialog = true;
     browserWindow.history.pushState(metadata, '', url);
-    openDetails(film);
+    openDetails(film, options);
   }
 
   function restoreFromUrl() {
