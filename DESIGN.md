@@ -8,7 +8,9 @@ colors:
   hairline: "#dedbd2"
   porcelain: "#f8f6f1"
   stone-paper: "#ebe8df"
+  surface-hover: "#e9e8dd"
   control-ink: "#575d54"
+  link-rule: "#838a79"
   deep-evergreen: "#243d31"
   soft-lichen: "#b5d67a"
   signal-wash: "#e8ece3"
@@ -18,6 +20,9 @@ colors:
   terracotta-ink: "#984a33"
   filter-cream: "#f5f3eb"
   hero-cream: "#f6f3e9"
+  hero-secondary: "#c6d7b0"
+  hero-copy: "#d2d7cc"
+  hero-muted: "#bbc5b7"
   night-paper: "#151915"
   night-ink: "#ecece2"
   night-muted: "#a4aa9c"
@@ -31,6 +36,18 @@ colors:
   night-signal-value: "#c3d89c"
   night-filter-ink: "#182219"
   night-terracotta: "#f0a07b"
+  muted-copy: "#62685e"
+  focus-terracotta: "#bd6446"
+  terracotta-on-dark: "#f0a07b"
+  night-rule-strong: "#424a40"
+  night-highlight: "#c3d89c"
+  night-highlight-rule: "#a3bd85"
+  night-copper: "#d18b6d"
+  night-link: "#d6e6c2"
+  night-link-rule: "#8e9c80"
+  night-soft-highlight: "#c4d8a2"
+  night-highlight-bright: "#d2e69f"
+  night-lime: "#c7e58f"
 typography:
   display:
     fontFamily: "Playfair Display, Georgia, serif"
@@ -48,9 +65,69 @@ typography:
     fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.7
+  caption:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "12px"
+    fontWeight: 400
+  micro:
+    fontFamily: "DM Mono, monospace"
+    fontSize: "8px"
+    fontWeight: 400
+  small:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+  card-title:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "15px"
+    fontWeight: 500
+  control:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "16px"
+    fontWeight: 400
+  utility:
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "17px"
+    fontWeight: 400
+  section-small:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "18px"
+    fontWeight: 500
+  section:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "19px"
+    fontWeight: 500
+  heading:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "20px"
+    fontWeight: 500
+  rank:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "21px"
+    fontWeight: 500
+  emphasis:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "22px"
+    fontWeight: 500
+  count:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "23px"
+    fontWeight: 600
+  display-small:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "24px"
+    fontWeight: 500
+  metric:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "25px"
+    fontWeight: 500
+  detail-score:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "26px"
+    fontWeight: 500
   label:
     fontFamily: "DM Mono, monospace"
-    fontSize: "11px"
+    fontSize: "12px"
     fontWeight: 400
     letterSpacing: "0.1em"
 rounded:
@@ -72,13 +149,13 @@ components:
     backgroundColor: "{colors.deep-evergreen}"
     textColor: "{colors.filter-cream}"
     rounded: "{rounded.sm}"
-    height: "30px"
+    height: "44px"
     padding: "0 12px"
   input-search:
     backgroundColor: "{colors.porcelain}"
     textColor: "{colors.ink}"
     rounded: "{rounded.sm}"
-    height: "38px"
+    height: "44px"
     padding: "0 10px"
   navigation:
     textColor: "{colors.ink}"
@@ -143,6 +220,10 @@ The light palette uses warm paper and forest green as its base, with lichen and 
 
 **The Accent Restraint Rule.** Keep terracotta and lichen as accents around evergreen structure; don’t let them replace the quiet paper and forest base.
 
+Reusable interface accents include muted copy, terracotta focus, and the brighter lichen, copper, and link colors used on dark surfaces. Small decorative tints and image overlays remain local to the components that use them.
+
+Hero copy uses dedicated cream, secondary, supporting, and muted text roles. Selected dark-theme controls use the night filter ink token, while the catalogue keeps its deeper evergreen token distinct from the dark hero green.
+
 ## Typography
 
 **Display Font:** Playfair Display (with Georgia, serif fallback)
@@ -155,14 +236,16 @@ The light palette uses warm paper and forest green as its base, with lichen and 
 - **Display** (500, 54–64px on desktop and 36–48px on mobile; .98–1.02 line-height): The hero headline uses the large end of the serif voice while keeping its copy intact across widths.
 - **Headline** (500, clamp 34–47px on desktop and 28–38px on mobile; -.055em tracking): Catalogue and collection headings.
 - **Film title** (serif, 15px in poster cards, 23–38px in the featured film, 28–42px in details): Titles carry the visual hierarchy inside each catalogue view.
-- **Body** (400, 14px, typically 1.45–1.7 line-height): Descriptions and explanatory copy; supporting text steps down to 12px.
+- **Body** (400, 14px, typically 1.45–1.7 line-height): Descriptions and explanatory copy; supporting text uses the 12px caption and 13px small-text steps.
+- **Card and control text** (15–16px): Film-card titles and editable controls use their own readable steps.
+- **Section and supporting display** (18–24px): Local section heads and counts sit between the headline and body scales; large metrics and feature titles may use component-specific sizes.
 - **Label** (DM Mono, usually 12px with tracked uppercase where appropriate): Counts, filters, provenance, and edition metadata.
 
 **The Three-Face Rule.** Use Playfair Display for expressive hierarchy, DM Sans for reading, and DM Mono for compact catalogue data; don’t add a fourth type family.
 
 ## Layout
 
-The desktop page sits in a centered shell capped at 1320px with 36px side gutters. The masthead is 68px tall (56px on shorter desktop viewports). The evergreen hero starts at a 176px minimum height, with its content setting the final height; the featured stamp is 176px. Below 700px, the masthead is 66px, the hero has a 250px minimum height, and the stamp is hidden. The mobile shell is capped at 560px with 18px side gutters. Sections use the 4px-based spacing scale, with a 38px section step and 40px section-end spacing; the mobile collection uses 22px above and 35px below.
+The desktop page sits in a centered shell capped at 1320px with 36px side gutters. The masthead is 68px tall (56px on shorter desktop viewports). The evergreen hero starts at a 176px minimum height, with its content setting the final height; the featured stamp is 176px. Below 700px, the masthead is 66px, the hero has a 250px minimum height, and the stamp is hidden. The mobile shell is capped at 560px with 18px side gutters. Sections use the 4px-based spacing scale, with a 38px section step and 40px section-end spacing; the mobile collection uses 22px above and 35px below. Primary controls keep a 44px minimum hit area across desktop and mobile.
 
 The main catalogue has two deliberately different reading modes: a four-column poster grid on wide screens, three columns at 920px and below, and two columns at 430px and below; the ledger presents the same ranking as a comparison table. Search and filters move from a four-column control row to two columns on mobile, where search spans the row. Filter facets and catalogue utilities use separate disclosures. Decade browsing leads with a small quick-pick set and offers search and show-all controls when more are available. The film-details dialog changes to a single-column poster and detail layout below 600px. Short-height desktop layouts tighten the masthead, hero, summary, and catalogue spacing to keep more of the ranked films in view.
 
@@ -186,7 +269,7 @@ Most interface controls have nearly square corners (2px); segmented controls ris
 ### Buttons
 Controls feel precise and editorial, with clear selected states.
 - **Shape:** Mostly square corners (2px); filter segments have 3px outer corners.
-- **Primary:** The selected filter uses deep evergreen with light text in the light theme, and lichen with dark text in dark mode (30px minimum height, 12px horizontal padding).
+- **Primary:** The selected filter uses deep evergreen with light text in the light theme, and lichen with dark text in dark mode (44px minimum height, 12px horizontal padding).
 - **Hover / Focus:** Hover shifts surface and border colors; keyboard focus uses a three-pixel outline with offset.
 - **Secondary:** Outline-and-paper controls use a thin rule and muted type; text actions remain underlined.
 
@@ -202,7 +285,7 @@ Controls feel precise and editorial, with clear selected states.
 - **Internal Padding:** 12–16px for compact panels; setup card uses responsive padding.
 
 ### Inputs / Fields
-- **Style:** Search sits on porcelain with a one-pixel hairline, nearly square corners, and a 38px height.
+- **Style:** Search sits on porcelain with a one-pixel hairline, nearly square corners, and a 44px minimum height.
 - **Focus:** A three-pixel outline with offset; the dark palette changes its focus color for contrast.
 
 ### Navigation
