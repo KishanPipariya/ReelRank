@@ -176,6 +176,12 @@ async function checkCatalogInteractions(page) {
   check(await page.locator('#selected-genres button').count() === 1 && await page.locator('#selected-genres button').textContent() === 'Crime ×', 'Removing one genre leaves the other selected genre intact.');
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#site-shell:not([hidden])');
+  await page.locator('#catalogue-tools > summary').click();
+  check(await page.locator('#catalogue-tools').evaluate((element) => element.open), 'Catalogue tools opens from its disclosure control.');
+  await page.locator('.catalogue-tools-intro').click();
+  check(await page.locator('#catalogue-tools').evaluate((element) => element.open), 'Catalogue tools stays open when the user interacts inside its panel.');
+  await page.locator('#hero-title').click();
+  check(!(await page.locator('#catalogue-tools').evaluate((element) => element.open)), 'Catalogue tools closes when the user clicks outside the panel.');
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.locator('#sort-select').selectOption('title');
   const directorCard = page.locator('.film-card:visible').filter({ hasText: 'Portrait of a Lady on Fire' });

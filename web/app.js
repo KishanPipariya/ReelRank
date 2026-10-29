@@ -1830,12 +1830,13 @@ closeSourceListsButton.addEventListener('click', () => {
   sourceListFilter.open = false;
   sourceListFilter.querySelector('summary').focus();
 });
+const catalogueToolsDisclosure = document.querySelector('#catalogue-tools');
 document.addEventListener('pointerdown', (event) => {
   const eventPath = event.composedPath();
   if (genreFilter.open && !eventPath.includes(genreFilter)) genreFilter.open = false;
   if (sourceListFilter.open && !eventPath.includes(sourceListFilter)) sourceListFilter.open = false;
+  if (catalogueToolsDisclosure.open && !eventPath.includes(catalogueToolsDisclosure)) catalogueToolsDisclosure.open = false;
 });
-const catalogueToolsDisclosure = document.querySelector('#catalogue-tools');
 const savedViewsGroup = document.querySelector('#saved-views');
 loadMoreButton.addEventListener('click', () => {
   const previousLimit = state.visibleLimit;
