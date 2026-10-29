@@ -13,7 +13,7 @@ import { createFilmNavigation, filmDetailUrl } from './film-navigation.js';
 import { updateEditionFreshness } from './edition-freshness.js';
 import { downloadCatalogueCsv } from './catalogue-download.js';
 import { bindSavedViewControls } from './saved-views.js';
-import { expandSnapshotWithRanking } from './ranking-csv.js';
+import { loadFullRanking } from './ranking-csv.js';
 
 const clearQueryButton = document.querySelector('#clear-query');
 const emptyResultActions = document.querySelector('#empty-result-actions');
@@ -39,6 +39,19 @@ const topBilledFeature = document.querySelector('#top-billed-feature');
 const topBilledGrid = document.querySelector('#top-billed-grid');
 const statusMessage = document.querySelector('#status-message');
 const statusMessageCopy = document.querySelector('#status-message-copy');
+const topBilledMobileLayout = window.matchMedia('(max-width: 700px)');
+function placeTopBilledForViewport() {
+  const collection = document.querySelector('#collection');
+  if (topBilledMobileLayout.matches) {
+    collection.classList.add('has-leading-feature');
+    collection.prepend(topBilled);
+  } else {
+    collection.classList.remove('has-leading-feature');
+    document.querySelector('.catalogue-results').insertBefore(topBilled, statusMessage);
+  }
+}
+placeTopBilledForViewport();
+topBilledMobileLayout.addEventListener('change', placeTopBilledForViewport);
 const programmeNote = document.querySelector('#programme-note');
 const programmeNoteCopy = document.querySelector('#programme-note-copy');
 const posterDisplayButton = document.querySelector('#poster-display-button');
@@ -1611,8 +1624,10 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
     ? ''
     : rankingLoadFailed
       ? `The full ranking could not load, so this view is using ${searchableCount} detailed films. Your search and filters are still here; check your connection and retry to load all ${rankedTotal.toLocaleString()}.`
+      : snapshot.ranking_csv_url
+        ? `The detailed films are ready. Loading all ${rankedTotal.toLocaleString()} ranked films in the background.`
       : `Full-ranking data is not included in this saved edition. Search covers ${searchableCount} detailed films; refresh the snapshot to include all ${rankedTotal.toLocaleString()}.`;
-  catalogueDataStatus.dataset.state = fullRankingFilms ? 'complete' : 'partial';
+  catalogueDataStatus.dataset.state = fullRankingFilms ? 'complete' : rankingLoadFailed ? 'partial' : snapshot.ranking_csv_url ? 'loading' : 'partial';
   retryRankingLoadButton.hidden = !rankingLoadFailed;
   retryRankingLoadButton.disabled = false;
   retryRankingLoadButton.textContent = 'Retry full-catalogue load';
@@ -1647,19 +1662,8 @@ async function loadSnapshot() {
     const snapshot = validateSnapshot(snapshotData);
     snapshotFailureKind = 'initialization';
     if (!showDemoState(configuredUsername, snapshot.username.trim())) return;
-    let fullRankingFilms = null;
-    let rankingLoadFailed = false;
-    if (snapshot.ranking_csv_url) {
-      try {
-        const rankingResponse = await fetch(snapshot.ranking_csv_url, { cache: 'default' });
-        if (!rankingResponse.ok) throw new Error(`Full ranking request failed: ${rankingResponse.status}`);
-        fullRankingFilms = expandSnapshotWithRanking(snapshot, await rankingResponse.text());
-      } catch (error) {
-        rankingLoadFailed = true;
-        console.warn('The full ranking file could not be loaded; showing the detailed snapshot films.', error);
-      }
-    }
-    initializeSnapshot(snapshot, fullRankingFilms, rankingLoadFailed);
+    initializeSnapshot(snapshot);
+    if (snapshot.ranking_csv_url) void loadFullRankingInBackground(snapshot);
   } catch (error) {
     siteShell.hidden = true;
     setupState.hidden = false;
@@ -1672,15 +1676,26 @@ async function loadSnapshot() {
   }
 }
 
+async function loadFullRankingInBackground(snapshot) {
+  try {
+    const fullRankingFilms = await loadFullRanking(snapshot);
+    if (activeSnapshot === snapshot) initializeSnapshot(snapshot, fullRankingFilms);
+  } catch (error) {
+    console.warn('The full ranking file could not be loaded; showing the detailed snapshot films.', error);
+    if (activeSnapshot === snapshot) {
+      initializeSnapshot(snapshot, null, true);
+      catalogueDataStatus.dataset.state = 'partial';
+    }
+  }
+}
+
 async function retryFullRanking() {
   if (!activeSnapshot?.ranking_csv_url || retryRankingLoadButton.disabled) return;
   retryRankingLoadButton.disabled = true;
   retryRankingLoadButton.textContent = 'Loading full catalogue…';
   catalogueDataStatus.textContent = `Loading all ${rankedTotal.toLocaleString()} ranked films. Your current results remain available while this loads.`;
   try {
-    const response = await fetch(activeSnapshot.ranking_csv_url, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`Full ranking request failed: ${response.status}`);
-    const fullRankingFilms = expandSnapshotWithRanking(activeSnapshot, await response.text());
+    const fullRankingFilms = await loadFullRanking(activeSnapshot, 'no-store');
     initializeSnapshot(activeSnapshot, fullRankingFilms);
   } catch (error) {
     console.warn('The full ranking could not be loaded; keeping the detailed snapshot films available.', error);

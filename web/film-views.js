@@ -593,7 +593,7 @@ function featuredFilmFor(film) {
   label.className = 'featured-film-label';
   label.textContent = `Selection · Overall rank ${rankNumber}`;
   copy.append(label);
-  const title = document.createElement('h4');
+  const title = document.createElement('h3');
   if (filmUrl) title.append(makeLink(film.title, filmUrl, 'featured-film-title'));
   else {
     const titleText = document.createElement('span');

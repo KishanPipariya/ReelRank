@@ -141,3 +141,50 @@ export function expandSnapshotWithRanking(snapshot, csvText) {
 
   return films;
 }
+
+export async function loadFullRankingDirect(snapshot, cache = 'default') {
+  if (snapshot.ranking_gzip_url && typeof DecompressionStream === 'function') {
+    try {
+      const compressedResponse = await fetch(snapshot.ranking_gzip_url, { cache });
+      if (!compressedResponse.ok) throw new Error(`Compressed ranking request failed: ${compressedResponse.status}`);
+      const decompressed = compressedResponse.body.pipeThrough(new DecompressionStream('gzip'));
+      const csvText = await new Response(decompressed).text();
+      return expandSnapshotWithRanking(snapshot, csvText);
+    } catch (error) {
+      console.warn('The compressed ranking could not be read; trying the CSV sidecar.', error);
+    }
+  }
+
+  if (!snapshot.ranking_csv_url) throw new Error('This snapshot does not include a full-ranking sidecar');
+  const response = await fetch(snapshot.ranking_csv_url, { cache });
+  if (!response.ok) throw new Error(`Full ranking request failed: ${response.status}`);
+  return expandSnapshotWithRanking(snapshot, await response.text());
+}
+
+export function loadFullRanking(snapshot, cache = 'default') {
+  if (typeof Worker !== 'function') return loadFullRankingDirect(snapshot, cache);
+
+  return new Promise((resolve, reject) => {
+    let worker;
+    try {
+      worker = new Worker(new URL('./ranking-worker.js', import.meta.url), { type: 'module' });
+    } catch {
+      resolve(loadFullRankingDirect(snapshot, cache));
+      return;
+    }
+
+    const finish = (callback, value) => {
+      worker.terminate();
+      callback(value);
+    };
+    worker.addEventListener('message', (event) => {
+      if (event.data.error) finish(reject, new Error(event.data.error));
+      else finish(resolve, event.data.films);
+    }, { once: true });
+    worker.addEventListener('error', () => {
+      worker.terminate();
+      loadFullRankingDirect(snapshot, cache).then(resolve, reject);
+    }, { once: true });
+    worker.postMessage({ snapshot, cache });
+  });
+}

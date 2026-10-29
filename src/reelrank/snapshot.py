@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import hashlib
 import io
 import json
@@ -13,7 +14,7 @@ from importlib.resources import files
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-from .fileio import atomic_write_text
+from .fileio import atomic_write_bytes, atomic_write_text
 from .http import ThreadLocalSessionPool, create_http_session
 from .letterboxd import _username_url, fetch_user_list_urls, fetch_user_watched_movies, movie_is_watched, rank_movies
 from .metadata import resolve_movie_metadata
@@ -349,6 +350,7 @@ def create_snapshot(username: str) -> dict:
             f"{hashlib.sha256(json.dumps(poster_galleries, sort_keys=True).encode()).hexdigest()[:12]}.json"
         ),
         "ranking_csv_url": f"/data/ranking-{generated_at.strftime('%Y%m%dT%H%M%SZ')}-{ranking_digest}.csv",
+        "ranking_gzip_url": f"/data/ranking-{generated_at.strftime('%Y%m%dT%H%M%SZ')}-{ranking_digest}.csv.gz",
         "list_count": len(list_urls),
         "film_count": len(results),
         "displayed_film_count": len(films),
@@ -376,6 +378,8 @@ def write_snapshot(snapshot: dict, output: Path) -> None:
     gallery_output = output.parent / gallery_name
     ranking_name = Path(snapshot.get("ranking_csv_url", "")).name
     ranking_output = output.parent / ranking_name if ranking_name else None
+    ranking_gzip_name = Path(snapshot.get("ranking_gzip_url", "")).name
+    ranking_gzip_output = output.parent / ranking_gzip_name if ranking_gzip_name else None
     private_fields = {"_poster_galleries", "_full_ranking", "_watched"}
     public_snapshot = {key: value for key, value in snapshot.items() if key not in private_fields}
     gallery_payload = snapshot.get("_poster_galleries") or {
@@ -412,4 +416,9 @@ def write_snapshot(snapshot: dict, output: Path) -> None:
     )
     if ranking_output is not None and ranking_csv is not None:
         atomic_write_text(ranking_output, ranking_csv)
+        if ranking_gzip_output is not None:
+            atomic_write_bytes(
+                ranking_gzip_output,
+                gzip.compress(ranking_csv.encode("utf-8"), mtime=0),
+            )
     atomic_write_text(output, json.dumps(public_snapshot, ensure_ascii=False, indent=2) + "\n")
