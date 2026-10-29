@@ -379,6 +379,8 @@ async function checkSavedPreferences() {
   const link = new URL(await page.locator('#programme-share-url').inputValue());
   check(link.searchParams.get('view') === 'posters', 'A shared default Poster Wall programme overrides a recipient Ledger preference.');
   await page.goto(link.href, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#site-shell:not([hidden])');
+  await page.locator('#film-grid').waitFor({ state: 'visible' });
   check(await page.locator('#film-grid').isVisible(), 'An explicit shared Poster Wall layout wins over stored preferences.');
   await openProgrammeShare(page);
   await openDisclosure(page, '#saved-views');
