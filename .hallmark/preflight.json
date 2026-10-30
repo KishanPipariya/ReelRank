@@ -1,0 +1,15 @@
+{
+  "scanned": "2026-10-30",
+  "findings": {
+    "fonts": "DM Sans, DM Mono, and Playfair Display are linked in web/index.html:12-14; DESIGN.md declares this combination.",
+    "palette": "Warm paper, evergreen, terracotta, and dark-mode roles are declared in web/styles.css:1-42 and documented in DESIGN.md.",
+    "motion": "Vanilla CSS transitions and a reduced-motion override in web/styles.css:680-690; no motion framework detected.",
+    "spacing": "4px-based spacing tokens are declared in web/styles.css:59-69, with many literal spacing values also present.",
+    "framework": "Static HTML/CSS/JS site under web/; package.json provides browser and accessibility checks."
+  },
+  "preserve": [
+    "The locked Personal Film Almanac identity and existing palette, type, and spacing roles in DESIGN.md.",
+    "The static catalogue content, links, filters, dialogs, and client-side wiring."
+  ],
+  "introduce": []
+}

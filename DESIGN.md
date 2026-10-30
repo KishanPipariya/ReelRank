@@ -10,6 +10,7 @@ colors:
   stone-paper: "#ebe8df"
   surface-hover: "#e9e8dd"
   control-ink: "#575d54"
+  control-border: "#73786e"
   link-rule: "#838a79"
   deep-evergreen: "#243d31"
   soft-lichen: "#b5d67a"
@@ -30,6 +31,7 @@ colors:
   night-surface: "#1e241f"
   night-soft-surface: "#222922"
   night-control: "#c0c5b9"
+  night-control-border: "#7a8374"
   night-evergreen: "#263d32"
   night-signal-wash: "#1d251f"
   night-signal-rule: "#344137"
@@ -215,8 +217,9 @@ The light palette uses warm paper and forest green as its base, with lichen and 
 - **Ink**: Primary light-theme text.
 - **Soft Graphite**: Supporting text; retain its muted hierarchy.
 - **Parchment Rule**: Quiet borders and dividers.
+- **Control Border**: A stronger edge for fields and controls, distinct from quiet section dividers.
 - **Night Paper, Night Surface, Night Soft Surface**: Dark canvas and layered surfaces.
-- **Night Text, Night Muted Text, Night Control Text, Night Rule**: Dark-theme type and dividers.
+- **Night Text, Night Muted Text, Night Control Text, Night Rule, Night Control Border**: Dark-theme type, dividers, and field edges.
 
 **The Accent Restraint Rule.** Keep terracotta and lichen as accents around evergreen structure; don’t let them replace the quiet paper and forest base.
 

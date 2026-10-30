@@ -591,7 +591,7 @@ function featuredFilmFor(film) {
   copy.className = 'featured-film-copy';
   const label = document.createElement('p');
   label.className = 'featured-film-label';
-  label.textContent = `Selection · Overall rank ${rankNumber}`;
+  label.textContent = `Selection, overall rank ${rankNumber}`;
   copy.append(label);
   const title = document.createElement('h3');
   if (filmUrl) title.append(makeLink(film.title, filmUrl, 'featured-film-title'));
