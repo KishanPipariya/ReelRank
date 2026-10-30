@@ -106,9 +106,6 @@ const sortSelect = document.querySelector('#sort-select');
 const countryIndexOptions = document.querySelector('#country-index-options');
 const decadeOptions = document.querySelector('#decade-options');
 const decadeIndexToggle = document.querySelector('#decade-index-toggle');
-const decadeIndexSearch = document.querySelector('#decade-index-search');
-const decadeIndexSearchControl = document.querySelector('#decade-index-search-control');
-const decadeIndexEmpty = document.querySelector('#decade-index-empty');
 const runtimeFilter = document.querySelector('#runtime-filter');
 const runtimeOptions = document.querySelector('#runtime-options');
 const genreFilter = document.querySelector('#genre-filter');
@@ -236,8 +233,6 @@ function setLanguageIndexExpanded(expanded) {
 
 function setDecadeIndexExpanded(expanded) {
   decadeOptions.classList.toggle('is-expanded', expanded);
-  decadeIndexSearchControl.hidden = !expanded;
-  if (!expanded) decadeIndexSearch.value = '';
   decadeIndexToggle.setAttribute('aria-expanded', String(expanded));
   decadeIndexToggle.textContent = expanded ? 'Show leading decades' : `Show all ${availableDecades.length} decades`;
   updateDecadeIndexVisibility();
@@ -245,17 +240,12 @@ function setDecadeIndexExpanded(expanded) {
 
 function updateDecadeIndexVisibility() {
   const expanded = decadeOptions.classList.contains('is-expanded');
-  const query = decadeIndexSearch.value.trim().toLocaleLowerCase();
-  let visibleCount = 0;
   decadeOptions.querySelectorAll('[data-decade]').forEach((button) => {
     const value = button.dataset.decade;
     const isLeading = value === '' || leadingDecades.includes(Number(value));
     const isSelected = button.getAttribute('aria-pressed') === 'true';
-    const label = value === '' ? 'all eras' : `${value}s`;
-    button.hidden = (!expanded && !isLeading && !isSelected) || (query && !label.toLocaleLowerCase().includes(query));
-    if (!button.hidden) visibleCount += 1;
+    button.hidden = !expanded && !isLeading && !isSelected;
   });
-  decadeIndexEmpty.hidden = !expanded || visibleCount > 0;
 }
 
 function updateLanguageIndexVisibility() {
@@ -1811,7 +1801,6 @@ languageIndexSearch.addEventListener('input', updateLanguageIndexVisibility);
 decadeIndexToggle.addEventListener('click', () => {
   setDecadeIndexExpanded(decadeIndexToggle.getAttribute('aria-expanded') !== 'true');
 });
-decadeIndexSearch.addEventListener('input', updateDecadeIndexVisibility);
 posterDisplayButton.addEventListener('click', () => setView('posters'));
 ledgerDisplayButton.addEventListener('click', () => setView('ledger'));
 printProgrammeButton.addEventListener('click', printProgramme);

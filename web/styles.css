@@ -371,6 +371,8 @@ h2 span { display: inline-grid; min-width: 34px; height: 28px; place-items: cent
 .catalog-filters-panel .decade-retrospective { margin: 0; padding: 0; border: 0; background: none; }
 .catalog-filters-panel .decade-retrospective-heading { margin: 0 0 8px; }
 .catalog-filters-panel .decade-retrospective-heading h3 { color: var(--ink); font-family: var(--mono); font-size: var(--type-caption); font-style: normal; letter-spacing: .08em; text-transform: uppercase; }
+.catalog-filters-panel .decade-options { max-width: none; }
+.catalog-filters-panel .decade-options .decade-option { flex-grow: 1; }
 .more-filters { border-top: 1px solid var(--line); }
 .more-filters > summary { min-height: var(--control-min-height); display: flex; align-items: center; justify-content: space-between; color: var(--ink); cursor: pointer; font-family: var(--mono); font-size: var(--type-caption); list-style: none; }
 .more-filters > summary::-webkit-details-marker { display: none; }
