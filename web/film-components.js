@@ -80,7 +80,15 @@ export function cardFor(film, index, dependencies) {
   info.className = 'film-info';
   const titleRow = document.createElement('h3');
   titleRow.className = 'film-title-row';
-  if (filmUrl) titleRow.append(makeLink(film.title, filmUrl, 'film-title'));
+  if (filmUrl) {
+    const titleLink = makeLink(film.title, filmUrl, 'film-title');
+    const visibleTitle = document.createElement('span');
+    visibleTitle.setAttribute('aria-hidden', 'true');
+    visibleTitle.textContent = film.title;
+    titleLink.title = film.title;
+    titleLink.replaceChildren(visibleTitle);
+    titleRow.append(titleLink);
+  }
   else {
     const title = document.createElement('span');
     title.className = 'film-title';

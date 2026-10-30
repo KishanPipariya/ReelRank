@@ -15,9 +15,6 @@ export function createProgrammePrinter(dependencies) {
     const snapshotRefreshedAt = getSnapshotRefreshedAt();
     const readerEdition = printFormatSelect.value === 'reader';
     printProgrammeContainer.classList.toggle('print-programme-reader', readerEdition);
-    document.querySelector('#print-programme-kicker').textContent = readerEdition
-      ? 'ReelRank · Reader’s edition'
-      : 'ReelRank · Catalogue edition';
     const filmsForProgramme = [...currentMatchingFilms].sort((left, right) => compareFilms(left, right, 'year-oldest'));
     printProgrammeTitle.textContent = topBilledTitle.textContent || 'ReelRank film selection';
     printProgrammeUsername.textContent = profileUsername.textContent;

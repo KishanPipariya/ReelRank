@@ -29,6 +29,7 @@ function openPosterViewer(film, posterUrl, showGallery = false) {
   posterViewerTitle.textContent = `${film.title} poster`;
   posterViewerCaption.textContent = [film.title, film.year].filter(Boolean).join(' · ');
   posterViewerCaption.dataset.posterUrl = posterUrl || '';
+  posterViewerImage.hidden = !posterUrl;
   if (posterUrl) {
     posterViewerImage.src = posterUrl;
     posterViewerImage.alt = `${film.title} poster`;
@@ -103,7 +104,8 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
     label.textContent = poster.current ? 'Current' : language;
     button.append(image, label);
     button.addEventListener('click', () => {
-    posterViewerImage.src = poster.url;
+      posterViewerImage.hidden = false;
+      posterViewerImage.src = poster.url;
       posterViewerCaption.dataset.posterUrl = poster.url;
       posterViewerImage.alt = `${film.title} poster`;
       posterViewerImage.classList.remove('is-zoomed');
@@ -594,7 +596,15 @@ function featuredFilmFor(film) {
   label.textContent = `Selection, overall rank ${rankNumber}`;
   copy.append(label);
   const title = document.createElement('h3');
-  if (filmUrl) title.append(makeLink(film.title, filmUrl, 'featured-film-title'));
+  if (filmUrl) {
+    const titleLink = makeLink(film.title, filmUrl, 'featured-film-title');
+    const visibleTitle = document.createElement('span');
+    visibleTitle.setAttribute('aria-hidden', 'true');
+    visibleTitle.textContent = film.title;
+    titleLink.title = film.title;
+    titleLink.replaceChildren(visibleTitle);
+    title.append(titleLink);
+  }
   else {
     const titleText = document.createElement('span');
     titleText.className = 'featured-film-title';
@@ -615,7 +625,12 @@ function featuredFilmFor(film) {
   if (film.overview) {
     const synopsis = document.createElement('p');
     synopsis.className = 'featured-film-overview';
-    synopsis.textContent = film.overview;
+    synopsis.setAttribute('role', 'note');
+    synopsis.setAttribute('aria-label', `Synopsis: ${film.overview}`);
+    const visibleSynopsis = document.createElement('span');
+    visibleSynopsis.setAttribute('aria-hidden', 'true');
+    visibleSynopsis.textContent = film.overview;
+    synopsis.append(visibleSynopsis);
     copy.append(synopsis);
   }
   const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];

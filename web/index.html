@@ -7,7 +7,7 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#151915" />
     <meta name="description" content="The Personal Film Almanac: a catalogue of films ranked by how often they appear in the Letterboxd lists you like." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>ReelRank — Letterboxd film rankings</title>
+    <title>ReelRank: Letterboxd film rankings</title>
     <link rel="preconnect" href="https://image.tmdb.org" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -59,9 +59,9 @@
             </p>
             <div id="edition-colophon" class="edition-colophon" aria-label="Catalogue notes">
               <span class="edition-colophon-heading">Most common</span>
-              <strong id="edition-leading-decade">—</strong>
+              <strong id="edition-leading-decade"></strong>
               <span class="edition-colophon-separator" aria-hidden="true">·</span>
-              <strong id="edition-leading-country">—</strong>
+              <strong id="edition-leading-country"></strong>
             </div>
           </div>
           <div class="hero-stamp" aria-hidden="true">
@@ -73,14 +73,14 @@
         </section>
 
         <section class="summary" aria-label="Snapshot summary">
-          <div class="summary-item"><strong id="film-total">—</strong><span>films found</span></div>
+          <div class="summary-item"><strong id="film-total"></strong><span>films found</span></div>
           <div class="summary-divider"></div>
-          <div class="summary-item"><strong id="list-total">—</strong><span>liked lists scanned</span></div>
+          <div class="summary-item"><strong id="list-total"></strong><span>liked lists scanned</span></div>
           <div class="summary-divider"></div>
-          <div class="summary-item"><strong id="unwatched-total">—</strong><span>still to watch</span></div>
+          <div class="summary-item"><strong id="unwatched-total"></strong><span>still to watch</span></div>
           <p class="summary-note">Ranked by how many liked lists include each film</p>
           <div class="watch-progress">
-            <div class="watch-progress-heading" id="watch-progress-copy"><span id="watch-progress-label">Films watched</span><span><strong id="watched-total">—</strong> of <span id="progress-film-total">—</span> · <span id="watch-progress-percent">—</span></span></div>
+            <div class="watch-progress-heading" id="watch-progress-copy"><span id="watch-progress-label">Films watched</span><span><strong id="watched-total"></strong> of <span id="progress-film-total"></span> · <span id="watch-progress-percent"></span></span></div>
             <progress id="watch-progress" max="1" value="0" aria-labelledby="watch-progress-copy"></progress>
           </div>
         </section>
@@ -112,8 +112,8 @@
                 <span id="search-help" class="sr-only"></span>
                 <div class="filter-tabs" role="group" aria-label="Filter films">
                   <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
-                  <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count">—</span></button>
-                  <button class="filter-button" type="button" data-filter="watched" aria-pressed="false">Watched <span id="watched-tab-count">—</span></button>
+                  <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count"></span></button>
+                  <button class="filter-button" type="button" data-filter="watched" aria-pressed="false">Watched <span id="watched-tab-count"></span></button>
                 </div>
                 <details id="catalog-filters" class="catalog-filters">
                   <summary class="catalog-filters-toggle" aria-label="Refine results">
@@ -235,7 +235,7 @@
                     <div id="runtime-options" class="runtime-options" role="group" aria-label="Filter films by running time" aria-describedby="runtime-filter-note">
                       <button class="runtime-option" type="button" data-runtime="" aria-pressed="true">Any length</button>
                       <button class="runtime-option" type="button" data-runtime="under-90" aria-pressed="false">Under 90 min</button>
-                      <button class="runtime-option" type="button" data-runtime="90-120" aria-pressed="false">90–120 min</button>
+                      <button class="runtime-option" type="button" data-runtime="90-120" aria-pressed="false">90 to 120 min</button>
                       <button class="runtime-option" type="button" data-runtime="over-120" aria-pressed="false">Over 120 min</button>
                       <span id="runtime-filter-note" class="runtime-filter-note">Choosing a running time excludes films with unknown runtimes.</span>
                     </div>
@@ -350,7 +350,7 @@
                     <select id="sort-select" aria-label="Sort films">
                       <option value="rank">Rank</option>
                       <option value="relevance" disabled>Relevance (search results)</option>
-                      <option value="title">Title A–Z</option>
+                      <option value="title">Title A to Z</option>
                       <optgroup label="Release year">
                         <option value="year-newest">Newest first</option>
                         <option value="year-oldest">Oldest first</option>
@@ -407,8 +407,8 @@
         <a id="footer-profile-link" href="https://letterboxd.com/" target="_blank" rel="noreferrer" aria-label="Letterboxd profile, opens in a new tab">Letterboxd profile ↗</a>
       </footer>
       <section id="tmdb-credit" class="tmdb-credit" aria-label="TMDB attribution" hidden>
-        <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" aria-label="The Movie Database, opens in a new tab">
-          <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="TMDB" />
+        <a class="tmdb-credit-wordmark" href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" aria-label="Visit TMDB, opens in a new tab">
+          TMDB
         </a>
         <div><strong>Film data and poster credits</strong><p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p></div>
       </section>
@@ -421,7 +421,7 @@
       <button id="poster-viewer-close" class="poster-viewer-close" type="button" aria-label="Close poster viewer" autofocus>×</button>
       <h2 id="poster-viewer-title" class="sr-only">Film poster</h2>
       <figure class="poster-viewer-figure">
-        <div class="poster-viewer-stage" tabindex="0" role="region" aria-label="Poster image"><img id="poster-viewer-image" class="poster-viewer-image" alt="" /></div>
+        <div id="poster-viewer-stage" class="poster-viewer-stage" tabindex="0" role="region" aria-label="Poster image"></div>
         <figcaption id="poster-viewer-caption" class="poster-viewer-caption"></figcaption>
       </figure>
       <p id="poster-viewer-status" class="poster-viewer-status" role="status" aria-live="polite"></p>
@@ -430,7 +430,6 @@
     </dialog>
     <main id="print-programme" class="print-programme" hidden aria-label="Printable film selection">
       <header class="print-programme-header">
-        <p id="print-programme-kicker" class="print-programme-kicker">ReelRank · Catalogue edition</p>
         <h1 id="print-programme-title">Film selection</h1>
         <p class="print-programme-edition"><span id="print-programme-username"></span><span aria-hidden="true"> · </span><time id="print-programme-date"></time></p>
         <p id="print-programme-context" class="print-programme-context"></p>
