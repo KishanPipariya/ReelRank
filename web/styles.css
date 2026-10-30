@@ -136,7 +136,6 @@ h1 { margin: 0; font-size: clamp(48px, 7vw, 78px); line-height: .99; letter-spac
 .hero-stamp { width: 176px; height: 176px; position: relative; z-index: 1; flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; border: 1px solid #d4e6c755; border-radius: 50%; text-align: center; transform: rotate(5deg); color: #c8d5c1; opacity: 1; }
 .stamp-top, .stamp-bottom { font-family: var(--mono); font-size: var(--type-micro); letter-spacing: .15em; text-transform: uppercase; }
 .stamp-main { margin: 8px 0; color: var(--night-highlight); font-family: var(--serif); font-size: var(--type-display-small); line-height: 1.03; font-style: italic; }
-.stamp-star { width: 20px; height: 20px; position: absolute; top: 18px; right: 24px; color: var(--orange); }
 .summary { min-height: 56px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 6px 2.8%; border-bottom: 1px solid var(--summary-rule); background: var(--summary-surface); }
 .summary-item { display: flex; align-items: baseline; gap: 9px; white-space: nowrap; }
 .summary-item strong { color: var(--summary-value); font-family: var(--serif); font-size: var(--type-metric); font-weight: 500; letter-spacing: -.04em; }
