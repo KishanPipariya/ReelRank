@@ -4,43 +4,31 @@ description: A personal film catalogue ranked by appearances across the Letterbo
 colors:
   warm-paper: "#f3f0e9"
   ink: "#22251f"
-  muted: "#5f655c"
+  soft-graphite: "#5f655c"
   hairline: "#dedbd2"
   porcelain: "#f8f6f1"
   stone-paper: "#ebe8df"
-  surface-hover: "#e9e8dd"
   control-ink: "#575d54"
   control-border: "#73786e"
-  link-rule: "#838a79"
   deep-evergreen: "#243d31"
   soft-lichen: "#b5d67a"
   signal-wash: "#e8ece3"
   signal-rule: "#d2d9cc"
-  signal-value: "#243d31"
   muted-terracotta: "#e88760"
   terracotta-ink: "#984a33"
+  muted-copy: "#62685e"
+  focus-terracotta: "#bd6446"
   filter-cream: "#f5f3eb"
   hero-cream: "#f6f3e9"
   hero-secondary: "#c6d7b0"
   hero-copy: "#d2d7cc"
   hero-muted: "#bbc5b7"
+  terracotta-on-dark: "#f0a07b"
   night-paper: "#151915"
   night-ink: "#ecece2"
   night-muted: "#a4aa9c"
-  night-hairline: "#353c34"
-  night-surface: "#1e241f"
-  night-soft-surface: "#222922"
-  night-control: "#c0c5b9"
-  night-control-border: "#7a8374"
   night-evergreen: "#263d32"
-  night-signal-wash: "#1d251f"
-  night-signal-rule: "#344137"
-  night-signal-value: "#c3d89c"
   night-filter-ink: "#182219"
-  night-terracotta: "#f0a07b"
-  muted-copy: "#62685e"
-  focus-terracotta: "#bd6446"
-  terracotta-on-dark: "#f0a07b"
   night-rule-strong: "#424a40"
   night-highlight: "#c3d89c"
   night-highlight-rule: "#a3bd85"
@@ -52,8 +40,8 @@ colors:
   night-lime: "#c7e58f"
 typography:
   display:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "clamp(54px, 5vw, 64px)"
+    fontFamily: "DM Sans, sans-serif"
+    fontSize: "clamp(48px, 4.5vw, 64px)"
     fontWeight: 500
     lineHeight: 0.98
     letterSpacing: "-0.04em"
@@ -61,77 +49,24 @@ typography:
     fontFamily: "Playfair Display, Georgia, serif"
     fontSize: "clamp(34px, 5vw, 47px)"
     fontWeight: 500
-    letterSpacing: "-0.055em"
+    letterSpacing: "-0.04em"
+  title:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "15px"
+    fontWeight: 500
+    lineHeight: 1.32
   body:
     fontFamily: "DM Sans, sans-serif"
     fontSize: "14px"
     fontWeight: 400
-    lineHeight: 1.7
-  caption:
-    fontFamily: "DM Sans, sans-serif"
-    fontSize: "12px"
-    fontWeight: 400
-  micro:
-    fontFamily: "DM Mono, monospace"
-    fontSize: "8px"
-    fontWeight: 400
-  small:
-    fontFamily: "DM Sans, sans-serif"
-    fontSize: "13px"
-    fontWeight: 400
-  card-title:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "15px"
-    fontWeight: 500
   control:
     fontFamily: "DM Sans, sans-serif"
     fontSize: "16px"
     fontWeight: 400
-  utility:
-    fontFamily: "DM Sans, sans-serif"
-    fontSize: "17px"
-    fontWeight: 400
-  section-small:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "18px"
-    fontWeight: 500
-  section:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "19px"
-    fontWeight: 500
-  heading:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "20px"
-    fontWeight: 500
-  rank:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "21px"
-    fontWeight: 500
-  emphasis:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "22px"
-    fontWeight: 500
-  count:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "23px"
-    fontWeight: 600
-  display-small:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "24px"
-    fontWeight: 500
-  metric:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "25px"
-    fontWeight: 500
-  detail-score:
-    fontFamily: "Playfair Display, Georgia, serif"
-    fontSize: "26px"
-    fontWeight: 500
   label:
     fontFamily: "DM Mono, monospace"
     fontSize: "12px"
     fontWeight: 400
-    letterSpacing: "0.1em"
 rounded:
   sm: "2px"
   md: "3px"
@@ -152,7 +87,7 @@ components:
     textColor: "{colors.filter-cream}"
     rounded: "{rounded.sm}"
     height: "44px"
-    padding: "0 12px"
+    padding: "0 8px"
   input-search:
     backgroundColor: "{colors.porcelain}"
     textColor: "{colors.ink}"
@@ -166,10 +101,17 @@ components:
     backgroundColor: "{colors.stone-paper}"
     textColor: "{colors.control-ink}"
     rounded: "{rounded.pill}"
-    padding: "3px 7px"
+    height: "32px"
+    padding: "3px 8px"
+  poster-info:
+    backgroundColor: "{colors.porcelain}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.sm}"
+    padding: "11px 10px 10px"
   setup-card:
     backgroundColor: "{colors.porcelain}"
     textColor: "{colors.ink}"
+    rounded: "{rounded.sm}"
     padding: "clamp(26px, 6vw, 54px)"
   hero-panel:
     backgroundColor: "{colors.deep-evergreen}"
@@ -182,132 +124,121 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Personal Film Almanac"**
+**Creative North Star: The Personal Film Almanac**
 
-ReelRank feels like a cinephile’s home: warm, comfortable, and organized around a personal catalogue. Its visual language pairs a lived-in paper palette with evergreen framing, serif film titles, and small mono labels that make rankings and provenance easy to scan.
+ReelRank treats a personal catalogue as an archive worth browsing. Warm paper, evergreen framing, and film artwork give the interface its character; list appearances and provenance keep that character tied to the product’s actual signal.
 
-The interface balances a poster wall’s immediacy with a ledger’s precision. Film artwork leads the browsing view; the ledger makes a large catalogue easier to compare. A softly tinted signal band groups ranking counts and watched progress, keeping provenance and status visible without competing with the hero. The same editorial rhythm carries into compact controls, expandable details, and a dedicated dark palette.
+The visual system pairs a direct sans-serif hero with literary serif section heads and film titles. Compact mono labels carry ranks, counts, filters, and edition details. Posters lead the browsing view; a ledger offers a denser way to compare the same catalogue.
 
 **Key Characteristics:**
-- Warm paper surfaces and deep evergreen framing
-- Playfair Display headlines alongside DM Sans reading text and DM Mono metadata
-- Poster-led browsing balanced by a compact, sortable ledger
-- Mostly flat surfaces with depth reserved for overlays
+- Warm paper surfaces framed by deep evergreen.
+- Film posters and list-appearance counts lead the browsing experience.
+- A sans-serif hero sits above serif catalogue headings and titles.
+- Mostly flat catalogue surfaces; depth belongs to open menus and dialogs.
 
 ## Colors
 
-The light palette uses warm paper and forest green as its base, with lichen and terracotta accents; dark mode keeps the same character with deeper surfaces and brighter text.
+The palette moves between warm paper and evergreen, using lichen for selected states and terracotta for focused emphasis. The dark scheme keeps the same roles on deeper surfaces with brighter text and links.
 
 ### Primary
-- **Deep Evergreen**: The main hero, active filter, and key interaction color.
-- **Night Evergreen**: The dark-mode hero and framing green; active filters shift to lichen for contrast.
+- **Deep Evergreen**: Hero field, active filter, and key interaction surface.
 
 ### Secondary
-- **Soft Lichen**: A restrained highlight for counts and emphasized display words; it becomes the active-filter fill in dark mode.
-- **Signal Wash**: A quiet moss tint that groups catalogue counts and watched progress; the dark theme remaps it to a raised evergreen surface.
+- **Soft Lichen**: Status and selected-state emphasis, especially against evergreen.
+- **Signal Wash**: Groups catalogue totals and watched progress without competing with the posters.
 
 ### Tertiary
-- **Muted Terracotta**: A warm accent for emphasis, score indicators, and selected details.
-- **Burnished Rust**: The stronger text and score accent on paper, shifting to light terracotta in dark mode.
+- **Muted Terracotta**: A small signal for focus, links, and selected details.
+- **Terracotta Ink**: The readable rust counterpart on paper surfaces.
 
 ### Neutral
-- **Warm Paper**: The light page canvas.
-- **Porcelain**: Raised light surfaces, including fields and the setup card.
-- **Stone Paper**: Secondary surfaces and ledger headings.
-- **Ink**: Primary light-theme text.
-- **Soft Graphite**: Supporting text; retain its muted hierarchy.
-- **Parchment Rule**: Quiet borders and dividers.
-- **Control Border**: A stronger edge for fields and controls, distinct from quiet section dividers.
-- **Night Paper, Night Surface, Night Soft Surface**: Dark canvas and layered surfaces.
-- **Night Text, Night Muted Text, Night Control Text, Night Rule, Night Control Border**: Dark-theme type, dividers, and field edges.
+- **Warm Paper**: Main light canvas.
+- **Porcelain**: Search fields, setup content, and raised panels.
+- **Stone Paper**: Secondary surfaces, filter chips, and ledger regions.
+- **Ink and Soft Graphite**: Primary and supporting text.
+- **Hairline and Control Border**: Quiet separators and stronger interactive edges.
+- **Night Paper, Night Ink, and Night Muted**: Dark canvas and text hierarchy.
 
-**The Accent Restraint Rule.** Keep terracotta and lichen as accents around evergreen structure; don’t let them replace the quiet paper and forest base.
-
-Reusable interface accents include muted copy, terracotta focus, and the brighter lichen, copper, and link colors used on dark surfaces. Small decorative tints and image overlays remain local to the components that use them.
-
-Hero copy uses dedicated cream, secondary, supporting, and muted text roles. Selected dark-theme controls use the night filter ink token, while the catalogue keeps its deeper evergreen token distinct from the dark hero green.
+**The Accent Restraint Rule.** Evergreen and paper carry the interface; lichen and terracotta remain accents.
 
 ## Typography
 
-**Display Font:** Playfair Display (with Georgia, serif fallback)
-**Body Font:** DM Sans (with sans-serif fallback)
-**Label/Mono Font:** DM Mono (with monospace fallback)
+**Display Font:** DM Sans (sans-serif)
+**Headline and Film Title Font:** Playfair Display (Georgia, serif)
+**Label Font:** DM Mono (monospace)
 
-**Character:** The serif gives film titles and section heads a literary cadence. The sans keeps descriptions comfortable to read; the mono face makes counts, filters, and provenance feel catalogued.
+**Character:** The sans-serif hero is clear and immediate. Playfair Display gives catalogue headings and film titles an editorial cadence; DM Mono makes counts and provenance quick to scan.
 
 ### Hierarchy
-- **Display** (500, 54–64px on desktop and 36–48px on mobile; .98–1.02 line-height): The hero headline uses the large end of the serif voice while keeping its copy intact across widths.
-- **Headline** (500, clamp 34–47px on desktop and 28–38px on mobile; -.055em tracking): Catalogue and collection headings.
-- **Film title** (serif, 15px in poster cards, 23–38px in the featured film, 28–42px in details): Titles carry the visual hierarchy inside each catalogue view.
-- **Body** (400, 14px, typically 1.45–1.7 line-height): Descriptions and explanatory copy; supporting text uses the 12px caption and 13px small-text steps.
-- **Card and control text** (15–16px): Film-card titles and editable controls use their own readable steps.
-- **Section and supporting display** (18–24px): Local section heads and counts sit between the headline and body scales; large metrics and feature titles may use component-specific sizes.
-- **Label** (DM Mono, usually 12px with tracked uppercase where appropriate): Counts, filters, provenance, and edition metadata.
+- **Display** (500, 48–64px, .98 line-height): The hero headline uses DM Sans.
+- **Headline** (500, 34–47px): Collection and section headings use Playfair Display.
+- **Title** (500, 15px, 1.32 line-height): Poster-card titles use Playfair Display and clamp to two lines.
+- **Body** (400, 14px): Supporting copy uses DM Sans; line-height varies by component for compact controls and longer reading.
+- **Control** (400, 16px): Search and editable controls use DM Sans.
+- **Label** (400, 12px): DM Mono carries compact counts, provenance, and filter labels.
 
-**The Three-Face Rule.** Use Playfair Display for expressive hierarchy, DM Sans for reading, and DM Mono for compact catalogue data; don’t add a fourth type family.
+**The Three-Face Rule.** Keep DM Sans for interface reading and the hero, Playfair Display for editorial headings and film titles, and DM Mono for catalogue data.
 
 ## Layout
 
-The desktop page sits in a centered shell capped at 1320px with 36px side gutters. The masthead is 68px tall (56px on shorter desktop viewports). The evergreen hero starts at a 176px minimum height, with its content setting the final height; the featured stamp is 176px. Below 700px, the masthead is 66px, the hero has a 250px minimum height, and the stamp is hidden. The mobile shell is capped at 560px with 18px side gutters. Sections use the 4px-based spacing scale, with a 38px section step and 40px section-end spacing; the mobile collection uses 22px above and 35px below. Primary controls keep a 44px minimum hit area across desktop and mobile.
+The centered page shell is capped at 1320px with 36px desktop gutters. The masthead is 68px high; the evergreen hero is at least 176px high and pairs its copy with a circular 176px almanac stamp on desktop. The stamp hides below 700px. Short desktop viewports reduce masthead and hero spacing.
 
-The main catalogue has two deliberately different reading modes: a four-column poster grid on wide screens, three columns at 920px and below, and two columns at 430px and below; the ledger presents the same ranking as a comparison table. Search and filters move from a four-column control row to two columns on mobile, where search spans the row. Filter facets and catalogue utilities use separate disclosures. Decade browsing leads with a small quick-pick set and offers search and show-all controls when more are available. The film-details dialog changes to a single-column poster and detail layout below 600px. Short-height desktop layouts tighten the masthead, hero, summary, and catalogue spacing to keep more of the ranked films in view.
+The poster wall uses four columns on wide screens, three at 920px and below, and two at 430px and below. Posters keep a 2:3 ratio. The table view presents the same ranking as a ledger. The feature-first page order leads from the hero to the most-listed films, then to the searchable catalogue. On mobile, the shell narrows to 560px with 16px outer gutters; search and filter controls stack into a single-column flow.
+
+Spacing follows the 4px scale, with a 38px section step and 40px section-end spacing. Most controls have a 44px minimum height; compact in-card filter actions use smaller but explicit hit areas.
 
 ## Elevation & Depth
 
-The page is mostly flat: hairline borders and nearby tonal surfaces separate catalogue regions, while the film imagery supplies most of the visual weight. Shadows are reserved for raised setup content, transient menus, and the film-details dialog; the dialog also uses a dimmed, lightly blurred backdrop. Focus is shown with a clear three-pixel outline.
+The resting catalogue uses borders and tonal surfaces rather than floating cards. Shadows distinguish transient utility menus, the setup card, and modal layers from the page beneath them.
 
 ### Shadow Vocabulary
-- **Setup card** (0 18px 55px #24251d10): A very soft lift against the paper background.
-- **Utility panels** (0 12px 32px #1519152e): A concise shadow that separates opened menus from the catalogue.
-- **Film details dialog** (0 24px 90px #10140f66): A strong layer above the dimmed page.
+- **Setup card** (`0 18px 55px #24251d10`): A soft lift against the paper canvas.
+- **Utility panel** (`0 12px 32px #1519152e`): Separates open filters and catalogue tools from results.
+- **Film dialog and poster viewer** (`0 24px 90px` with dark translucent ink): Raises focused film content above a dimmed catalogue.
 
-**The Flat-by-Default Rule.** Keep resting catalogue surfaces flat; reserve stronger depth for controls that open above surrounding content.
+**The Flat-by-Default Rule.** Keep catalogue surfaces flat at rest; reserve strong shadows for overlays and dialogs.
 
 ## Shapes
 
-Most interface controls have nearly square corners (2px); segmented controls rise to 3px. Small round marks identify the wordmark, while tags and progress tracks use pill shapes. Film posters hold a consistent 2:3 ratio. Border lines are thin and quiet rather than outlining every element.
+Controls and panels use nearly square 2px corners; segmented controls use 3px. Genre tags and progress tracks are pill-shaped, while the wordmark mark and hero stamp are circular. Posters preserve a portrait 2:3 ratio. Borders stay thin and quiet except where a control needs a stronger edge.
 
 ## Components
 
 ### Buttons
-Controls feel precise and editorial, with clear selected states.
-- **Shape:** Mostly square corners (2px); filter segments have 3px outer corners.
-- **Primary:** The selected filter uses deep evergreen with light text in the light theme, and lichen with dark text in dark mode (44px minimum height, 12px horizontal padding).
-- **Hover / Focus:** Hover shifts surface and border colors; keyboard focus uses a three-pixel outline with offset.
-- **Secondary:** Outline-and-paper controls use a thin rule and muted type; text actions remain underlined.
+- **Selected filter:** Deep evergreen with filter cream text; 44px minimum height.
+- **Secondary controls:** Paper or transparent fills with a visible border or underline.
+- **Hover / Focus:** Small surface changes on hover; keyboard focus uses a three-pixel outline with offset.
 
 ### Chips
-- **Style:** Genre tags sit on stone paper with control text and pill corners (999px).
-- **State:** Hover and selected tags switch to evergreen with light text; dark mode retains the lichen-led contrast treatment.
+- Genre chips use stone paper and control ink, pill corners, and a 32px minimum height. Selected chips switch to the active evergreen treatment.
 
 ### Cards / Containers
-- **Corner Style:** 2px or square where structural.
-- **Background:** Setup and overlay panels use porcelain; catalogue background stays on paper.
-- **Shadow Strategy:** Flat at rest; lift only setup, menus, and modal layers.
-- **Border:** One-pixel hairline for controls and panel edges.
-- **Internal Padding:** 12–16px for compact panels; setup card uses responsive padding.
+- Poster cards put the image first, then a square-cornered paper metadata panel with a thin rule.
+- The featured film uses a dark evergreen field to distinguish the current ranking lead.
+- Setup content uses a porcelain surface; the catalogue itself remains unraised.
 
 ### Inputs / Fields
-- **Style:** Search sits on porcelain with a one-pixel hairline, nearly square corners, and a 44px minimum height.
-- **Focus:** A three-pixel outline with offset; the dark palette changes its focus color for contrast.
+- Search uses a porcelain field, a one-pixel control edge, and a 44px outer hit area.
+- Focus is visible as an offset outline; disabled controls reduce opacity and use a not-allowed cursor.
 
 ### Navigation
-- **Style:** The wordmark and profile link sit at opposite ends of the masthead; a fine divider closes the 68px row. It compresses to 56px on short desktop screens and 66px on mobile.
+- The wordmark and profile link occupy opposite ends of the 68px masthead. The row compresses on mobile and short desktop screens.
 
 ### Signature Components
-- **Hero:** Evergreen field with a fine inset keyline, existing terracotta/lichen light, lichen emphasis in the display type, and a circular, slightly rotated almanac stamp on desktop. The headline, explanatory line, ranking-method link, edition date, and catalogue notes form its content sequence; the stamp hides on mobile.
-- **Poster wall and ledger:** Two views of one ranked catalogue. Posters keep a consistent portrait ratio; ledger rows expose film metadata and appearance counts.
-- **Film detail dialog:** A wide, scrollable panel with poster accent, adjacent-film navigation, and a dimmed backdrop.
+- **Hero:** Evergreen frame, sans-serif headline, short explanation, methodology link, edition details, and a circular almanac stamp on desktop.
+- **Poster wall and ledger:** Two views of one ranking, optimized for visual browsing and metadata comparison.
+- **Film detail dialog:** A scrollable detail panel with poster, adjacent-film navigation, and source notes.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep poster artwork as the leading image in poster-wall mode.
-- **Do** preserve the light and dark themes through the system color-scheme preference.
-- **Do** use mono type for compact metadata and serif type for film titles and editorial headings.
-- **Do** keep the catalogue flat at rest and use shadows for raised menus and dialogs.
+- Keep poster artwork central to poster-wall browsing.
+- Preserve light and dark palettes through the system color-scheme preference.
+- Use serif type for catalogue headings and film titles; use mono for compact catalogue data.
+- Reserve shadows for open menus, setup content, and dialogs.
 
 ### Don't:
-- **Don't** turn catalogue rows into generic rounded cards; the poster wall and ledger have distinct, intentional structures.
-- **Don't** spread terracotta across broad surfaces; it is an accent to the paper-and-evergreen palette.
-- **Don't** remove the visible focus treatment from interactive controls.
+- Turn the poster wall or ledger into generic rounded dashboard cards.
+- Spread terracotta across broad surfaces; keep it as a signal color.
+- Remove the visible focus treatment from interactive controls.
+- Shift the hero to Playfair Display without revising the type hierarchy; it currently uses DM Sans.
