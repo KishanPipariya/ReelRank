@@ -14,6 +14,7 @@ import { updateEditionFreshness } from './edition-freshness.js';
 import { downloadCatalogueCsv } from './catalogue-download.js';
 import { bindSavedViewControls } from './saved-views.js';
 import { loadFullRanking } from './ranking-csv.js';
+import { isLocalDevHost, selectedDevDataMode, snapshotForDevMode } from './dev-data.js';
 
 const clearQueryButton = document.querySelector('#clear-query');
 const emptyResultActions = document.querySelector('#empty-result-actions');
@@ -939,13 +940,16 @@ function directorCreditFor(directors, className, beforeFilter) {
   const credit = document.createElement('p');
   credit.className = className;
   credit.append(document.createTextNode('Directed by '));
-  directors.forEach((director, index) => {
+  const showAll = className === 'film-detail-director';
+  const visibleCount = showAll ? directors.length : Math.min(2, directors.length);
+  const appendDirector = (director, index) => {
     if (index) credit.append(document.createTextNode(', '));
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'director-filter';
     button.dataset.director = director;
     button.textContent = director;
+    button.title = director;
     button.setAttribute('aria-pressed', String(state.directors.includes(director)));
     button.setAttribute('aria-label', `Filter by director ${director}`);
     button.addEventListener('click', () => {
@@ -953,7 +957,37 @@ function directorCreditFor(directors, className, beforeFilter) {
       toggleDirector(director);
     });
     credit.append(button);
-  });
+  };
+  directors.slice(0, visibleCount).forEach(appendDirector);
+  if (!showAll && directors.length > visibleCount) {
+    const hiddenDirectors = directors.slice(visibleCount);
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'director-more-button';
+    more.textContent = `+${hiddenDirectors.length}`;
+    more.setAttribute('aria-expanded', 'false');
+    more.setAttribute('aria-label', `Show ${hiddenDirectors.length} more directors for ${directors[0]}`);
+    let expanded = false;
+    more.addEventListener('click', () => {
+      expanded = !expanded;
+      if (expanded) {
+        more.remove();
+        hiddenDirectors.forEach((director, index) => appendDirector(director, visibleCount + index));
+        credit.append(more);
+      } else credit.querySelectorAll('.director-filter[data-extra="true"]').forEach((button) => {
+        button.previousSibling?.remove();
+        button.remove();
+      });
+      if (expanded) credit.querySelectorAll('.director-filter').forEach((button, index) => {
+        if (index >= visibleCount) button.dataset.extra = 'true';
+      });
+      credit.classList.toggle('is-expanded', expanded);
+      more.textContent = expanded ? '−' : `+${hiddenDirectors.length}`;
+      more.setAttribute('aria-expanded', String(expanded));
+      more.setAttribute('aria-label', expanded ? 'Show fewer directors' : `Show ${hiddenDirectors.length} more directors for ${directors[0]}`);
+    });
+    credit.append(more);
+  }
   return credit;
 }
 
@@ -993,6 +1027,14 @@ function originalFilmFactsFor(film) {
   return facts;
 }
 
+function runtimeLabelFor(minutes) {
+  if (minutes < 1440) return `${minutes.toLocaleString()} min`;
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const remainingMinutes = minutes % 60;
+  return [days ? `${days}d` : '', hours ? `${hours}h` : '', remainingMinutes ? `${remainingMinutes}m` : ''].filter(Boolean).join(' ');
+}
+
 function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
   const countries = [...new Set(Array.isArray(film.countries) ? film.countries.filter((name) => typeof name === 'string' && name.trim()) : [])];
   const runtime = Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0 ? film.runtime_minutes : null;
@@ -1029,10 +1071,6 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
       extraCountries.className = 'cinephile-country-extra';
       extraCountries.setAttribute('aria-hidden', 'true');
       extraCountries.inert = true;
-      countries.slice(1).forEach((country, index) => {
-        if (index) extraCountries.append(document.createTextNode(', '));
-        extraCountries.append(countryButtonFor(country, 'country-filter-button', -1));
-      });
       const toggle = document.createElement('button');
       toggle.className = 'country-more-button';
       toggle.type = 'button';
@@ -1041,6 +1079,12 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
       toggle.setAttribute('aria-label', `Show ${countries.length - 1} more ${countries.length === 2 ? 'country' : 'countries'} for ${film.title}`);
       toggle.addEventListener('click', () => {
         const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+        if (expanded && !extraCountries.childElementCount) {
+          countries.slice(1).forEach((country, index) => {
+            if (index) extraCountries.append(document.createTextNode(', '));
+            extraCountries.append(countryButtonFor(country, 'country-filter-button', -1));
+          });
+        }
         extraCountries.setAttribute('aria-hidden', String(!expanded));
         extraCountries.inert = !expanded;
         extraCountries.querySelectorAll('.country-filter-button').forEach((button) => {
@@ -1048,6 +1092,7 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
         });
         meta.classList.toggle('is-expanded', expanded);
         countryGroup.classList.toggle('is-expanded', expanded);
+        if (!expanded) extraCountries.replaceChildren();
         toggle.setAttribute('aria-expanded', String(expanded));
         toggle.textContent = expanded ? 'Show fewer' : `+${countries.length - 1}`;
         toggle.setAttribute('aria-label', expanded
@@ -1062,7 +1107,10 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
   if (runtime) {
     const runtimeLabel = document.createElement('span');
     runtimeLabel.className = 'cinephile-runtime';
-    runtimeLabel.textContent = `${runtime} min`;
+    const formattedRuntime = runtimeLabelFor(runtime);
+    runtimeLabel.textContent = formattedRuntime;
+    runtimeLabel.title = `${runtime.toLocaleString()} minutes`;
+    runtimeLabel.setAttribute('aria-label', `${runtime.toLocaleString()} minutes (${formattedRuntime})`);
     meta.append(runtimeLabel);
   }
   return meta;
@@ -1518,7 +1566,8 @@ function render() {
 }
 
 function showDemoState(configuredUsername, snapshotUsername) {
-  const matches = snapshotUsername.toLocaleLowerCase() === configuredUsername.toLocaleLowerCase();
+  const isStressSnapshot = isLocalDevHost() && selectedDevDataMode() === 'worst';
+  const matches = snapshotUsername.toLocaleLowerCase() === configuredUsername.toLocaleLowerCase() || isStressSnapshot;
   const requested = new URLSearchParams(window.location.search).get('demo') === '1';
   if (!matches) {
     const demoUrl = new URL(window.location.href);
@@ -1580,6 +1629,7 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   const profileLink = document.querySelector('#profile-link');
   profileLink.href = profileUrl;
   profileLink.setAttribute('aria-label', `Letterboxd profile for ${username}, opens in a new tab`);
+  profileLink.title = username;
   document.querySelector('#profile-username').textContent = username;
   document.querySelector('#profile-stamp').textContent = username;
   const footerProfileLink = document.querySelector('#footer-profile-link');
@@ -1590,7 +1640,7 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   document.querySelector('#tmdb-credit').hidden = !(snapshot.tmdb_match_count > 0);
   rankedTotal = snapshot.film_count ?? films.length;
   document.querySelector('#film-total').textContent = rankedTotal.toLocaleString();
-  document.querySelector('#list-total').textContent = snapshot.list_count ?? 'Unavailable';
+  document.querySelector('#list-total').textContent = Number.isSafeInteger(snapshot.list_count) ? snapshot.list_count.toLocaleString() : 'Unavailable';
   const unwatchedCount = snapshot.unwatched_count ?? films.filter((film) => !film.watched).length;
   const watchedCount = Math.max(0, rankedTotal - unwatchedCount);
   document.querySelector('#unwatched-total').textContent = unwatchedCount.toLocaleString();
@@ -1643,6 +1693,23 @@ async function loadSnapshot() {
     const configResponse = await fetch('/site-config.json', { cache: 'no-store' });
     if (!configResponse.ok) throw new Error(`Site configuration request failed: ${configResponse.status}`);
     const config = await configResponse.json();
+    const devDataSwitch = document.querySelector('#dev-data-switch');
+    if (isLocalDevHost()) {
+      devDataSwitch.hidden = false;
+      const devParams = new URLSearchParams(window.location.search);
+      if (devParams.get('dir') === 'rtl') document.documentElement.dir = 'rtl';
+      if (devParams.get('text') === '200') document.documentElement.style.fontSize = '200%';
+      const activeMode = selectedDevDataMode() || 'demo';
+      devDataSwitch.querySelectorAll('[data-dev-data]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.devData === activeMode));
+        button.addEventListener('click', () => {
+          const url = new URL(window.location.href);
+          if (button.dataset.devData === 'demo') url.searchParams.delete('data');
+          else url.searchParams.set('data', button.dataset.devData);
+          window.location.assign(url.href);
+        }, { once: true });
+      });
+    }
     const configuredUsername = typeof config.letterboxd_username === 'string' ? config.letterboxd_username.trim() : '';
     publicSiteUrl = typeof config.public_site_url === 'string' ? config.public_site_url.trim() : '';
     if (!configuredUsername) throw new Error('Site configuration does not include a Letterboxd username');
@@ -1653,7 +1720,14 @@ async function loadSnapshot() {
     const response = await fetch('/data/snapshot.json', { cache: 'default' });
     if (!response.ok) throw new Error(`Snapshot request failed: ${response.status}`);
     snapshotFailureKind = 'json';
-    const snapshotData = await response.json();
+    const rawSnapshotData = await response.json();
+    const devMode = selectedDevDataMode();
+    let rankingFilms = null;
+    if (devMode === '1000') {
+      try { rankingFilms = await loadFullRanking(rawSnapshotData); }
+      catch (error) { console.warn('The real ranking could not be loaded for the 1,000-row development view.', error); }
+    }
+    const snapshotData = snapshotForDevMode(rawSnapshotData, devMode, rankingFilms);
     snapshotFailureKind = 'schema';
     const snapshot = validateSnapshot(snapshotData);
     snapshotFailureKind = 'initialization';

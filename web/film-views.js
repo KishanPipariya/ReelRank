@@ -290,6 +290,7 @@ function renderFilmDetails(film, retainFocus = false) {
       const title = document.createElement('span');
       title.className = 'film-detail-step-title';
       title.textContent = destination?.title || boundaryLabel;
+      title.title = destination?.title || boundaryLabel;
       button.append(label, title);
       button.setAttribute('aria-label', destination
         ? `${isPrevious ? 'Previous' : 'Next'}: ${destination.title}`
@@ -472,17 +473,49 @@ function ledgerRowFor(film) {
   directorCell.className = 'ledger-director-cell';
   const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
   if (directors.length) {
-    directors.forEach((director, index) => {
+    const appendDirector = (director, index) => {
       if (index) directorCell.append(document.createTextNode(', '));
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'director-filter';
       button.textContent = director;
+      button.title = director;
       button.setAttribute('aria-pressed', String(state.directors.includes(director)));
       button.setAttribute('aria-label', `Filter by director ${director}`);
       button.addEventListener('click', () => toggleDirector(director));
       directorCell.append(button);
-    });
+    };
+    const visibleCount = Math.min(2, directors.length);
+    directors.slice(0, visibleCount).forEach(appendDirector);
+    if (directors.length > visibleCount) {
+      const hiddenDirectors = directors.slice(visibleCount);
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'director-more-button';
+      more.textContent = `+${hiddenDirectors.length}`;
+      more.setAttribute('aria-expanded', 'false');
+      more.setAttribute('aria-label', `Show ${hiddenDirectors.length} more directors for ${film.title}`);
+      let expanded = false;
+      more.addEventListener('click', () => {
+        expanded = !expanded;
+        if (expanded) {
+          more.remove();
+          hiddenDirectors.forEach((director, index) => appendDirector(director, visibleCount + index));
+          directorCell.querySelectorAll('.director-filter').forEach((button, index) => {
+            if (index >= visibleCount) button.dataset.extra = 'true';
+          });
+          directorCell.append(more);
+        } else directorCell.querySelectorAll('.director-filter[data-extra="true"]').forEach((button) => {
+          button.previousSibling?.remove();
+          button.remove();
+        });
+        directorCell.classList.toggle('is-expanded', expanded);
+        more.textContent = expanded ? '−' : `+${hiddenDirectors.length}`;
+        more.setAttribute('aria-expanded', String(expanded));
+        more.setAttribute('aria-label', expanded ? `Show fewer directors for ${film.title}` : `Show ${hiddenDirectors.length} more directors for ${film.title}`);
+      });
+      directorCell.append(more);
+    }
   } else directorCell.textContent = '—';
 
   const productionCell = document.createElement('td');
@@ -638,8 +671,32 @@ function featuredFilmFor(film) {
     const genreTags = document.createElement('div');
     genreTags.className = 'genre-tags featured-film-genres';
     genreTags.setAttribute('role', 'group');
-    genreTags.setAttribute('aria-label', `Genres for ${film.title}`);
-    genres.forEach((genre) => genreTags.append(genreChipFor(genre)));
+    genreTags.setAttribute('aria-label', `Genres for ${film.title}, ${genres.length} total`);
+    genres.slice(0, 2).forEach((genre) => genreTags.append(genreChipFor(genre)));
+    if (genres.length > 2) {
+      const hiddenGenres = genres.slice(2);
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'genre-tag genre-tag-more';
+      more.textContent = `+${hiddenGenres.length}`;
+      more.setAttribute('aria-expanded', 'false');
+      more.setAttribute('aria-label', `Show ${hiddenGenres.length} more ${hiddenGenres.length === 1 ? 'genre' : 'genres'}`);
+      more.addEventListener('click', () => {
+        const expanded = genreTags.classList.toggle('is-expanded');
+        if (expanded) {
+          const extraTags = hiddenGenres.map((genre) => {
+            const tag = genreChipFor(genre);
+            tag.classList.add('genre-extra-tag');
+            return tag;
+          });
+          more.before(...extraTags);
+        } else genreTags.querySelectorAll('.genre-extra-tag').forEach((tag) => tag.remove());
+        more.textContent = expanded ? '−' : `+${hiddenGenres.length}`;
+        more.setAttribute('aria-expanded', String(expanded));
+        more.setAttribute('aria-label', expanded ? 'Hide additional genres' : `Show ${hiddenGenres.length} more ${hiddenGenres.length === 1 ? 'genre' : 'genres'}`);
+      });
+      genreTags.append(more);
+    }
     copy.append(genreTags);
   }
   copy.append(filmAppearanceCountFor(film, 'featured-film-count'));

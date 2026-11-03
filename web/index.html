@@ -17,6 +17,16 @@
     <script src="/app.js" type="module"></script>
   </head>
   <body>
+    <nav id="dev-data-switch" class="dev-data-switch" aria-label="Development data" hidden>
+      <span>Data</span>
+      <div class="dev-data-options" role="group" aria-label="Choose catalogue data">
+        <button type="button" data-dev-data="demo">Demo</button>
+        <button type="button" data-dev-data="worst">Worst case</button>
+        <button type="button" data-dev-data="empty">Empty</button>
+        <button type="button" data-dev-data="one">One</button>
+        <button type="button" data-dev-data="1000">1,000 rows</button>
+      </div>
+    </nav>
     <main id="setup-state" class="setup-state" aria-labelledby="setup-title">
       <div class="setup-card">
         <a class="wordmark" href="/" aria-label="ReelRank home"><span class="wordmark-mark">R</span> ReelRank</a>
