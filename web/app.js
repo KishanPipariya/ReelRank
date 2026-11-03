@@ -188,6 +188,12 @@ let searchUrlTimer;
 let currentShownCount = 0;
 let currentMatchCount = 0;
 let currentMatchingFilms = [];
+let currentLargeMatchingFilms = [];
+let currentLargeMatchKey = '';
+let currentLargeFacetKey = '';
+let currentLargeHighestScore = 1;
+let currentLargeSortedFilms = [];
+let currentLargeSortedKey = '';
 let currentHighestScore = 1;
 let countryAtlasSize = 0;
 let languageAtlasSize = 0;
@@ -197,6 +203,118 @@ let leadingDecades = [];
 let snapshotRefreshedAt = '';
 let posterGalleryUrl = '/data/poster-galleries.json';
 let sourceListsForDownload = [];
+let catalogueRenderRequest = 0;
+let searchRenderTimer = 0;
+let devFixtureRankedFilmCount = 0;
+const largeCatalogueThreshold = 5000;
+
+function yieldToBrowser() {
+  return new Promise((resolve) => window.setTimeout(resolve, 0));
+}
+
+function incrementFilmCounts(counts, values) {
+  for (const value of new Set(values)) {
+    if (typeof value === 'string' && value.trim()) counts.set(value, (counts.get(value) || 0) + 1);
+  }
+}
+
+function largeCatalogueMatchKey(query) {
+  return JSON.stringify([
+    query, state.filter, state.genres, state.directors, state.sourceLists,
+    state.country, state.language, state.decade, state.runtime,
+  ]);
+}
+
+async function findLargeCatalogueMatches(query, requestId) {
+  const matching = [];
+  let watchedCount = 0;
+  let unwatchedCount = 0;
+  let highestScore = 1;
+
+  for (let start = 0; start < films.length; start += 2000) {
+    const end = Math.min(start + 2000, films.length);
+    for (let index = start; index < end; index += 1) {
+      const film = films[index];
+      if (!matchesSearchAndGenres(film, query)) continue;
+      if (film.watched) watchedCount += 1;
+      else unwatchedCount += 1;
+      if (!matchesWatchFilter(film)) continue;
+      matching.push(film);
+      highestScore = Math.max(highestScore, Number(film.liked_in) || 0);
+    }
+    if (end < films.length) {
+      await yieldToBrowser();
+      if (requestId !== catalogueRenderRequest) return null;
+    }
+  }
+
+  document.querySelector('#unwatched-tab-count').textContent = unwatchedCount.toLocaleString();
+  document.querySelector('#watched-tab-count').textContent = watchedCount.toLocaleString();
+  return { matching, highestScore };
+}
+
+async function updateLargeFacetCounts(query, requestId) {
+  const countryCounts = new Map();
+  const decadeCounts = new Map();
+  const genreCounts = new Map();
+  const sourceListCounts = new Map();
+  const languageCounts = new Map();
+  let decadeTotal = 0;
+
+  for (let start = 0; start < films.length; start += 2000) {
+    const end = Math.min(start + 2000, films.length);
+    for (let index = start; index < end; index += 1) {
+      const film = films[index];
+      if (!matchesWatchFilter(film)) continue;
+
+      if (matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { country: '' })) {
+        incrementFilmCounts(countryCounts, Array.isArray(film.countries) ? film.countries : []);
+      }
+      if (matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { decade: '' })) {
+        decadeTotal += 1;
+        const decade = filmDecade(film);
+        if (decade !== null) decadeCounts.set(decade, (decadeCounts.get(decade) || 0) + 1);
+      }
+      if (matchesSearchAndGenres(film, query, [])) {
+        incrementFilmCounts(genreCounts, Array.isArray(film.genres) ? film.genres : []);
+      }
+      if (matchesSearchAndGenres(film, query, state.genres, [])) {
+        incrementFilmCounts(sourceListCounts, filmSourceListUrls(film));
+      }
+      if (matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { language: '' })) {
+        const language = String(film.original_language || '').trim() || 'unknown';
+        languageCounts.set(language, (languageCounts.get(language) || 0) + 1);
+      }
+    }
+    if (end < films.length) {
+      await yieldToBrowser();
+      if (requestId !== catalogueRenderRequest) return false;
+    }
+  }
+
+  countryIndexOptions.querySelectorAll('[data-country]').forEach((button) => {
+    const count = countryCounts.get(button.dataset.country) || 0;
+    button.querySelector('small').textContent = count.toLocaleString();
+    button.setAttribute('aria-label', `Filter by production country ${button.dataset.country}, ${count} ${count === 1 ? 'film' : 'films'}`);
+  });
+  decadeOptions.querySelectorAll('.decade-option').forEach((button) => {
+    const count = button.dataset.decade === '' ? decadeTotal : decadeCounts.get(Number(button.dataset.decade)) || 0;
+    button.querySelector('.decade-option-count').textContent = count.toLocaleString();
+  });
+  genreOptions.querySelectorAll('.genre-option').forEach((option) => {
+    option.querySelector('.genre-option-count').textContent = (genreCounts.get(option.querySelector('input').value) || 0).toLocaleString();
+  });
+  sourceListOptions.querySelectorAll('.genre-option').forEach((option) => {
+    option.querySelector('.genre-option-count').textContent = (sourceListCounts.get(option.dataset.sourceList) || 0).toLocaleString();
+  });
+  languageIndexOptions.querySelectorAll('[data-language]').forEach((button) => {
+    const count = languageCounts.get(button.dataset.language) || 0;
+    button.querySelector('small').textContent = count.toLocaleString();
+    const label = button.querySelector('span')?.textContent || button.dataset.languageLabel;
+    button.setAttribute('aria-label', `Filter by original language ${label}, ${count} ${count === 1 ? 'film' : 'films'}`);
+  });
+  return true;
+}
 
 function setCountryIndexExpanded(expanded) {
   countryIndex.classList.toggle('is-expanded', expanded);
@@ -1497,30 +1615,70 @@ document.querySelectorAll('.more-filter-group').forEach((group) => {
   });
 });
 
-function render() {
+async function render() {
+  const requestId = ++catalogueRenderRequest;
   updateProgrammeShare();
   const query = searchInput.value.trim().toLocaleLowerCase();
-  renderLanguageOptions();
+  const largeCatalogue = films.length > largeCatalogueThreshold;
   const relevanceOption = sortSelect.querySelector('option[value="relevance"]');
   if (relevanceOption) relevanceOption.disabled = !query;
   sortSelect.value = state.sort;
   clearQueryButton.hidden = !query;
   filterControls.renderActiveViewFilters();
   renderDirectorFilmography();
-  updateWatchFilterCounts(query);
-  updateCountryAndDecadeCounts(query);
-  updateGenreOptionCounts(query);
-  updateSourceListOptionCounts(query);
-  const matching = films.filter((film) => {
-    if (!matchesWatchFilter(film)) return false;
-    return matchesSearchAndGenres(film, query);
-  });
-  matching.sort((left, right) => compareFilms(left, right));
+  let matching;
+  let highestScore = 1;
+  let sortKey = '';
+  if (largeCatalogue) {
+    const matchKey = largeCatalogueMatchKey(query);
+    sortKey = JSON.stringify([matchKey, state.sort]);
+    document.querySelector('.catalogue-results').setAttribute('aria-busy', 'true');
+    if (matchKey === currentLargeMatchKey) {
+      matching = currentLargeMatchingFilms;
+      highestScore = currentLargeHighestScore;
+    } else {
+      matchingFilmsCount.textContent = `Searching ${films.length.toLocaleString()} films…`;
+      document.querySelector('#results-announcement').textContent = `Searching ${films.length.toLocaleString()} films.`;
+      const result = await findLargeCatalogueMatches(query, requestId);
+      if (!result || requestId !== catalogueRenderRequest) return;
+      currentLargeMatchingFilms = result.matching;
+      currentLargeMatchKey = matchKey;
+      currentLargeHighestScore = result.highestScore;
+      matching = result.matching;
+      highestScore = result.highestScore;
+    }
+    if (catalogFilters.open && currentLargeFacetKey !== matchKey) {
+      if (!await updateLargeFacetCounts(query, requestId) || requestId !== catalogueRenderRequest) return;
+      currentLargeFacetKey = matchKey;
+    }
+    document.querySelector('.catalogue-results').removeAttribute('aria-busy');
+  } else {
+    renderLanguageOptions();
+    updateWatchFilterCounts(query);
+    updateCountryAndDecadeCounts(query);
+    updateGenreOptionCounts(query);
+    updateSourceListOptionCounts(query);
+    matching = films.filter((film) => {
+      if (!matchesWatchFilter(film)) return false;
+      return matchesSearchAndGenres(film, query);
+    });
+  }
+  if (largeCatalogue && sortKey === currentLargeSortedKey) matching = currentLargeSortedFilms;
+  else {
+    matching.sort((left, right) => compareFilms(left, right));
+    if (largeCatalogue) {
+      currentLargeSortedFilms = matching;
+      currentLargeSortedKey = sortKey;
+    }
+  }
   currentMatchingFilms = matching;
   const hasActiveSelection = Boolean(query) || state.filter !== 'all' || state.genres.length > 0 || state.directors.length > 0 || state.sourceLists.length > 0 || Boolean(state.country) || Boolean(state.language) || state.decade !== '' || Boolean(state.runtime);
   programmeNote.hidden = matching.length === 0 || !hasActiveSelection;
   programmeNoteCopy.textContent = programmeNoteFor(matching);
-  currentHighestScore = Math.max(1, ...matching.map((film) => Number(film.liked_in) || 0));
+  currentHighestScore = highestScore;
+  if (!largeCatalogue) {
+    for (const film of matching) currentHighestScore = Math.max(currentHighestScore, Number(film.liked_in) || 0);
+  }
   const ledgerView = state.view === 'ledger';
   const rankedPosterView = !ledgerView && state.sort === 'rank';
   const highlighted = rankedPosterView ? matching.slice(0, 3) : [];
@@ -1585,6 +1743,10 @@ function render() {
   resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription ? `, ${filterDescription}` : ''}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
 }
 
+catalogFilters.addEventListener('toggle', () => {
+  if (catalogFilters.open) void render();
+});
+
 function showDemoState(configuredUsername, snapshotUsername) {
   const isStressSnapshot = isLocalDevHost() && selectedDevDataMode() === 'worst';
   const matches = snapshotUsername.toLocaleLowerCase() === configuredUsername.toLocaleLowerCase() || isStressSnapshot;
@@ -1614,6 +1776,11 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   activeSnapshot = snapshot;
   const snapshotUsername = snapshot.username.trim();
   films = fullRankingFilms || snapshot.films;
+  currentLargeMatchingFilms = [];
+  currentLargeMatchKey = '';
+  currentLargeFacetKey = '';
+  currentLargeSortedFilms = [];
+  currentLargeSortedKey = '';
   renderLanguageOptions();
   films.forEach((film) => originalPosterByFilm.set(film, film.poster_url));
   const posterChoices = readPreferences().posterChoices || {};
@@ -1697,6 +1864,14 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   retryRankingLoadButton.hidden = !rankingLoadFailed;
   retryRankingLoadButton.disabled = false;
   retryRankingLoadButton.textContent = 'Retry full-catalogue load';
+  if (isLocalDevHost() && selectedDevDataMode() === '100000') {
+    const sourceCount = devFixtureRankedFilmCount.toLocaleString();
+    const generatedCount = Math.max(0, films.length - devFixtureRankedFilmCount).toLocaleString();
+    collectionScope.textContent = `Search all ${searchableCount} stress rows by title, year, and list. ${sourceCount} rows use local ranking data; ${generatedCount} generated rows have no enriched metadata.`;
+    metadataFilterScope.textContent = `Director, genre, country, language, and running-time filters only match rows with available metadata. ${generatedCount} generated rows have no enriched metadata.`;
+    catalogueDataStatus.textContent = `Development stress fixture: ${sourceCount} local ranking rows padded with ${generatedCount} sparse generated rows.`;
+    catalogueDataStatus.dataset.state = 'complete';
+  }
   document.querySelector('#collection-footnote').textContent = `Browsing ${searchableCount} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
   siteShell.hidden = false;
   render();
@@ -1743,10 +1918,11 @@ async function loadSnapshot() {
     const rawSnapshotData = await response.json();
     const devMode = selectedDevDataMode();
     let rankingFilms = null;
-    if (devMode === '1000') {
+    if (devMode === '100000') {
       try { rankingFilms = await loadFullRanking(rawSnapshotData); }
-      catch (error) { console.warn('The real ranking could not be loaded for the 1,000-row development view.', error); }
+      catch (error) { console.warn('The real ranking could not be loaded for the 100,000-row development view.', error); }
     }
+    devFixtureRankedFilmCount = devMode === '100000' ? Math.min(rankingFilms?.length || 0, 100000) : 0;
     const snapshotData = snapshotForDevMode(rawSnapshotData, devMode, rankingFilms);
     snapshotFailureKind = 'schema';
     const snapshot = validateSnapshot(snapshotData);
@@ -1848,8 +2024,9 @@ emptyClearFilters.addEventListener('click', () => resetCatalogView());
 searchInput.addEventListener('input', () => {
   beginSearchEdit();
   state.visibleLimit = 40;
-  render();
   queueSearchUrlUpdate();
+  window.clearTimeout(searchRenderTimer);
+  searchRenderTimer = window.setTimeout(() => { void render(); }, 120);
 });
 searchInput.addEventListener('blur', commitSearchEdit);
 sortSelect.addEventListener('change', () => {

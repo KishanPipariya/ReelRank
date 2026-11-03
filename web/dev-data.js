@@ -1,4 +1,4 @@
-const modes = new Set(['demo', 'worst', 'empty', 'one', '1000']);
+const modes = new Set(['demo', 'worst', 'empty', 'one', '100000']);
 
 function syntheticFilm(base, index, overrides = {}) {
   const generatedTitle = `Stress case film ${String(index + 1).padStart(4, '0')}`;
@@ -51,14 +51,14 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
     films = [syntheticFilm(base, 0, {
       title: 'Jo', year: '2026', directors: ['J'], genres: ['Drama'], liked_in: 1, watched: false,
     })];
-  } else if (mode === '1000') {
-    films = Array.isArray(rankingFilms) && rankingFilms.length >= 1000
-      ? rankingFilms.slice(0, 1000).map((film) => {
-        const row = { ...film, lists: Array.isArray(film.lists) ? film.lists : [] };
-        delete row.list_ids;
-        return row;
-      })
-      : Array.from({ length: 1000 }, (_, index) => syntheticFilm(base, index));
+  } else if (mode === '100000') {
+    films = Array.from({ length: 100000 }, (_, index) => {
+      const film = rankingFilms?.[index];
+      if (!film) return syntheticFilm(base, index);
+      const row = { ...film, lists: Array.isArray(film.lists) ? film.lists : [] };
+      delete row.list_ids;
+      return row;
+    });
   } else {
     films = [
       syntheticFilm(base, 0, {
