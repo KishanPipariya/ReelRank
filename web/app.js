@@ -192,6 +192,7 @@ let currentHighestScore = 1;
 let countryAtlasSize = 0;
 let languageAtlasSize = 0;
 const facetQuickPickLimit = 4;
+const filmMetadataBatchSize = 8;
 let leadingDecades = [];
 let snapshotRefreshedAt = '';
 let posterGalleryUrl = '/data/poster-galleries.json';
@@ -940,8 +941,8 @@ function directorCreditFor(directors, className, beforeFilter) {
   const credit = document.createElement('p');
   credit.className = className;
   credit.append(document.createTextNode('Directed by '));
-  const showAll = className === 'film-detail-director';
-  const visibleCount = showAll ? directors.length : Math.min(2, directors.length);
+  const initialCount = Math.min(2, directors.length);
+  let visibleCount = initialCount;
   const appendDirector = (director, index) => {
     if (index) credit.append(document.createTextNode(', '));
     const button = document.createElement('button');
@@ -958,33 +959,42 @@ function directorCreditFor(directors, className, beforeFilter) {
     });
     credit.append(button);
   };
-  directors.slice(0, visibleCount).forEach(appendDirector);
-  if (!showAll && directors.length > visibleCount) {
-    const hiddenDirectors = directors.slice(visibleCount);
+  directors.slice(0, initialCount).forEach(appendDirector);
+  if (directors.length > initialCount) {
     const more = document.createElement('button');
     more.type = 'button';
     more.className = 'director-more-button';
-    more.textContent = `+${hiddenDirectors.length}`;
+    const updateMoreLabel = () => {
+      const remaining = directors.length - visibleCount;
+      const nextBatch = Math.min(filmMetadataBatchSize, remaining);
+      more.textContent = remaining ? `Show ${nextBatch} more` : 'Show fewer';
+      more.setAttribute('aria-label', remaining
+        ? `Show ${nextBatch} more directors; ${remaining} remaining for ${directors[0]}`
+        : 'Show fewer directors');
+    };
+    updateMoreLabel();
     more.setAttribute('aria-expanded', 'false');
-    more.setAttribute('aria-label', `Show ${hiddenDirectors.length} more directors for ${directors[0]}`);
-    let expanded = false;
     more.addEventListener('click', () => {
-      expanded = !expanded;
-      if (expanded) {
+      if (visibleCount < directors.length) {
+        const end = Math.min(directors.length, visibleCount + filmMetadataBatchSize);
         more.remove();
-        hiddenDirectors.forEach((director, index) => appendDirector(director, visibleCount + index));
+        for (let index = visibleCount; index < end; index += 1) {
+          appendDirector(directors[index], index);
+          credit.lastElementChild.dataset.extra = 'true';
+        }
+        visibleCount = end;
         credit.append(more);
-      } else credit.querySelectorAll('.director-filter[data-extra="true"]').forEach((button) => {
-        button.previousSibling?.remove();
-        button.remove();
-      });
-      if (expanded) credit.querySelectorAll('.director-filter').forEach((button, index) => {
-        if (index >= visibleCount) button.dataset.extra = 'true';
-      });
+      } else {
+        credit.querySelectorAll('.director-filter[data-extra="true"]').forEach((button) => {
+          button.previousSibling?.remove();
+          button.remove();
+        });
+        visibleCount = initialCount;
+      }
+      const expanded = visibleCount > initialCount;
       credit.classList.toggle('is-expanded', expanded);
-      more.textContent = expanded ? '−' : `+${hiddenDirectors.length}`;
       more.setAttribute('aria-expanded', String(expanded));
-      more.setAttribute('aria-label', expanded ? 'Show fewer directors' : `Show ${hiddenDirectors.length} more directors for ${directors[0]}`);
+      updateMoreLabel();
     });
     credit.append(more);
   }
@@ -1074,17 +1084,31 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
       const toggle = document.createElement('button');
       toggle.className = 'country-more-button';
       toggle.type = 'button';
-      toggle.textContent = `+${countries.length - 1}`;
       toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-label', `Show ${countries.length - 1} more ${countries.length === 2 ? 'country' : 'countries'} for ${film.title}`);
+      let visibleCount = 1;
+      const noun = countries.length === 2 ? 'country' : 'countries';
+      const updateCountryToggle = () => {
+        const remaining = countries.length - visibleCount;
+        const nextBatch = Math.min(filmMetadataBatchSize, remaining);
+        toggle.textContent = remaining ? `+${remaining}` : 'Show fewer';
+        toggle.setAttribute('aria-label', remaining
+          ? `Show ${nextBatch} more ${noun}; ${remaining} remaining for ${film.title}`
+          : `Show fewer countries for ${film.title}`);
+      };
+      updateCountryToggle();
       toggle.addEventListener('click', () => {
-        const expanded = toggle.getAttribute('aria-expanded') !== 'true';
-        if (expanded && !extraCountries.childElementCount) {
-          countries.slice(1).forEach((country, index) => {
-            if (index) extraCountries.append(document.createTextNode(', '));
-            extraCountries.append(countryButtonFor(country, 'country-filter-button', -1));
-          });
+        if (visibleCount < countries.length) {
+          const end = Math.min(countries.length, visibleCount + filmMetadataBatchSize);
+          for (let index = visibleCount; index < end; index += 1) {
+            if (index > 1) extraCountries.append(document.createTextNode(', '));
+            extraCountries.append(countryButtonFor(countries[index], 'country-filter-button', -1));
+          }
+          visibleCount = end;
+        } else {
+          extraCountries.replaceChildren();
+          visibleCount = 1;
         }
+        const expanded = visibleCount > 1;
         extraCountries.setAttribute('aria-hidden', String(!expanded));
         extraCountries.inert = !expanded;
         extraCountries.querySelectorAll('.country-filter-button').forEach((button) => {
@@ -1092,12 +1116,8 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
         });
         meta.classList.toggle('is-expanded', expanded);
         countryGroup.classList.toggle('is-expanded', expanded);
-        if (!expanded) extraCountries.replaceChildren();
         toggle.setAttribute('aria-expanded', String(expanded));
-        toggle.textContent = expanded ? 'Show fewer' : `+${countries.length - 1}`;
-        toggle.setAttribute('aria-label', expanded
-          ? `Show fewer countries for ${film.title}`
-          : `Show ${countries.length - 1} more ${countries.length === 2 ? 'country' : 'countries'} for ${film.title}`);
+        updateCountryToggle();
       });
       countryGroup.append(toggle, extraCountries);
     }

@@ -261,6 +261,14 @@ def test_snapshot_schema_rejects_inconsistent_display_counts():
         })
 
 
+def test_snapshot_rejects_film_appearances_above_scanned_list_count():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["films"][0]["liked_in"] = fixture["list_count"] + 1
+
+    with pytest.raises(ValueError, match="liked_in cannot exceed list_count"):
+        snapshot.validate_snapshot(fixture)
+
+
 def test_snapshot_schema_accepts_shared_fixture_without_optional_tmdb_fields():
     fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
     assert snapshot.validate_snapshot(fixture) == fixture

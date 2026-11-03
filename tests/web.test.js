@@ -7,6 +7,7 @@ import { parseUrlState, urlForState } from '../web/url-state.js';
 import { createLocalPreferences, parsePresetImport } from '../web/local-preferences.js';
 import { catalogueCsv } from '../web/catalogue-download.js';
 import { editionFreshness } from '../web/edition-freshness.js';
+import { snapshotForDevMode } from '../web/dev-data.js';
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/snapshot-minimal.json', import.meta.url), 'utf8'));
 const browserSchema = JSON.parse(await readFile(new URL('../web/snapshot.schema.json', import.meta.url), 'utf8'));
@@ -59,6 +60,9 @@ test('snapshot contract rejects invalid TMDB identifiers and inconsistent counts
   const invalidCount = structuredClone(fixture);
   invalidCount.displayed_unwatched_count = 1;
   assert.throws(() => validateSnapshot(invalidCount), /schema/);
+  const impossibleFilmCount = structuredClone(fixture);
+  impossibleFilmCount.films[0].liked_in = 2;
+  assert.throws(() => validateSnapshot(impossibleFilmCount), /liked_in cannot exceed list_count/);
   const invalidSource = structuredClone(fixture);
   invalidSource.films[0].metadata_source = [];
   assert.throws(() => validateSnapshot(invalidSource), /metadata_source/);
@@ -68,6 +72,17 @@ test('snapshot contract rejects invalid TMDB identifiers and inconsistent counts
   const invalidVersion = structuredClone(fixture);
   invalidVersion.schema_version = true;
   assert.throws(() => validateSnapshot(invalidVersion), /Unsupported snapshot schema version/);
+});
+
+test('worst-case fixtures keep counts coherent and clear inherited optional TMDB metadata', () => {
+  const worst = snapshotForDevMode(fixture, 'worst');
+  assert.equal(worst.films[0].liked_in, worst.list_count);
+  const sparseFilm = worst.films.find((film) => film.title === '🦊 Fox');
+  assert.deepEqual(sparseFilm.directors, []);
+  assert.deepEqual(sparseFilm.genres, []);
+  assert.deepEqual(sparseFilm.countries, []);
+  assert.equal(sparseFilm.runtime_minutes, null);
+  assert.equal(sparseFilm.overview, '');
 });
 
 test('snapshot validation rejects unsafe profile, film, and list URLs and invalid edition times', () => {

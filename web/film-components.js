@@ -1,5 +1,7 @@
 import { filmDetailUrl } from './film-navigation.js';
 
+const filmMetadataBatchSize = 8;
+
 export function posterFallbackFor(film, className = 'poster-fallback') {
   const cover = document.createElement('div');
   cover.className = className;
@@ -118,27 +120,39 @@ export function cardFor(film, index, dependencies) {
     genreTags.setAttribute('aria-label', `Genres, ${genres.length} total`);
     genres.slice(0, 2).forEach((genre) => genreTags.append(genreChipFor(genre)));
     if (genres.length > 2) {
-      const hiddenGenres = genres.slice(2);
+      let visibleCount = 2;
       const more = document.createElement('button');
       more.type = 'button';
       more.className = 'genre-tag genre-tag-more';
-      more.textContent = `+${hiddenGenres.length}`;
+      more.textContent = `+${genres.length - visibleCount}`;
       more.setAttribute('aria-expanded', 'false');
-      more.setAttribute('aria-label', `Show ${hiddenGenres.length} more ${hiddenGenres.length === 1 ? 'genre' : 'genres'}`);
+      const updateMoreLabel = () => {
+        const remaining = genres.length - visibleCount;
+        more.textContent = remaining ? `+${remaining}` : '−';
+        more.setAttribute('aria-label', remaining
+          ? `Show ${Math.min(filmMetadataBatchSize, remaining)} more ${remaining === 1 ? 'genre' : 'genres'}; ${remaining} remaining`
+          : 'Show fewer genres');
+      };
       more.addEventListener('click', () => {
-        const expanded = genreTags.classList.toggle('is-expanded');
-        if (expanded) {
-          const extraTags = hiddenGenres.map((genre) => {
+        if (visibleCount < genres.length) {
+          const end = Math.min(genres.length, visibleCount + filmMetadataBatchSize);
+          const extraTags = genres.slice(visibleCount, end).map((genre) => {
             const tag = genreChipFor(genre);
             tag.classList.add('genre-extra-tag');
             return tag;
           });
           more.before(...extraTags);
-        } else genreTags.querySelectorAll('.genre-extra-tag').forEach((tag) => tag.remove());
-        more.textContent = expanded ? '−' : `+${hiddenGenres.length}`;
+          visibleCount = end;
+        } else {
+          genreTags.querySelectorAll('.genre-extra-tag').forEach((tag) => tag.remove());
+          visibleCount = 2;
+        }
+        const expanded = visibleCount > 2;
+        genreTags.classList.toggle('is-expanded', expanded);
         more.setAttribute('aria-expanded', String(expanded));
-        more.setAttribute('aria-label', expanded ? 'Hide additional genres' : `Show ${hiddenGenres.length} more ${hiddenGenres.length === 1 ? 'genre' : 'genres'}`);
+        updateMoreLabel();
       });
+      updateMoreLabel();
       genreTags.append(more);
     }
     info.append(genreTags);

@@ -64,6 +64,8 @@ def validate_snapshot(snapshot: object) -> dict:
         if any(not _is_letterboxd_list_url(url) for url in source_lists):
             raise ValueError("Snapshot source_lists must contain HTTPS Letterboxd list URLs")
     for index, film in enumerate(films):
+        if film["liked_in"] > snapshot["list_count"]:
+            raise ValueError(f"snapshot.films[{index}].liked_in cannot exceed list_count")
         if "lists" not in film and "list_ids" not in film:
             raise ValueError(f"snapshot.films[{index}] must include lists or list_ids")
         if film["letterboxd_url"] and not _is_letterboxd_film_url(film["letterboxd_url"]):

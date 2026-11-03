@@ -91,6 +91,9 @@ export function validateSnapshot(snapshot) {
     throw new Error('Snapshot films must include lists or list_ids');
   }
   for (const [index, film] of snapshot.films.entries()) {
+    if (film.liked_in > snapshot.list_count) {
+      throw new Error(`snapshot.films[${index}].liked_in cannot exceed list_count`);
+    }
     if (film.letterboxd_url && !isHttpsLetterboxdUrl(film.letterboxd_url, /^\/film\/[^/]+\/?$/)) {
       throw new Error(`snapshot.films[${index}].letterboxd_url must be an HTTPS Letterboxd film URL`);
     }
