@@ -45,6 +45,27 @@ test('snapshot contract accepts optional TMDB enrichment fields when omitted', (
   assert.equal(validateSnapshot(fixture), fixture);
 });
 
+test('snapshot contract bounds profile and TMDB text while preserving accepted values', () => {
+  const bounded = structuredClone(fixture);
+  bounded.username = 'u'.repeat(128);
+  bounded.profile_url = `https://letterboxd.com/${bounded.username}/`;
+  bounded.films[0].title = 'T'.repeat(1024);
+  bounded.films[0].overview = 'O'.repeat(20000);
+  bounded.films[0].directors = ['D'.repeat(512)];
+  assert.equal(validateSnapshot(bounded), bounded);
+
+  bounded.username += 'u';
+  bounded.profile_url = `https://letterboxd.com/${bounded.username}/`;
+  assert.throws(() => validateSnapshot(bounded), /username/);
+  bounded.username = 'username';
+  bounded.profile_url = 'https://letterboxd.com/username/';
+  bounded.films[0].overview += 'O';
+  assert.throws(() => validateSnapshot(bounded), /overview/);
+  bounded.films[0].overview = '';
+  bounded.films[0].directors = ['D'.repeat(513)];
+  assert.throws(() => validateSnapshot(bounded), /directors/);
+});
+
 test('snapshot contract treats integer-valued JSON numbers as integers', () => {
   const integerFloat = structuredClone(fixture);
   integerFloat.film_count = 1.0;

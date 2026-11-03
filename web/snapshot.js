@@ -28,6 +28,7 @@ function validateAgainstSchema(value, schema, path = 'snapshot') {
   if ('const' in schema && value !== schema.const) throw new Error(`${path} has an unsupported value`);
   if (schema.enum && !schema.enum.includes(value)) throw new Error(`${path} has an unsupported value`);
   if (typeof value === 'string' && value.length < (schema.minLength || 0)) throw new Error(`${path} must not be empty`);
+  if (typeof value === 'string' && value.length > (schema.maxLength ?? Infinity)) throw new Error(`${path} exceeds the supported text length`);
   if (typeof value === 'string' && schema.pattern && !new RegExp(schema.pattern).test(value)) {
     throw new Error(`${path} does not match its required text pattern`);
   }

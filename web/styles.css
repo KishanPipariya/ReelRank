@@ -250,6 +250,7 @@ h1 { margin: 0; font-size: clamp(48px, 7vw, 78px); line-height: .99; letter-spac
 .edition-stale-label { color: var(--terracotta-on-dark); font-family: var(--mono); font-size: var(--type-caption); font-weight: 500; color: var(--control-ink); }
 .snapshot-label { color: var(--night-highlight); font-size: var(--type-caption); }
 .edition-colophon { width: fit-content; max-width: min(600px, 100%); display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-1) var(--space-2); margin: 0; padding: var(--space-2) var(--space-2) var(--space-1) 0; border-top: 1px solid var(--color-d4e6c72b); border-bottom: 1px solid var(--color-d4e6c72b); color: var(--hero-muted); line-height: 1.4; }
+.edition-colophon[hidden] { display: none; }
 .edition-colophon-heading { color: var(--terracotta-on-dark); font-family: var(--mono); font-size: var(--type-caption); }
 .edition-colophon-item { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
 .edition-colophon-item strong { color: var(--night-highlight); font-family: var(--serif); font-size: var(--type-caption); font-weight: 500; }
@@ -730,6 +731,18 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
 .poster-viewer-dialog:not([open]) { display: none; }
 .poster-viewer-dialog { width: min(860px, calc(100% - 24px)); max-width: none; max-height: min(96vh, 980px); position: relative; display: grid; justify-items: center; gap: var(--space-3); overflow: auto; padding: 56px var(--space-4) var(--space-4); border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
 .poster-viewer-dialog::backdrop { background: var(--color-111611d9); }
+.film-detail-dialog, .poster-viewer-dialog {
+  opacity: 0;
+  transform: scale(.96);
+  transition: opacity 250ms cubic-bezier(.23, 1, .32, 1), transform 250ms cubic-bezier(.23, 1, .32, 1), display 250ms allow-discrete, overlay 250ms allow-discrete;
+}
+.film-detail-dialog[open], .poster-viewer-dialog[open] { opacity: 1; transform: scale(1); }
+.film-detail-dialog[open]::backdrop, .poster-viewer-dialog[open]::backdrop { opacity: 1; transition: opacity 250ms cubic-bezier(.23, 1, .32, 1); }
+.film-detail-dialog::backdrop, .poster-viewer-dialog::backdrop { opacity: 0; transition: opacity 250ms cubic-bezier(.23, 1, .32, 1); }
+@starting-style {
+  .film-detail-dialog[open], .poster-viewer-dialog[open] { opacity: 0; transform: scale(.96); }
+  .film-detail-dialog[open]::backdrop, .poster-viewer-dialog[open]::backdrop { opacity: 0; }
+}
 .poster-viewer-close { position: absolute; z-index: 1; top: var(--space-2); right: var(--space-2); width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; font-size: var(--type-count); line-height: 1; }
 .poster-viewer-figure { display: grid; justify-items: center; gap: var(--space-2); max-width: 100%; margin: 0; }
 .poster-viewer-stage { max-width: 100%; max-height: 82vh; display: grid; place-items: center; overflow: auto; background: var(--surface-soft); }
@@ -829,6 +842,10 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .film-detail-dialog, .poster-viewer-dialog { transform: none; transition: opacity 120ms cubic-bezier(.23, 1, .32, 1), display 120ms allow-discrete, overlay 120ms allow-discrete; }
+  .film-detail-dialog[open], .poster-viewer-dialog[open] { transform: none; }
+  .film-detail-dialog::backdrop, .poster-viewer-dialog::backdrop,
+  .film-detail-dialog[open]::backdrop, .poster-viewer-dialog[open]::backdrop { transition: opacity 120ms cubic-bezier(.23, 1, .32, 1); }
   .film-card.is-arriving { animation: none; }
   .poster-link:hover, .poster-link:focus-visible,
   .poster-link:hover .poster-image { transform: none; }

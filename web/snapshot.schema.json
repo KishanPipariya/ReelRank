@@ -4,9 +4,9 @@
   "required": ["schema_version", "username", "profile_url", "refreshed_at", "list_count", "film_count", "displayed_film_count", "unwatched_count", "displayed_unwatched_count", "tmdb_match_count", "films"],
   "properties": {
     "schema_version": { "type": "integer", "const": 1 },
-    "username": { "type": "string", "minLength": 1, "pattern": "\\S" },
-    "profile_url": { "type": "string", "minLength": 1, "pattern": "\\S" },
-    "refreshed_at": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "username": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
+    "profile_url": { "type": "string", "minLength": 1, "maxLength": 2048, "pattern": "\\S" },
+    "refreshed_at": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
     "poster_gallery_url": { "type": "string", "pattern": "^/data/poster-galleries-[A-Za-z0-9T_Z.-]+\\.json$" },
     "ranking_csv_url": { "type": "string", "pattern": "^/data/ranking-[A-Za-z0-9T_Z.-]+\\.csv$" },
     "ranking_gzip_url": { "type": "string", "pattern": "^/data/ranking-[A-Za-z0-9T_Z.-]+\\.csv\\.gz$" },
@@ -20,20 +20,20 @@
     "source_lists": { "$ref": "#/$defs/stringArray" }
   },
   "$defs": {
-    "stringArray": { "type": "array", "items": { "type": "string" } },
+    "stringArray": { "type": "array", "items": { "type": "string", "maxLength": 512 } },
     "film": {
       "type": "object",
       "required": ["title", "year", "letterboxd_title", "letterboxd_year", "letterboxd_url", "poster_url", "backdrop_url", "overview", "tmdb_url", "watched", "liked_in", "genres"],
       "properties": {
-        "title": { "type": "string", "minLength": 1, "pattern": "\\S" },
-        "year": { "type": "string" },
-        "letterboxd_title": { "type": "string" },
-        "letterboxd_year": { "type": "string" },
-        "letterboxd_url": { "type": "string" },
-        "poster_url": { "type": "string" },
-        "backdrop_url": { "type": "string" },
-        "overview": { "type": "string" },
-        "tmdb_url": { "type": "string" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 1024, "pattern": "\\S" },
+        "year": { "type": "string", "maxLength": 64 },
+        "letterboxd_title": { "type": "string", "maxLength": 1024 },
+        "letterboxd_year": { "type": "string", "maxLength": 64 },
+        "letterboxd_url": { "type": "string", "maxLength": 2048 },
+        "poster_url": { "type": "string", "maxLength": 2048 },
+        "backdrop_url": { "type": "string", "maxLength": 2048 },
+        "overview": { "type": "string", "maxLength": 20000 },
+        "tmdb_url": { "type": "string", "maxLength": 2048 },
         "watched": { "type": "boolean" },
         "liked_in": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
         "genres": { "$ref": "#/$defs/stringArray" },
@@ -41,14 +41,14 @@
         "list_ids": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 } },
         "directors": { "$ref": "#/$defs/stringArray" },
         "countries": { "$ref": "#/$defs/stringArray" },
-        "original_title": { "type": "string" },
-        "original_language": { "type": "string" },
+        "original_title": { "type": "string", "maxLength": 1024 },
+        "original_language": { "type": "string", "maxLength": 64 },
         "runtime_minutes": { "anyOf": [{ "type": "integer", "minimum": 1, "maximum": 9007199254740991 }, { "type": "null" }] },
         "tmdb_id": { "anyOf": [{ "type": "integer", "minimum": 0, "maximum": 9007199254740991 }, { "type": "null" }] },
         "tmdb_rating": { "anyOf": [{ "type": "number" }, { "type": "null" }] },
         "metadata_source": { "enum": ["", "legacy", "letterboxd", "title_match"] },
         "metadata_status": { "enum": ["unavailable", "id_only", "complete", "partial"] },
-        "metadata_fetched_at": { "type": "string" }
+        "metadata_fetched_at": { "type": "string", "maxLength": 128 }
       },
       "additionalProperties": true
     }

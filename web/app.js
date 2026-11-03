@@ -824,8 +824,8 @@ function editionColophonFor(catalogue) {
   const leadingDecade = [...decadeCounts].sort((left, right) => right[1] - left[1] || left[0] - right[0])[0];
   const leadingCountry = [...countryCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0];
   return {
-    decade: leadingDecade ? `${leadingDecade[0]}s` : 'Unavailable',
-    country: leadingCountry ? leadingCountry[0] : 'Unavailable',
+    decade: leadingDecade ? `${leadingDecade[0]}s` : '',
+    country: leadingCountry ? leadingCountry[0] : '',
   };
 }
 
@@ -1808,8 +1808,17 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   }
   posterGalleryUrl = snapshot.poster_gallery_url || '/data/poster-galleries.json';
   const colophon = editionColophonFor(films);
-  document.querySelector('#edition-leading-decade').textContent = colophon.decade;
-  document.querySelector('#edition-leading-country').textContent = colophon.country;
+  const colophonElement = document.querySelector('#edition-colophon');
+  const decadeElement = document.querySelector('#edition-leading-decade');
+  const countryElement = document.querySelector('#edition-leading-country');
+  const colophonSeparator = colophonElement.querySelector('.edition-colophon-separator');
+  decadeElement.textContent = colophon.decade;
+  countryElement.textContent = colophon.country;
+  decadeElement.hidden = !colophon.decade;
+  countryElement.hidden = !colophon.country;
+  colophonSeparator.hidden = !(colophon.decade && colophon.country);
+  colophonElement.hidden = !(colophon.decade || colophon.country);
+  colophonElement.setAttribute('aria-label', [colophon.decade, colophon.country].filter(Boolean).join(' · '));
   buildGenreFilter();
   const username = snapshotUsername;
   const profileUrl = safeUrl(snapshot.profile_url, ['letterboxd.com']) || `https://letterboxd.com/${encodeURIComponent(username)}/`;
@@ -1864,6 +1873,15 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   retryRankingLoadButton.hidden = !rankingLoadFailed;
   retryRankingLoadButton.disabled = false;
   retryRankingLoadButton.textContent = 'Retry full-catalogue load';
+  if (isLocalDevHost() && ['empty', 'one', 'worst'].includes(selectedDevDataMode())) {
+    const mode = selectedDevDataMode();
+    catalogueDataStatus.textContent = mode === 'empty'
+      ? 'Development fixture: this catalogue has no films.'
+      : mode === 'one'
+        ? 'Development fixture: this catalogue has one film.'
+        : `Development stress fixture: ${searchableCount} local films with worst-case text and metadata.`;
+    catalogueDataStatus.dataset.state = 'complete';
+  }
   if (isLocalDevHost() && selectedDevDataMode() === '100000') {
     const sourceCount = devFixtureRankedFilmCount.toLocaleString();
     const generatedCount = Math.max(0, films.length - devFixtureRankedFilmCount).toLocaleString();

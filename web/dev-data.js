@@ -1,4 +1,5 @@
 const modes = new Set(['demo', 'worst', 'empty', 'one', '100000']);
+const stressUsername = 'thisisaverylongusernamethatisallowed'.repeat(4).slice(0, 128);
 
 function syntheticFilm(base, index, overrides = {}) {
   const generatedTitle = `Stress case film ${String(index + 1).padStart(4, '0')}`;
@@ -114,8 +115,8 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
   const stressSnapshot = {
     ...snapshot,
     ...(mode === 'worst' ? {
-      username: 'thisisaverylongusernamethatisallowed',
-      profile_url: 'https://letterboxd.com/thisisaverylongusernamethatisallowed/',
+      username: stressUsername,
+      profile_url: `https://letterboxd.com/${stressUsername}/`,
     } : {}),
     film_count: films.length,
     displayed_film_count: films.length,
