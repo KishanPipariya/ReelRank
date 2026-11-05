@@ -312,9 +312,9 @@ async function updateLargeFacetCounts(query, requestId) {
         languageCounts.set(language, (languageCounts.get(language) || 0) + 1);
       }
       if (matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { runtime: '' })) {
+        runtimeCounts.set('', runtimeCounts.get('') + 1);
         const runtime = Number(film.runtime_minutes);
         if (Number.isInteger(runtime) && runtime > 0) {
-          runtimeCounts.set('', runtimeCounts.get('') + 1);
           const bucket = runtime < 90 ? 'under-90' : runtime <= 120 ? '90-120' : 'over-120';
           runtimeCounts.set(bucket, runtimeCounts.get(bucket) + 1);
         }
@@ -1034,9 +1034,9 @@ function updateCountryAndDecadeCounts(query) {
   films.forEach((film) => {
     if (!matchesWatchFilter(film)
       || !matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { runtime: '' })) return;
+    runtimeCounts.set('', runtimeCounts.get('') + 1);
     const runtime = Number(film.runtime_minutes);
     if (!Number.isInteger(runtime) || runtime <= 0) return;
-    runtimeCounts.set('', runtimeCounts.get('') + 1);
     const bucket = runtime < 90 ? 'under-90' : runtime <= 120 ? '90-120' : 'over-120';
     runtimeCounts.set(bucket, runtimeCounts.get(bucket) + 1);
   });
@@ -2099,6 +2099,7 @@ document.querySelectorAll('.filter-button').forEach((button) => {
 function clearQuery() {
   beginSearchEdit();
   searchInput.value = '';
+  if (state.sort === 'relevance') state.sort = 'rank';
   state.visibleLimit = 40;
   commitSearchEdit();
   render();
@@ -2106,7 +2107,7 @@ function clearQuery() {
 }
 clearQueryButton.addEventListener('click', clearQuery);
 emptyClearQuery.addEventListener('click', clearQuery);
-function resetCatalogView({ clearQueryText = false, resetSort = false, resetView = false } = {}) {
+function resetCatalogView({ clearQueryText = false } = {}) {
   window.clearTimeout(searchUrlTimer);
   if (clearQueryText) {
     state.searchEditing = false;
@@ -2115,6 +2116,7 @@ function resetCatalogView({ clearQueryText = false, resetSort = false, resetView
     sourceListSearch.value = '';
     updateSourceListOptionVisibility();
     updateGenreOptionVisibility();
+    if (state.sort === 'relevance') state.sort = 'rank';
   }
   state.filter = 'all';
   state.genres = [];
@@ -2124,8 +2126,6 @@ function resetCatalogView({ clearQueryText = false, resetSort = false, resetView
   state.language = '';
   state.decade = '';
   state.runtime = '';
-  if (resetSort) state.sort = 'rank';
-  if (resetView) state.view = 'posters';
   state.visibleLimit = 40;
   syncControls();
   updateUrlState();
@@ -2133,7 +2133,8 @@ function resetCatalogView({ clearQueryText = false, resetSort = false, resetView
   searchInput.focus();
 }
 emptyClearFilters.addEventListener('click', () => resetCatalogView());
-emptyEditGenres.addEventListener('click', () => {
+emptyEditGenres.addEventListener('click', (event) => {
+  event.stopPropagation();
   catalogFilters.open = true;
   genreFilter.open = true;
   genreFilter.scrollIntoView({ block: 'center' });
@@ -2144,6 +2145,7 @@ emptyEditGenres.addEventListener('click', () => {
 
 searchInput.addEventListener('input', () => {
   beginSearchEdit();
+  if (!searchInput.value.trim() && state.sort === 'relevance') state.sort = 'rank';
   state.visibleLimit = 40;
   queueSearchUrlUpdate();
   window.clearTimeout(searchRenderTimer);
@@ -2162,7 +2164,7 @@ genreOptionsToggle.addEventListener('click', () => {
   genreOptionsToggle.setAttribute('aria-expanded', String(genreOptionsToggle.getAttribute('aria-expanded') !== 'true'));
   updateGenreOptionVisibility();
 });
-clearSearchStateButton.addEventListener('click', () => resetCatalogView({ clearQueryText: true, resetSort: true, resetView: true }));
+clearSearchStateButton.addEventListener('click', () => resetCatalogView({ clearQueryText: true }));
 clearGenresButton.addEventListener('click', () => {
   state.genres = [];
   state.visibleLimit = 40;

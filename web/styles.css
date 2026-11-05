@@ -1203,6 +1203,7 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
     .decade-option:hover { border-color: var(--night-highlight-rule); }
   }
   .decade-option[aria-pressed='true'] { border-color: var(--night-highlight-rule); background: var(--deep-evergreen); color: var(--filter-cream); }
+  .decade-option[aria-pressed='true'] .decade-option-count { color: var(--filter-cream); }
   .decade-option-count { color: var(--night-muted); }
   .country-index-heading { color: var(--color-a8b294); }
   .country-index-search-control input { border-color: var(--control-border); background: var(--surface); color: var(--ink); }
@@ -1213,6 +1214,7 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
     .country-index-option:hover { border-color: var(--night-highlight-rule); }
   }
   .country-index-option[aria-pressed='true'] { border-color: var(--night-highlight-rule); background: var(--deep-evergreen); color: var(--filter-cream); }
+  .country-index-option[aria-pressed='true'] small { color: var(--filter-cream); }
   .country-index-option small { color: var(--night-muted); }
   .country-index-toggle { border-color: var(--night-rule-strong); color: var(--night-soft-highlight); }
   .film-year-divider span { color: var(--color-a4aa9e); }
