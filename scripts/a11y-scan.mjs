@@ -339,9 +339,13 @@ async function checkDetailPresentation(page, label) {
     const layout = await page.locator('#film-detail-dialog').evaluate((dialog) => {
       const bounds = dialog.getBoundingClientRect();
       const controls = [...dialog.querySelectorAll('.film-detail-step')].map((button) => button.getBoundingClientRect());
+      const controlsDoNotOverlap = controls[0].right <= controls[1].left
+        || controls[1].right <= controls[0].left
+        || controls[0].bottom <= controls[1].top
+        || controls[1].bottom <= controls[0].top;
       return bounds.left >= 0 && bounds.right <= innerWidth && dialog.scrollWidth <= dialog.clientWidth
         && controls.every((control) => control.left >= bounds.left && control.right <= bounds.right && control.height >= 40)
-        && controls[0].right <= controls[1].left;
+        && controlsDoNotOverlap;
     });
     check(layout, `${label} detail controls fit at ${width}px without overlap and retain 40px targets.`);
   }

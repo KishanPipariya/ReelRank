@@ -1,5 +1,7 @@
 const modes = new Set(['demo', 'worst', 'empty', 'one', '100000']);
 const stressUsername = 'thisisaverylongusernamethatisallowed'.repeat(4).slice(0, 128);
+const schemaMaximumTitle = ('The Long Journey: A Complete Chronicle of Every Crossing and Return — ').repeat(20).slice(0, 1024);
+const schemaMaximumOverview = ('The travelers continue across changing landscapes, meeting new people and weighing the choices that shape the journey. ').repeat(200).slice(0, 20000);
 
 function syntheticFilm(base, index, overrides = {}) {
   const generatedTitle = `Stress case film ${String(index + 1).padStart(4, '0')}`;
@@ -69,10 +71,11 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
         liked_in: 1284, watched: false,
       }),
       syntheticFilm(base, 1, {
-        title: 'Modern Times Forever', original_title: 'Stora Enso Building, Helsinki', year: '2011',
-        directors: ['Bjornstjerne Reuter Christiansen', 'Jakob Fenger', 'Rasmus Nielsen'],
-        genres: ['Documentary'], countries: ['Denmark', 'Finland', 'Vietnam'], runtime_minutes: 14400,
-        overview: "The film shows centuries of decay, compressed into the span of the film, marking Helsinki's Stora Enso headquarters building.",
+        title: 'Logistics', original_title: 'Logistics', original_language: 'xx', year: '2012',
+        directors: ['Erika Magnusson', 'Daniel Andersson'], genres: ['Documentary'],
+        countries: ['Sweden', 'China', 'Germany', 'Netherlands', 'Spain'], runtime_minutes: 999,
+        overview: 'An experimental art film following a pedometer through a 35-day journey. TMDB movie 421017 reports a runtime of 999 minutes.',
+        tmdb_id: 421017, tmdb_url: 'https://www.themoviedb.org/movie/421017',
         poster_url: 'https://image.tmdb.org/t/p/w500/reelrank-missing-poster.jpg', liked_in: 1284, watched: true,
       }),
       syntheticFilm(base, 2, {
@@ -108,6 +111,12 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
       syntheticFilm(base, 8, {
         title: '<script>alert(1)</script> &amp; **bold**', directors: ['Seán O’Brien-Ó Súilleabháin'],
         genres: ['Drama', 'Comedy', 'Music', 'History'], liked_in: 19, watched: false,
+      }),
+      syntheticFilm(base, 9, {
+        title: schemaMaximumTitle, year: '2026', overview: schemaMaximumOverview,
+        directors: ['Đặng Thị Ngọc Hân', 'نور الهدى عبد الرحمن'],
+        genres: ['Documentary', 'Drama', 'History'], countries: ['Viet Nam', 'United States of America'],
+        runtime_minutes: 999, liked_in: 18, watched: false,
       }),
     ];
   }

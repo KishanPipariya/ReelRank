@@ -392,7 +392,7 @@ const filterControls = createFilterControls({
     activeViewTools, activeGenreFilters, activeDirectorFilters, activeSourceListFilters, searchInput,
   },
   actions: {
-    toggleGenre, toggleDirector, toggleSourceList, setCountry, setLanguage, languageLabel, setDecade, setRuntime,
+    toggleGenre, toggleDirector, toggleSourceList, setWatchFilter, setCountry, setLanguage, languageLabel, setDecade, setRuntime,
     setCountryIndexExpanded, setLanguageIndexExpanded,
   },
 });
@@ -632,6 +632,15 @@ function toggleDirector(director) {
 
 function setCountry(country) {
   state.country = country;
+  state.visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
+}
+
+function setWatchFilter(filter) {
+  window.clearTimeout(searchUrlTimer);
+  state.filter = ['all', 'watched', 'unwatched'].includes(filter) ? filter : 'all';
   state.visibleLimit = 40;
   syncControls();
   updateUrlState();
@@ -1992,12 +2001,7 @@ async function retryFullRanking() {
 
 document.querySelectorAll('.filter-button').forEach((button) => {
   button.addEventListener('click', () => {
-    window.clearTimeout(searchUrlTimer);
-    state.filter = button.dataset.filter;
-    state.visibleLimit = 40;
-    syncControls();
-    updateUrlState();
-    render();
+    setWatchFilter(button.dataset.filter);
   });
 });
 

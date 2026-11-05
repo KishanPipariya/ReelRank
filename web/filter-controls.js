@@ -57,7 +57,11 @@ export function createFilterControls({ state, sources, elements, actions }) {
       || state.genres.length || state.directors.length || state.sourceLists.length || state.country || state.language || state.decade !== '' || state.runtime;
     elements.activeViewTools.hidden = !hasActiveView;
     elements.activeGenreFilters.replaceChildren();
-    elements.activeGenreFilters.hidden = state.genres.length === 0 && !state.country && !state.language && state.decade === '' && !state.runtime;
+    elements.activeGenreFilters.hidden = state.filter === 'all' && state.genres.length === 0 && !state.country && !state.language && state.decade === '' && !state.runtime;
+    if (state.filter !== 'all') {
+      const label = state.filter === 'watched' ? 'Watched' : 'Unwatched';
+      appendFacetChip(elements.activeGenreFilters, label, `Remove ${state.filter} filter`, () => actions.setWatchFilter('all'));
+    }
     state.genres.forEach((genre) => appendFacetChip(elements.activeGenreFilters, genre, `Remove ${genre} genre filter`, () => actions.toggleGenre(genre)));
     elements.activeDirectorFilters.replaceChildren();
     elements.activeDirectorFilters.hidden = state.directors.length === 0;
