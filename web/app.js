@@ -275,7 +275,7 @@ async function updateLargeFacetCounts(query, requestId) {
         const decade = filmDecade(film);
         if (decade !== null) decadeCounts.set(decade, (decadeCounts.get(decade) || 0) + 1);
       }
-      if (matchesSearchAndGenres(film, query, [])) {
+      if (matchesSearchAndGenres(film, query, state.genres)) {
         incrementFilmCounts(genreCounts, Array.isArray(film.genres) ? film.genres : []);
       }
       if (matchesSearchAndGenres(film, query, state.genres, [])) {
@@ -302,7 +302,9 @@ async function updateLargeFacetCounts(query, requestId) {
     button.querySelector('.decade-option-count').textContent = count.toLocaleString();
   });
   genreOptions.querySelectorAll('.genre-option').forEach((option) => {
-    option.querySelector('.genre-option-count').textContent = (genreCounts.get(option.querySelector('input').value) || 0).toLocaleString();
+    const count = genreCounts.get(option.querySelector('input').value) || 0;
+    option.dataset.currentGenreCount = String(count);
+    option.querySelector('.genre-option-count').textContent = count.toLocaleString();
   });
   sourceListOptions.querySelectorAll('.genre-option').forEach((option) => {
     option.querySelector('.genre-option-count').textContent = (sourceListCounts.get(option.dataset.sourceList) || 0).toLocaleString();
@@ -413,9 +415,10 @@ function buildGenreFilter() {
   state.genres = state.genres.filter((genre) => availableGenres.includes(genre));
   genreFilter.hidden = availableGenres.length === 0;
   genreOptions.replaceChildren();
-  availableGenres.forEach((genre) => {
+  availableGenres.forEach((genre, index) => {
     const label = document.createElement('label');
     label.className = 'genre-option';
+    label.dataset.catalogueRank = String(index);
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.value = genre;
@@ -425,6 +428,7 @@ function buildGenreFilter() {
     const count = document.createElement('small');
     count.className = 'genre-option-count';
     count.textContent = counts.get(genre).toLocaleString();
+    label.dataset.currentGenreCount = String(counts.get(genre));
     label.append(checkbox, name, count);
     genreOptions.append(label);
   });
@@ -578,6 +582,18 @@ function updateGenreOptionVisibility() {
   genreOptionsToggle.hidden = options.length <= facetQuickPickLimit || Boolean(query);
   genreOptionsToggle.textContent = expanded ? `Show top ${facetQuickPickLimit}` : `Show all ${options.length.toLocaleString()} genres`;
   genreEmptyState.hidden = visibleCount > 0;
+}
+
+function sortGenreOptionsByCurrentCount() {
+  const options = [...genreOptions.querySelectorAll('.genre-option')];
+  const catalogueRank = (option) => Number(option.dataset.catalogueRank) || 0;
+  const count = (option) => Number(option.dataset.currentGenreCount) || 0;
+  const selected = options.filter((option) => state.genres.includes(option.querySelector('input').value));
+  const unselected = options.filter((option) => !state.genres.includes(option.querySelector('input').value));
+  selected.sort((left, right) => catalogueRank(left) - catalogueRank(right));
+  unselected.sort((left, right) => count(right) - count(left) || catalogueRank(left) - catalogueRank(right));
+  genreOptions.replaceChildren(...selected, ...unselected);
+  updateGenreOptionVisibility();
 }
 
 function toggleGenre(genre) {
@@ -974,11 +990,13 @@ function updateCountryAndDecadeCounts(query) {
 function updateGenreOptionCounts(query) {
   const contextFilms = films.filter((film) => {
     if (!matchesWatchFilter(film)) return false;
-    return matchesSearchAndGenres(film, query, []);
+    return matchesSearchAndGenres(film, query, state.genres);
   });
   const counts = countGenres(contextFilms);
   genreOptions.querySelectorAll('.genre-option').forEach((option) => {
-    option.querySelector('.genre-option-count').textContent = (counts.get(option.querySelector('input').value) || 0).toLocaleString();
+    const count = counts.get(option.querySelector('input').value) || 0;
+    option.dataset.currentGenreCount = String(count);
+    option.querySelector('.genre-option-count').textContent = count.toLocaleString();
   });
 }
 
@@ -1020,7 +1038,7 @@ function updateBackToFiltersVisibility() {
   const filterLabel = state.filter === 'all' ? 'All films' : `${state.filter[0].toLocaleUpperCase()}${state.filter.slice(1)}`;
   const viewDescription = [
     `${filterLabel} filter`,
-    state.genres.length ? `genres ${state.genres.join(' or ')}` : '',
+    state.genres.length ? `genres ${state.genres.join(' and ')}` : '',
     state.directors.length ? `directors ${state.directors.join(' or ')}` : '',
     state.sourceLists.length ? `source lists ${state.sourceLists.map((url) => availableSourceLists.find((item) => item.url === url)?.label).filter(Boolean).join(' or ')}` : '',
     state.country ? `country ${state.country}` : '',
@@ -1624,7 +1642,7 @@ document.querySelectorAll('.more-filter-group').forEach((group) => {
   });
 });
 
-async function render() {
+async function render({ sortGenresOnOpen = false } = {}) {
   const requestId = ++catalogueRenderRequest;
   updateProgrammeShare();
   const query = searchInput.value.trim().toLocaleLowerCase();
@@ -1660,6 +1678,7 @@ async function render() {
       if (!await updateLargeFacetCounts(query, requestId) || requestId !== catalogueRenderRequest) return;
       currentLargeFacetKey = matchKey;
     }
+    if (sortGenresOnOpen) sortGenreOptionsByCurrentCount();
     document.querySelector('.catalogue-results').removeAttribute('aria-busy');
   } else {
     renderLanguageOptions();
@@ -1667,6 +1686,7 @@ async function render() {
     updateCountryAndDecadeCounts(query);
     updateGenreOptionCounts(query);
     updateSourceListOptionCounts(query);
+    if (sortGenresOnOpen) sortGenreOptionsByCurrentCount();
     matching = films.filter((film) => {
       if (!matchesWatchFilter(film)) return false;
       return matchesSearchAndGenres(film, query);
@@ -1747,13 +1767,20 @@ async function render() {
   }
   updateBackToFiltersVisibility();
   const resultAnnouncement = document.querySelector('#results-announcement');
-  const filterDescription = [state.filter === 'all' ? '' : `${state.filter} only`, state.genres.length ? `genres: ${state.genres.join(' or ')}` : '', state.directors.length ? `directors: ${state.directors.join(' or ')}` : '', state.sourceLists.length ? `source lists: ${state.sourceLists.map((url) => availableSourceLists.find((sourceList) => sourceList.url === url)?.label).filter(Boolean).join(' or ')}` : '', state.country ? `country: ${state.country}` : '', state.decade !== '' ? `decade: ${state.decade}s` : '', state.runtime ? `runtime: ${state.runtime === 'under-90' ? 'under 90 minutes' : state.runtime === '90-120' ? '90 to 120 minutes' : 'over 120 minutes'}` : ''].filter(Boolean).join(', ');
+  const filterDescription = [state.filter === 'all' ? '' : `${state.filter} only`, state.genres.length ? `genres: ${state.genres.join(' and ')}` : '', state.directors.length ? `directors: ${state.directors.join(' or ')}` : '', state.sourceLists.length ? `source lists: ${state.sourceLists.map((url) => availableSourceLists.find((sourceList) => sourceList.url === url)?.label).filter(Boolean).join(' or ')}` : '', state.country ? `country: ${state.country}` : '', state.decade !== '' ? `decade: ${state.decade}s` : '', state.runtime ? `runtime: ${state.runtime === 'under-90' ? 'under 90 minutes' : state.runtime === '90-120' ? '90 to 120 minutes' : 'over 120 minutes'}` : ''].filter(Boolean).join(', ');
   const sortDescription = state.sort === 'rank' ? '' : `, sorted by ${sortSelect.options[sortSelect.selectedIndex].text}`;
   resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription ? `, ${filterDescription}` : ''}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
 }
 
 catalogFilters.addEventListener('toggle', () => {
-  if (catalogFilters.open) void render();
+  if (catalogFilters.open) {
+    void render({ sortGenresOnOpen: true });
+  }
+});
+
+genreFilter.addEventListener('toggle', () => {
+  if (!genreFilter.open) return;
+  void render({ sortGenresOnOpen: true });
 });
 
 function showDemoState(configuredUsername, snapshotUsername) {

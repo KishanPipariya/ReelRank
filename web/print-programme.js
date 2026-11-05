@@ -28,7 +28,7 @@ export function createProgrammePrinter(dependencies) {
       state.language ? `original language: ${state.language === 'unknown' ? 'unknown' : languageNameFor(state.language)}` : '',
       state.decade !== '' ? `decade: ${state.decade}s` : '',
       state.runtime ? `runtime: ${state.runtime === 'under-90' ? 'under 90 min' : state.runtime === '90-120' ? '90–120 min' : 'over 120 min'}` : '',
-      state.genres.length ? `genres: ${state.genres.join(' / ')}` : '',
+      state.genres.length ? `genres: ${state.genres.join(' and ')}` : '',
       searchInput.value.trim() ? `search: ${searchInput.value.trim()}` : '',
     ].filter(Boolean);
     const selectedView = activeFilters.length ? `Selected view: ${activeFilters.join(' · ')}` : 'Full catalogue';

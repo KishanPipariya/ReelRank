@@ -14,7 +14,7 @@ export function programmeShare(href, state, query, sourceLists = [], publicSiteU
     state.language ? `Original language: ${languageLabel(state.language)}` : '',
     state.decade !== '' ? `${state.decade}s` : '',
     state.directors.length ? `Directed by ${state.directors.join(' or ')}` : '',
-    state.genres.join(' or '),
+    state.genres.join(' and '),
     state.sourceLists.length ? `From ${state.sourceLists.map((url) => sourceLists.find((list) => list.url === url)?.label || url).join(' or ')}` : '',
     state.runtime === 'under-90' ? 'Under 90 minutes' : state.runtime === '90-120' ? '90–120 minutes' : state.runtime === 'over-120' ? 'Over 120 minutes' : '',
     state.filter === 'watched' ? 'Watched' : state.filter === 'unwatched' ? 'Unwatched' : '',

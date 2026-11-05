@@ -144,6 +144,8 @@ test('catalog filters combine genres, director, list, country, decade, and query
   };
   assert.equal(filmDecade(film), 2010);
   assert.equal(matchesFilm(film, filters, film.lists, ['Favorites']), true);
+  assert.equal(matchesFilm(film, { ...filters, genres: ['Drama', 'Science Fiction'] }, film.lists, ['Favorites']), true);
+  assert.equal(matchesFilm(film, { ...filters, genres: ['Science Fiction', 'Comedy'] }, film.lists, ['Favorites']), false);
   assert.equal(matchesFilm(film, { ...filters, genres: ['Comedy'] }, film.lists, ['Favorites']), false);
   assert.equal(matchesFilm(film, { ...filters, query: 'la llegada' }, film.lists, ['Favorites']), true);
 });

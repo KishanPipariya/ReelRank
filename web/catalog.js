@@ -22,7 +22,7 @@ const normalizedSearchCache = new WeakMap();
 
 export function matchesFilm(film, filters, sourceListUrls = film.lists || [], sourceListLabels = [], searchText = buildSearchText(film, sourceListLabels)) {
   const genres = Array.isArray(film.genres) ? film.genres : [];
-  if (filters.genres?.length && !filters.genres.some((genre) => genres.includes(genre))) return false;
+  if (filters.genres?.length && !filters.genres.every((genre) => genres.includes(genre))) return false;
   const directors = Array.isArray(film.directors) ? film.directors : [];
   if (filters.directors?.length && !filters.directors.some((director) => directors.includes(director))) return false;
   if (filters.sourceLists?.length && !filters.sourceLists.some((url) => sourceListUrls.includes(url))) return false;
