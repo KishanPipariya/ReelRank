@@ -609,7 +609,7 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(34px, 5vw, 47px); fo
 .clear-genres[hidden] { display: none; }
 .close-genres { min-height: var(--control-min-height); padding: var(--space-1) 0; border: 0; background: transparent; color: var(--forest); cursor: pointer; font-family: var(--mono); font-size: var(--type-caption); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
 .genre-search-box { height: 34px; display: flex; align-items: center; margin-bottom: var(--space-2); padding: 0 var(--space-2); border: 1px solid var(--control-border); background: var(--surface); }
-.genre-search-box:focus-within { outline: 2px solid var(--orange); outline-offset: 1px; }
+.genre-search-box:focus-within { border-color: var(--orange); box-shadow: inset 0 0 0 1px var(--orange); }
 .genre-search-box input { width: 100%; min-width: 0; min-height: 32px; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: var(--type-caption); }
 .genre-search-box input::placeholder { color: var(--muted); opacity: 1; }
 .genre-filter-help { margin: 0 0 var(--space-2); color: var(--muted); font-size: var(--type-caption); line-height: 1.45; }
@@ -941,6 +941,7 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
   .director-filmography-match { border-color: ButtonText; color: CanvasText; }
   .setup-card, .demo-banner { border: 1px solid ButtonText; }
   :focus-visible, .search-box:focus-within { outline-color: Highlight; }
+  .genre-search-box:focus-within { border-color: Highlight; box-shadow: inset 0 0 0 1px Highlight; }
   a { text-decoration: underline; }
 }
 
@@ -1107,7 +1108,7 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
   .top-billed-heading { align-items: baseline; justify-content: space-between; margin-bottom: var(--space-1); }
   .top-billed-heading .section-eyebrow { font-size: var(--type-caption); }
   .top-billed-heading h2 { font-size: var(--type-section); }
-  .featured-film { grid-template-columns: minmax(135px, 44vw) minmax(0, 1fr); gap: var(--space-4); padding: var(--space-4); }
+  .featured-film { grid-template-columns: minmax(0, min(44vw, 240px)) minmax(0, 1fr); gap: var(--space-4); padding: var(--space-4); }
   .featured-film-poster { width: 100%; }
   .featured-film-label { font-size: var(--type-caption); }
   .featured-film-title { font-size: clamp(20px, 5.8vw, 29px); }
@@ -1131,7 +1132,7 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
 @media (max-width: 430px) {
   .film-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-4); }
   .top-billed-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5) var(--space-4); }
-  .featured-film { grid-template-columns: minmax(112px, 34vw) minmax(0, 1fr); gap: var(--space-3); padding: var(--space-4); }
+  .featured-film { gap: var(--space-3); padding: var(--space-4); }
   .featured-film-facts .cinephile-country-primary { overflow: visible; overflow-wrap: anywhere; text-overflow: clip; white-space: normal; }
 }
 @media (max-width: 380px) {
@@ -1139,7 +1140,9 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
   .hero-description { max-width: none; }
   .collection-tools { gap: var(--space-2); }
   .filter-button { padding-inline: var(--space-1); font-size: var(--type-caption); }
-  .featured-film { grid-template-columns: minmax(104px, 34vw) minmax(0, 1fr); gap: var(--space-2); padding: var(--space-3); }
+  .featured-film { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3) 0; }
+  .featured-film-poster { width: 100%; }
+  .featured-film-copy { min-width: 0; padding-inline: var(--space-3); }
   .featured-film::after { inset: var(--space-2); }
   .featured-film-label { margin-bottom: var(--space-2); font-size: var(--type-caption); }
 }
