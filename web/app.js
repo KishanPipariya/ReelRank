@@ -74,6 +74,16 @@ const languageIndexSearch = document.querySelector('#language-index-search');
 const languageIndexSearchControl = document.querySelector('#language-index-search-control');
 const languageIndexEmpty = document.querySelector('#language-index-empty');
 const directorFilmography = document.querySelector('#director-filmography');
+const directorFilmographyState = {
+  director: null,
+  summaryCount: null,
+  content: null,
+  entries: new Map(),
+  films: [],
+  rendered: false,
+};
+const directorFilmographyFilmsByName = new Map();
+let directorFilmographySourceFilms = null;
 const printProgrammeTitle = document.querySelector('#print-programme-title');
 const printProgrammeUsername = document.querySelector('#print-programme-username');
 const printProgrammeDate = document.querySelector('#print-programme-date');
@@ -1606,48 +1616,178 @@ const printProgramme = createProgrammePrinter({
   languageNameFor,
 });
 
-function renderDirectorFilmography() {
-  directorFilmography.replaceChildren();
-  directorFilmography.hidden = state.directors.length !== 1;
-  if (state.directors.length !== 1) return;
-
-  const director = state.directors[0];
-  const titles = films.filter((film) => Array.isArray(film.directors) && film.directors.includes(director));
+function directorFilmographySummary(titles, matchingCount) {
   const years = titles.map((film) => Number.parseInt(film.year, 10)).filter(Number.isFinite).sort((a, b) => a - b);
-  const label = document.createElement('span');
-  label.className = 'director-filmography-label';
-  label.textContent = 'Filmography';
-  const name = document.createElement('strong');
-  name.textContent = director;
-  const details = document.createElement('span');
-  details.className = 'director-filmography-details';
-  const yearSpan = years.length
-    ? ` · ${years[0] === years[years.length - 1] ? years[0] : `${years[0]}–${years[years.length - 1]}`}`
-    : '';
-  details.textContent = `${titles.length} ${titles.length === 1 ? 'film' : 'films'} in this catalogue${yearSpan}`;
-  const heading = document.createElement('div');
-  heading.className = 'director-filmography-heading';
-  heading.append(label, name, details);
-  const timeline = document.createElement('div');
-  timeline.className = 'director-career-timeline';
-  timeline.setAttribute('role', 'group');
-  timeline.setAttribute('aria-label', `Films by ${director}, linked by release year`);
-  [...titles].sort((left, right) => compareFilms(left, right, 'year-oldest')).forEach((film) => {
-    const year = film.year || '—';
-    const filmUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
-    const marker = document.createElement(filmUrl ? 'a' : 'span');
-    marker.className = 'director-career-year';
-    marker.textContent = year;
-    marker.title = `${film.title} (${year})`;
-    marker.setAttribute('aria-label', `${film.title}, ${year}${filmUrl ? ', opens on Letterboxd in a new tab' : ''}`);
-    if (filmUrl) {
-      marker.href = filmUrl;
-      marker.target = '_blank';
-      marker.rel = 'noreferrer';
-    }
-    timeline.append(marker);
+  const yearRange = years.length
+    ? `${years[0] === years[years.length - 1] ? years[0] : `${years[0]}–${years[years.length - 1]}`}`
+    : 'release years unavailable';
+  const unknownYearCount = titles.length - years.length;
+  const matchText = `${matchingCount} ${matchingCount === 1 ? 'film matches' : 'films match'} current filters`;
+  const unknownText = unknownYearCount ? ` · ${unknownYearCount} without a known year` : '';
+  return `${titles.length} catalogue ${titles.length === 1 ? 'film' : 'films'} · ${matchText} · ${yearRange}${unknownText}`;
+}
+
+function updateDirectorFilmographyMatches() {
+  const matchingFilms = new Set(currentMatchingFilms);
+  let matchingCount = 0;
+  directorFilmographyState.entries.forEach(({ film, item, matchLabel, button }) => {
+    const matches = matchingFilms.has(film);
+    if (matches) matchingCount += 1;
+    item.classList.toggle('is-filter-match', matches);
+    matchLabel.hidden = !matches;
+    button.setAttribute('aria-label', `Open details for ${film.title}, ${film.year || 'year unknown'}`);
   });
-  directorFilmography.append(heading, timeline);
+  if (!directorFilmographyState.rendered) {
+    matchingCount = directorFilmographyState.films.filter((film) => matchingFilms.has(film)).length;
+  }
+  const summaryText = directorFilmographySummary(directorFilmographyState.films, matchingCount);
+  if (directorFilmographyState.summaryCount.textContent !== summaryText) {
+    directorFilmographyState.summaryCount.textContent = summaryText;
+  }
+}
+
+function renderDirectorFilmographyEntries() {
+  const { director, content, films: titles } = directorFilmographyState;
+  const datedTitles = [...titles].sort((left, right) => {
+    const leftYear = Number.parseInt(left.year, 10);
+    const rightYear = Number.parseInt(right.year, 10);
+    if (Number.isFinite(leftYear) && Number.isFinite(rightYear) && leftYear !== rightYear) return leftYear - rightYear;
+    if (Number.isFinite(leftYear) !== Number.isFinite(rightYear)) return Number.isFinite(leftYear) ? -1 : 1;
+    return compareFilms(left, right, 'title');
+  });
+  const decadeGroups = new Map();
+  datedTitles.forEach((film) => {
+    const year = Number.parseInt(film.year, 10);
+    const decade = Number.isFinite(year) ? `${Math.floor(year / 10) * 10}s` : 'Year unknown';
+    if (!decadeGroups.has(decade)) decadeGroups.set(decade, new Map());
+    const yearGroups = decadeGroups.get(decade);
+    const yearLabel = Number.isFinite(year) ? String(year) : 'Year unknown';
+    if (!yearGroups.has(yearLabel)) yearGroups.set(yearLabel, []);
+    yearGroups.get(yearLabel).push(film);
+  });
+
+  const decadeNavigation = document.createElement('nav');
+  decadeNavigation.className = 'director-filmography-decades';
+  decadeNavigation.setAttribute('aria-label', `Jump to decade in films by ${director}`);
+  const decadeSections = [];
+  [...decadeGroups].forEach(([decade, yearGroups], decadeIndex) => {
+    const decadeId = `director-filmography-decade-${decadeIndex}`;
+    const section = document.createElement('section');
+    section.className = 'director-filmography-decade';
+    const heading = document.createElement('h4');
+    heading.id = decadeId;
+    heading.tabIndex = -1;
+    heading.textContent = decade;
+    section.setAttribute('aria-labelledby', decadeId);
+    section.append(heading);
+
+    yearGroups.forEach((yearFilms, year) => {
+      const yearGroup = document.createElement('section');
+      yearGroup.className = 'director-filmography-year-group';
+      const yearHeading = document.createElement('h5');
+      yearHeading.textContent = year;
+      const list = document.createElement('ul');
+      list.className = 'director-filmography-films';
+      yearFilms.forEach((film) => {
+        const item = document.createElement('li');
+        item.className = 'director-filmography-entry';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'director-filmography-title';
+        button.textContent = film.title;
+        button.addEventListener('click', () => openFilmDetailsFromUi(film));
+        const matchLabel = document.createElement('span');
+        matchLabel.className = 'director-filmography-match';
+        matchLabel.textContent = 'Matches filters';
+        item.append(button, matchLabel);
+        list.append(item);
+        directorFilmographyState.entries.set(film, { film, item, matchLabel, button });
+      });
+      yearGroup.append(yearHeading, list);
+      section.append(yearGroup);
+    });
+
+    const jump = document.createElement('button');
+    jump.type = 'button';
+    jump.className = 'director-filmography-decade-jump';
+    jump.textContent = decade;
+    jump.setAttribute('aria-label', `Jump to ${decade}`);
+    jump.addEventListener('click', () => {
+      heading.scrollIntoView({ block: 'start' });
+      heading.focus({ preventScroll: true });
+    });
+    decadeNavigation.append(jump);
+    decadeSections.push(section);
+  });
+
+  const list = document.createElement('div');
+  list.className = 'director-filmography-groups';
+  list.append(...decadeSections);
+  content.replaceChildren(decadeNavigation, list);
+  directorFilmographyState.rendered = true;
+  updateDirectorFilmographyMatches();
+}
+
+function renderDirectorFilmography() {
+  const director = state.directors.length === 1 ? state.directors[0] : null;
+  directorFilmography.hidden = !director;
+  if (!director) {
+    if (directorFilmographyState.director !== null) {
+      directorFilmography.replaceChildren();
+      Object.assign(directorFilmographyState, {
+        director: null,
+        summaryCount: null,
+        content: null,
+        entries: new Map(),
+        films: [],
+        rendered: false,
+      });
+    }
+    return;
+  }
+
+  if (directorFilmographySourceFilms !== films) {
+    directorFilmographyFilmsByName.clear();
+    directorFilmographySourceFilms = films;
+  }
+  if (!directorFilmographyFilmsByName.has(director)) {
+    directorFilmographyFilmsByName.set(director, films.filter((film) => Array.isArray(film.directors) && film.directors.includes(director)));
+  }
+  const titles = directorFilmographyFilmsByName.get(director);
+  const filmsChanged = titles.length !== directorFilmographyState.films.length
+    || titles.some((film, index) => film !== directorFilmographyState.films[index]);
+  if (directorFilmographyState.director !== director || filmsChanged) {
+    const details = document.createElement('details');
+    details.className = 'director-filmography-disclosure';
+    const summary = document.createElement('summary');
+    const summaryLabel = document.createElement('span');
+    summaryLabel.className = 'director-filmography-summary-label';
+    summaryLabel.textContent = `Browse films by ${director}`;
+    const summaryCount = document.createElement('span');
+    summaryCount.className = 'director-filmography-summary-count';
+    summaryCount.setAttribute('aria-live', 'polite');
+    summaryCount.setAttribute('aria-atomic', 'true');
+    summary.append(summaryLabel, summaryCount);
+    const content = document.createElement('div');
+    content.className = 'director-filmography-content';
+    details.append(summary, content);
+    details.addEventListener('toggle', () => {
+      if (details.open && !directorFilmographyState.rendered && directorFilmographyState.director === director) {
+        renderDirectorFilmographyEntries();
+      }
+    });
+    directorFilmography.replaceChildren(details);
+    Object.assign(directorFilmographyState, {
+      director,
+      summaryCount,
+      content,
+      entries: new Map(),
+      films: titles,
+      rendered: false,
+    });
+  }
+  directorFilmographyState.films = titles;
+  updateDirectorFilmographyMatches();
 }
 
 function updateProgrammeShare() {
@@ -1712,7 +1852,6 @@ async function render({ sortGenresOnOpen = false } = {}) {
   sortSelect.value = state.sort;
   clearQueryButton.hidden = !query;
   filterControls.renderActiveViewFilters();
-  renderDirectorFilmography();
   let matching;
   let highestScore = 1;
   let searchScopeCount = 0;
@@ -1769,6 +1908,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
     }
   }
   currentMatchingFilms = matching;
+  renderDirectorFilmography();
   updateSearchScopeCount(searchScopeCount);
   const hasActiveSelection = Boolean(query) || state.filter !== 'all' || state.genres.length > 0 || state.directors.length > 0 || state.sourceLists.length > 0 || Boolean(state.country) || Boolean(state.language) || state.decade !== '' || Boolean(state.runtime);
   programmeNote.hidden = matching.length === 0 || !hasActiveSelection;
