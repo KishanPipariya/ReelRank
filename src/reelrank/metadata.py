@@ -41,12 +41,19 @@ def _fetch_tmdb_poster_gallery(client, movie_id: int, api_key: str) -> tuple[lis
     return [{"path": poster["path"], "language": poster["language"]} for poster in ranked[:24]], True
 
 
-def resolve_movie_metadata(client, movie: Movie, api_key: str | None, genre_names: dict[int, str]) -> tuple[dict | None, bool, str]:
+def resolve_movie_metadata(
+    client,
+    movie: Movie,
+    api_key: str | None,
+    genre_names: dict[int, str],
+    fetch_poster_gallery: bool = True,
+) -> tuple[dict | None, bool, str]:
     """Resolve one film's metadata, preferring its TMDB link on Letterboxd."""
     letterboxd_tmdb_id = _fetch_letterboxd_tmdb_id(client, movie.uri)
     if letterboxd_tmdb_id is not None:
         record = {"id": letterboxd_tmdb_id}
         cacheable = True
+        gallery_loaded = False
         if api_key:
             try:
                 response = client.get(
@@ -64,14 +71,16 @@ def resolve_movie_metadata(client, movie: Movie, api_key: str | None, genre_name
                 cacheable = False
             poster_gallery, gallery_loaded = (
                 _fetch_tmdb_poster_gallery(client, letterboxd_tmdb_id, api_key)
-                if record.get("poster_path") or movie.poster_url
+                if fetch_poster_gallery and (record.get("poster_path") or movie.poster_url)
                 else ([], True)
             )
             if gallery_loaded:
                 record["poster_gallery"] = poster_gallery
             else:
                 cacheable = False
-        return _tmdb_metadata_payload(movie, record, genre_names), cacheable, "letterboxd"
+        payload = _tmdb_metadata_payload(movie, record, genre_names)
+        payload["metadata_poster_gallery_loaded"] = fetch_poster_gallery and gallery_loaded
+        return payload, cacheable, "letterboxd"
 
     if not api_key:
         return None, False, ""
@@ -104,7 +113,9 @@ def resolve_movie_metadata(client, movie: Movie, api_key: str | None, genre_name
                 return None, False, ""
         best_id = best.get("id")
         if not isinstance(best_id, int):
-            return _tmdb_metadata_payload(movie, best, genre_names), False, "title_match"
+            payload = _tmdb_metadata_payload(movie, best, genre_names)
+            payload["metadata_poster_gallery_loaded"] = False
+            return payload, False, "title_match"
         details_response = client.get(
             f"https://api.themoviedb.org/3/movie/{best_id}",
             params={"api_key": api_key, "language": "en-US", "append_to_response": "credits"},
@@ -116,11 +127,12 @@ def resolve_movie_metadata(client, movie: Movie, api_key: str | None, genre_name
         payload = _tmdb_metadata_payload(movie, record, genre_names)
         poster_gallery, gallery_loaded = (
             _fetch_tmdb_poster_gallery(client, best_id, api_key)
-            if record.get("poster_path") or movie.poster_url
+            if fetch_poster_gallery and (record.get("poster_path") or movie.poster_url)
             else ([], True)
         )
         if gallery_loaded:
             payload["poster_gallery"] = poster_gallery
+        payload["metadata_poster_gallery_loaded"] = fetch_poster_gallery and gallery_loaded
         return payload, gallery_loaded, "title_match"
     except RequestsError:
         return None, False, ""

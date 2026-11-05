@@ -16,7 +16,7 @@ from rich.progress import Progress
 from .errors import PaginationLimitReached, PaginationStalled
 from .fileio import atomic_write_text
 from .http import ThreadLocalSessionPool, create_http_session
-from .models import Movie, MovieResult
+from .models import Movie, MovieResult, ranked_movie_sort_key
 
 Session = curl_requests.Session
 _LETTERBOXD_HOSTS = {"letterboxd.com", "www.letterboxd.com", "boxd.it", "www.boxd.it"}
@@ -273,7 +273,7 @@ def rank_movies(
         MovieResult(movie_by_uri[key], len(list_numbers), [list_urls[i] for i in sorted(list_numbers)])
         for key, list_numbers in occurrences.items()
     ]
-    return sorted(results, key=lambda result: (-result.liked_in, result.movie.title.lower(), result.movie.year))
+    return sorted(results, key=ranked_movie_sort_key)
 
 def write_csv(results: list[MovieResult], output: Path) -> None:
     buffer = io.StringIO(newline="")

@@ -13,6 +13,7 @@ from functools import lru_cache
 from importlib.resources import files
 from pathlib import Path
 from urllib.parse import unquote, urlparse
+from rich.progress import Progress
 
 from .fileio import atomic_write_bytes, atomic_write_text
 from .http import ThreadLocalSessionPool, create_http_session
@@ -209,10 +210,17 @@ def _validate_schema(value: object, schema: dict, root: dict | None = None, path
             _validate_schema(item, schema["items"], root, f"{path}[{index}]")
 
 
-def _metadata_cache_is_fresh(value: object, now: datetime, needs_details: bool) -> bool:
+def _metadata_cache_is_fresh(
+    value: object,
+    now: datetime,
+    needs_details: bool,
+    needs_poster_gallery: bool = False,
+) -> bool:
     if not isinstance(value, dict) or not _is_nonnegative_integer(value.get("tmdb_id")) or not value["tmdb_id"]:
         return False
     if needs_details and not value.get("metadata_details_loaded"):
+        return False
+    if needs_poster_gallery and not value.get("metadata_poster_gallery_loaded", "poster_gallery" in value):
         return False
     fetched_at = value.get("metadata_fetched_at")
     if not isinstance(fetched_at, str):
@@ -227,46 +235,76 @@ def _metadata_cache_is_fresh(value: object, now: datetime, needs_details: bool) 
     return timedelta(0) <= age <= timedelta(days=METADATA_CACHE_DAYS)
 
 
-def create_snapshot(username: str) -> dict:
+def create_snapshot(
+    username: str,
+    include_all_metadata: bool = False,
+    progress: Progress | None = None,
+) -> dict:
     """Fetch and serialize one user's ranked liked-list films for the web demo."""
     username = username.strip().strip("/")
     tmdb_api_key = _load_tmdb_api_key()
+    if include_all_metadata and not tmdb_api_key:
+        raise ValueError("Full local metadata requires TMDB_API_KEY in .env or the environment")
     generated_at = datetime.now(timezone.utc).replace(microsecond=0)
     generated_at_text = generated_at.isoformat().replace("+00:00", "Z")
 
     with create_http_session() as client:
+        list_task = progress.add_task("Loading liked lists", total=None) if progress else None
         list_urls = fetch_user_list_urls(client, username)
         if not list_urls:
             raise ValueError(f"No public liked lists found for {username}")
-        results = rank_movies(list_urls)
+        if progress and list_task is not None:
+            progress.update(list_task, description=f"Loaded {len(list_urls):,} liked lists", total=1, completed=1)
+        ranking_task = progress.add_task("Fetching films from liked lists", total=len(list_urls)) if progress else None
+        results = rank_movies(list_urls, progress, ranking_task)
+        if progress and ranking_task is not None:
+            progress.update(ranking_task, description=f"Ranked {len(results):,} films")
+        watched_task = progress.add_task("Loading watched films", total=None) if progress else None
         watched = fetch_user_watched_movies(client, username)
+        if progress and watched_task is not None:
+            progress.update(watched_task, description=f"Loaded {len(watched):,} watched films", total=1, completed=1)
 
         # Resolve movie metadata for the highest-ranked films through TMDB.
-        featured_results = results[:500]
+        featured_results = results if include_all_metadata else results[:500]
         metadata: dict[int, dict | None] = {}
         poster_galleries: dict[str, list[dict[str, str]]] = {}
         tmdb_match_count = 0
         tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v6.json"
         tmdb_cache = _load_tmdb_metadata_cache(tmdb_cache_path)
         missing_metadata: list[tuple[int, MovieResult, str]] = []
+        metadata_task = progress.add_task("Checking cached film metadata", total=len(featured_results)) if progress else None
         for index, result in enumerate(featured_results):
             cache_key = _tmdb_metadata_key(result.movie)
             if cache_key in tmdb_cache:
                 cached = tmdb_cache[cache_key]
-                if _metadata_cache_is_fresh(cached, generated_at, bool(tmdb_api_key)):
+                if _metadata_cache_is_fresh(cached, generated_at, bool(tmdb_api_key), index < 500):
                     metadata[index] = cached
+                    if progress and metadata_task is not None:
+                        progress.advance(metadata_task)
                 else:
                     missing_metadata.append((index, result, cache_key))
             else:
                 missing_metadata.append((index, result, cache_key))
 
+        if progress and metadata_task is not None:
+            progress.update(
+                metadata_task,
+                description=f"Enriching film metadata ({len(missing_metadata):,} uncached)",
+                completed=len(metadata),
+            )
         if missing_metadata:
             genre_names = _fetch_tmdb_movie_genres(client, tmdb_api_key) if tmdb_api_key else {}
 
             def fetch_tmdb_metadata(entry: tuple[int, MovieResult, str]) -> tuple[int, str, dict | None, bool]:
                 index, result, cache_key = entry
                 worker_client = worker_sessions.get()
-                value, cacheable, source = resolve_movie_metadata(worker_client, result.movie, tmdb_api_key, genre_names)
+                value, cacheable, source = resolve_movie_metadata(
+                    worker_client,
+                    result.movie,
+                    tmdb_api_key,
+                    genre_names,
+                    fetch_poster_gallery=index < 500,
+                )
                 if value is not None:
                     value.update({
                         "metadata_source": source,
@@ -281,12 +319,17 @@ def create_snapshot(username: str) -> dict:
                         metadata[index] = value
                         if cacheable and value is not None:
                             tmdb_cache[cache_key] = value
+                        if progress and metadata_task is not None:
+                            progress.advance(metadata_task)
             _write_tmdb_metadata_cache(tmdb_cache_path, tmdb_cache)
         tmdb_match_count = sum(value is not None for value in metadata.values())
+        if progress and metadata_task is not None:
+            progress.update(metadata_task, description=f"Film metadata ready ({tmdb_match_count:,} matches)")
         if tmdb_api_key and not tmdb_match_count:
             raise ValueError("TMDB did not match any ranked films; the previous demo snapshot was left unchanged")
 
     films = []
+    records_task = progress.add_task("Building snapshot records", total=len(featured_results)) if progress else None
     for index, result in enumerate(featured_results):
         movie = result.movie
         is_watched = movie_is_watched(movie, watched)
@@ -329,6 +372,10 @@ def create_snapshot(username: str) -> dict:
                 "lists": result.lists,
             }
         )
+        if progress and records_task is not None:
+            progress.advance(records_task)
+    if progress and records_task is not None:
+        progress.update(records_task, description=f"Built {len(films):,} snapshot records")
 
     source_lists = list(dict.fromkeys(url for film in films for url in film["lists"]))
     source_list_index = {url: index for index, url in enumerate(source_lists)}
@@ -372,6 +419,51 @@ def create_snapshot(username: str) -> dict:
         "_watched": watched,
     }
     return validate_snapshot(snapshot)
+
+
+def public_snapshot_from_full(snapshot: dict, featured_limit: int = 500) -> dict:
+    """Return the deployable top-film edition from a fully enriched local snapshot."""
+    public_snapshot = {key: value for key, value in snapshot.items()}
+    films = [dict(film) for film in snapshot["films"][:featured_limit]]
+    source_lists = snapshot.get("source_lists", [])
+    public_source_lists: list[str] = []
+    source_list_index: dict[str, int] = {}
+    for film in films:
+        urls = [source_lists[index] for index in film.get("list_ids", []) if index < len(source_lists)]
+        film["list_ids"] = []
+        for url in urls:
+            if url not in source_list_index:
+                source_list_index[url] = len(public_source_lists)
+                public_source_lists.append(url)
+            film["list_ids"].append(source_list_index[url])
+
+    public_snapshot["films"] = films
+    public_snapshot["source_lists"] = public_source_lists
+    public_snapshot["displayed_film_count"] = len(films)
+    public_snapshot["displayed_unwatched_count"] = sum(not film["watched"] for film in films)
+    public_snapshot["tmdb_match_count"] = sum(film.get("metadata_status") != "unavailable" for film in films)
+    poster_galleries = snapshot.get("_poster_galleries")
+    if isinstance(poster_galleries, dict):
+        featured_ids = {str(film["tmdb_id"]) for film in films if film.get("tmdb_id") is not None}
+        public_snapshot["_poster_galleries"] = {
+            **poster_galleries,
+            "galleries": {
+                tmdb_id: gallery for tmdb_id, gallery in poster_galleries.get("galleries", {}).items()
+                if tmdb_id in featured_ids
+            },
+        }
+    return validate_snapshot(public_snapshot)
+
+
+def local_snapshot_paths(snapshot: dict) -> dict:
+    """Point a localhost edition at sidecars within the ignored local data directory."""
+    local_snapshot = {key: value for key, value in snapshot.items()}
+    local_snapshot["local_metadata_edition"] = True
+    for key in ("poster_gallery_url", "ranking_csv_url", "ranking_gzip_url"):
+        value = local_snapshot.get(key)
+        if isinstance(value, str) and value.startswith("/data/"):
+            local_snapshot[key] = value.replace("/data/", "/data/local/", 1)
+    return validate_snapshot(local_snapshot)
 
 def write_snapshot(snapshot: dict, output: Path) -> None:
     """Write the snapshot and sidecar files using atomic file replacements."""

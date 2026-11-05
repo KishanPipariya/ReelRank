@@ -12,7 +12,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 from .genres import filter_genre
 from .http import create_http_session
 from .letterboxd import fetch_user_list_urls, fetch_user_watched_movies, filter_unwatched, rank_movies, write_csv
-from .snapshot import create_snapshot, write_snapshot
+from .snapshot import create_snapshot, local_snapshot_paths, public_snapshot_from_full, write_snapshot
 from .tmdb import _genre_slug, _load_tmdb_api_key, _match_tmdb_records, build_tmdb_genre_caches
 
 def refresh_snapshot_cli() -> None:
@@ -24,11 +24,54 @@ def refresh_snapshot_cli() -> None:
         default=Path("web/data/snapshot.json"),
         help="JSON snapshot path (default: web/data/snapshot.json)",
     )
+    parser.add_argument(
+        "--include-local-full",
+        action="store_true",
+        help="Also generate a full-metadata snapshot for localhost (requires TMDB_API_KEY)",
+    )
+    parser.add_argument(
+        "--local-output",
+        type=Path,
+        default=Path("web/data/local/snapshot.json"),
+        help="Local-only full snapshot path (default: web/data/local/snapshot.json)",
+    )
     args = parser.parse_args()
     try:
-        username = args.username or _configured_site_username()
-        snapshot = create_snapshot(username)
-        write_snapshot(snapshot, args.output)
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("{task.description}"),
+            BarColumn(bar_width=26),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            console=Console(stderr=True),
+        ) as progress:
+            username = args.username or _configured_site_username()
+            if args.include_local_full:
+                if args.output.resolve() == args.local_output.resolve():
+                    raise ValueError("--output and --local-output must point to different files")
+                try:
+                    local_snapshot = create_snapshot(username, include_all_metadata=True, progress=progress)
+                except (RequestsError, ValueError, OSError) as local_error:
+                    progress.console.print("Full local enrichment failed; refreshing the deployable snapshot only.")
+                    public_snapshot = create_snapshot(username, progress=progress)
+                    write_task = progress.add_task("Writing deployable snapshot", total=1)
+                    write_snapshot(public_snapshot, args.output)
+                    progress.update(write_task, description=f"Wrote deployable snapshot to {args.output}", completed=1)
+                    raise ValueError(
+                        f"Local full-metadata generation failed ({local_error}); updated the deployable snapshot at {args.output}"
+                    )
+                snapshot = public_snapshot_from_full(local_snapshot)
+                write_task = progress.add_task("Writing deployable snapshot", total=1)
+                write_snapshot(snapshot, args.output)
+                progress.update(write_task, description=f"Wrote deployable snapshot to {args.output}", completed=1)
+                local_write_task = progress.add_task("Writing localhost-only snapshot and sidecars", total=1)
+                write_snapshot(local_snapshot_paths(local_snapshot), args.local_output)
+                progress.update(local_write_task, description=f"Wrote localhost-only snapshot to {args.local_output}", completed=1)
+            else:
+                snapshot = create_snapshot(username, progress=progress)
+                write_task = progress.add_task("Writing snapshot and sidecars", total=1)
+                write_snapshot(snapshot, args.output)
+                progress.update(write_task, description=f"Wrote snapshot to {args.output}", completed=1)
     except (RequestsError, ValueError, OSError) as error:
         parser.exit(1, f"Error: {error}\n")
     metadata_summary = (
@@ -40,6 +83,8 @@ def refresh_snapshot_cli() -> None:
         f"Updated {args.output}: {snapshot['film_count']} films across {snapshot['list_count']} lists; "
         f"{metadata_summary}"
     )
+    if args.include_local_full:
+        print(f"Updated local-only full-metadata snapshot: {args.local_output}")
 
 
 def _configured_site_username(config_path: Path = Path("web/site-config.json")) -> str:

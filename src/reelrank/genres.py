@@ -9,7 +9,7 @@ from rich.progress import Progress
 
 from .errors import PaginationLimitReached, PaginationStalled
 from .letterboxd import _movie_key, parse_list_page
-from .models import MovieResult
+from .models import MovieResult, ranked_movie_sort_key
 from .tmdb import _filter_genre_from_tmdb_api, _filter_genre_from_tmdb_csv, _genre_slug
 
 Session = curl_requests.Session
@@ -66,7 +66,7 @@ def filter_genre(
                     )
                 return sorted(
                     local_matches,
-                    key=lambda result: (-result.liked_in, result.movie.title.lower(), result.movie.year),
+                    key=ranked_movie_sort_key,
                 )
             raise ValueError(
                 f"Letterboxd returned no films on the {genre} genre page, and metadata fallback file "
@@ -105,4 +105,4 @@ def filter_genre(
     if scanned_movies == 0:
         raise ValueError(f"No films could be read from Letterboxd's {genre} genre catalog")
 
-    return sorted(matches.values(), key=lambda result: (-result.liked_in, result.movie.title.lower(), result.movie.year))
+    return sorted(matches.values(), key=ranked_movie_sort_key)

@@ -19,7 +19,7 @@ from rich.progress import Progress
 
 from .fileio import atomic_write_text
 from .letterboxd import _movie_key
-from .models import Movie, MovieResult
+from .models import Movie, MovieResult, ranked_movie_sort_key
 
 Session = curl_requests.Session
 
@@ -375,7 +375,7 @@ def _match_tmdb_records(
             found = [result for result in candidates_by_title.get(title, []) if not result.movie.year or not year]
         for result in found:
             matches[_movie_key(result.movie)] = result
-    return sorted(matches.values(), key=lambda result: (-result.liked_in, result.movie.title.lower(), result.movie.year))
+    return sorted(matches.values(), key=ranked_movie_sort_key)
 
 def _load_tmdb_genre_cache(cache_path: Path) -> set[tuple[str, str]] | None:
     try:

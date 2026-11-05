@@ -50,10 +50,23 @@ export function matchesFilm(film, filters, sourceListUrls = film.lists || [], so
   return query.split(' ').every((term) => normalizedText.includes(term));
 }
 
+function titleSortKey(value) {
+  const title = String(value || '').trim();
+  const withoutArticle = title.replace(/^the\s+(.+)$/i, '$1');
+  return withoutArticle || title;
+}
+
+export function compareAlphabeticallyIgnoringThe(left, right) {
+  const leftText = String(left || '').trim();
+  const rightText = String(right || '').trim();
+  return titleSortKey(leftText).localeCompare(titleSortKey(rightText))
+    || leftText.localeCompare(rightText);
+}
+
 export function compareFilms(left, right, sort, rankByFilm) {
   const leftRank = rankByFilm.get(left) ?? 0;
   const rightRank = rankByFilm.get(right) ?? 0;
-  if (sort === 'title') return (left.title || '').localeCompare(right.title || '') || leftRank - rightRank;
+  if (sort === 'title') return compareAlphabeticallyIgnoringThe(left.title, right.title) || leftRank - rightRank;
   if (sort === 'year-newest' || sort === 'year-oldest') {
     const leftYear = Number.parseInt(left.year, 10);
     const rightYear = Number.parseInt(right.year, 10);

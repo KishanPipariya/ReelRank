@@ -1,5 +1,5 @@
 import { programmeShare } from './programme-share.js';
-import { buildSearchText, compareFilms as compareCatalogFilms, filmDecade, matchesFilm } from './catalog.js';
+import { buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, filmDecade, matchesFilm } from './catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from './snapshot.js';
 import { cardFor as createFilmCard, updateFilmCard } from './film-components.js';
 import { parseUrlState, urlForState } from './url-state.js';
@@ -494,11 +494,11 @@ function buildCatalogFilters() {
   });
   availableSourceLists = [...sourceListCounts]
     .map(([url, count]) => ({ url, count, label: listLabel(url) }))
-    .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label));
+    .sort((left, right) => right.count - left.count || compareAlphabeticallyIgnoringThe(left.label, right.label));
   sourceListOptionsToggle.setAttribute('aria-expanded', 'false');
   sourceListOptionsToggle.hidden = availableSourceLists.length <= facetQuickPickLimit;
   sourceListSearch.value = '';
-  state.sourceLists = [...new Set(state.sourceLists.map(sourceListUrl).filter((url) => sourceListCounts.has(url)))];
+  state.sourceLists = [...new Set(state.sourceLists.map(sourceListUrl).filter((url) => sourceListCounts.has(url)))].sort(compareSourceListUrls);
   sourceListFilter.hidden = availableSourceLists.length === 0;
   sourceListOptions.replaceChildren(...availableSourceLists.map((sourceList) => {
     const option = document.createElement('label');
@@ -652,7 +652,7 @@ function toggleGenre(genre) {
 function toggleSourceList(url) {
   state.sourceLists = state.sourceLists.includes(url)
     ? state.sourceLists.filter((selected) => selected !== url)
-    : [...state.sourceLists, url].sort((left, right) => left.localeCompare(right));
+    : [...state.sourceLists, url].sort(compareSourceListUrls);
   state.visibleLimit = 40;
   syncControls();
   updateUrlState();
@@ -833,6 +833,10 @@ function listLabel(value) {
   } catch {
     return 'Letterboxd list';
   }
+}
+
+function compareSourceListUrls(left, right) {
+  return compareAlphabeticallyIgnoringThe(listLabel(left), listLabel(right)) || left.localeCompare(right);
 }
 
 function sourceListUrl(value) {
@@ -1990,6 +1994,11 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
     catalogueDataStatus.textContent = `Development stress fixture: ${sourceCount} local ranking rows padded with ${generatedCount} sparse generated rows.`;
     catalogueDataStatus.dataset.state = 'complete';
   }
+  if (snapshot.local_metadata_edition === true) {
+    metadataFilterScope.textContent = `Local-only edition: filters use available film details across all ${searchableCount} ranked films. The deployable edition keeps metadata for its top 500.`;
+    catalogueDataStatus.textContent = `Local full-metadata edition loaded for ${searchableCount} films.`;
+    catalogueDataStatus.dataset.state = 'complete';
+  }
   document.querySelector('#collection-footnote').textContent = `Browsing ${searchableCount} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
   siteShell.hidden = false;
   render();
@@ -2030,10 +2039,25 @@ async function loadSnapshot() {
     failedResource = 'catalogue';
     setupTitle.textContent = `Preparing @${configuredUsername}'s ReelRank`;
     setupCopy.textContent = 'Loading the configured profile and its catalogue edition…';
-    const response = await fetch('/data/snapshot.json', { cache: 'default' });
-    if (!response.ok) throw new Error(`Snapshot request failed: ${response.status}`);
-    snapshotFailureKind = 'json';
-    const rawSnapshotData = await response.json();
+    let rawSnapshotData = null;
+    if (isLocalDevHost()) {
+      try {
+        const localResponse = await fetch('/data/local/snapshot.json', { cache: 'default' });
+        if (localResponse.ok) {
+          const localData = await localResponse.json();
+          validateSnapshot(localData);
+          rawSnapshotData = localData;
+        }
+      } catch (error) {
+        console.warn('The ignored localhost full-metadata snapshot could not be loaded; using the regular snapshot.', error);
+      }
+    }
+    if (!rawSnapshotData) {
+      const response = await fetch('/data/snapshot.json', { cache: 'default' });
+      if (!response.ok) throw new Error(`Snapshot request failed: ${response.status}`);
+      snapshotFailureKind = 'json';
+      rawSnapshotData = await response.json();
+    }
     const devMode = selectedDevDataMode();
     let rankingFilms = null;
     if (devMode === '100000') {
