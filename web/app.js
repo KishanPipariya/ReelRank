@@ -1005,7 +1005,7 @@ function cardFor(film, index) {
     });
     filmCardByFilm.set(film, card);
   }
-  updateFilmCard(card, film, index, state, rankByFilm.get(film) + 1, currentHighestScore, currentFilmDetailUrl);
+  updateFilmCard(card, film, index, state, rankByFilm.get(film) + 1, currentHighestScore, currentFilmDetailUrl, genreChipFor);
   return card;
 }
 

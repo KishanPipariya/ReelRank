@@ -2,6 +2,76 @@ import { filmDetailUrl } from './film-navigation.js';
 
 const filmMetadataBatchSize = 8;
 
+export function genresWithSelectedFirst(genres, selectedGenres = []) {
+  const selected = new Set(Array.isArray(selectedGenres) ? selectedGenres : []);
+  return [
+    ...genres.filter((genre) => selected.has(genre)),
+    ...genres.filter((genre) => !selected.has(genre)),
+  ];
+}
+
+function genreTagsFor(film, state, genreChipFor) {
+  const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];
+  if (!genres.length) return null;
+
+  const orderedGenres = genresWithSelectedFirst(genres, state.genres);
+  const genreTags = document.createElement('div');
+  genreTags.className = 'genre-tags';
+  genreTags.dataset.activeGenreFilters = JSON.stringify(state.genres);
+  genreTags.setAttribute('role', 'group');
+  genreTags.setAttribute('aria-label', `Genres, ${genres.length} total`);
+  orderedGenres.slice(0, 2).forEach((genre) => genreTags.append(genreChipFor(genre)));
+  if (orderedGenres.length <= 2) return genreTags;
+
+  let visibleCount = 2;
+  const more = document.createElement('button');
+  more.type = 'button';
+  more.className = 'genre-tag genre-tag-more';
+  const updateMoreLabel = () => {
+    const remaining = orderedGenres.length - visibleCount;
+    more.textContent = remaining ? `+${remaining}` : '−';
+    more.setAttribute('aria-label', remaining
+      ? `Show ${Math.min(filmMetadataBatchSize, remaining)} more ${remaining === 1 ? 'genre' : 'genres'}; ${remaining} remaining`
+      : 'Show fewer genres');
+  };
+  more.setAttribute('aria-expanded', 'false');
+  updateMoreLabel();
+  more.addEventListener('click', () => {
+    if (visibleCount < orderedGenres.length) {
+      const end = Math.min(orderedGenres.length, visibleCount + filmMetadataBatchSize);
+      const extraTags = orderedGenres.slice(visibleCount, end).map((genre) => {
+        const tag = genreChipFor(genre);
+        tag.classList.add('genre-extra-tag');
+        return tag;
+      });
+      more.before(...extraTags);
+      visibleCount = end;
+    } else {
+      genreTags.querySelectorAll('.genre-extra-tag').forEach((tag) => tag.remove());
+      visibleCount = 2;
+    }
+    const expanded = visibleCount > 2;
+    genreTags.classList.toggle('is-expanded', expanded);
+    more.setAttribute('aria-expanded', String(expanded));
+    updateMoreLabel();
+  });
+  genreTags.append(more);
+  return genreTags;
+}
+
+function syncCardGenreTags(card, film, state, genreChipFor) {
+  const info = card.querySelector('.film-info');
+  if (!info) return;
+  const current = info.querySelector('.genre-tags');
+  const selectionKey = JSON.stringify(state.genres);
+  if (current?.dataset.activeGenreFilters === selectionKey) return;
+
+  const next = genreTagsFor(film, state, genreChipFor);
+  if (current && next) current.replaceWith(next);
+  else if (current) current.remove();
+  else if (next) info.querySelector('.film-detail-trigger')?.before(next);
+}
+
 export function posterFallbackFor(film, className = 'poster-fallback') {
   const cover = document.createElement('div');
   cover.className = className;
@@ -112,64 +182,22 @@ export function cardFor(film, index, dependencies) {
 
   info.append(filmAppearanceCountFor(film, 'film-count'));
 
-  const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre) : [])];
-  if (genres.length) {
-    const genreTags = document.createElement('div');
-    genreTags.className = 'genre-tags';
-    genreTags.setAttribute('role', 'group');
-    genreTags.setAttribute('aria-label', `Genres, ${genres.length} total`);
-    genres.slice(0, 2).forEach((genre) => genreTags.append(genreChipFor(genre)));
-    if (genres.length > 2) {
-      let visibleCount = 2;
-      const more = document.createElement('button');
-      more.type = 'button';
-      more.className = 'genre-tag genre-tag-more';
-      more.textContent = `+${genres.length - visibleCount}`;
-      more.setAttribute('aria-expanded', 'false');
-      const updateMoreLabel = () => {
-        const remaining = genres.length - visibleCount;
-        more.textContent = remaining ? `+${remaining}` : '−';
-        more.setAttribute('aria-label', remaining
-          ? `Show ${Math.min(filmMetadataBatchSize, remaining)} more ${remaining === 1 ? 'genre' : 'genres'}; ${remaining} remaining`
-          : 'Show fewer genres');
-      };
-      more.addEventListener('click', () => {
-        if (visibleCount < genres.length) {
-          const end = Math.min(genres.length, visibleCount + filmMetadataBatchSize);
-          const extraTags = genres.slice(visibleCount, end).map((genre) => {
-            const tag = genreChipFor(genre);
-            tag.classList.add('genre-extra-tag');
-            return tag;
-          });
-          more.before(...extraTags);
-          visibleCount = end;
-        } else {
-          genreTags.querySelectorAll('.genre-extra-tag').forEach((tag) => tag.remove());
-          visibleCount = 2;
-        }
-        const expanded = visibleCount > 2;
-        genreTags.classList.toggle('is-expanded', expanded);
-        more.setAttribute('aria-expanded', String(expanded));
-        updateMoreLabel();
-      });
-      updateMoreLabel();
-      genreTags.append(more);
-    }
-    info.append(genreTags);
-  }
+  const genreTags = genreTagsFor(film, state, genreChipFor);
+  if (genreTags) info.append(genreTags);
 
   info.append(filmDetailButtonFor(film));
   card.append(info);
   return card;
 }
 
-export function updateFilmCard(card, film, index, state, rankNumber, highestScore = 1, getFilmDetailUrl = (item) => filmDetailUrl(window.location.href, item)) {
+export function updateFilmCard(card, film, index, state, rankNumber, highestScore = 1, getFilmDetailUrl = (item) => filmDetailUrl(window.location.href, item), genreChipFor) {
   const detailHref = getFilmDetailUrl(film).href;
   card.querySelector('.poster-link')?.setAttribute('href', detailHref);
   card.querySelector('.film-detail-trigger')?.setAttribute('href', detailHref);
   const rank = card.querySelector('.rank-chip');
   rank.textContent = state.sort === 'rank' ? `No. ${rankNumber}` : `Overall ${rankNumber}`;
   rank.setAttribute('aria-label', state.sort === 'rank' ? `Catalogue number ${rankNumber}` : `Overall rank ${rankNumber}`);
+  if (genreChipFor) syncCardGenreTags(card, film, state, genreChipFor);
   card.querySelectorAll('.genre-tag[data-genre]').forEach((tag) => {
     tag.setAttribute('aria-pressed', String(state.genres.includes(tag.dataset.genre)));
   });

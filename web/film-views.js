@@ -1,8 +1,10 @@
-import { posterFallbackFor, responsivePosterAttrs } from './film-components.js';
+import { genresWithSelectedFirst, posterFallbackFor, responsivePosterAttrs } from './film-components.js';
 
 const filmMetadataBatchSize = 8;
 
-function appendProgressiveGenreTags(container, genres, genreChipFor, initialCount = 2) {
+function appendProgressiveGenreTags(container, genres, genreChipFor, initialCount = 2, selectedGenres = []) {
+  genres = genresWithSelectedFirst(genres, selectedGenres);
+  container.dataset.activeGenreFilters = JSON.stringify(selectedGenres);
   let visibleCount = Math.min(initialCount, genres.length);
   genres.slice(0, visibleCount).forEach((genre) => container.append(genreChipFor(genre)));
   if (visibleCount >= genres.length) return;
@@ -420,7 +422,7 @@ function renderFilmDetails(film, retainFocus = false) {
         collectionTitle.scrollIntoView({ behavior, block: 'start' });
       });
       return button;
-    }, 6);
+    }, 6, state.genres);
     copy.append(genreList);
   }
   const notes = filmProgrammeNotesFor(film, { includeOriginalFacts: false });
@@ -599,6 +601,20 @@ function ledgerRowsFor(shownFilms) {
 function featuredFilmFor(film) {
   const cached = featuredFilmByFilm.get(film);
   if (cached) {
+    const genreTags = cached.querySelector('.featured-film-genres');
+    if (genreTags?.dataset.activeGenreFilters !== JSON.stringify(state.genres)) {
+      const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];
+      if (genres.length) {
+        const nextGenreTags = document.createElement('div');
+        nextGenreTags.className = 'genre-tags featured-film-genres';
+        nextGenreTags.setAttribute('role', 'group');
+        nextGenreTags.setAttribute('aria-label', `Genres for ${film.title}, ${genres.length} total`);
+        appendProgressiveGenreTags(nextGenreTags, genres, genreChipFor, 2, state.genres);
+        genreTags?.replaceWith(nextGenreTags);
+      } else {
+        genreTags?.remove();
+      }
+    }
     cached.querySelectorAll('.genre-tag[data-genre]').forEach((button) => {
       button.setAttribute('aria-pressed', String(state.genres.includes(button.dataset.genre)));
     });
@@ -713,7 +729,7 @@ function featuredFilmFor(film) {
     genreTags.className = 'genre-tags featured-film-genres';
     genreTags.setAttribute('role', 'group');
     genreTags.setAttribute('aria-label', `Genres for ${film.title}, ${genres.length} total`);
-    appendProgressiveGenreTags(genreTags, genres, genreChipFor);
+    appendProgressiveGenreTags(genreTags, genres, genreChipFor, 2, state.genres);
     copy.append(genreTags);
   }
   copy.append(filmAppearanceCountFor(film, 'featured-film-count'));
