@@ -544,7 +544,7 @@ async function checkKeyboardAndReflow() {
     await page.waitForSelector('#site-shell:not([hidden])');
     await page.waitForSelector('.film-card');
 
-    check(await page.getByLabel(/^Search these \d+ films$/, { exact: true }).count() === 1, 'Search field has a collection-specific accessible name.');
+    check(await page.getByLabel(/^Search these [\p{N}\p{Zs},.]+ films?$/u, { exact: true }).count() === 1, 'Search field has a collection-specific accessible name.');
     check(await page.getByLabel('Sort films').count() === 1, 'Sort control has an accessible name.');
     check(await page.getByRole('group', { name: 'Filter films', exact: true }).count() === 1, 'Watched filters have a labelled group.');
     check(await page.locator('#results-announcement').getAttribute('aria-live') === 'polite', 'Results use a polite live region.');

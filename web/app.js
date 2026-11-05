@@ -190,6 +190,7 @@ let currentMatchCount = 0;
 let currentMatchingFilms = [];
 let currentLargeMatchingFilms = [];
 let currentLargeMatchKey = '';
+let currentLargeSearchScopeCount = 0;
 let currentLargeFacetKey = '';
 let currentLargeHighestScore = 1;
 let currentLargeSortedFilms = [];
@@ -225,16 +226,29 @@ function largeCatalogueMatchKey(query) {
   ]);
 }
 
+function updateSearchScopeCount(count) {
+  const formatted = count.toLocaleString();
+  const noun = count === 1 ? 'film' : 'films';
+  const label = `Search these ${formatted} ${noun}`;
+  const placeholder = `Search ${formatted} ${noun}`;
+  const help = `Search within ${formatted} ${noun} matching the active filters. Results follow the selected sort. Press slash to focus search; Escape to clear it.`;
+  if (searchScopeLabel.textContent !== label) searchScopeLabel.textContent = label;
+  if (searchInput.placeholder !== placeholder) searchInput.placeholder = placeholder;
+  if (searchHelp.textContent !== help) searchHelp.textContent = help;
+}
+
 async function findLargeCatalogueMatches(query, requestId) {
   const matching = [];
   let watchedCount = 0;
   let unwatchedCount = 0;
   let highestScore = 1;
+  let searchScopeCount = 0;
 
   for (let start = 0; start < films.length; start += 2000) {
     const end = Math.min(start + 2000, films.length);
     for (let index = start; index < end; index += 1) {
       const film = films[index];
+      if (matchesWatchFilter(film) && matchesSearchAndGenres(film, '')) searchScopeCount += 1;
       if (!matchesSearchAndGenres(film, query)) continue;
       if (film.watched) watchedCount += 1;
       else unwatchedCount += 1;
@@ -250,7 +264,7 @@ async function findLargeCatalogueMatches(query, requestId) {
 
   document.querySelector('#unwatched-tab-count').textContent = unwatchedCount.toLocaleString();
   document.querySelector('#watched-tab-count').textContent = watchedCount.toLocaleString();
-  return { matching, highestScore };
+  return { matching, highestScore, searchScopeCount };
 }
 
 async function updateLargeFacetCounts(query, requestId) {
@@ -1655,6 +1669,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
   renderDirectorFilmography();
   let matching;
   let highestScore = 1;
+  let searchScopeCount = 0;
   let sortKey = '';
   if (largeCatalogue) {
     const matchKey = largeCatalogueMatchKey(query);
@@ -1663,6 +1678,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
     if (matchKey === currentLargeMatchKey) {
       matching = currentLargeMatchingFilms;
       highestScore = currentLargeHighestScore;
+      searchScopeCount = currentLargeSearchScopeCount;
     } else {
       matchingFilmsCount.textContent = `Searching ${films.length.toLocaleString()} films…`;
       document.querySelector('#results-announcement').textContent = `Searching ${films.length.toLocaleString()} films.`;
@@ -1671,8 +1687,10 @@ async function render({ sortGenresOnOpen = false } = {}) {
       currentLargeMatchingFilms = result.matching;
       currentLargeMatchKey = matchKey;
       currentLargeHighestScore = result.highestScore;
+      currentLargeSearchScopeCount = result.searchScopeCount;
       matching = result.matching;
       highestScore = result.highestScore;
+      searchScopeCount = result.searchScopeCount;
     }
     if (catalogFilters.open && currentLargeFacetKey !== matchKey) {
       if (!await updateLargeFacetCounts(query, requestId) || requestId !== catalogueRenderRequest) return;
@@ -1687,6 +1705,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
     updateGenreOptionCounts(query);
     updateSourceListOptionCounts(query);
     if (sortGenresOnOpen) sortGenreOptionsByCurrentCount();
+    searchScopeCount = films.filter((film) => matchesWatchFilter(film) && matchesSearchAndGenres(film, '')).length;
     matching = films.filter((film) => {
       if (!matchesWatchFilter(film)) return false;
       return matchesSearchAndGenres(film, query);
@@ -1701,6 +1720,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
     }
   }
   currentMatchingFilms = matching;
+  updateSearchScopeCount(searchScopeCount);
   const hasActiveSelection = Boolean(query) || state.filter !== 'all' || state.genres.length > 0 || state.directors.length > 0 || state.sourceLists.length > 0 || Boolean(state.country) || Boolean(state.language) || state.decade !== '' || Boolean(state.runtime);
   programmeNote.hidden = matching.length === 0 || !hasActiveSelection;
   programmeNoteCopy.textContent = programmeNoteFor(matching);
@@ -1889,9 +1909,7 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   editionDate.title = formatDate(snapshot.refreshed_at);
   const detailedCount = snapshot.displayed_film_count ?? snapshot.films.length;
   const searchableCount = films.length.toLocaleString();
-  searchHelp.textContent = 'Results follow the selected sort. Press slash to focus search; Escape to clear it.';
-  searchScopeLabel.textContent = `Search these ${searchableCount} films`;
-  searchInput.placeholder = `Search ${searchableCount} films`;
+  updateSearchScopeCount(films.length);
   collectionScope.textContent = fullRankingFilms
     ? `Search all ${searchableCount} ranked films by title, year, and list. The first ${detailedCount.toLocaleString()} have richer details, so searches also match original title, director, genre, and synopsis. Use Relevance to see closest matches first.`
     : `Search title, year, director, genre, synopsis, and source lists in ${searchableCount} detailed films.`;
