@@ -206,10 +206,10 @@ async function checkCatalogInteractions(page) {
   check(await page.locator('#catalog-filters').evaluate((element) => element.open), 'Explore opens before using its facet controls.');
   await page.locator('#runtime-options [data-runtime="under-90"]').click();
   check(new URL(page.url()).searchParams.get('runtime') === 'under-90', 'Runtime selection is reflected in the URL.');
-  check(await page.locator('#matching-films-count').textContent() === '1 film', 'Under-90-minute selection returns the matching film.');
+  check(await page.locator('#matching-films-count').textContent() === 'Showing 1 of 1 film', 'Under-90-minute selection returns the matching film.');
   check(await page.locator('#active-genre-filters').getByRole('button', { name: 'Remove runtime filter: Under 90 min' }).count() === 1, 'Runtime selection has a named removable filter chip.');
   await page.locator('#runtime-options [data-runtime="90-120"]').click();
-  check(await page.locator('#matching-films-count').textContent() === '3 films', '90–120-minute selection respects inclusive boundaries.');
+  check(await page.locator('#matching-films-count').textContent() === 'Showing 3 of 3 films', '90–120-minute selection respects inclusive boundaries.');
   await page.locator('#runtime-options [data-runtime=""]').click();
   await page.locator('#sort-select').selectOption('title');
   await openFilterFacet(page, '.more-filter-group:has(#country-index-options)');

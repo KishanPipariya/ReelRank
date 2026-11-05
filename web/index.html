@@ -121,7 +121,7 @@
                 </div>
                 <span id="search-help" class="sr-only"></span>
                 <div class="filter-tabs" role="group" aria-label="Filter films">
-                  <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
+                  <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All <span id="all-tab-count"></span></button>
                   <button class="filter-button" type="button" data-filter="unwatched" aria-pressed="false">Unwatched <span id="unwatched-tab-count"></span></button>
                   <button class="filter-button" type="button" data-filter="watched" aria-pressed="false">Watched <span id="watched-tab-count"></span></button>
                 </div>
@@ -131,6 +131,7 @@
                     <span id="catalog-filter-count" class="catalog-filter-count" hidden></span>
                   </summary>
                   <div class="catalog-filters-panel">
+                    <p id="filter-count-status" class="filter-count-status" role="status" hidden></p>
                     <p id="metadata-filter-scope" class="metadata-filter-scope"></p>
                     <section class="catalog-filter-quick-picks" aria-label="Quick picks">
                     <details id="genre-filter" class="genre-filter" hidden>

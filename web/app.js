@@ -129,6 +129,7 @@ const closeSourceListsButton = document.querySelector('#close-source-lists');
 const selectedGenres = document.querySelector('#selected-genres');
 const catalogFilters = document.querySelector('#catalog-filters');
 const catalogFiltersTrigger = document.querySelector('#catalog-filters > summary');
+const filterCountStatus = document.querySelector('#filter-count-status');
 const activeViewTools = document.querySelector('#active-view-tools');
 const activeGenreFilters = document.querySelector('#active-genre-filters');
 const activeDirectorFilters = document.querySelector('#active-director-filters');
@@ -237,6 +238,14 @@ function updateSearchScopeCount(count) {
   if (searchHelp.textContent !== help) searchHelp.textContent = help;
 }
 
+function setFilterCountsUpdating(updating) {
+  filterCountStatus.hidden = !updating;
+  filterCountStatus.textContent = updating ? 'Updating filter counts…' : '';
+  const panel = catalogFilters.querySelector('.catalog-filters-panel');
+  if (updating) panel.setAttribute('aria-busy', 'true');
+  else panel.removeAttribute('aria-busy');
+}
+
 async function findLargeCatalogueMatches(query, requestId) {
   const matching = [];
   let watchedCount = 0;
@@ -264,6 +273,7 @@ async function findLargeCatalogueMatches(query, requestId) {
 
   document.querySelector('#unwatched-tab-count').textContent = unwatchedCount.toLocaleString();
   document.querySelector('#watched-tab-count').textContent = watchedCount.toLocaleString();
+  document.querySelector('#all-tab-count').textContent = (unwatchedCount + watchedCount).toLocaleString();
   return { matching, highestScore, searchScopeCount };
 }
 
@@ -978,6 +988,7 @@ function updateWatchFilterCounts(query) {
   const unwatchedCount = contextualFilms.length - watchedCount;
   document.querySelector('#unwatched-tab-count').textContent = unwatchedCount.toLocaleString();
   document.querySelector('#watched-tab-count').textContent = watchedCount.toLocaleString();
+  document.querySelector('#all-tab-count').textContent = contextualFilms.length.toLocaleString();
 }
 
 function updateCountryAndDecadeCounts(query) {
@@ -1674,7 +1685,9 @@ async function render({ sortGenresOnOpen = false } = {}) {
   if (largeCatalogue) {
     const matchKey = largeCatalogueMatchKey(query);
     sortKey = JSON.stringify([matchKey, state.sort]);
+    const needsLargeFacetCounts = catalogFilters.open && currentLargeFacetKey !== matchKey;
     document.querySelector('.catalogue-results').setAttribute('aria-busy', 'true');
+    if (catalogFilters.open) setFilterCountsUpdating(needsLargeFacetCounts);
     if (matchKey === currentLargeMatchKey) {
       matching = currentLargeMatchingFilms;
       highestScore = currentLargeHighestScore;
@@ -1697,6 +1710,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
       currentLargeFacetKey = matchKey;
     }
     if (sortGenresOnOpen) sortGenreOptionsByCurrentCount();
+    if (needsLargeFacetCounts) setFilterCountsUpdating(false);
     document.querySelector('.catalogue-results').removeAttribute('aria-busy');
   } else {
     renderLanguageOptions();
@@ -1734,7 +1748,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
   const shown = matching.slice(0, state.visibleLimit + highlighted.length);
   currentShownCount = shown.length;
   currentMatchCount = matching.length;
-  matchingFilmsCount.textContent = `${matching.length.toLocaleString()} ${matching.length === 1 ? 'film' : 'films'}`;
+  matchingFilmsCount.textContent = `Showing ${shown.length.toLocaleString()} of ${matching.length.toLocaleString()} ${matching.length === 1 ? 'film' : 'films'}`;
   topBilled.hidden = !rankedPosterView || highlighted.length === 0;
   grid.hidden = ledgerView;
   filmLedgerView.hidden = !ledgerView;
@@ -1795,7 +1809,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
 catalogFilters.addEventListener('toggle', () => {
   if (catalogFilters.open) {
     void render({ sortGenresOnOpen: true });
-  }
+  } else setFilterCountsUpdating(false);
 });
 
 genreFilter.addEventListener('toggle', () => {

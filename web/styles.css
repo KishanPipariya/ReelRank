@@ -517,6 +517,7 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(34px, 5vw, 47px); fo
 .catalog-filter-count { min-width: 18px; height: 18px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--filter-active); color: var(--filter-active-ink); font-family: var(--mono); font-size: var(--type-caption); }
 .catalog-filter-count[hidden] { display: none; }
 .catalog-filters-panel { width: min(860px, calc(100% - 72px)); max-height: min(70vh, 720px); position: absolute; z-index: 9; top: calc(100% + var(--space-2)); right: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; align-items: start; gap: var(--space-3); overflow: auto; padding: var(--space-4); border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.filter-count-status { margin: 0; padding: var(--space-2); background: var(--surface-soft); color: var(--muted); font-family: var(--mono); font-size: var(--type-caption); }
 .metadata-filter-scope { margin: 0; padding: 0 0 var(--space-2); border-bottom: 1px solid var(--line); color: var(--muted); font-size: var(--type-small); line-height: 1.5; }
 .catalogue-tools-panel { width: min(640px, calc(100% - 36px)); max-height: min(70vh, 640px); position: absolute; z-index: 9; top: calc(100% + var(--space-2)); right: 0; overflow: auto; padding: var(--space-4); border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
 .catalog-filter-quick-picks { display: grid; grid-template-columns: minmax(170px, .75fr) minmax(0, 1.25fr); align-items: start; gap: var(--space-4); }
