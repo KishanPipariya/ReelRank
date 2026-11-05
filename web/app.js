@@ -20,6 +20,7 @@ const clearQueryButton = document.querySelector('#clear-query');
 const emptyResultActions = document.querySelector('#empty-result-actions');
 const emptyClearQuery = document.querySelector('#empty-clear-query');
 const emptyClearFilters = document.querySelector('#empty-clear-filters');
+const emptyEditGenres = document.querySelector('#empty-edit-genres');
 const selectionEnd = document.querySelector('#selection-end');
 
 const programmeShareDetails = document.querySelector('#programme-share');
@@ -283,6 +284,7 @@ async function updateLargeFacetCounts(query, requestId) {
   const genreCounts = new Map();
   const sourceListCounts = new Map();
   const languageCounts = new Map();
+  const runtimeCounts = new Map([['', 0], ['under-90', 0], ['90-120', 0], ['over-120', 0]]);
   let decadeTotal = 0;
 
   for (let start = 0; start < films.length; start += 2000) {
@@ -308,6 +310,14 @@ async function updateLargeFacetCounts(query, requestId) {
       if (matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { language: '' })) {
         const language = String(film.original_language || '').trim() || 'unknown';
         languageCounts.set(language, (languageCounts.get(language) || 0) + 1);
+      }
+      if (matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { runtime: '' })) {
+        const runtime = Number(film.runtime_minutes);
+        if (Number.isInteger(runtime) && runtime > 0) {
+          runtimeCounts.set('', runtimeCounts.get('') + 1);
+          const bucket = runtime < 90 ? 'under-90' : runtime <= 120 ? '90-120' : 'over-120';
+          runtimeCounts.set(bucket, runtimeCounts.get(bucket) + 1);
+        }
       }
     }
     if (end < films.length) {
@@ -339,7 +349,16 @@ async function updateLargeFacetCounts(query, requestId) {
     const label = button.querySelector('span')?.textContent || button.dataset.languageLabel;
     button.setAttribute('aria-label', `Filter by original language ${label}, ${count} ${count === 1 ? 'film' : 'films'}`);
   });
+  updateRuntimeOptionCounts(runtimeCounts);
   return true;
+}
+
+function updateRuntimeOptionCounts(counts) {
+  runtimeOptions.querySelectorAll('[data-runtime]').forEach((button) => {
+    const count = counts.get(button.dataset.runtime) || 0;
+    button.querySelector('.runtime-option-count').textContent = count.toLocaleString();
+    button.setAttribute('aria-label', `${button.firstChild.textContent.trim()}, ${count} ${count === 1 ? 'film' : 'films'}`);
+  });
 }
 
 function setCountryIndexExpanded(expanded) {
@@ -1010,6 +1029,18 @@ function updateCountryAndDecadeCounts(query) {
       : decadeCounts.get(Number(button.dataset.decade)) || 0;
     button.querySelector('.decade-option-count').textContent = count.toLocaleString();
   });
+
+  const runtimeCounts = new Map([['', 0], ['under-90', 0], ['90-120', 0], ['over-120', 0]]);
+  films.forEach((film) => {
+    if (!matchesWatchFilter(film)
+      || !matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { runtime: '' })) return;
+    const runtime = Number(film.runtime_minutes);
+    if (!Number.isInteger(runtime) || runtime <= 0) return;
+    runtimeCounts.set('', runtimeCounts.get('') + 1);
+    const bucket = runtime < 90 ? 'under-90' : runtime <= 120 ? '90-120' : 'over-120';
+    runtimeCounts.set(bucket, runtimeCounts.get(bucket) + 1);
+  });
+  updateRuntimeOptionCounts(runtimeCounts);
 }
 
 function updateGenreOptionCounts(query) {
@@ -1792,6 +1823,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
   emptyResultActions.hidden = matching.length !== 0 || (!query && !canClearFilters);
   emptyClearQuery.hidden = !query;
   emptyClearFilters.hidden = !canClearFilters;
+  emptyEditGenres.hidden = matching.length !== 0 || state.genres.length === 0;
   selectionEnd.hidden = matching.length === 0 || shown.length < matching.length;
   selectionEnd.textContent = `End of this selection · ${matching.length} ${matching.length === 1 ? 'film' : 'films'}`;
   loadMoreButton.hidden = matching.length <= shown.length;
@@ -2101,6 +2133,14 @@ function resetCatalogView({ clearQueryText = false, resetSort = false, resetView
   searchInput.focus();
 }
 emptyClearFilters.addEventListener('click', () => resetCatalogView());
+emptyEditGenres.addEventListener('click', () => {
+  catalogFilters.open = true;
+  genreFilter.open = true;
+  genreFilter.scrollIntoView({ block: 'center' });
+  const firstSelectedGenre = selectedGenres.querySelector('button');
+  if (firstSelectedGenre) firstSelectedGenre.focus({ preventScroll: true });
+  else genreFilter.querySelector('summary')?.focus({ preventScroll: true });
+});
 
 searchInput.addEventListener('input', () => {
   beginSearchEdit();

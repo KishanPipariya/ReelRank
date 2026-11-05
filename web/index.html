@@ -152,7 +152,7 @@
                           <span class="sr-only">Search genres</span>
                           <input id="genre-search" type="search" placeholder="Search genres" autocomplete="off" />
                         </label>
-                        <p class="genre-filter-help">Selected genres stay first. Other genres sort by current-result count when opened; ties follow catalogue popularity. Films must match all selected genres.</p>
+                        <p class="genre-filter-help">Selected genres stay first. Other genres sort by current-result count when opened; ties follow catalogue popularity. Films must match every selected genre.</p>
                         <div id="genre-options" class="genre-options" role="group" aria-label="Filter films by genre"></div>
                         <button id="genre-options-toggle" class="facet-show-all" type="button" aria-expanded="false" hidden></button>
                         <p id="genre-empty-state" class="genre-empty-state" hidden>No genres match that search.</p>
@@ -174,7 +174,7 @@
                         <details class="more-filter-group">
                           <summary id="people-lists-heading" aria-label="Director and source list filters">Director &amp; source list</summary>
                           <div class="more-filter-content">
-                          <p class="director-filter-hint"><strong>Director</strong><br />Choose a director from a film’s credits to filter the catalogue.</p>
+                          <p class="director-filter-hint"><strong>Director</strong><br />Choose one or more directors from film credits; films can match any selected director.</p>
                           <details id="source-list-filter" class="genre-filter source-list-filter" hidden>
                   <summary class="genre-filter-toggle">
                     <span>Source lists</span>
@@ -239,11 +239,11 @@
                           <div id="runtime-filter" class="runtime-filter" hidden>
                     <span class="runtime-filter-label">Running time</span>
                     <div id="runtime-options" class="runtime-options" role="group" aria-label="Filter films by running time" aria-describedby="runtime-filter-note">
-                      <button class="runtime-option" type="button" data-runtime="" aria-pressed="true">Any length</button>
-                      <button class="runtime-option" type="button" data-runtime="under-90" aria-pressed="false">Under 90 min</button>
-                      <button class="runtime-option" type="button" data-runtime="90-120" aria-pressed="false">90 to 120 min</button>
-                      <button class="runtime-option" type="button" data-runtime="over-120" aria-pressed="false">Over 120 min</button>
-                      <span id="runtime-filter-note" class="runtime-filter-note">Choosing a running time excludes films with unknown runtimes.</span>
+                      <button class="runtime-option" type="button" data-runtime="" aria-pressed="true">Any length <small class="runtime-option-count">0</small></button>
+                      <button class="runtime-option" type="button" data-runtime="under-90" aria-pressed="false">Under 90 min <small class="runtime-option-count">0</small></button>
+                      <button class="runtime-option" type="button" data-runtime="90-120" aria-pressed="false">90 to 120 min <small class="runtime-option-count">0</small></button>
+                      <button class="runtime-option" type="button" data-runtime="over-120" aria-pressed="false">Over 120 min <small class="runtime-option-count">0</small></button>
+                      <span id="runtime-filter-note" class="runtime-filter-note">Counts use known runtimes only; choosing a running time excludes films with unknown runtimes.</span>
                     </div>
                           </div>
                           </div>
@@ -272,7 +272,7 @@
                           <label for="preset-list">Choose a saved view</label>
                           <div class="saved-view-select-row">
                             <select id="preset-list"><option value="">Choose a saved view</option></select>
-                            <div class="saved-view-actions"><button id="preset-apply" class="print-programme-button" type="button">Apply</button><button id="preset-delete" class="print-programme-button" type="button">Delete</button></div>
+                            <div class="saved-view-actions"><button id="preset-apply" class="print-programme-button" type="button" disabled>Apply</button><button id="preset-delete" class="print-programme-button" type="button" disabled>Delete</button></div>
                           </div>
                           <details class="saved-view-portability">
                             <summary>Move saved views between browsers</summary>
@@ -383,6 +383,7 @@
               <div id="empty-result-actions" class="empty-result-actions" hidden>
                 <button id="empty-clear-query" class="clear-search-state" type="button" hidden>Clear search</button>
                 <button id="empty-clear-filters" class="clear-search-state" type="button" hidden>Clear filters</button>
+                <button id="empty-edit-genres" class="clear-search-state" type="button" hidden>Edit genres</button>
               </div>
             </div>
             <p id="results-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>

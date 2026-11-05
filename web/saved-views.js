@@ -9,9 +9,17 @@ export function bindSavedViewControls(dependencies) {
   } = dependencies;
   const presetName = document.querySelector('#preset-name');
   const presetList = document.querySelector('#preset-list');
+  const presetApply = document.querySelector('#preset-apply');
+  const presetDelete = document.querySelector('#preset-delete');
   const presetStatus = document.querySelector('#preset-status');
   const savedUndo = readUndo?.() || null;
   let pendingUndo = null;
+
+  function syncPresetActions() {
+    const selected = Boolean(presetList.value);
+    presetApply.disabled = !selected;
+    presetDelete.disabled = !selected;
+  }
 
   function showStatus(message, undo, undoLabel = 'Undo', undoneMessage = 'Change undone.', recovery = null) {
     if (undo !== undefined) {
@@ -71,10 +79,13 @@ export function bindSavedViewControls(dependencies) {
 
   function renderPresets() {
     const current = presetList.value;
-    presetList.replaceChildren(new Option('Choose a preset', ''));
+    presetList.replaceChildren(new Option('Choose a saved view', ''));
     savedPresets().forEach((preset, index) => presetList.add(new Option(preset.name, String(index))));
     if ([...presetList.options].some((item) => item.value === current)) presetList.value = current;
+    syncPresetActions();
   }
+
+  presetList.addEventListener('change', syncPresetActions);
 
   function capturePresetState() {
     return {
@@ -107,6 +118,7 @@ export function bindSavedViewControls(dependencies) {
     if (!savePreferences({ presets })) { showStatus('Could not save this view in this browser.'); return; }
     renderPresets();
     presetList.value = '';
+    syncPresetActions();
     showStatus(`Saved “${name}”.`, () => {
       if (!replacePreferences(previousPreferences)) return false;
       renderPresets();
@@ -115,7 +127,7 @@ export function bindSavedViewControls(dependencies) {
   });
 
   document.querySelector('#preset-apply').addEventListener('click', () => {
-    if (!presetList.value) { showStatus('Choose a preset to apply.'); return; }
+    if (!presetList.value) { showStatus('Choose a saved view to apply.'); return; }
     const preset = savedPresets()[Number(presetList.value)];
     if (!preset) return;
     Object.assign(state, preset.state);
@@ -126,7 +138,7 @@ export function bindSavedViewControls(dependencies) {
   });
 
   document.querySelector('#preset-delete').addEventListener('click', () => {
-    if (!presetList.value) { showStatus('Choose a preset to delete.'); return; }
+    if (!presetList.value) { showStatus('Choose a saved view to delete.'); return; }
     const index = Number(presetList.value);
     const previousPreferences = readPreferences();
     const presets = savedPresets();
@@ -135,10 +147,12 @@ export function bindSavedViewControls(dependencies) {
     if (!savePreferences({ presets })) { showStatus(`Could not delete “${removed.name}” in this browser.`); return; }
     renderPresets();
     presetList.value = '';
+    syncPresetActions();
     showStatus(`Deleted “${removed.name}”.`, () => {
       if (!replacePreferences(previousPreferences)) return false;
       renderPresets();
       presetList.value = String(index);
+      syncPresetActions();
       return true;
     }, `Undo deleting “${removed.name}”`, `Saved view “${removed.name}” restored.`, recoveryRecord(previousPreferences, `Undo deleting “${removed.name}”`, `Saved view “${removed.name}” restored.`, 'saved-views'));
   });
@@ -168,6 +182,7 @@ export function bindSavedViewControls(dependencies) {
       if (!savePreferences({ presets: merged.slice(-100) })) { showStatus('Could not save imported views in this browser.'); return; }
       renderPresets();
       presetList.value = '';
+      syncPresetActions();
       showStatus(`Imported ${imported.length} saved ${imported.length === 1 ? 'view' : 'views'}.`, () => {
         if (!replacePreferences(previousPreferences)) return false;
         renderPresets();
