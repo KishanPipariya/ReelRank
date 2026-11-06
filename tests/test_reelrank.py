@@ -80,7 +80,7 @@ def test_snapshot_without_tmdb_uses_letterboxd_poster(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(snapshot, "_load_tmdb_api_key", lambda: None)
     monkeypatch.setattr(snapshot, "create_http_session", EmptySession)
-    monkeypatch.setattr(snapshot, "resolve_movie_metadata", lambda *_: (None, False, ""))
+    monkeypatch.setattr(snapshot, "resolve_movie_metadata", lambda *_, **__: (None, False, ""))
     monkeypatch.setattr(snapshot, "fetch_user_list_urls", lambda *_: result.lists)
     monkeypatch.setattr(snapshot, "rank_movies", lambda *_: [result])
     monkeypatch.setattr(snapshot, "fetch_user_watched_movies", lambda *_: set())

@@ -10,7 +10,7 @@ export function genresWithSelectedFirst(genres, selectedGenres = []) {
   ];
 }
 
-function genreTagsFor(film, state, genreChipFor) {
+function genreTagsFor(film, state, genreChipFor, initialVisibleCount = 2) {
   const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];
   if (!genres.length) return null;
 
@@ -23,7 +23,12 @@ function genreTagsFor(film, state, genreChipFor) {
   orderedGenres.slice(0, 2).forEach((genre) => genreTags.append(genreChipFor(genre)));
   if (orderedGenres.length <= 2) return genreTags;
 
-  let visibleCount = 2;
+  let visibleCount = Math.min(orderedGenres.length, Math.max(2, initialVisibleCount));
+  orderedGenres.slice(2, visibleCount).forEach((genre) => {
+    const tag = genreChipFor(genre);
+    tag.classList.add('genre-extra-tag');
+    genreTags.append(tag);
+  });
   const more = document.createElement('button');
   more.type = 'button';
   more.className = 'genre-tag genre-tag-more';
@@ -34,7 +39,9 @@ function genreTagsFor(film, state, genreChipFor) {
       ? `Show ${Math.min(filmMetadataBatchSize, remaining)} more ${remaining === 1 ? 'genre' : 'genres'}; ${remaining} remaining`
       : 'Show fewer genres');
   };
-  more.setAttribute('aria-expanded', 'false');
+  const initiallyExpanded = visibleCount > 2;
+  genreTags.classList.toggle('is-expanded', initiallyExpanded);
+  more.setAttribute('aria-expanded', String(initiallyExpanded));
   updateMoreLabel();
   more.addEventListener('click', () => {
     if (visibleCount < orderedGenres.length) {
@@ -66,7 +73,10 @@ function syncCardGenreTags(card, film, state, genreChipFor) {
   const selectionKey = JSON.stringify(state.genres);
   if (current?.dataset.activeGenreFilters === selectionKey) return;
 
-  const next = genreTagsFor(film, state, genreChipFor);
+  const visibleCount = current?.classList.contains('is-expanded')
+    ? current.querySelectorAll('.genre-tag[data-genre]').length
+    : 2;
+  const next = genreTagsFor(film, state, genreChipFor, visibleCount);
   if (current && next) current.replaceWith(next);
   else if (current) current.remove();
   else if (next) info.querySelector('.film-detail-trigger')?.before(next);
