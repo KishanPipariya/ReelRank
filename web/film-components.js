@@ -2,6 +2,19 @@ import { filmDetailUrl } from './film-navigation.js';
 
 const filmMetadataBatchSize = 8;
 
+export function setGenreLabel(button, genre, { full = false } = {}) {
+  button.title = genre;
+  button.classList.toggle('genre-tag-long', genre.length > 40);
+  if (full) {
+    button.textContent = genre;
+    return;
+  }
+  const label = document.createElement('span');
+  label.className = 'genre-tag-label';
+  label.textContent = genre;
+  button.replaceChildren(label);
+}
+
 export function genresWithSelectedFirst(genres, selectedGenres = []) {
   const selected = new Set(Array.isArray(selectedGenres) ? selectedGenres : []);
   return [
@@ -95,6 +108,7 @@ export function posterFallbackFor(film, className = 'poster-fallback') {
   details.className = 'poster-fallback-details';
   const director = Array.isArray(film.directors) ? film.directors.find((name) => typeof name === 'string' && name.trim()) : '';
   details.textContent = [film.year, director].filter(Boolean).join(' · ');
+  details.title = details.textContent;
   cover.append(label, title, details);
   return cover;
 }

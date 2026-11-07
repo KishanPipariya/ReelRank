@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/web.test.js",
-    "check:browser": "node scripts/a11y-scan.mjs"
+    "check:browser": "node scripts/a11y-scan.mjs",
+    "check:stress": "node scripts/ui-stress-scan.mjs"
   },
   "devDependencies": {
     "axe-core": "4.13.0",

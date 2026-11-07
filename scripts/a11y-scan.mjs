@@ -411,8 +411,7 @@ async function checkSavedPreferences() {
   const exportContents = await readFile(await exportFile.path());
   await openDisclosure(page, '#saved-views');
   await page.locator('#preset-list').selectOption('');
-  await page.locator('#preset-apply').click();
-  check((await page.locator('#preset-status').textContent()).includes('Choose a preset'), 'Empty preset selections do not apply the first saved item.');
+  check(await page.locator('#preset-apply').isDisabled() && await page.locator('#preset-delete').isDisabled(), 'An empty saved-view selection disables Apply and Delete.');
   await page.locator('#preset-list').selectOption('0');
   await page.locator('#preset-apply').click();
   check((await page.locator('#preset-status').textContent()).includes('Applied'), 'Users can apply a saved preset.');
@@ -421,11 +420,13 @@ async function checkSavedPreferences() {
   await openDisclosure(page, '#saved-views');
   await openDisclosure(page, '.saved-view-portability');
   await page.locator('#preset-import-file').setInputFiles({ name: exportFile.suggestedFilename(), mimeType: 'application/json', buffer: exportContents });
+  await page.waitForFunction(() => document.querySelector('#preset-list').options.length === 2);
   check(await page.locator('#preset-list option').count() === 2, 'Users can import an exported saved view.');
   await page.locator('.film-card:visible').filter({ hasText: 'Arrival' }).first().locator('.film-detail-trigger').click();
   check(await page.locator('.film-note-sources a').count() > 0, 'Compact list IDs retain linked source provenance in film details.');
   await page.getByRole('button', { name: 'Browse posters for Arrival' }).click();
   await page.locator('.poster-viewer-option').first().click();
+  await page.waitForFunction(() => document.querySelector('#poster-viewer-feedback').textContent.includes('Poster choice saved'));
   await page.locator('#poster-viewer-close').click();
   await page.locator('#film-detail-close').click();
   await page.waitForFunction(() => !new URL(location.href).searchParams.has('film'));
@@ -478,6 +479,7 @@ async function openSite(options = {}) {
   tracedContexts.add(context);
   const page = await context.newPage();
   activePage = page;
+  await page.route('**/data/local/snapshot.json', (route) => route.fulfill({ status: 404 }));
   await page.route('**/site-config.json', (route) => route.fulfill({
     contentType: 'application/json',
     body: JSON.stringify({ letterboxd_username: configUsername || snapshot.username }),

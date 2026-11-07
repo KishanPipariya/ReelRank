@@ -1,7 +1,7 @@
 import { programmeShare } from './programme-share.js';
 import { buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, filmDecade, matchesFilm } from './catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from './snapshot.js';
-import { cardFor as createFilmCard, updateFilmCard } from './film-components.js';
+import { cardFor as createFilmCard, updateFilmCard, setGenreLabel } from './film-components.js';
 import { parseUrlState, urlForState } from './url-state.js';
 import { createFilterControls } from './filter-controls.js';
 import { createFilmViews } from './film-views.js';
@@ -10,7 +10,7 @@ import { createProgrammePrinter } from './print-programme.js';
 import { createLocalPreferences } from './local-preferences.js';
 import { compareRelevance } from './catalog.js';
 import { createFilmNavigation, entryMetadata, filmDetailUrl } from './film-navigation.js';
-import { updateEditionFreshness } from './edition-freshness.js';
+import { updateEditionFreshness, formatUpdatedAt } from './edition-freshness.js';
 import { downloadCatalogueCsv } from './catalogue-download.js';
 import { bindSavedViewControls } from './saved-views.js';
 import { loadFullRanking } from './ranking-csv.js';
@@ -106,6 +106,8 @@ const posterViewerCaption = document.querySelector('#poster-viewer-caption');
 const posterViewerZoom = document.querySelector('#poster-viewer-zoom');
 const posterViewerClose = document.querySelector('#poster-viewer-close');
 const posterViewerStatus = document.querySelector('#poster-viewer-status');
+const posterViewerFeedback = document.querySelector('#poster-viewer-feedback');
+const posterViewerRetry = document.querySelector('#poster-viewer-retry');
 const posterViewerGallery = document.querySelector('#poster-viewer-gallery');
 const searchInput = document.querySelector('#search-input');
 const searchScopeLabel = document.querySelector('label[for="search-input"]');
@@ -217,6 +219,7 @@ let snapshotRefreshedAt = '';
 let posterGalleryUrl = '/data/poster-galleries.json';
 let sourceListsForDownload = [];
 let catalogueRenderRequest = 0;
+let snapshotFilmRestorePending = false;
 let searchRenderTimer = 0;
 let devFixtureRankedFilmCount = 0;
 const largeCatalogueThreshold = 5000;
@@ -865,28 +868,6 @@ function filmSourceListUrls(film) {
   return [...new Set((Array.isArray(film.lists) ? film.lists : []).map(sourceListUrl).filter(Boolean))];
 }
 
-function formatDate(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Refresh date unavailable';
-  const elapsedSeconds = Math.max(0, (Date.now() - date.getTime()) / 1000);
-  let amount;
-  let unit;
-  if (elapsedSeconds < 45) return `Updated just now · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
-  if (elapsedSeconds < 90) [amount, unit] = [1, 'minute'];
-  else if (elapsedSeconds < 60 * 60) [amount, unit] = [Math.round(elapsedSeconds / 60), 'minute'];
-  else if (elapsedSeconds < 90 * 60) [amount, unit] = [1, 'hour'];
-  else if (elapsedSeconds < 24 * 60 * 60) [amount, unit] = [Math.round(elapsedSeconds / (60 * 60)), 'hour'];
-  else if (elapsedSeconds < 36 * 60 * 60) [amount, unit] = [1, 'day'];
-  else if (elapsedSeconds < 30 * 24 * 60 * 60) [amount, unit] = [Math.round(elapsedSeconds / (24 * 60 * 60)), 'day'];
-  else if (elapsedSeconds < 45 * 24 * 60 * 60) [amount, unit] = [1, 'month'];
-  else if (elapsedSeconds < 365 * 24 * 60 * 60) [amount, unit] = [Math.round(elapsedSeconds / (30 * 24 * 60 * 60)), 'month'];
-  else if (elapsedSeconds < 545 * 24 * 60 * 60) [amount, unit] = [1, 'year'];
-  else [amount, unit] = [Math.round(elapsedSeconds / (365 * 24 * 60 * 60)), 'year'];
-  const relativeTime = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' }).format(-amount, unit);
-  const exactTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
-  return `Updated ${relativeTime} · ${exactTime}`;
-}
-
 function formatEditionDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Date unavailable';
@@ -1138,7 +1119,7 @@ function genreChipFor(genre) {
   tag.type = 'button';
   tag.className = 'genre-tag';
   tag.dataset.genre = genre;
-  tag.textContent = genre;
+  setGenreLabel(tag, genre);
   tag.setAttribute('aria-label', `Filter by ${genre}`);
   tag.setAttribute('aria-pressed', String(state.genres.includes(genre)));
   tag.addEventListener('click', () => {
@@ -1464,6 +1445,8 @@ const filmViews = createFilmViews({
   posterViewerZoom,
   posterViewerClose,
   posterViewerStatus,
+  posterViewerFeedback,
+  posterViewerRetry,
   posterViewerGallery,
   getSnapshotRefreshedAt: () => snapshotRefreshedAt,
   getPosterGalleryUrl: () => posterGalleryUrl,
@@ -1524,6 +1507,7 @@ function filmAppearanceCountFor(film, className = 'film-count') {
   count.className = className;
   const countValue = document.createElement('strong');
   countValue.textContent = likedListCount.toLocaleString();
+  count.classList.toggle('has-long-count', countValue.textContent.length > 12);
   const countLabel = document.createElement('span');
   countLabel.textContent = likedListCount === 1 ? 'list appearance' : 'list appearances';
   count.append(countValue, countLabel, scoreMeterFor(film, className === 'featured-film-count' ? 'featured-score-meter' : 'film-score-meter'));
@@ -1973,13 +1957,19 @@ async function render({ sortGenresOnOpen = false } = {}) {
   loadMoreButton.hidden = matching.length <= shown.length;
   if (!loadMoreButton.hidden) {
     const remaining = matching.length - shown.length;
-    loadMoreButton.textContent = `Show ${Math.min(40, remaining)} more films · ${new Intl.NumberFormat().format(remaining)} left`;
+    const nextBatch = Math.min(40, remaining);
+    loadMoreButton.textContent = `Show ${nextBatch} more ${nextBatch === 1 ? 'film' : 'films'} · ${new Intl.NumberFormat().format(remaining)} left`;
   }
   updateBackToFiltersVisibility();
   const resultAnnouncement = document.querySelector('#results-announcement');
   const filterDescription = [state.filter === 'all' ? '' : `${state.filter} only`, state.genres.length ? `genres: ${state.genres.join(' and ')}` : '', state.directors.length ? `directors: ${state.directors.join(' or ')}` : '', state.sourceLists.length ? `source lists: ${state.sourceLists.map((url) => availableSourceLists.find((sourceList) => sourceList.url === url)?.label).filter(Boolean).join(' or ')}` : '', state.country ? `country: ${state.country}` : '', state.decade !== '' ? `decade: ${state.decade}s` : '', state.runtime ? `runtime: ${state.runtime === 'under-90' ? 'under 90 minutes' : state.runtime === '90-120' ? '90 to 120 minutes' : 'over 120 minutes'}` : ''].filter(Boolean).join(', ');
   const sortDescription = state.sort === 'rank' ? '' : `, sorted by ${sortSelect.options[sortSelect.selectedIndex].text}`;
   resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription ? `, ${filterDescription}` : ''}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
+  filmViews.refreshFilmNavigation();
+  if (snapshotFilmRestorePending) {
+    snapshotFilmRestorePending = false;
+    restoreFilmFromUrl();
+  }
 }
 
 catalogFilters.addEventListener('toggle', () => {
@@ -2046,11 +2036,12 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   if (snapshot.ranking_csv_url) {
     rankingDownload.href = snapshot.ranking_csv_url;
     rankingDownload.download = '';
-    rankingDownload.textContent = `Download all ${(snapshot.film_count ?? films.length).toLocaleString()} films (CSV)`;
+    const downloadCount = snapshot.film_count ?? films.length;
+    rankingDownload.textContent = `Download all ${downloadCount.toLocaleString()} ${downloadCount === 1 ? 'film' : 'films'} (CSV)`;
   } else {
     rankingDownload.href = '#';
     rankingDownload.removeAttribute('download');
-    rankingDownload.textContent = `Download displayed ${films.length.toLocaleString()} films (CSV)`;
+    rankingDownload.textContent = `Download displayed ${films.length.toLocaleString()} ${films.length === 1 ? 'film' : 'films'} (CSV)`;
   }
   posterGalleryUrl = snapshot.poster_gallery_url || '/data/poster-galleries.json';
   const colophon = editionColophonFor(films);
@@ -2082,7 +2073,9 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   document.querySelector('#tmdb-credit').hidden = !(snapshot.tmdb_match_count > 0);
   rankedTotal = snapshot.film_count ?? films.length;
   document.querySelector('#film-total').textContent = rankedTotal.toLocaleString();
+  document.querySelector('#film-total-label').textContent = rankedTotal === 1 ? 'film found' : 'films found';
   document.querySelector('#list-total').textContent = Number.isSafeInteger(snapshot.list_count) ? snapshot.list_count.toLocaleString() : 'Unavailable';
+  document.querySelector('#list-total-label').textContent = snapshot.list_count === 1 ? 'liked list scanned' : 'liked lists scanned';
   const unwatchedCount = snapshot.unwatched_count ?? films.filter((film) => !film.watched).length;
   const watchedCount = Math.max(0, rankedTotal - unwatchedCount);
   document.querySelector('#unwatched-total').textContent = unwatchedCount.toLocaleString();
@@ -2096,23 +2089,26 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   progress.setAttribute('aria-label', `${watchedCount.toLocaleString()} of ${rankedTotal.toLocaleString()} films watched (${progressPercent} percent)`);
   const editionDate = document.querySelector('#refreshed-label');
   editionDate.textContent = formatEditionDate(snapshot.refreshed_at);
-  editionDate.title = formatDate(snapshot.refreshed_at);
+  editionDate.title = formatUpdatedAt(snapshot.refreshed_at);
   const detailedCount = snapshot.displayed_film_count ?? snapshot.films.length;
   const searchableCount = films.length.toLocaleString();
+  const searchableFilmNoun = films.length === 1 ? 'film' : 'films';
+  const detailedFilmNoun = detailedCount === 1 ? 'film' : 'films';
+  const remainingFilmCount = Math.max(0, rankedTotal - films.length);
   updateSearchScopeCount(films.length);
   collectionScope.textContent = fullRankingFilms
-    ? `Search all ${searchableCount} ranked films by title, year, and list. The first ${detailedCount.toLocaleString()} have richer details, so searches also match original title, director, genre, and synopsis. Use Relevance to see closest matches first.`
-    : `Search title, year, director, genre, synopsis, and source lists in ${searchableCount} detailed films.`;
+    ? `Search all ${searchableCount} ranked ${searchableFilmNoun} by title, year, and list. The first ${detailedCount.toLocaleString()} ${detailedCount === 1 ? 'has' : 'have'} richer details, so searches also match original title, director, genre, and synopsis. Use Relevance to see closest matches first.`
+    : `Search title, year, director, genre, synopsis, and source lists in ${searchableCount} detailed ${searchableFilmNoun}.`;
   metadataFilterScope.textContent = fullRankingFilms
-    ? `Genre, director, country, language, and running-time filters only include films with matching details. This edition has details for the top ${detailedCount.toLocaleString()} films; title, year, and source-list search covers all ${searchableCount}.`
-    : `These filters use the ${searchableCount} detailed films available in this edition. Search and filters do not include the remaining ${Math.max(0, rankedTotal - films.length).toLocaleString()} ranked films.`;
+    ? `Genre, director, country, language, and running-time filters only include films with matching details. This edition has details for the top ${detailedCount.toLocaleString()} ${detailedFilmNoun}; title, year, and source-list search covers all ${searchableCount}.`
+    : `These filters use the ${searchableCount} detailed ${searchableFilmNoun} available in this edition. Search and filters do not include the remaining ${remainingFilmCount.toLocaleString()} ranked ${remainingFilmCount === 1 ? 'film' : 'films'}.`;
   catalogueDataStatus.textContent = fullRankingFilms
     ? ''
     : rankingLoadFailed
-      ? `The full ranking could not load, so this view is using ${searchableCount} detailed films. Your search and filters are still here; check your connection and retry to load all ${rankedTotal.toLocaleString()}.`
+      ? `The full ranking could not load, so this view is using ${searchableCount} detailed ${searchableFilmNoun}. Your search and filters are still here; check your connection and retry to load all ${rankedTotal.toLocaleString()}.`
       : snapshot.ranking_csv_url
         ? `The detailed films are ready. Loading all ${rankedTotal.toLocaleString()} ranked films in the background.`
-      : `Full-ranking data is not included in this saved edition. Search covers ${searchableCount} detailed films; refresh the snapshot to include all ${rankedTotal.toLocaleString()}.`;
+      : `Full-ranking data is not included in this saved edition. Search covers ${searchableCount} detailed ${searchableFilmNoun}; refresh the snapshot to include all ${rankedTotal.toLocaleString()}.`;
   catalogueDataStatus.dataset.state = fullRankingFilms ? 'complete' : rankingLoadFailed ? 'partial' : snapshot.ranking_csv_url ? 'loading' : 'partial';
   retryRankingLoadButton.hidden = !rankingLoadFailed;
   retryRankingLoadButton.disabled = false;
@@ -2139,13 +2135,13 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
     catalogueDataStatus.textContent = `Local full-metadata edition loaded for ${searchableCount} films.`;
     catalogueDataStatus.dataset.state = 'complete';
   }
-  document.querySelector('#collection-footnote').textContent = `Browsing ${searchableCount} ranked films. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
+  document.querySelector('#collection-footnote').textContent = `Browsing ${searchableCount} ranked ${searchableFilmNoun}. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
   siteShell.hidden = false;
+  snapshotFilmRestorePending = true;
   render();
   updateEditionFreshness(document.querySelector('#edition-stale-notice'), snapshotRefreshedAt);
   setupState.hidden = true;
   retryButton.hidden = true;
-  restoreFilmFromUrl();
 }
 
 async function loadSnapshot() {

@@ -2,6 +2,8 @@ const modes = new Set(['demo', 'worst', 'empty', 'one', '100000']);
 const stressUsername = 'thisisaverylongusernamethatisallowed'.repeat(4).slice(0, 128);
 const schemaMaximumTitle = ('The Long Journey: A Complete Chronicle of Every Crossing and Return — ').repeat(20).slice(0, 1024);
 const schemaMaximumOverview = ('The travelers continue across changing landscapes, meeting new people and weighing the choices that shape the journey. ').repeat(200).slice(0, 20000);
+const longSourceList = 'https://letterboxd.com/reelrankdemo/list/the-complete-international-cinema-restoration-and-preservation-programme-2026-including-alternate-cuts-and-newly-rediscovered-films/';
+const sourceLists = Array.from({ length: 12 }, (_, index) => index === 0 ? longSourceList : index === 1 ? longSourceList.replace(/\/$/, '-directors-cuts-and-extended-editions/') : `https://letterboxd.com/reelrankdemo/list/world-cinema-programme-volume-${index + 1}/`);
 
 function syntheticFilm(base, index, overrides = {}) {
   const generatedTitle = `Stress case film ${String(index + 1).padStart(4, '0')}`;
@@ -31,7 +33,7 @@ function syntheticFilm(base, index, overrides = {}) {
     watched: overrides.watched ?? index % 2 === 0,
     liked_in: overrides.liked_in ?? Math.max(1, 1000 - index),
     list_ids: [],
-    lists: [],
+    lists: overrides.lists ?? [],
   };
 }
 
@@ -68,7 +70,7 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
         title: 'Harakiri', original_title: '切腹', original_language: 'ja', year: '1962',
         directors: ['Masaki Kobayashi'], genres: ['Action', 'Drama', 'History'], countries: ['Japan'], runtime_minutes: 135,
         overview: 'Down-on-his-luck veteran Tsugumo Hanshirō enters the courtyard of the prosperous House of Iyi. Unemployed, and with no family, he hopes to find a place to commit seppuku—and a worthy second to deliver the coup de grâce in his suicide ritual. The senior counselor for the Iyi clan questions the ronin’s resolve and integrity, suspecting Hanshirō of seeking charity rather than an honorable end. What follows is a pair of interlocking stories which lay bare the difference between honor and respect, and promises to examine the legendary foundations of the Samurai code.',
-        liked_in: 1284, watched: false,
+        liked_in: 1284, watched: false, lists: sourceLists,
       }),
       syntheticFilm(base, 1, {
         title: 'Logistics', original_title: 'Logistics', original_language: 'xx', year: '2012',
@@ -118,8 +120,31 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
         genres: ['Documentary', 'Drama', 'History'], countries: ['Viet Nam', 'United States of America'],
         runtime_minutes: 999, liked_in: 18, watched: false,
       }),
+      syntheticFilm(base, 10, {
+        title: 'The Cure for Insomnia', year: '1987', directors: ['John Henry Timmis IV'],
+        genres: ['Experimental', 'Documentary'], runtime_minutes: 5220, liked_in: 12,
+        overview: 'An 87-hour experimental film. This fixture checks a real multi-day running time.',
+        lists: [longSourceList],
+      }),
+      syntheticFilm(base, 11, {
+        title: 'Đặng Thị Ngọc Hân — نور الهدى عبد الرحمن — 👩🏽‍💻 Priya', year: '',
+        directors: ['Aleksandra Wiśniewska-Kowalczyk', 'Christopher Alexander Montgomery III', 'J', 'Jo'],
+        genres: ['customer-feedback-from-enterprise-onboarding', 'Benachrichtigungseinstellungen', 'Drama'],
+        countries: ['United States of America'], liked_in: 1,
+        overview: 'Imported catalogue entry with a long tag, mixed writing systems, and short and long credit names.',
+      }),
+      syntheticFilm(base, 12, {
+        title: 'Schema boundary: archive compilation',
+        year: '2026 (restoration; original release date remains unconfirmed)'.padEnd(64, ' '),
+        genres: ['International cinema preservation and restoration programme — '.repeat(10).slice(0, 512)],
+        directors: ['Archive collective — '.repeat(30).slice(0, 512)],
+        runtime_minutes: Number.MAX_SAFE_INTEGER, liked_in: Number.MAX_SAFE_INTEGER,
+        overview: 'The snapshot schema accepts these exact numeric and text limits. This row checks that contract rather than a typical film.',
+      }),
     ];
   }
+  const fixtureSourceLists = [...new Set(films.flatMap((film) => film.lists || []))];
+  if (mode === 'worst') films.forEach((film) => { film.list_ids = film.lists.map((url) => fixtureSourceLists.indexOf(url)); });
   const unwatchedCount = films.filter((film) => !film.watched).length;
   const stressSnapshot = {
     ...snapshot,
@@ -132,9 +157,9 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
     unwatched_count: unwatchedCount,
     displayed_unwatched_count: unwatchedCount,
     tmdb_match_count: 0,
-    list_count: mode === 'one' || mode === 'empty' ? (mode === 'one' ? 1 : 0) : 1284,
+    list_count: mode === 'one' || mode === 'empty' ? (mode === 'one' ? 1 : 0) : mode === 'worst' ? Number.MAX_SAFE_INTEGER : 1284,
     films,
-    source_lists: [],
+    source_lists: fixtureSourceLists,
   };
   delete stressSnapshot.ranking_csv_url;
   delete stressSnapshot.ranking_gzip_url;

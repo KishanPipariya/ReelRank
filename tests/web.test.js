@@ -6,7 +6,7 @@ import { snapshotLoadErrorMessage, validateSnapshot } from '../web/snapshot.js';
 import { parseUrlState, urlForState } from '../web/url-state.js';
 import { createLocalPreferences, parsePresetImport } from '../web/local-preferences.js';
 import { catalogueCsv } from '../web/catalogue-download.js';
-import { editionFreshness } from '../web/edition-freshness.js';
+import { editionFreshness, formatUpdatedAt } from '../web/edition-freshness.js';
 import { snapshotForDevMode } from '../web/dev-data.js';
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/snapshot-minimal.json', import.meta.url), 'utf8'));
@@ -30,6 +30,19 @@ test('edition freshness turns stale at 30 days and ignores future timestamps', (
   assert.deepEqual(editionFreshness('2026-10-01T00:00:00Z', now), { stale: false, ageDays: 25 });
   assert.deepEqual(editionFreshness('2026-10-27T00:00:00Z', now), { stale: false, ageDays: 0 });
   assert.deepEqual(editionFreshness('invalid', now), { stale: false, ageDays: null });
+});
+
+test('future edition timestamps are described explicitly instead of as just updated', () => {
+  const now = Date.parse('2026-11-07T00:00:00Z');
+  assert.match(formatUpdatedAt('2026-11-10T00:00:00Z', now), /^Edition timestamp is in the future · /);
+  assert.doesNotMatch(formatUpdatedAt('2026-11-10T00:00:00Z', now), /just now/);
+});
+
+test('edition update descriptions retain present and past wording and handle invalid dates', () => {
+  const now = Date.parse('2026-11-07T00:00:00Z');
+  assert.match(formatUpdatedAt('2026-11-07T00:00:00Z', now), /^Updated just now · /);
+  assert.match(formatUpdatedAt('2026-11-06T00:00:00Z', now), /^Updated yesterday · /);
+  assert.equal(formatUpdatedAt('not a timestamp', now), 'Refresh date unavailable');
 });
 
 test('catalogue CSV handles quoted titles and neutralizes spreadsheet formulas', () => {
@@ -97,7 +110,9 @@ test('snapshot contract rejects invalid TMDB identifiers and inconsistent counts
 
 test('worst-case fixtures keep counts coherent and clear inherited optional TMDB metadata', () => {
   const worst = snapshotForDevMode(fixture, 'worst');
-  assert.equal(worst.films[0].liked_in, worst.list_count);
+  assert.equal(Math.max(...worst.films.map((film) => film.liked_in)), worst.list_count);
+  assert.equal(validateSnapshot(worst), worst);
+  assert.deepEqual(worst.films[0].list_ids.map((id) => worst.source_lists[id]), worst.films[0].lists);
   const sparseFilm = worst.films.find((film) => film.title === '🦊 Fox');
   assert.deepEqual(sparseFilm.directors, []);
   assert.deepEqual(sparseFilm.genres, []);

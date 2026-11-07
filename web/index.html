@@ -45,7 +45,7 @@
       <nav id="dev-data-switch" class="dev-data-switch" aria-label="Development data" hidden>
         <span>Data</span>
         <div class="dev-data-options" role="group" aria-label="Choose catalogue data">
-          <button type="button" data-dev-data="demo">Demo</button>
+          <button type="button" data-dev-data="demo">Demo data</button>
           <button type="button" data-dev-data="worst">Worst case</button>
           <button type="button" data-dev-data="empty">Empty</button>
           <button type="button" data-dev-data="one">One</button>
@@ -83,9 +83,9 @@
         </section>
 
         <section class="summary" aria-label="Snapshot summary">
-          <div class="summary-item"><strong id="film-total"></strong><span>films found</span></div>
+          <div class="summary-item"><strong id="film-total"></strong><span id="film-total-label">films found</span></div>
           <div class="summary-divider"></div>
-          <div class="summary-item"><strong id="list-total"></strong><span>liked lists scanned</span></div>
+          <div class="summary-item"><strong id="list-total"></strong><span id="list-total-label">liked lists scanned</span></div>
           <div class="summary-divider"></div>
           <div class="summary-item"><strong id="unwatched-total"></strong><span>still to watch</span></div>
           <p class="summary-note">Ranked by how many liked lists include each film</p>
@@ -431,6 +431,8 @@
         <div id="poster-viewer-stage" class="poster-viewer-stage" tabindex="0" role="region" aria-label="Poster image"></div>
         <figcaption id="poster-viewer-caption" class="poster-viewer-caption"></figcaption>
       </figure>
+      <p id="poster-viewer-feedback" class="poster-viewer-status" role="status" aria-live="polite"></p>
+      <button id="poster-viewer-retry" class="poster-viewer-zoom" type="button" hidden>Retry poster</button>
       <p id="poster-viewer-status" class="poster-viewer-status" role="status" aria-live="polite"></p>
       <div id="poster-viewer-gallery" class="poster-viewer-gallery" role="group" aria-label="Choose a poster" hidden></div>
       <button id="poster-viewer-zoom" class="poster-viewer-zoom" type="button" aria-pressed="false">View at actual size</button>

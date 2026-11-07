@@ -1,0 +1,76 @@
+[
+  {
+    "profile": "320",
+    "fallbackTitleHeight": 35,
+    "newFilmScrollTop": 0,
+    "countryFits": true,
+    "futureTooltip": true,
+    "singularDownload": true
+  },
+  {
+    "profile": "1440",
+    "hoverContrast": 5.782715337155544
+  },
+  {
+    "profile": "1440",
+    "fallbackTitleHeight": 52.5,
+    "newFilmScrollTop": 0,
+    "countryFits": true,
+    "futureTooltip": true,
+    "singularDownload": true
+  },
+  {
+    "profile": "2560",
+    "hoverContrast": 5.782715337155544
+  },
+  {
+    "profile": "2560",
+    "fallbackTitleHeight": 52.5,
+    "newFilmScrollTop": 0,
+    "countryFits": true,
+    "futureTooltip": true,
+    "singularDownload": true
+  },
+  {
+    "profile": "720",
+    "fallbackTitleHeight": 35,
+    "newFilmScrollTop": 0,
+    "countryFits": true,
+    "futureTooltip": true,
+    "singularDownload": true
+  },
+  {
+    "profile": "dark",
+    "hoverContrast": 7.548469905657351
+  },
+  {
+    "profile": "dark",
+    "fallbackTitleHeight": 35,
+    "newFilmScrollTop": 0,
+    "countryFits": true,
+    "futureTooltip": true,
+    "singularDownload": true
+  },
+  {
+    "profile": "text200",
+    "fallbackTitleHeight": 35,
+    "newFilmScrollTop": 0,
+    "countryFits": true,
+    "futureTooltip": true,
+    "singularDownload": true
+  },
+  {
+    "profile": "rtl",
+    "fallbackTitleHeight": 35,
+    "newFilmScrollTop": 0,
+    "countryFits": true,
+    "futureTooltip": true,
+    "singularDownload": true
+  },
+  {
+    "posterFailurePreservesChoice": true,
+    "retryRecovers": true,
+    "lateSelectionIgnored": true,
+    "closedViewerDoesNotSave": true
+  }
+]

@@ -1,4 +1,5 @@
-import { genresWithSelectedFirst, posterFallbackFor, responsivePosterAttrs } from './film-components.js';
+import { genresWithSelectedFirst, posterFallbackFor, responsivePosterAttrs, setGenreLabel } from './film-components.js';
+import { filmIdentifier } from './film-navigation.js';
 
 const filmMetadataBatchSize = 8;
 
@@ -56,7 +57,7 @@ export function createFilmViews(dependencies) {
     originalFilmFactsFor, sourceListNotesFor, filmProgrammeNotesFor,
     filmDetailContent, filmDetailDialog, getCurrentMatchingFilms,
     posterViewerDialog, posterViewerImage, posterViewerTitle, posterViewerCaption,
-    posterViewerZoom, posterViewerClose, posterViewerStatus, posterViewerGallery,
+    posterViewerZoom, posterViewerClose, posterViewerStatus, posterViewerFeedback, posterViewerRetry, posterViewerGallery,
     getSnapshotRefreshedAt,
     getPosterGalleryUrl,
     rememberPosterChoice,
@@ -64,35 +65,90 @@ export function createFilmViews(dependencies) {
     onFilmDetailChange,
     getFilmShareUrl,
   } = dependencies;
+let detailFilm = null;
+let detailNavigationFilms = null;
 let posterAccentRequest = 0;
 let posterGalleryRequest = 0;
 let posterGalleryDataPromise;
+let posterPreviewRequest = 0;
+let activePosterFilm = null;
+let retryPosterPreview = null;
 const featuredFilmByFilm = new WeakMap();
 function posterVariant(url, size) {
   try { const parsed = new URL(url); if (parsed.hostname !== 'image.tmdb.org') return url; return url.replace(/\/t\/p\/w\d+(?=\/)/, `/t/p/${size}`); }
   catch { return url; }
 }
 
-function openPosterViewer(film, posterUrl, showGallery = false) {
+async function previewPoster(film, url, { save = false, caption = '', canonicalUrl = url, zoomed = false, selectedButton = null, onReady = null } = {}) {
+  const request = ++posterPreviewRequest;
+  retryPosterPreview = null;
+  posterViewerRetry.hidden = true;
+  posterViewerFeedback.textContent = 'Loading poster…';
+  const stage = posterViewerImage.parentElement;
+  stage.setAttribute('aria-busy', 'true');
+  const candidate = new Image();
+  candidate.referrerPolicy = 'no-referrer';
+  candidate.src = url;
+  try {
+    await candidate.decode();
+  } catch {
+    if (request === posterPreviewRequest && posterViewerDialog.open) {
+      posterViewerFeedback.textContent = 'Could not load this poster. Your current poster choice is unchanged. Try again or choose another poster.';
+      retryPosterPreview = () => previewPoster(film, url, { save, caption, canonicalUrl, zoomed, selectedButton, onReady });
+      posterViewerRetry.hidden = false;
+    }
+    return false;
+  } finally {
+    if (request === posterPreviewRequest) stage.removeAttribute('aria-busy');
+  }
+  if (request !== posterPreviewRequest || !posterViewerDialog.open) return false;
+
+  posterViewerImage.src = url;
+  posterViewerImage.alt = `${film.title} poster`;
+  posterViewerImage.hidden = false;
+  posterViewerImage.classList.toggle('is-zoomed', zoomed);
+  posterViewerCaption.dataset.posterUrl = canonicalUrl;
+  posterViewerCaption.textContent = caption || [film.title, film.year].filter(Boolean).join(' · ');
+  posterViewerZoom.disabled = false;
+  posterViewerZoom.setAttribute('aria-pressed', String(zoomed));
+  posterViewerZoom.textContent = zoomed ? 'Fit to screen' : 'View at actual size';
+  posterViewerFeedback.textContent = '';
+  if (save && Number.isSafeInteger(film.tmdb_id)) {
+    const saved = rememberPosterChoice(film, canonicalUrl);
+    posterViewerFeedback.textContent = saved === false
+      ? 'Could not save this poster choice in this browser.'
+      : 'Poster choice saved on this device.';
+  }
+  if (selectedButton) posterViewerGallery.querySelectorAll('.poster-viewer-option').forEach((option) => {
+    option.setAttribute('aria-pressed', String(option === selectedButton));
+  });
+  onReady?.();
+  return true;
+}
+
+function openPosterViewer(film, showGallery = false) {
+  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
   const request = ++posterGalleryRequest;
+  posterPreviewRequest += 1;
+  activePosterFilm = film;
+  retryPosterPreview = null;
+  posterViewerRetry.hidden = true;
+  posterViewerFeedback.textContent = '';
   posterViewerTitle.textContent = `${film.title} poster`;
   posterViewerCaption.textContent = [film.title, film.year].filter(Boolean).join(' · ');
-  posterViewerCaption.dataset.posterUrl = posterUrl || '';
-  posterViewerImage.hidden = !posterUrl;
-  if (posterUrl) {
-    posterViewerImage.src = posterUrl;
-    posterViewerImage.alt = `${film.title} poster`;
-  } else {
-    posterViewerImage.removeAttribute('src');
-    posterViewerImage.alt = '';
-  }
+  posterViewerCaption.dataset.posterUrl = '';
+  posterViewerImage.hidden = true;
+  posterViewerImage.removeAttribute('src');
+  posterViewerImage.alt = '';
   posterViewerImage.classList.remove('is-zoomed');
+  posterViewerZoom.disabled = true;
   posterViewerZoom.setAttribute('aria-pressed', 'false');
   posterViewerZoom.textContent = 'View at actual size';
   posterViewerGallery.replaceChildren();
   posterViewerGallery.hidden = true;
   posterViewerStatus.textContent = showGallery ? 'Loading alternate posters…' : '';
   posterViewerDialog.showModal();
+  if (posterUrl) void previewPoster(film, posterUrl);
   if (showGallery) void loadPosterGallery(film, posterUrl, request);
 }
 
@@ -136,38 +192,49 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
     return;
   }
 
-  posterViewerStatus.textContent = `${posters.length} ${posters.length === 1 ? 'poster' : 'posters'} available. Choose one to preview.`;
+  posterViewerStatus.textContent = `${posters.length} poster ${posters.length === 1 ? 'option' : 'options'}. Choose one to preview.`;
   posters.forEach((poster, index) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'poster-viewer-option';
     button.setAttribute('aria-pressed', String(poster.current));
     const language = poster.current ? 'Current' : poster.language ? poster.language.toUpperCase() : 'No language tag';
-    button.setAttribute('aria-label', `${poster.current ? 'Current poster' : 'Select poster'}, ${language}, ${index + 1} of ${posters.length}`);
+    const accessibleLabel = `${poster.current ? 'Current poster' : 'Select poster'}, ${language}, ${index + 1} of ${posters.length}`;
+    button.setAttribute('aria-label', accessibleLabel);
     const image = document.createElement('img');
-    image.src = poster.url;
     image.alt = '';
     image.loading = 'lazy';
     image.referrerPolicy = 'no-referrer';
+    const unavailable = document.createElement('span');
+    unavailable.className = 'poster-viewer-thumbnail-fallback';
+    unavailable.textContent = 'No image';
+    unavailable.setAttribute('aria-hidden', 'true');
+    unavailable.hidden = true;
     const label = document.createElement('span');
-    label.textContent = poster.current ? 'Current' : language;
-    button.append(image, label);
+    label.textContent = language;
+    image.addEventListener('error', () => {
+      image.hidden = true;
+      unavailable.hidden = false;
+      label.textContent = `${language} · unavailable`;
+      button.title = 'Could not load this poster. Select to retry.';
+      button.setAttribute('aria-label', `Retry loading ${language} poster, ${index + 1} of ${posters.length}`);
+    });
+    button.append(image, unavailable, label);
+    image.src = poster.url;
     button.addEventListener('click', () => {
-      posterViewerImage.hidden = false;
-      posterViewerImage.src = poster.url;
-      posterViewerCaption.dataset.posterUrl = poster.url;
-      posterViewerImage.alt = `${film.title} poster`;
-      posterViewerImage.classList.remove('is-zoomed');
-      posterViewerZoom.setAttribute('aria-pressed', 'false');
-      posterViewerZoom.textContent = 'View at actual size';
-      posterViewerCaption.textContent = [film.title, film.year, language, `${index + 1} of ${posters.length}`].filter(Boolean).join(' · ');
-      if (Number.isSafeInteger(film.tmdb_id)) {
-        const saved = rememberPosterChoice(film, poster.url);
-        if (saved === false) posterViewerStatus.textContent = 'Could not save this poster choice in this browser.';
-        else posterViewerStatus.textContent = 'Poster choice saved on this device.';
-      }
-      posterViewerGallery.querySelectorAll('.poster-viewer-option').forEach((option) => {
-        option.setAttribute('aria-pressed', String(option === button));
+      void previewPoster(film, poster.url, {
+        save: true,
+        caption: [film.title, film.year, language, `${index + 1} of ${posters.length}`].filter(Boolean).join(' · '),
+        selectedButton: button,
+        onReady: () => {
+          if (!button.isConnected) return;
+          image.src = poster.url;
+          image.hidden = false;
+          unavailable.hidden = true;
+          label.textContent = language;
+          button.removeAttribute('title');
+          button.setAttribute('aria-label', accessibleLabel);
+        },
       });
     });
     posterViewerGallery.append(button);
@@ -176,12 +243,23 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
 }
 
 posterViewerZoom.addEventListener('click', () => {
+  const selected = posterViewerCaption.dataset.posterUrl;
+  if (!selected || !activePosterFilm) return;
   const zoomed = posterViewerZoom.getAttribute('aria-pressed') !== 'true';
-  posterViewerZoom.setAttribute('aria-pressed', String(zoomed));
-  posterViewerZoom.textContent = zoomed ? 'Fit to screen' : 'View at actual size';
-  posterViewerImage.classList.toggle('is-zoomed', zoomed);
-  const selected = posterViewerCaption.dataset.posterUrl || posterViewerGallery.querySelector('[aria-pressed="true"] img')?.src || '';
-  if (selected) posterViewerImage.src = posterVariant(selected, zoomed ? 'original' : '500');
+  void previewPoster(activePosterFilm, posterVariant(selected, zoomed ? 'original' : '500'), {
+    canonicalUrl: selected,
+    caption: posterViewerCaption.textContent,
+    zoomed,
+  });
+});
+posterViewerRetry.addEventListener('click', () => { void retryPosterPreview?.(); });
+posterViewerDialog.addEventListener('close', () => {
+  posterPreviewRequest += 1;
+  posterGalleryRequest += 1;
+  activePosterFilm = null;
+  retryPosterPreview = null;
+  posterViewerRetry.hidden = true;
+  posterViewerImage.parentElement.removeAttribute('aria-busy');
 });
 posterViewerClose.addEventListener('click', () => posterViewerDialog.close());
 posterViewerDialog.addEventListener('click', (event) => {
@@ -249,6 +327,8 @@ function samplePosterAccent(posterUrl, request) {
 function openFilmDetails(film, { focusProvenance = false } = {}) {
   renderFilmDetails(film);
   if (!filmDetailDialog.open) filmDetailDialog.showModal();
+  filmDetailDialog.scrollTop = 0;
+  filmDetailDialog.scrollLeft = 0;
   if (focusProvenance) requestAnimationFrame(() => {
     const provenance = filmDetailContent.querySelector('.film-note-sources');
     if (provenance) {
@@ -258,62 +338,8 @@ function openFilmDetails(film, { focusProvenance = false } = {}) {
   });
 }
 
-function renderFilmDetails(film, retainFocus = false) {
-  onFilmDetailChange(film);
-  const films = getFilms();
+function detailNavigationFor(film) {
   const currentFilms = getCurrentMatchingFilms();
-  filmDetailContent.replaceChildren();
-  const layout = document.createElement('div');
-  layout.className = 'film-detail-layout';
-  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
-  const posterColumn = document.createElement('div');
-  posterColumn.className = 'film-detail-poster-column';
-  const poster = document.createElement(posterUrl ? 'button' : 'div');
-  poster.className = `film-detail-poster${posterUrl ? ' film-detail-poster-trigger' : ''}`;
-  if (posterUrl) {
-    poster.type = 'button';
-    poster.setAttribute('aria-label', `View poster for ${film.title}`);
-    poster.addEventListener('click', () => openPosterViewer(film, posterUrl));
-    const image = document.createElement('img');
-    image.src = posterUrl;
-    responsivePosterAttrs(image, posterUrl, '(max-width: 640px) 30vw, 180px');
-    image.alt = '';
-    image.referrerPolicy = 'no-referrer';
-    image.addEventListener('error', () => {
-      poster.replaceWith(posterFallbackFor(film, 'film-detail-poster poster-fallback film-detail-poster-fallback'));
-    }, { once: true });
-    poster.append(image);
-    const cue = document.createElement('span');
-    cue.className = 'poster-enlarge-cue';
-    cue.textContent = 'Enlarge poster';
-    cue.setAttribute('aria-hidden', 'true');
-    poster.append(cue);
-  } else {
-    poster.append(posterFallbackFor(film, 'poster-fallback film-detail-poster-fallback'));
-  }
-  posterColumn.append(poster);
-  if (Number.isSafeInteger(film.tmdb_id)) {
-    const galleryButton = document.createElement('button');
-    galleryButton.type = 'button';
-    galleryButton.className = 'film-detail-gallery-button';
-    galleryButton.textContent = posterUrl ? 'View other posters' : 'Browse posters';
-    galleryButton.setAttribute('aria-label', `${posterUrl ? 'View other posters for' : 'Browse posters for'} ${film.title}`);
-    galleryButton.addEventListener('click', () => openPosterViewer(film, posterUrl, true));
-    posterColumn.append(galleryButton);
-  }
-  const resetPosterButton = document.createElement('button');
-  resetPosterButton.type = 'button'; resetPosterButton.className = 'film-detail-gallery-button';
-  resetPosterButton.textContent = 'Reset poster';
-  resetPosterButton.setAttribute('aria-label', `Reset poster for ${film.title} to the catalogue original`);
-  const resetStatus = document.createElement('span'); resetStatus.className = 'sr-only'; resetStatus.setAttribute('role', 'status'); resetStatus.setAttribute('aria-live', 'polite');
-  resetPosterButton.addEventListener('click', () => { resetStatus.textContent = resetPosterChoice(film) ? 'Poster reset to the catalogue original.' : 'Could not save the poster reset in this browser.'; });
-  posterColumn.append(resetPosterButton, resetStatus);
-  const copy = document.createElement('div');
-  copy.className = 'film-detail-copy';
-  const rank = films.indexOf(film) + 1;
-  const kicker = document.createElement('p');
-  kicker.className = 'film-detail-kicker';
-  kicker.textContent = `Catalogue no. ${String(rank).padStart(3, '0')} · ${film.watched ? 'Watched' : 'Unwatched'}`;
   const currentIndex = currentFilms.indexOf(film);
   if (currentIndex >= 0) {
     const navigation = document.createElement('nav');
@@ -325,7 +351,7 @@ function renderFilmDetails(film, retainFocus = false) {
     position.setAttribute('role', 'status');
     position.setAttribute('aria-live', 'polite');
     position.setAttribute('aria-atomic', 'true');
-    position.textContent = `Film ${currentIndex + 1} of ${currentFilms.length}`;
+    position.textContent = `Film ${(currentIndex + 1).toLocaleString()} of ${currentFilms.length.toLocaleString()}`;
     const stepButtonFor = (direction, destination, boundaryLabel) => {
       const isPrevious = direction === 'previous';
       const button = document.createElement('button');
@@ -354,8 +380,91 @@ function renderFilmDetails(film, retainFocus = false) {
     keyboardHint.append('Use ', Object.assign(document.createElement('kbd'), { textContent: '←' }), ' and ', Object.assign(document.createElement('kbd'), { textContent: '→' }), ' to browse');
     navigation.append(previous, position, next);
     navigation.append(keyboardHint);
-    copy.append(navigation);
+    return navigation;
   }
+  return null;
+}
+
+function refreshFilmNavigation() {
+  if (!filmDetailDialog.open || !detailFilm) return;
+  const matching = getCurrentMatchingFilms();
+  const identifier = filmIdentifier(detailFilm);
+  const film = getFilms().find((item) => filmIdentifier(item) === identifier) || detailFilm;
+  if (matching === detailNavigationFilms && film === detailFilm) return;
+  const previous = filmDetailContent.querySelector('.film-detail-navigation');
+  const focused = previous?.contains(document.activeElement) ? document.activeElement.id : '';
+  const next = detailNavigationFor(film);
+  if (previous && next) previous.replaceWith(next);
+  else if (previous) previous.remove();
+  else if (next) filmDetailContent.querySelector('.film-detail-copy')?.prepend(next);
+  detailFilm = film;
+  detailNavigationFilms = matching;
+  if (focused) {
+    const preferred = next?.querySelector(`#${focused}`);
+    const fallback = next?.querySelector('.film-detail-step:not(:disabled)');
+    (preferred && !preferred.disabled ? preferred : fallback || filmDetailDialog.querySelector('.film-detail-close'))?.focus({ preventScroll: true });
+  }
+}
+
+function renderFilmDetails(film, retainFocus = false) {
+  detailFilm = film;
+  detailNavigationFilms = getCurrentMatchingFilms();
+  onFilmDetailChange(film);
+  const films = getFilms();
+  filmDetailContent.replaceChildren();
+  const layout = document.createElement('div');
+  layout.className = 'film-detail-layout';
+  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
+  const posterColumn = document.createElement('div');
+  posterColumn.className = 'film-detail-poster-column';
+  const poster = document.createElement(posterUrl ? 'button' : 'div');
+  poster.className = `film-detail-poster${posterUrl ? ' film-detail-poster-trigger' : ''}`;
+  if (posterUrl) {
+    poster.type = 'button';
+    poster.setAttribute('aria-label', `View poster for ${film.title}`);
+    poster.addEventListener('click', () => openPosterViewer(film));
+    const image = document.createElement('img');
+    image.src = posterUrl;
+    responsivePosterAttrs(image, posterUrl, '(max-width: 640px) 30vw, 180px');
+    image.alt = '';
+    image.referrerPolicy = 'no-referrer';
+    image.addEventListener('error', () => {
+      poster.replaceWith(posterFallbackFor(film, 'film-detail-poster poster-fallback film-detail-poster-fallback'));
+    }, { once: true });
+    poster.append(image);
+    const cue = document.createElement('span');
+    cue.className = 'poster-enlarge-cue';
+    cue.textContent = 'Enlarge poster';
+    cue.setAttribute('aria-hidden', 'true');
+    poster.append(cue);
+  } else {
+    poster.append(posterFallbackFor(film, 'poster-fallback film-detail-poster-fallback'));
+  }
+  posterColumn.append(poster);
+  if (Number.isSafeInteger(film.tmdb_id)) {
+    const galleryButton = document.createElement('button');
+    galleryButton.type = 'button';
+    galleryButton.className = 'film-detail-gallery-button';
+    galleryButton.textContent = posterUrl ? 'View other posters' : 'Browse posters';
+    galleryButton.setAttribute('aria-label', `${posterUrl ? 'View other posters for' : 'Browse posters for'} ${film.title}`);
+    galleryButton.addEventListener('click', () => openPosterViewer(film, true));
+    posterColumn.append(galleryButton);
+  }
+  const resetPosterButton = document.createElement('button');
+  resetPosterButton.type = 'button'; resetPosterButton.className = 'film-detail-gallery-button';
+  resetPosterButton.textContent = 'Reset poster';
+  resetPosterButton.setAttribute('aria-label', `Reset poster for ${film.title} to the catalogue original`);
+  const resetStatus = document.createElement('span'); resetStatus.className = 'sr-only'; resetStatus.setAttribute('role', 'status'); resetStatus.setAttribute('aria-live', 'polite');
+  resetPosterButton.addEventListener('click', () => { resetStatus.textContent = resetPosterChoice(film) ? 'Poster reset to the catalogue original.' : 'Could not save the poster reset in this browser.'; });
+  posterColumn.append(resetPosterButton, resetStatus);
+  const copy = document.createElement('div');
+  copy.className = 'film-detail-copy';
+  const rank = films.indexOf(film) + 1;
+  const kicker = document.createElement('p');
+  kicker.className = 'film-detail-kicker';
+  kicker.textContent = `Catalogue no. ${String(rank).padStart(3, '0')} · ${film.watched ? 'Watched' : 'Unwatched'}`;
+  const navigation = detailNavigationFor(film);
+  if (navigation) copy.append(navigation);
   const title = document.createElement('h2');
   title.id = 'film-detail-title';
   title.textContent = film.title;
@@ -373,6 +482,7 @@ function renderFilmDetails(film, retainFocus = false) {
   score.className = 'film-detail-score';
   const scoreValue = document.createElement('strong');
   scoreValue.textContent = (Number(film.liked_in) || 0).toLocaleString();
+  score.classList.toggle('has-long-count', scoreValue.textContent.length > 12);
   score.append(scoreValue, ` ${Number(film.liked_in) === 1 ? 'list appearance' : 'list appearances'}`);
   copy.append(kicker, title, year);
   const originalFacts = originalFilmFactsFor(film);
@@ -416,7 +526,7 @@ function renderFilmDetails(film, retainFocus = false) {
       button.type = 'button';
       button.className = 'genre-tag';
       button.dataset.genre = genre;
-      button.textContent = genre;
+      setGenreLabel(button, genre, { full: true });
       button.setAttribute('aria-label', `Filter by ${genre}`);
       button.setAttribute('aria-pressed', String(state.genres.includes(genre)));
       button.addEventListener('click', () => {
@@ -765,5 +875,5 @@ function updatePosterForFilm(film, url) {
   else if (detailImage) detailImage.replaceWith(posterFallbackFor(film, 'film-detail-poster poster-fallback'));
 }
 
-  return { openFilmDetails, ledgerRowsFor, featuredFilmFor, updatePosterForFilm };
+  return { openFilmDetails, refreshFilmNavigation, ledgerRowsFor, featuredFilmFor, updatePosterForFilm };
 }

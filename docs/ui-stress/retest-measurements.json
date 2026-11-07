@@ -1,0 +1,892 @@
+{
+  "extended_fields": [
+    {
+      "case": "long-language",
+      "profile": "320",
+      "value": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026",
+      "length": 64,
+      "dialog": {
+        "client": 286,
+        "scroll": 286
+      },
+      "language": {
+        "text": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026 (FR-LATN-FR-X-ARCHIVE-RESTORE-PRINT-ENGLISH-SUBTITLE-EDITION-2026)",
+        "width": 246,
+        "scroll": 246,
+        "whiteSpace": "normal",
+        "overflowWrap": "normal"
+      }
+    },
+    {
+      "case": "long-original-title",
+      "profile": "320",
+      "titleLength": 1024,
+      "dialog": {
+        "client": 286,
+        "scroll": 286
+      },
+      "country": {
+        "text": "United Kingdom of Great Britain and Northern Ireland",
+        "width": 246,
+        "scroll": 293,
+        "title": ""
+      }
+    },
+    {
+      "case": "fallback",
+      "profile": "320",
+      "layout": {
+        "height": 424,
+        "title": {
+          "x": 36.453125,
+          "y": 135.734375,
+          "width": 247.09375,
+          "height": 17.5,
+          "top": 135.734375,
+          "right": 283.546875,
+          "bottom": 153.234375,
+          "left": 36.453125
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 35,
+          "y": 165.234375,
+          "width": 250,
+          "height": 304,
+          "top": 165.234375,
+          "right": 285,
+          "bottom": 469.234375,
+          "left": 35
+        },
+        "childTextHeight": 337.5
+      }
+    },
+    {
+      "case": "detail-fallback",
+      "profile": "320",
+      "layout": {
+        "height": 228.390625,
+        "title": {
+          "x": 100.203125,
+          "y": -895.296875,
+          "width": 119.59375,
+          "height": 0,
+          "top": -895.296875,
+          "right": 219.796875,
+          "bottom": -895.296875,
+          "left": 100.203125
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 100.203125,
+          "y": -883.296875,
+          "width": 119.59375,
+          "height": 864,
+          "top": -883.296875,
+          "right": 219.796875,
+          "bottom": -19.296875,
+          "left": 100.203125
+        },
+        "childTextHeight": 896
+      }
+    },
+    {
+      "case": "long-language",
+      "profile": "1440",
+      "value": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026",
+      "length": 64,
+      "dialog": {
+        "client": 818,
+        "scroll": 818
+      },
+      "language": {
+        "text": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026 (FR-LATN-FR-X-ARCHIVE-RESTORE-PRINT-ENGLISH-SUBTITLE-EDITION-2026)",
+        "width": 492,
+        "scroll": 492,
+        "whiteSpace": "normal",
+        "overflowWrap": "normal"
+      }
+    },
+    {
+      "case": "long-original-title",
+      "profile": "1440",
+      "titleLength": 1024,
+      "dialog": {
+        "client": 818,
+        "scroll": 818
+      },
+      "country": {
+        "text": "United Kingdom of Great Britain and Northern Ireland",
+        "width": 293,
+        "scroll": 293,
+        "title": ""
+      }
+    },
+    {
+      "case": "fallback",
+      "profile": "1440",
+      "layout": {
+        "height": 466,
+        "title": {
+          "x": 413,
+          "y": 100.84375,
+          "width": 278,
+          "height": 52.5,
+          "top": 100.84375,
+          "right": 691,
+          "bottom": 153.34375,
+          "left": 413
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 413,
+          "y": 165.34375,
+          "width": 278,
+          "height": 288,
+          "top": 165.34375,
+          "right": 691,
+          "bottom": 453.34375,
+          "left": 413
+        },
+        "childTextHeight": 356.5
+      }
+    },
+    {
+      "case": "detail-fallback",
+      "profile": "1440",
+      "layout": {
+        "height": 343,
+        "title": {
+          "x": 360,
+          "y": 66,
+          "width": 196,
+          "height": 0,
+          "top": 66,
+          "right": 556,
+          "bottom": 66,
+          "left": 360
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 360,
+          "y": 78,
+          "width": 196,
+          "height": 432,
+          "top": 78,
+          "right": 556,
+          "bottom": 510,
+          "left": 360
+        },
+        "childTextHeight": 448
+      }
+    },
+    {
+      "case": "long-language",
+      "profile": "2560",
+      "value": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026",
+      "length": 64,
+      "dialog": {
+        "client": 818,
+        "scroll": 818
+      },
+      "language": {
+        "text": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026 (FR-LATN-FR-X-ARCHIVE-RESTORE-PRINT-ENGLISH-SUBTITLE-EDITION-2026)",
+        "width": 492,
+        "scroll": 492,
+        "whiteSpace": "normal",
+        "overflowWrap": "normal"
+      }
+    },
+    {
+      "case": "long-original-title",
+      "profile": "2560",
+      "titleLength": 1024,
+      "dialog": {
+        "client": 818,
+        "scroll": 818
+      },
+      "country": {
+        "text": "United Kingdom of Great Britain and Northern Ireland",
+        "width": 293,
+        "scroll": 293,
+        "title": ""
+      }
+    },
+    {
+      "case": "fallback",
+      "profile": "2560",
+      "layout": {
+        "height": 466,
+        "title": {
+          "x": 973,
+          "y": 100.84375,
+          "width": 278,
+          "height": 52.5,
+          "top": 100.84375,
+          "right": 1251,
+          "bottom": 153.34375,
+          "left": 973
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 973,
+          "y": 165.34375,
+          "width": 278,
+          "height": 288,
+          "top": 165.34375,
+          "right": 1251,
+          "bottom": 453.34375,
+          "left": 973
+        },
+        "childTextHeight": 356.5
+      }
+    },
+    {
+      "case": "detail-fallback",
+      "profile": "2560",
+      "layout": {
+        "height": 343,
+        "title": {
+          "x": 920,
+          "y": 66,
+          "width": 196,
+          "height": 0,
+          "top": 66,
+          "right": 1116,
+          "bottom": 66,
+          "left": 920
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 920,
+          "y": 78,
+          "width": 196,
+          "height": 432,
+          "top": 78,
+          "right": 1116,
+          "bottom": 510,
+          "left": 920
+        },
+        "childTextHeight": 448
+      }
+    },
+    {
+      "case": "long-language",
+      "profile": "720",
+      "value": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026",
+      "length": 64,
+      "dialog": {
+        "client": 686,
+        "scroll": 686
+      },
+      "language": {
+        "text": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026 (FR-LATN-FR-X-ARCHIVE-RESTORE-PRINT-ENGLISH-SUBTITLE-EDITION-2026)",
+        "width": 369.609375,
+        "scroll": 370,
+        "whiteSpace": "normal",
+        "overflowWrap": "normal"
+      }
+    },
+    {
+      "case": "long-original-title",
+      "profile": "720",
+      "titleLength": 1024,
+      "dialog": {
+        "client": 686,
+        "scroll": 686
+      },
+      "country": {
+        "text": "United Kingdom of Great Britain and Northern Ireland",
+        "width": 293,
+        "scroll": 293,
+        "title": ""
+      }
+    },
+    {
+      "case": "fallback",
+      "profile": "720",
+      "layout": {
+        "height": 298,
+        "title": {
+          "x": 53,
+          "y": 61.53125,
+          "width": 166,
+          "height": 0,
+          "top": 61.53125,
+          "right": 219,
+          "bottom": 61.53125,
+          "left": 53
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 53,
+          "y": 73.53125,
+          "width": 166,
+          "height": 448,
+          "top": 73.53125,
+          "right": 219,
+          "bottom": 521.53125,
+          "left": 53
+        },
+        "childTextHeight": 464
+      }
+    },
+    {
+      "case": "detail-fallback",
+      "profile": "720",
+      "layout": {
+        "height": 343,
+        "title": {
+          "x": 62.796875,
+          "y": -71.203125,
+          "width": 196,
+          "height": 0,
+          "top": -71.203125,
+          "right": 258.796875,
+          "bottom": -71.203125,
+          "left": 62.796875
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 62.796875,
+          "y": -59.203125,
+          "width": 196,
+          "height": 432,
+          "top": -59.203125,
+          "right": 258.796875,
+          "bottom": 372.796875,
+          "left": 62.796875
+        },
+        "childTextHeight": 448
+      }
+    },
+    {
+      "case": "long-language",
+      "profile": "dark-320",
+      "value": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026",
+      "length": 64,
+      "dialog": {
+        "client": 286,
+        "scroll": 286
+      },
+      "language": {
+        "text": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026 (FR-LATN-FR-X-ARCHIVE-RESTORE-PRINT-ENGLISH-SUBTITLE-EDITION-2026)",
+        "width": 246,
+        "scroll": 246,
+        "whiteSpace": "normal",
+        "overflowWrap": "normal"
+      }
+    },
+    {
+      "case": "long-original-title",
+      "profile": "dark-320",
+      "titleLength": 1024,
+      "dialog": {
+        "client": 286,
+        "scroll": 286
+      },
+      "country": {
+        "text": "United Kingdom of Great Britain and Northern Ireland",
+        "width": 246,
+        "scroll": 293,
+        "title": ""
+      }
+    },
+    {
+      "case": "fallback",
+      "profile": "dark-320",
+      "layout": {
+        "height": 424,
+        "title": {
+          "x": 36.453125,
+          "y": 135.734375,
+          "width": 247.09375,
+          "height": 17.5,
+          "top": 135.734375,
+          "right": 283.546875,
+          "bottom": 153.234375,
+          "left": 36.453125
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 35,
+          "y": 165.234375,
+          "width": 250,
+          "height": 304,
+          "top": 165.234375,
+          "right": 285,
+          "bottom": 469.234375,
+          "left": 35
+        },
+        "childTextHeight": 337.5
+      }
+    },
+    {
+      "case": "detail-fallback",
+      "profile": "dark-320",
+      "layout": {
+        "height": 228.390625,
+        "title": {
+          "x": 100.203125,
+          "y": -895.296875,
+          "width": 119.59375,
+          "height": 0,
+          "top": -895.296875,
+          "right": 219.796875,
+          "bottom": -895.296875,
+          "left": 100.203125
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 100.203125,
+          "y": -883.296875,
+          "width": 119.59375,
+          "height": 864,
+          "top": -883.296875,
+          "right": 219.796875,
+          "bottom": -19.296875,
+          "left": 100.203125
+        },
+        "childTextHeight": 896
+      }
+    },
+    {
+      "case": "long-language",
+      "profile": "text200",
+      "value": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026",
+      "length": 64,
+      "dialog": {
+        "client": 286,
+        "scroll": 286
+      },
+      "language": {
+        "text": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026 (FR-LATN-FR-X-ARCHIVE-RESTORE-PRINT-ENGLISH-SUBTITLE-EDITION-2026)",
+        "width": 246,
+        "scroll": 246,
+        "whiteSpace": "normal",
+        "overflowWrap": "normal"
+      }
+    },
+    {
+      "case": "long-original-title",
+      "profile": "text200",
+      "titleLength": 1024,
+      "dialog": {
+        "client": 286,
+        "scroll": 286
+      },
+      "country": {
+        "text": "United Kingdom of Great Britain and Northern Ireland",
+        "width": 246,
+        "scroll": 293,
+        "title": ""
+      }
+    },
+    {
+      "case": "fallback",
+      "profile": "text200",
+      "layout": {
+        "height": 424,
+        "title": {
+          "x": 36.4375,
+          "y": -626.5625,
+          "width": 247.125,
+          "height": 0,
+          "top": -626.5625,
+          "right": 283.5625,
+          "bottom": -626.5625,
+          "left": 36.4375
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 35,
+          "y": -614.5625,
+          "width": 250,
+          "height": 1674,
+          "top": -614.5625,
+          "right": 285,
+          "bottom": 1059.4375,
+          "left": 35
+        },
+        "childTextHeight": 1736
+      }
+    },
+    {
+      "case": "detail-fallback",
+      "profile": "text200",
+      "layout": {
+        "height": 228.390625,
+        "title": {
+          "x": 100.203125,
+          "y": -1650.296875,
+          "width": 119.59375,
+          "height": 0,
+          "top": -1650.296875,
+          "right": 219.796875,
+          "bottom": -1650.296875,
+          "left": 100.203125
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 66.40625,
+          "y": -1638.296875,
+          "width": 187.203125,
+          "height": 1705,
+          "top": -1638.296875,
+          "right": 253.609375,
+          "bottom": 66.703125,
+          "left": 66.40625
+        },
+        "childTextHeight": 1798
+      }
+    },
+    {
+      "case": "long-language",
+      "profile": "rtl",
+      "value": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026",
+      "length": 64,
+      "dialog": {
+        "client": 286,
+        "scroll": 286
+      },
+      "language": {
+        "text": "fr-Latn-FR-x-archive-restore-print-english-subtitle-edition-2026 (FR-LATN-FR-X-ARCHIVE-RESTORE-PRINT-ENGLISH-SUBTITLE-EDITION-2026)",
+        "width": 246,
+        "scroll": 246,
+        "whiteSpace": "normal",
+        "overflowWrap": "normal"
+      }
+    },
+    {
+      "case": "long-original-title",
+      "profile": "rtl",
+      "titleLength": 1024,
+      "dialog": {
+        "client": 286,
+        "scroll": 286
+      },
+      "country": {
+        "text": "United Kingdom of Great Britain and Northern Ireland",
+        "width": 246,
+        "scroll": 293,
+        "title": ""
+      }
+    },
+    {
+      "case": "fallback",
+      "profile": "rtl",
+      "layout": {
+        "height": 424,
+        "title": {
+          "x": 36.453125,
+          "y": 135.734375,
+          "width": 247.09375,
+          "height": 17.5,
+          "top": 135.734375,
+          "right": 283.546875,
+          "bottom": 153.234375,
+          "left": 36.453125
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 35,
+          "y": 165.234375,
+          "width": 250,
+          "height": 304,
+          "top": 165.234375,
+          "right": 285,
+          "bottom": 469.234375,
+          "left": 35
+        },
+        "childTextHeight": 337.5
+      }
+    },
+    {
+      "case": "detail-fallback",
+      "profile": "rtl",
+      "layout": {
+        "height": 228.390625,
+        "title": {
+          "x": 100.203125,
+          "y": -895.296875,
+          "width": 119.59375,
+          "height": 0,
+          "top": -895.296875,
+          "right": 219.796875,
+          "bottom": -895.296875,
+          "left": 100.203125
+        },
+        "titleText": "Schema boundary: archive compilation",
+        "details": {
+          "x": 100.203125,
+          "y": -883.296875,
+          "width": 119.59375,
+          "height": 864,
+          "top": -883.296875,
+          "right": 219.796875,
+          "bottom": -19.296875,
+          "left": 100.203125
+        },
+        "childTextHeight": 896
+      }
+    },
+    {
+      "case": "reopen-scroll",
+      "oldScroll": 18214,
+      "newScroll": 1101,
+      "title": {
+        "text": "Harakiri",
+        "top": -489.828125
+      },
+      "dialog": {
+        "x": 16,
+        "y": 60,
+        "width": 288,
+        "height": 780,
+        "top": 60,
+        "right": 304,
+        "bottom": 840,
+        "left": 16
+      }
+    },
+    {
+      "case": "failed-gallery-selection",
+      "status": "Poster choice saved on this device.",
+      "preview": {
+        "src": "https://image.tmdb.org/t/p/w500/reelrank-audit-failed-poster.jpg",
+        "complete": true,
+        "naturalWidth": 0,
+        "alt": "Logistics poster"
+      },
+      "stored": {
+        "421017": "https://image.tmdb.org/t/p/w500/reelrank-audit-failed-poster.jpg"
+      },
+      "failedThumbnails": 2
+    },
+    {
+      "case": "date",
+      "name": "future",
+      "input": "2026-11-10T07:30:18.520Z",
+      "label": "Nov 10, 2026",
+      "title": "Updated just now \u00b7 Nov 10, 2026, 1:00 PM",
+      "stale": false,
+      "age": "",
+      "pageWidth": 320
+    },
+    {
+      "case": "date",
+      "name": "epoch",
+      "input": "1970-01-01T00:00:00Z",
+      "label": "Jan 1, 1970",
+      "title": "Updated 57 years ago \u00b7 Jan 1, 1970, 5:30 AM",
+      "stale": true,
+      "age": "This snapshot is 20764 days old.",
+      "pageWidth": 320
+    },
+    {
+      "case": "date",
+      "name": "timezone",
+      "input": "2025-12-31T23:30:00-08:00",
+      "label": "Jan 1, 2026",
+      "title": "Updated 10 months ago \u00b7 Jan 1, 2026, 1:00 PM",
+      "stale": true,
+      "age": "This snapshot is 310 days old.",
+      "pageWidth": 320
+    }
+  ],
+  "focused_states": [
+    {
+      "case": "long-genre-hover",
+      "theme": "light",
+      "color": "rgb(245, 243, 235)",
+      "background": "rgba(0, 0, 0, 0)",
+      "dialogBackground": "rgb(248, 246, 241)",
+      "contrast": 1.0286424137500083,
+      "fontSize": "12px",
+      "hover": true,
+      "pressed": "false"
+    },
+    {
+      "case": "long-genre-hover",
+      "theme": "dark",
+      "color": "rgb(24, 34, 25)",
+      "background": "rgba(0, 0, 0, 0)",
+      "dialogBackground": "rgb(30, 36, 31)",
+      "contrast": 1.0356200560889575,
+      "fontSize": "12px",
+      "hover": true,
+      "pressed": "false"
+    },
+    {
+      "case": "one-download",
+      "text": "Download displayed 1 films (CSV)"
+    },
+    {
+      "case": "single-remaining",
+      "text": "Show 1 more films \u00b7 1 left"
+    },
+    {
+      "case": "long-country",
+      "text": "United Kingdom of Great Britain and Northern Ireland",
+      "width": 246,
+      "scroll": 293,
+      "title": "",
+      "whiteSpace": "nowrap"
+    }
+  ],
+  "actual_catalogue": [
+    {
+      "mode": "demo",
+      "width": 320,
+      "elapsedMs": 966,
+      "url": "http://127.0.0.1:4173/",
+      "count": "Showing 43 of 34,509 films",
+      "status": "Local full-metadata edition loaded for 34,509 films.",
+      "pageWidth": 320,
+      "cards": 42
+    },
+    {
+      "mode": "demo",
+      "width": 1440,
+      "elapsedMs": 1033,
+      "url": "http://127.0.0.1:4173/",
+      "count": "Showing 43 of 34,509 films",
+      "status": "Local full-metadata edition loaded for 34,509 films.",
+      "pageWidth": 1440,
+      "cards": 42
+    },
+    {
+      "mode": "demo",
+      "width": 2560,
+      "elapsedMs": 1165,
+      "url": "http://127.0.0.1:4173/",
+      "count": "Showing 43 of 34,509 films",
+      "status": "Local full-metadata edition loaded for 34,509 films.",
+      "pageWidth": 2560,
+      "cards": 42
+    },
+    {
+      "mode": "worst",
+      "width": 320,
+      "elapsedMs": 431,
+      "url": "http://127.0.0.1:4173/?data=worst",
+      "count": "Showing 13 of 13 films",
+      "status": "Development stress fixture: 13 local films with worst-case text and metadata.",
+      "pageWidth": 320,
+      "cards": 12
+    },
+    {
+      "mode": "worst",
+      "width": 1440,
+      "elapsedMs": 481,
+      "url": "http://127.0.0.1:4173/?data=worst",
+      "count": "Showing 13 of 13 films",
+      "status": "Development stress fixture: 13 local films with worst-case text and metadata.",
+      "pageWidth": 1440,
+      "cards": 12
+    },
+    {
+      "mode": "worst",
+      "width": 2560,
+      "elapsedMs": 556,
+      "url": "http://127.0.0.1:4173/?data=worst",
+      "count": "Showing 13 of 13 films",
+      "status": "Development stress fixture: 13 local films with worst-case text and metadata.",
+      "pageWidth": 2560,
+      "cards": 12
+    },
+    {
+      "mode": "empty",
+      "width": 320,
+      "elapsedMs": 400,
+      "url": "http://127.0.0.1:4173/?data=empty",
+      "count": "Showing 0 of 0 films",
+      "status": "Development fixture: this catalogue has no films.",
+      "pageWidth": 320,
+      "cards": 0
+    },
+    {
+      "mode": "empty",
+      "width": 1440,
+      "elapsedMs": 416,
+      "url": "http://127.0.0.1:4173/?data=empty",
+      "count": "Showing 0 of 0 films",
+      "status": "Development fixture: this catalogue has no films.",
+      "pageWidth": 1440,
+      "cards": 0
+    },
+    {
+      "mode": "empty",
+      "width": 2560,
+      "elapsedMs": 433,
+      "url": "http://127.0.0.1:4173/?data=empty",
+      "count": "Showing 0 of 0 films",
+      "status": "Development fixture: this catalogue has no films.",
+      "pageWidth": 2560,
+      "cards": 0
+    },
+    {
+      "mode": "one",
+      "width": 320,
+      "elapsedMs": 463,
+      "url": "http://127.0.0.1:4173/?data=one",
+      "count": "Showing 1 of 1 film",
+      "status": "Development fixture: this catalogue has one film.",
+      "pageWidth": 320,
+      "cards": 0
+    },
+    {
+      "mode": "one",
+      "width": 1440,
+      "elapsedMs": 489,
+      "url": "http://127.0.0.1:4173/?data=one",
+      "count": "Showing 1 of 1 film",
+      "status": "Development fixture: this catalogue has one film.",
+      "pageWidth": 1440,
+      "cards": 0
+    },
+    {
+      "mode": "one",
+      "width": 2560,
+      "elapsedMs": 505,
+      "url": "http://127.0.0.1:4173/?data=one",
+      "count": "Showing 1 of 1 film",
+      "status": "Development fixture: this catalogue has one film.",
+      "pageWidth": 2560,
+      "cards": 0
+    },
+    {
+      "mode": "100000",
+      "width": 320,
+      "elapsedMs": 3670,
+      "url": "http://127.0.0.1:4173/?data=100000",
+      "count": "Showing 43 of 100,000 films",
+      "status": "Development stress fixture: 34,509 local ranking rows padded with 65,491 sparse generated rows.",
+      "pageWidth": 320,
+      "cards": 42
+    },
+    {
+      "mode": "100000",
+      "width": 1440,
+      "elapsedMs": 3695,
+      "url": "http://127.0.0.1:4173/?data=100000",
+      "count": "Showing 43 of 100,000 films",
+      "status": "Development stress fixture: 34,509 local ranking rows padded with 65,491 sparse generated rows.",
+      "pageWidth": 1440,
+      "cards": 42
+    },
+    {
+      "mode": "100000",
+      "width": 2560,
+      "elapsedMs": 3711,
+      "url": "http://127.0.0.1:4173/?data=100000",
+      "count": "Showing 43 of 100,000 films",
+      "status": "Development stress fixture: 34,509 local ranking rows padded with 65,491 sparse generated rows.",
+      "pageWidth": 2560,
+      "cards": 42
+    },
+    {
+      "errors": []
+    }
+  ]
+}
