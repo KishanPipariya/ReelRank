@@ -6,8 +6,12 @@ function appendProgressiveGenreTags(container, genres, genreChipFor, initialCoun
   genres = genresWithSelectedFirst(genres, selectedGenres);
   container.dataset.activeGenreFilters = JSON.stringify(selectedGenres);
   let visibleCount = Math.min(initialCount, genres.length);
-  genres.slice(0, visibleCount).forEach((genre) => container.append(genreChipFor(genre)));
-  if (visibleCount >= genres.length) return;
+  genres.slice(0, visibleCount).forEach((genre, index) => {
+    const tag = genreChipFor(genre);
+    if (index >= 2) tag.classList.add('genre-extra-tag');
+    container.append(tag);
+  });
+  if (genres.length <= 2) return;
 
   const more = document.createElement('button');
   more.type = 'button';
@@ -19,7 +23,9 @@ function appendProgressiveGenreTags(container, genres, genreChipFor, initialCoun
       ? `Show ${Math.min(filmMetadataBatchSize, remaining)} more ${remaining === 1 ? 'genre' : 'genres'}; ${remaining} remaining`
       : 'Show fewer genres');
   };
-  more.setAttribute('aria-expanded', 'false');
+  const initiallyExpanded = visibleCount > 2;
+  container.classList.toggle('is-expanded', initiallyExpanded);
+  more.setAttribute('aria-expanded', String(initiallyExpanded));
   updateLabel();
   more.addEventListener('click', () => {
     if (visibleCount < genres.length) {
@@ -490,6 +496,13 @@ function ledgerRowFor(film) {
     image.loading = 'lazy';
     image.decoding = 'async';
     image.referrerPolicy = 'no-referrer';
+    image.addEventListener('error', () => {
+      const fallback = document.createElement('span');
+      fallback.className = 'ledger-poster-fallback';
+      fallback.setAttribute('role', 'img');
+      fallback.setAttribute('aria-label', `Poster unavailable for ${film.title}`);
+      poster.replaceChildren(fallback);
+    }, { once: true });
     poster.append(image);
     filmLayout.append(poster);
   }
@@ -605,11 +618,14 @@ function featuredFilmFor(film) {
     if (genreTags?.dataset.activeGenreFilters !== JSON.stringify(state.genres)) {
       const genres = [...new Set(Array.isArray(film.genres) ? film.genres.filter((genre) => typeof genre === 'string' && genre.trim()) : [])];
       if (genres.length) {
+        const visibleCount = genreTags?.classList.contains('is-expanded')
+          ? genreTags.querySelectorAll('.genre-tag[data-genre]').length
+          : 2;
         const nextGenreTags = document.createElement('div');
         nextGenreTags.className = 'genre-tags featured-film-genres';
         nextGenreTags.setAttribute('role', 'group');
         nextGenreTags.setAttribute('aria-label', `Genres for ${film.title}, ${genres.length} total`);
-        appendProgressiveGenreTags(nextGenreTags, genres, genreChipFor, 2, state.genres);
+        appendProgressiveGenreTags(nextGenreTags, genres, genreChipFor, visibleCount, state.genres);
         genreTags?.replaceWith(nextGenreTags);
       } else {
         genreTags?.remove();

@@ -9,7 +9,7 @@ import { countCountriesAndDecades, countGenres, countSourceLists } from './facet
 import { createProgrammePrinter } from './print-programme.js';
 import { createLocalPreferences } from './local-preferences.js';
 import { compareRelevance } from './catalog.js';
-import { createFilmNavigation, filmDetailUrl } from './film-navigation.js';
+import { createFilmNavigation, entryMetadata, filmDetailUrl } from './film-navigation.js';
 import { updateEditionFreshness } from './edition-freshness.js';
 import { downloadCatalogueCsv } from './catalogue-download.js';
 import { bindSavedViewControls } from './saved-views.js';
@@ -1973,7 +1973,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
   loadMoreButton.hidden = matching.length <= shown.length;
   if (!loadMoreButton.hidden) {
     const remaining = matching.length - shown.length;
-    loadMoreButton.textContent = `Show ${Math.min(40, remaining)} more films · ${remaining} left`;
+    loadMoreButton.textContent = `Show ${Math.min(40, remaining)} more films · ${new Intl.NumberFormat().format(remaining)} left`;
   }
   updateBackToFiltersVisibility();
   const resultAnnouncement = document.querySelector('#results-announcement');
