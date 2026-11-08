@@ -1,0 +1,61 @@
+
+> check:stress
+> node scripts/ui-stress-scan.mjs
+
+320/demo: passed
+320/worst: passed
+320/empty: passed
+320/one: passed
+320/100000: passed
+1440/demo: passed
+1440/worst: passed
+1440/empty: passed
+1440/one: passed
+1440/100000: passed
+2560/demo: passed
+2560/worst: passed
+2560/empty: passed
+2560/one: passed
+2560/100000: passed
+200-reflow/demo: passed
+200-reflow/worst: passed
+200-reflow/empty: passed
+200-reflow/one: passed
+200-reflow/100000: passed
+dark-320/demo: passed
+dark-320/worst: passed
+dark-320/empty: passed
+dark-320/one: passed
+dark-320/100000: passed
+text-200/demo: passed
+text-200/worst: passed
+text-200/empty: passed
+text-200/one: passed
+text-200/100000: passed
+rtl-320/demo: passed
+rtl-320/worst: passed
+rtl-320/empty: passed
+rtl-320/one: passed
+rtl-320/100000: passed
+Background ranking refresh preserves reading content, focus, and position: passed
+320: hover, fallback, fresh-dialog, country, future-date and singular regressions passed
+1440: hover, fallback, fresh-dialog, country, future-date and singular regressions passed
+2560: hover, fallback, fresh-dialog, country, future-date and singular regressions passed
+720: hover, fallback, fresh-dialog, country, future-date and singular regressions passed
+dark: hover, fallback, fresh-dialog, country, future-date and singular regressions passed
+text200: hover, fallback, fresh-dialog, country, future-date and singular regressions passed
+rtl: hover, fallback, fresh-dialog, country, future-date and singular regressions passed
+Single remaining film and full-ranking download labels passed
+Failed poster, successful retry, superseded selection, and closed-viewer races passed
+320: saved-view capacity, replacement/undo and missing-poster transitions passed
+1440: saved-view capacity, replacement/undo and missing-poster transitions passed
+2560: saved-view capacity, replacement/undo and missing-poster transitions passed
+720: saved-view capacity, replacement/undo and missing-poster transitions passed
+dark: saved-view capacity, replacement/undo and missing-poster transitions passed
+text200: saved-view capacity, replacement/undo and missing-poster transitions passed
+rtl: saved-view capacity, replacement/undo and missing-poster transitions passed
+Compact and Reader print scores retain every digit inside the printable layout
+Compact and Reader: full unbroken titles, original titles, credits, synopsis excerpt and search context fit
+Unicode/date contracts, legacy source provenance/search, and light/dark print contrast passed
+Search headings and Reader excerpts preserve boundary emoji without lone surrogates
+R2 poster failure focus restoration and normal opener return passed

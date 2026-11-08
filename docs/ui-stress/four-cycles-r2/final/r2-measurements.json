@@ -1,0 +1,74 @@
+[
+  {
+    "width": 320,
+    "removedOpenerFallsBackToBrowse": true,
+    "connectedOpenerRestored": true
+  },
+  {
+    "width": 1440,
+    "removedOpenerFallsBackToBrowse": true,
+    "connectedOpenerRestored": true
+  },
+  {
+    "width": 320,
+    "languageHeading": true,
+    "languageAnnouncement": true,
+    "unknownLanguage": true,
+    "singularFallback": true
+  },
+  {
+    "width": 1440,
+    "languageHeading": true,
+    "languageAnnouncement": true,
+    "unknownLanguage": true,
+    "singularFallback": true
+  },
+  {
+    "width": 320,
+    "retiredSourceVisibleRemovable": true
+  },
+  {
+    "width": 320,
+    "crossTabAction": "apply",
+    "identityPreserved": true
+  },
+  {
+    "width": 320,
+    "crossTabAction": "delete",
+    "identityPreserved": true
+  },
+  {
+    "width": 320,
+    "crossTabAction": "removed",
+    "identityPreserved": true
+  },
+  {
+    "width": 1440,
+    "retiredSourceVisibleRemovable": true
+  },
+  {
+    "width": 1440,
+    "crossTabAction": "apply",
+    "identityPreserved": true
+  },
+  {
+    "width": 1440,
+    "crossTabAction": "delete",
+    "identityPreserved": true
+  },
+  {
+    "width": 1440,
+    "crossTabAction": "removed",
+    "identityPreserved": true
+  },
+  {
+    "width": 320,
+    "distinctRankingUrlPreservesIdentity": true,
+    "matchedMetadataRetained": true
+  },
+  {
+    "width": 1440,
+    "distinctRankingUrlPreservesIdentity": true,
+    "matchedMetadataRetained": true
+  }
+]

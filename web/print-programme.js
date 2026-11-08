@@ -1,3 +1,4 @@
+import { sourceListLabel } from './source-list-label.js';
 import { graphemePrefix } from './display-text.js';
 
 export function createProgrammePrinter(dependencies) {
@@ -25,7 +26,7 @@ export function createProgrammePrinter(dependencies) {
     const activeFilters = [
       state.filter === 'all' ? '' : `${state.filter} films`,
       state.directors.length ? `directors: ${state.directors.join(' / ')}` : '',
-      state.sourceLists.length ? `liked lists: ${state.sourceLists.map((url) => availableSourceLists.find((item) => item.url === url)?.label).filter(Boolean).join(' / ')}` : '',
+      state.sourceLists.length ? `liked lists: ${state.sourceLists.map((url) => sourceListLabel(url, availableSourceLists)).join(' / ')}` : '',
       state.country ? `country: ${state.country}` : '',
       state.language ? `original language: ${state.language === 'unknown' ? 'unknown' : languageNameFor(state.language)}` : '',
       state.decade !== '' ? `decade: ${state.decade}s` : '',

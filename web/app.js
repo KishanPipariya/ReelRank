@@ -1,3 +1,4 @@
+import { sourceListLabel } from './source-list-label.js';
 import { graphemePrefix } from './display-text.js';
 import { programmeShare } from './programme-share.js';
 import { buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, filmDecade, matchesFilm } from './catalog.js';
@@ -1092,7 +1093,7 @@ function updateBackToFiltersVisibility() {
     `${filterLabel} filter`,
     state.genres.length ? `genres ${state.genres.join(' and ')}` : '',
     state.directors.length ? `directors ${state.directors.join(' or ')}` : '',
-    state.sourceLists.length ? `source lists ${state.sourceLists.map((url) => availableSourceLists.find((item) => item.url === url)?.label).filter(Boolean).join(' or ')}` : '',
+    state.sourceLists.length ? `source lists ${state.sourceLists.map((url) => sourceListLabel(url, availableSourceLists)).join(' or ')}` : '',
     state.country ? `country ${state.country}` : '',
     state.language ? `original language ${languageLabel(state.language === 'unknown' ? '' : state.language)}` : '',
     state.decade !== '' ? `decade ${state.decade}s` : '',
@@ -1552,13 +1553,14 @@ function programmeHeadingFor(query, defaultRankedView, matching) {
   if (state.directors.length > 1) return { eyebrow: 'Director selection', title: `${state.directors.length} selected directors` };
   if (state.sourceLists.length === 1) {
     const sourceList = availableSourceLists.find((item) => item.url === state.sourceLists[0]);
-    if (sourceList) return { eyebrow: 'From a liked list', title: sourceList.label };
+    return { eyebrow: sourceList ? 'From a liked list' : 'Unavailable source list', title: sourceListLabel(state.sourceLists[0], availableSourceLists) };
   }
   if (state.sourceLists.length > 1) return { eyebrow: 'Source-list selection', title: `${state.sourceLists.length} selected lists` };
   if (state.country && state.decade !== '') {
     return { eyebrow: 'Films by country and decade', title: `${state.country} · ${state.decade}s` };
   }
   if (state.country) return { eyebrow: 'Films by country', title: state.country };
+  if (state.language) return { eyebrow: 'Films by original language', title: state.language === 'unknown' ? 'Unknown language' : languageNameFor(state.language) };
   if (state.decade !== '') return { eyebrow: 'Films by decade', title: `${state.decade}s` };
   if (state.runtime) {
     const title = state.runtime === 'under-90' ? 'Under 90 minutes' : state.runtime === '90-120' ? '90–120 minutes' : 'Over 120 minutes';
@@ -1577,7 +1579,7 @@ function programmeHeadingFor(query, defaultRankedView, matching) {
   if (state.sort === 'year-newest') return { eyebrow: 'Sorted by year', title: 'Newest first' };
   if (state.sort === 'year-oldest') return { eyebrow: 'Sorted by year', title: 'Oldest first' };
   if (state.sort === 'title') return { eyebrow: 'Sorted by title', title: 'A–Z' };
-  return { eyebrow: 'Current selection', title: `${matching.length.toLocaleString()} films` };
+  return { eyebrow: 'Current selection', title: `${matching.length.toLocaleString()} ${matching.length === 1 ? 'film' : 'films'}` };
 }
 
 const printProgramme = createProgrammePrinter({
@@ -1963,7 +1965,7 @@ async function render({ sortGenresOnOpen = false } = {}) {
   }
   updateBackToFiltersVisibility();
   const resultAnnouncement = document.querySelector('#results-announcement');
-  const filterDescription = [state.filter === 'all' ? '' : `${state.filter} only`, state.genres.length ? `genres: ${state.genres.join(' and ')}` : '', state.directors.length ? `directors: ${state.directors.join(' or ')}` : '', state.sourceLists.length ? `source lists: ${state.sourceLists.map((url) => availableSourceLists.find((sourceList) => sourceList.url === url)?.label).filter(Boolean).join(' or ')}` : '', state.country ? `country: ${state.country}` : '', state.decade !== '' ? `decade: ${state.decade}s` : '', state.runtime ? `runtime: ${state.runtime === 'under-90' ? 'under 90 minutes' : state.runtime === '90-120' ? '90 to 120 minutes' : 'over 120 minutes'}` : ''].filter(Boolean).join(', ');
+  const filterDescription = [state.filter === 'all' ? '' : `${state.filter} only`, state.genres.length ? `genres: ${state.genres.join(' and ')}` : '', state.directors.length ? `directors: ${state.directors.join(' or ')}` : '', state.sourceLists.length ? `source lists: ${state.sourceLists.map((url) => sourceListLabel(url, availableSourceLists)).join(' or ')}` : '', state.country ? `country: ${state.country}` : '', state.language ? `original language: ${state.language === 'unknown' ? 'unknown' : languageNameFor(state.language)}` : '', state.decade !== '' ? `decade: ${state.decade}s` : '', state.runtime ? `runtime: ${state.runtime === 'under-90' ? 'under 90 minutes' : state.runtime === '90-120' ? '90 to 120 minutes' : 'over 120 minutes'}` : ''].filter(Boolean).join(', ');
   const sortDescription = state.sort === 'rank' ? '' : `, sorted by ${sortSelect.options[sortSelect.selectedIndex].text}`;
   resultAnnouncement.textContent = `Showing ${shown.length} of ${matching.length} matching ${matching.length === 1 ? 'film' : 'films'}${filterDescription ? `, ${filterDescription}` : ''}${sortDescription}${query ? ` for ${searchInput.value.trim()}` : ''}.`;
   filmViews.refreshFilmNavigation();
@@ -2385,7 +2387,6 @@ document.addEventListener('pointerdown', (event) => {
   const eventPath = event.composedPath();
   if (genreFilter.open && !eventPath.includes(genreFilter)) genreFilter.open = false;
   if (sourceListFilter.open && !eventPath.includes(sourceListFilter)) sourceListFilter.open = false;
-  if (catalogueToolsDisclosure.open && !eventPath.includes(catalogueToolsDisclosure)) catalogueToolsDisclosure.open = false;
 });
 const savedViewsGroup = document.querySelector('#saved-views');
 loadMoreButton.addEventListener('click', () => {
@@ -2406,6 +2407,7 @@ backToFiltersButton.addEventListener('click', () => {
 window.addEventListener('scroll', updateBackToFiltersVisibility, { passive: true });
 document.addEventListener('click', (event) => {
   const eventPath = event.composedPath();
+  if (catalogueToolsDisclosure.open && !eventPath.includes(catalogueToolsDisclosure)) catalogueToolsDisclosure.open = false;
   if (catalogFilters.open && !eventPath.includes(catalogFilters)) catalogFilters.open = false;
   const presetStatusRegion = document.querySelector('#preset-status');
   document.querySelectorAll('.catalogue-tool-group[open]').forEach((disclosure) => {

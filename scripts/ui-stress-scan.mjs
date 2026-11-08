@@ -8,6 +8,7 @@ import { checkBoundaryRegressions } from './ui-boundary-regressions.mjs';
 import { checkPrintTextRegressions } from './ui-print-regressions.mjs';
 import { checkCrossBoundaryRegressions } from './ui-cross-boundary-regressions.mjs';
 import { checkUnicodeExcerptRegressions } from './ui-unicode-regressions.mjs';
+import { checkR2Regressions } from './ui-r2-regressions.mjs';
 
 const require = createRequire(import.meta.url);
 const baseUrl = process.env.SITE_URL || 'http://127.0.0.1:4173';
@@ -175,6 +176,7 @@ try {
   await checkPrintTextRegressions({ openFixture, baseUrl, outputDirectory });
   await checkCrossBoundaryRegressions({ openFixture, baseUrl, fixture, outputDirectory });
   await checkUnicodeExcerptRegressions({ openFixture, baseUrl, fixture, outputDirectory });
+  await checkR2Regressions({ openFixture, baseUrl, fixture, outputDirectory });
 } catch (error) {
   await activePage?.screenshot({ path: `${outputDirectory}/failure.png` }).catch(() => {});
   throw error;

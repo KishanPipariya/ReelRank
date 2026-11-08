@@ -1,0 +1,22 @@
+[
+  {
+    "width": 320,
+    "focus": {
+      "tag": "BODY",
+      "id": "",
+      "inFilm": false,
+      "openFilm": true
+    },
+    "triggerCount": 0
+  },
+  {
+    "width": 1440,
+    "focus": {
+      "tag": "BODY",
+      "id": "",
+      "inFilm": false,
+      "openFilm": true
+    },
+    "triggerCount": 0
+  }
+]

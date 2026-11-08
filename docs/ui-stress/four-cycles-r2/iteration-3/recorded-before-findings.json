@@ -1,0 +1,55 @@
+{
+  "source": "Recorded from the first browser audit tool output before cycle-3 edits; corresponding screenshots are alongside this file.",
+  "observations": [
+    {
+      "case": "retired-source",
+      "width": 320,
+      "chips": 0,
+      "status": "Applied “Retired festival”."
+    },
+    {
+      "case": "cross-tab-apply",
+      "width": 320,
+      "query": "Roma",
+      "status": "Applied “Later view”.",
+      "names": [
+        "Contact",
+        "Later view"
+      ]
+    },
+    {
+      "case": "cross-tab-delete",
+      "width": 320,
+      "query": "",
+      "status": "Deleted “Later view”.Undo",
+      "names": [
+        "Contact"
+      ]
+    },
+    {
+      "case": "retired-source",
+      "width": 1440,
+      "chips": 0,
+      "status": "Applied “Retired festival”."
+    },
+    {
+      "case": "cross-tab-apply",
+      "width": 1440,
+      "query": "Roma",
+      "status": "Applied “Later view”.",
+      "names": [
+        "Contact",
+        "Later view"
+      ]
+    },
+    {
+      "case": "cross-tab-delete",
+      "width": 1440,
+      "query": "",
+      "status": "Deleted “Later view”.Undo",
+      "names": [
+        "Contact"
+      ]
+    }
+  ]
+}

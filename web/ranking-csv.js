@@ -80,6 +80,7 @@ export function expandSnapshotWithRanking(snapshot, csvText) {
   if (required.some((name) => !column.has(name))) throw new Error('Full ranking CSV is missing required columns');
   if (header.length !== required.length || new Set(header).size !== header.length) throw new Error('Full ranking CSV has an unexpected column layout');
   if (rows.length !== snapshot.film_count) throw new Error('Full ranking CSV does not match this snapshot');
+  const titleYearCounts = new Map();
   const rankedRows = rows.map((row) => {
     if (row.length !== header.length) throw new Error('Full ranking CSV contains a row with missing or extra fields');
     const rankValue = readCell(row, column.get('Rank'));
@@ -96,7 +97,9 @@ export function expandSnapshotWithRanking(snapshot, csvText) {
     if (!safeFilmUrl(readCell(row, column.get('Letterboxd URI')))) throw new Error('Full ranking CSV contains an invalid Letterboxd film URL');
     const listUrls = readCell(row, column.get('List URLs')).trim().split(/\s+/).filter(Boolean);
     if (listUrls.some((url) => !safeListUrl(url))) throw new Error('Full ranking CSV contains an invalid source-list URL');
-    return { row, rank };
+    const titleYearKey = `${title}\u0000${year}`;
+    titleYearCounts.set(titleYearKey, (titleYearCounts.get(titleYearKey) || 0) + 1);
+    return { row, rank, titleYearKey };
   }).sort((left, right) => left.rank - right.rank);
   if (rankedRows.some(({ rank }, index) => rank !== index + 1)) throw new Error('Full ranking CSV ranks are incomplete or duplicated');
 
@@ -104,16 +107,18 @@ export function expandSnapshotWithRanking(snapshot, csvText) {
   const detailedByTitleYear = new Map();
   for (const film of snapshot.films) {
     const url = safeFilmUrl(film.letterboxd_url);
-    if (url) detailedByUrl.set(url, film);
-    detailedByTitleYear.set(`${film.letterboxd_title || film.title}\u0000${film.letterboxd_year || film.year}`, film);
+    if (url) detailedByUrl.set(url.replace('https://www.letterboxd.com/', 'https://letterboxd.com/'), film);
+    const key = `${(film.letterboxd_title || film.title).trim()}\u0000${(film.letterboxd_year || film.year).trim()}`;
+    detailedByTitleYear.set(key, detailedByTitleYear.has(key) ? null : film);
   }
 
-  const films = rankedRows.map(({ row }) => {
+  const films = rankedRows.map(({ row, titleYearKey }) => {
     const title = readCell(row, column.get('Title'));
     const year = readCell(row, column.get('Year')).trim();
     const letterboxdUrl = safeFilmUrl(readCell(row, column.get('Letterboxd URI')));
-    const matched = (letterboxdUrl && detailedByUrl.get(letterboxdUrl))
-      || detailedByTitleYear.get(`${title}\u0000${year}`);
+    const legacy = detailedByTitleYear.get(titleYearKey);
+    const matched = detailedByUrl.get(letterboxdUrl.replace('https://www.letterboxd.com/', 'https://letterboxd.com/'))
+      || (titleYearCounts.get(titleYearKey) === 1 && legacy && !safeFilmUrl(legacy.letterboxd_url) ? legacy : null);
     const lists = [...new Set(readCell(row, column.get('List URLs')).split(/\s+/).map(safeListUrl).filter(Boolean))];
     const film = matched ? { ...matched } : {
       title,

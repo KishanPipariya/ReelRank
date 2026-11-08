@@ -72,6 +72,7 @@ let posterGalleryRequest = 0;
 let posterGalleryDataPromise;
 let posterPreviewRequest = 0;
 let activePosterFilm = null;
+let posterViewerOpener = null;
 let retryPosterPreview = null;
 const featuredFilmByFilm = new WeakMap();
 function posterVariant(url, size) {
@@ -131,6 +132,7 @@ function openPosterViewer(film, showGallery = false) {
   const request = ++posterGalleryRequest;
   posterPreviewRequest += 1;
   activePosterFilm = film;
+  posterViewerOpener = document.activeElement;
   retryPosterPreview = null;
   posterViewerRetry.hidden = true;
   posterViewerFeedback.textContent = '';
@@ -260,6 +262,14 @@ posterViewerDialog.addEventListener('close', () => {
   retryPosterPreview = null;
   posterViewerRetry.hidden = true;
   posterViewerImage.parentElement.removeAttribute('aria-busy');
+  if (filmDetailDialog.open) {
+    const opener = posterViewerOpener;
+    const target = opener?.isConnected && !opener.disabled && filmDetailDialog.contains(opener)
+      ? opener
+      : filmDetailContent.querySelector('.film-detail-browse-posters') || filmDetailDialog.querySelector('#film-detail-close');
+    target?.focus({ preventScroll: true });
+  }
+  posterViewerOpener = null;
 });
 posterViewerClose.addEventListener('click', () => posterViewerDialog.close());
 posterViewerDialog.addEventListener('click', (event) => {

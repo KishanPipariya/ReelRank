@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "username": "fixture-viewer",
+  "profile_url": "https://letterboxd.com/fixture-viewer/",
+  "refreshed_at": "2026-10-25T00:00:00Z",
+  "list_count": 5,
+  "film_count": 2,
+  "displayed_film_count": 1,
+  "unwatched_count": 1,
+  "displayed_unwatched_count": 0,
+  "tmdb_match_count": 1,
+  "films": [
+    {
+      "title": "Home",
+      "year": "2019",
+      "letterboxd_title": "Home",
+      "letterboxd_year": "2019",
+      "letterboxd_url": "https://letterboxd.com/film/home-2019/",
+      "poster_url": "",
+      "backdrop_url": "",
+      "overview": "First-only restoration synopsis: Georgian animation.",
+      "tmdb_url": "https://www.themoviedb.org/movie/91234",
+      "watched": true,
+      "liked_in": 5,
+      "genres": [
+        "Drama",
+        "Thriller",
+        "Mystery"
+      ],
+      "lists": [
+        "https://letterboxd.com/fixture/list/halliwells-top-1000-the-ultimate-movie-countdown-and-criterion-watchlist/"
+      ],
+      "directors": [
+        "Mariam Kapanadze"
+      ],
+      "countries": [
+        "United Kingdom"
+      ],
+      "original_title": "Home",
+      "original_language": "en",
+      "runtime_minutes": 104,
+      "tmdb_id": 91234,
+      "tmdb_rating": null,
+      "metadata_source": "",
+      "metadata_fetched_at": "",
+      "metadata_status": "unavailable"
+    }
+  ],
+  "ranking_csv_url": "/data/ranking-r2.csv"
+}

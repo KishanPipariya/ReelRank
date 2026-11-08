@@ -1,0 +1,26 @@
+[
+  {
+    "width": 320,
+    "removedOpenerFallsBackToBrowse": true,
+    "connectedOpenerRestored": true
+  },
+  {
+    "width": 1440,
+    "removedOpenerFallsBackToBrowse": true,
+    "connectedOpenerRestored": true
+  },
+  {
+    "width": 320,
+    "languageHeading": true,
+    "languageAnnouncement": true,
+    "unknownLanguage": true,
+    "singularFallback": true
+  },
+  {
+    "width": 1440,
+    "languageHeading": true,
+    "languageAnnouncement": true,
+    "unknownLanguage": true,
+    "singularFallback": true
+  }
+]

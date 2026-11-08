@@ -77,11 +77,19 @@ export function bindSavedViewControls(dependencies) {
     return Array.isArray(items) ? items.filter((item) => item && typeof item.name === 'string' && item.state) : [];
   }
 
+  function selectedPresetName() {
+    return presetList.selectedOptions[0]?.dataset.presetName || '';
+  }
+
   function renderPresets() {
-    const current = presetList.value;
+    const current = selectedPresetName().toLocaleLowerCase();
     presetList.replaceChildren(new Option('Choose a saved view', ''));
-    savedPresets().forEach((preset, index) => presetList.add(new Option(preset.name, String(index))));
-    if ([...presetList.options].some((item) => item.value === current)) presetList.value = current;
+    savedPresets().forEach((preset, index) => {
+      const option = new Option(preset.name, String(index));
+      option.dataset.presetName = preset.name;
+      presetList.add(option);
+      if (current && preset.name.toLocaleLowerCase() === current) presetList.value = option.value;
+    });
     syncPresetActions();
   }
 
@@ -133,8 +141,10 @@ export function bindSavedViewControls(dependencies) {
 
   document.querySelector('#preset-apply').addEventListener('click', () => {
     if (!presetList.value) { showStatus('Choose a saved view to apply.'); return; }
-    const preset = savedPresets()[Number(presetList.value)];
-    if (!preset) return;
+    const name = selectedPresetName().toLocaleLowerCase();
+    const preset = savedPresets().find((item) => item.name.toLocaleLowerCase() === name);
+    if (!preset) { renderPresets(); showStatus('That saved view is no longer available. Choose another saved view.', null); return; }
+    renderPresets();
     Object.assign(state, preset.state);
     searchInput.value = state.query || '';
     state.visibleLimit = 40;
@@ -144,10 +154,11 @@ export function bindSavedViewControls(dependencies) {
 
   document.querySelector('#preset-delete').addEventListener('click', () => {
     if (!presetList.value) { showStatus('Choose a saved view to delete.'); return; }
-    const index = Number(presetList.value);
+    const name = selectedPresetName().toLocaleLowerCase();
     const previousPreferences = readPreferences();
     const presets = savedPresets();
-    if (!Number.isInteger(index) || !presets[index]) return;
+    const index = presets.findIndex((item) => item.name.toLocaleLowerCase() === name);
+    if (index < 0) { renderPresets(); showStatus('That saved view is no longer available. Choose another saved view.', null); return; }
     const [removed] = presets.splice(index, 1);
     if (!savePreferences({ presets })) { showStatus(`Could not delete “${removed.name}” in this browser.`); return; }
     renderPresets();

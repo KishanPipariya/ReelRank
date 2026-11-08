@@ -1,3 +1,4 @@
+import { expandSnapshotWithRanking } from '../web/ranking-csv.js';
 import { graphemePrefix } from '../web/display-text.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -346,4 +347,23 @@ test('display prefixes preserve emoji, combining marks and joined graphemes at c
   assert.equal(graphemePrefix('Plain text', 35), 'Plain text');
   assert.equal(graphemePrefix('Plain text', 0), '');
   assert.equal(graphemePrefix('A'.repeat(259) + '🎬' + '続きを読む', 260), 'A'.repeat(259) + '🎬');
+});
+
+
+test('ranking metadata requires URL identity or an unambiguous URI-less legacy detail', () => {
+  const detail = { ...fixture.films[0], title: 'Home', letterboxd_title: 'Home', year: '2019', letterboxd_year: '2019', letterboxd_url: 'https://letterboxd.com/film/home-2019/', overview: 'First-only restoration synopsis', directors: ['Mariam Kapanadze'], tmdb_id: 91234 };
+  const other = { ...detail, letterboxd_url: 'https://letterboxd.com/film/home-2019-1/' };
+  const snapshot = { ...fixture, films: [detail], film_count: 2 };
+  const csv = catalogueCsv([detail, other]);
+  const merged = expandSnapshotWithRanking(snapshot, csv);
+  assert.equal(merged[0].overview, detail.overview);
+  assert.equal(merged[1].overview, '');
+  assert.equal(merged[1].tmdb_id, undefined);
+  assert.deepEqual(merged[1].directors || [], []);
+  const alias = { ...snapshot, films: [{ ...detail, letterboxd_url: 'https://www.letterboxd.com/film/home-2019' }] };
+  assert.equal(expandSnapshotWithRanking(alias, csv)[0].overview, detail.overview);
+  const legacy = { ...snapshot, films: [{ ...detail, letterboxd_url: '' }] };
+  assert.ok(expandSnapshotWithRanking(legacy, csv).every((film) => film.overview === ''));
+  const unique = { ...legacy, film_count: 1 };
+  assert.equal(expandSnapshotWithRanking(unique, catalogueCsv([detail]))[0].overview, detail.overview);
 });

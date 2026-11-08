@@ -1,3 +1,5 @@
+import { sourceListLabel } from './source-list-label.js';
+
 export function createFilterControls({ state, sources, elements, actions }) {
   function appendFacetChip(container, label, ariaLabel, onRemove) {
     container.hidden = false;
@@ -40,13 +42,12 @@ export function createFilterControls({ state, sources, elements, actions }) {
       return;
     }
     state.sourceLists.forEach((url) => {
-      const item = sources().find((source) => source.url === url);
-      if (!item) return;
+      const label = sourceListLabel(url, sources());
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'selected-genre-chip';
-      chip.textContent = `${item.label} ×`;
-      chip.setAttribute('aria-label', `Remove ${item.label} source list filter`);
+      chip.textContent = `${label} ×`;
+      chip.setAttribute('aria-label', `Remove ${label} source list filter`);
       chip.addEventListener('click', () => actions.toggleSourceList(url));
       elements.selectedSourceLists.append(chip);
     });
@@ -69,16 +70,14 @@ export function createFilterControls({ state, sources, elements, actions }) {
     elements.activeSourceListFilters.replaceChildren();
     elements.activeSourceListFilters.hidden = state.sourceLists.length === 0;
     state.sourceLists.forEach((url) => {
-      const item = sources().find((source) => source.url === url);
-      if (item) {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'active-genre-chip active-source-list-chip';
-        chip.textContent = `List: ${item.label} ×`;
-        chip.setAttribute('aria-label', `Remove ${item.label} source list filter`);
-        chip.addEventListener('click', () => actions.toggleSourceList(url));
-        elements.activeSourceListFilters.append(chip);
-      }
+      const label = sourceListLabel(url, sources());
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'active-genre-chip active-source-list-chip';
+      chip.textContent = `List: ${label} ×`;
+      chip.setAttribute('aria-label', `Remove ${label} source list filter`);
+      chip.addEventListener('click', () => actions.toggleSourceList(url));
+      elements.activeSourceListFilters.append(chip);
     });
     if (state.country) appendFacetChip(elements.activeGenreFilters, `Country: ${state.country}`, 'Remove production country filter', () => actions.setCountry(''));
     if (state.language) appendFacetChip(elements.activeGenreFilters, `Language: ${actions.languageLabel(state.language)}`, 'Remove original language filter', () => actions.setLanguage(''));
