@@ -406,17 +406,7 @@ function refreshFilmNavigation() {
   }
 }
 
-function renderFilmDetails(film, retainFocus = false) {
-  detailFilm = film;
-  detailNavigationFilms = getCurrentMatchingFilms();
-  onFilmDetailChange(film);
-  const films = getFilms();
-  filmDetailContent.replaceChildren();
-  const layout = document.createElement('div');
-  layout.className = 'film-detail-layout';
-  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
-  const posterColumn = document.createElement('div');
-  posterColumn.className = 'film-detail-poster-column';
+function detailPosterFor(film, posterUrl) {
   const poster = document.createElement(posterUrl ? 'button' : 'div');
   poster.className = `film-detail-poster${posterUrl ? ' film-detail-poster-trigger' : ''}`;
   if (posterUrl) {
@@ -429,7 +419,7 @@ function renderFilmDetails(film, retainFocus = false) {
     image.alt = '';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
-      poster.replaceWith(posterFallbackFor(film, 'film-detail-poster poster-fallback film-detail-poster-fallback'));
+      poster.replaceWith(detailPosterFor(film, ''));
     }, { once: true });
     poster.append(image);
     const cue = document.createElement('span');
@@ -440,11 +430,26 @@ function renderFilmDetails(film, retainFocus = false) {
   } else {
     poster.append(posterFallbackFor(film, 'poster-fallback film-detail-poster-fallback'));
   }
+  return poster;
+}
+
+function renderFilmDetails(film, retainFocus = false) {
+  detailFilm = film;
+  detailNavigationFilms = getCurrentMatchingFilms();
+  onFilmDetailChange(film);
+  const films = getFilms();
+  filmDetailContent.replaceChildren();
+  const layout = document.createElement('div');
+  layout.className = 'film-detail-layout';
+  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
+  const posterColumn = document.createElement('div');
+  posterColumn.className = 'film-detail-poster-column';
+  const poster = detailPosterFor(film, posterUrl);
   posterColumn.append(poster);
   if (Number.isSafeInteger(film.tmdb_id)) {
     const galleryButton = document.createElement('button');
     galleryButton.type = 'button';
-    galleryButton.className = 'film-detail-gallery-button';
+    galleryButton.className = 'film-detail-gallery-button film-detail-browse-posters';
     galleryButton.textContent = posterUrl ? 'View other posters' : 'Browse posters';
     galleryButton.setAttribute('aria-label', `${posterUrl ? 'View other posters for' : 'Browse posters for'} ${film.title}`);
     galleryButton.addEventListener('click', () => openPosterViewer(film, true));
@@ -721,6 +726,19 @@ function ledgerRowsFor(shownFilms) {
 }
 
 
+function featuredPosterMediaFor(film, posterUrl) {
+  if (!posterUrl) return posterFallbackFor(film);
+  const image = document.createElement('img');
+  image.src = posterUrl;
+  responsivePosterAttrs(image, posterUrl, '(max-width: 640px) 32vw, 360px');
+  image.alt = `Poster for ${film.title}`;
+  image.loading = 'eager';
+  image.decoding = 'async';
+  image.referrerPolicy = 'no-referrer';
+  image.addEventListener('error', () => image.replaceWith(posterFallbackFor(film)), { once: true });
+  return image;
+}
+
 function featuredFilmFor(film) {
   const cached = featuredFilmByFilm.get(film);
   if (cached) {
@@ -777,21 +795,7 @@ function featuredFilmFor(film) {
   poster.className = 'featured-film-poster';
   poster.setAttribute('aria-label', `Read details for ${film.title}, overall rank ${rankNumber}`);
   poster.addEventListener('click', (event) => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); filmDetailButtonFor(film).click(); });
-  if (posterUrl) {
-    const image = document.createElement('img');
-    image.src = posterUrl;
-    responsivePosterAttrs(image, posterUrl, '(max-width: 640px) 32vw, 360px');
-    image.alt = `Poster for ${film.title}`;
-    image.loading = 'eager';
-    image.decoding = 'async';
-    image.referrerPolicy = 'no-referrer';
-    image.addEventListener('error', () => {
-      image.replaceWith(posterFallbackFor(film));
-    }, { once: true });
-    poster.append(image);
-  } else {
-    poster.append(posterFallbackFor(film));
-  }
+  poster.append(featuredPosterMediaFor(film, posterUrl));
   const rank = document.createElement('span');
   rank.className = 'rank-chip';
   rank.textContent = state.sort === 'rank' ? `No. ${rankNumber}` : `Overall ${rankNumber}`;
@@ -866,13 +870,19 @@ function featuredFilmFor(film) {
 }
 
 function updatePosterForFilm(film, url) {
-  const feature = featuredFilmByFilm.get(film);
-  const image = feature?.querySelector('.featured-film-poster img');
-  if (image && url) { image.src = url; responsivePosterAttrs(image, url, '(max-width: 640px) 32vw, 360px'); }
-  else if (image) image.replaceWith(posterFallbackFor(film, 'featured-film-poster poster-fallback'));
-  const detailImage = filmDetailContent.querySelector('.film-detail-poster img');
-  if (detailImage && url) { detailImage.src = url; responsivePosterAttrs(detailImage, url, '(max-width: 640px) 30vw, 180px'); }
-  else if (detailImage) detailImage.replaceWith(posterFallbackFor(film, 'film-detail-poster poster-fallback'));
+  const posterUrl = safeUrl(url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
+  const poster = featuredFilmByFilm.get(film)?.querySelector('.featured-film-poster');
+  if (poster) {
+    poster.querySelector('img, .poster-fallback')?.remove();
+    poster.prepend(featuredPosterMediaFor(film, posterUrl));
+  }
+  if (detailFilm !== film) return;
+  filmDetailContent.querySelector('.film-detail-poster')?.replaceWith(detailPosterFor(film, posterUrl));
+  const galleryButton = filmDetailContent.querySelector('.film-detail-browse-posters');
+  if (galleryButton) {
+    galleryButton.textContent = posterUrl ? 'View other posters' : 'Browse posters';
+    galleryButton.setAttribute('aria-label', `${posterUrl ? 'View other posters for' : 'Browse posters for'} ${film.title}`);
+  }
 }
 
   return { openFilmDetails, refreshFilmNavigation, ledgerRowsFor, featuredFilmFor, updatePosterForFilm };

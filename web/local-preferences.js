@@ -1,3 +1,5 @@
+export const savedViewLimit = 100;
+
 export const preferenceKey = 'reelrank.preferences.v1';
 export const preferenceUndoKey = 'reelrank.preferences.undo.v1';
 
@@ -16,7 +18,7 @@ export function validatePreferences(value) {
   if (value.posterChoices && typeof value.posterChoices === 'object' && !Array.isArray(value.posterChoices)) {
     result.posterChoices = Object.fromEntries(Object.entries(value.posterChoices).filter(([id, url]) => /^\d+$/.test(id) && typeof url === 'string' && /^https:\/\/image\.tmdb\.org\/t\/p\/(?:w\d+|original)\//.test(url)));
   }
-  if (Array.isArray(value.presets)) result.presets = value.presets.slice(0, 100).filter((preset) => {
+  if (Array.isArray(value.presets)) result.presets = value.presets.slice(0, savedViewLimit).filter((preset) => {
     const saved = preset?.state;
     return preset && typeof preset === 'object' && !Array.isArray(preset) && typeof preset.name === 'string'
       && preset.name.trim() && preset.name.length <= 48 && saved && typeof saved === 'object' && !Array.isArray(saved)
@@ -77,7 +79,7 @@ export function createLocalPreferences(storage) {
 
 export function parsePresetImport(value) {
   const presets = Array.isArray(value) ? value : value && Array.isArray(value.presets) ? value.presets : null;
-  if (!presets || presets.length > 100) return null;
+  if (!presets || presets.length > savedViewLimit) return null;
   const valid = validatePreferences({ presets }).presets || [];
   if (valid.length !== presets.length) return null;
   return valid;

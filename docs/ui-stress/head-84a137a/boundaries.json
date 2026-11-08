@@ -1,0 +1,200 @@
+[
+  {
+    "case": "101st-preset",
+    "width": 320,
+    "beforeOptions": 101,
+    "afterOptions": 101,
+    "status": "Saved “Winter programme — restored films”.Undo",
+    "newNameInOptions": false,
+    "rawStoredCount": 101,
+    "errors": []
+  },
+  {
+    "case": "101st-preset-reload",
+    "width": 320,
+    "newNameInOptions": false,
+    "count": 101
+  },
+  {
+    "case": "101st-preset",
+    "width": 1440,
+    "beforeOptions": 101,
+    "afterOptions": 101,
+    "status": "Saved “Winter programme — restored films”.Undo",
+    "newNameInOptions": false,
+    "rawStoredCount": 101,
+    "errors": []
+  },
+  {
+    "case": "101st-preset-reload",
+    "width": 1440,
+    "newNameInOptions": false,
+    "count": 101
+  },
+  {
+    "case": "fallback-to-image",
+    "width": 320,
+    "stored": "https://image.tmdb.org/t/p/w500/head-audit-valid-poster.jpg",
+    "detailImages": 0,
+    "detailFallbacks": 1
+  },
+  {
+    "case": "featured-after-save",
+    "width": 320,
+    "images": 0,
+    "fallbacks": 1
+  },
+  {
+    "case": "featured-after-reload",
+    "width": 320,
+    "images": 1
+  },
+  {
+    "case": "reset-to-no-image",
+    "width": 320,
+    "images": 0,
+    "enlargeTrigger": 1,
+    "cue": "Enlarge poster"
+  },
+  {
+    "case": "reset-empty-viewer",
+    "width": 320,
+    "imageHidden": true,
+    "feedback": "",
+    "galleryStatus": "",
+    "zoomDisabled": true,
+    "errors": []
+  },
+  {
+    "case": "fallback-to-image",
+    "width": 1440,
+    "stored": "https://image.tmdb.org/t/p/w500/head-audit-valid-poster.jpg",
+    "detailImages": 0,
+    "detailFallbacks": 1
+  },
+  {
+    "case": "featured-after-save",
+    "width": 1440,
+    "images": 0,
+    "fallbacks": 1
+  },
+  {
+    "case": "featured-after-reload",
+    "width": 1440,
+    "images": 1
+  },
+  {
+    "case": "reset-to-no-image",
+    "width": 1440,
+    "images": 0,
+    "enlargeTrigger": 1,
+    "cue": "Enlarge poster"
+  },
+  {
+    "case": "reset-empty-viewer",
+    "width": 1440,
+    "imageHidden": true,
+    "feedback": "",
+    "galleryStatus": "",
+    "zoomDisabled": true,
+    "errors": []
+  },
+  {
+    "case": "print-score",
+    "format": "compact",
+    "geometry": {
+      "row": {
+        "x": 0,
+        "y": 696.59375,
+        "width": 696,
+        "height": 135,
+        "top": 696.59375,
+        "right": 696,
+        "bottom": 831.59375,
+        "left": 0
+      },
+      "score": {
+        "x": 578,
+        "y": 700.59375,
+        "width": 118,
+        "height": 33,
+        "top": 700.59375,
+        "right": 696,
+        "bottom": 733.59375,
+        "left": 578
+      },
+      "number": {
+        "x": 578,
+        "y": 700.59375,
+        "width": 151.03125,
+        "height": 21,
+        "top": 700.59375,
+        "right": 729.03125,
+        "bottom": 721.59375,
+        "left": 578
+      },
+      "details": {
+        "x": 57,
+        "y": 700.59375,
+        "width": 513,
+        "height": 126,
+        "top": 700.59375,
+        "right": 570,
+        "bottom": 826.59375,
+        "left": 57
+      },
+      "text": "9,007,199,254,740,991 list appearances",
+      "scoreClient": 118,
+      "scoreScroll": 151
+    }
+  },
+  {
+    "case": "print-score",
+    "format": "reader",
+    "geometry": {
+      "row": {
+        "x": 0,
+        "y": 554.625,
+        "width": 696,
+        "height": 175.78125,
+        "top": 554.625,
+        "right": 696,
+        "bottom": 730.40625,
+        "left": 0
+      },
+      "score": {
+        "x": 578,
+        "y": 562.625,
+        "width": 118,
+        "height": 37,
+        "top": 562.625,
+        "right": 696,
+        "bottom": 599.625,
+        "left": 578
+      },
+      "number": {
+        "x": 578,
+        "y": 566.625,
+        "width": 151.03125,
+        "height": 21,
+        "top": 566.625,
+        "right": 729.03125,
+        "bottom": 587.625,
+        "left": 578
+      },
+      "details": {
+        "x": 57,
+        "y": 562.625,
+        "width": 513,
+        "height": 112,
+        "top": 562.625,
+        "right": 570,
+        "bottom": 674.625,
+        "left": 57
+      },
+      "text": "9,007,199,254,740,991 list appearances",
+      "scoreClient": 118,
+      "scoreScroll": 151
+    }
+  }
+]

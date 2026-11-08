@@ -1,4 +1,4 @@
-import { parsePresetImport } from './local-preferences.js';
+import { parsePresetImport, savedViewLimit } from './local-preferences.js';
 
 export function bindSavedViewControls(dependencies) {
   const {
@@ -114,6 +114,11 @@ export function bindSavedViewControls(dependencies) {
     if (!name) { showStatus('Enter a name for this preset.'); presetName.focus(); return; }
     const previousPreferences = readPreferences();
     const presets = savedPresets().filter((preset) => preset.name.toLocaleLowerCase() !== name.toLocaleLowerCase());
+    if (presets.length >= savedViewLimit) {
+      showStatus(`You can save up to ${savedViewLimit} views. Delete a saved view or use an existing name to replace it.`);
+      presetName.focus();
+      return;
+    }
     presets.push({ name, state: capturePresetState() });
     if (!savePreferences({ presets })) { showStatus('Could not save this view in this browser.'); return; }
     renderPresets();
@@ -179,7 +184,7 @@ export function bindSavedViewControls(dependencies) {
         if (old >= 0) merged.splice(old, 1);
         merged.push(item);
       });
-      if (!savePreferences({ presets: merged.slice(-100) })) { showStatus('Could not save imported views in this browser.'); return; }
+      if (!savePreferences({ presets: merged.slice(-savedViewLimit) })) { showStatus('Could not save imported views in this browser.'); return; }
       renderPresets();
       presetList.value = '';
       syncPresetActions();
