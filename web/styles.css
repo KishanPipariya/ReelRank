@@ -1371,7 +1371,8 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
   @page { margin: 14mm 13mm; }
   body { margin: 0 !important; background: var(--color-fff) !important; color: var(--color-171a17) !important; }
   body > #setup-state, body > #site-shell { display: none !important; }
-  body > #print-programme, body > #print-programme[hidden] { width: 100%; display: block !important; color: var(--color-171a17) !important; font-family: var(--serif); }
+  body > #print-programme, body > #print-programme[hidden] { width: 100%; display: block !important; color: var(--color-171a17) !important; font-family: var(--serif); overflow-wrap: anywhere; }
+  .print-film-details, .print-film-synopsis { min-width: 0; }
   .print-programme-header { margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 2px solid var(--color-293a30); }
   .print-programme-header h1 { margin: 0; color: var(--color-20251f); font-family: var(--serif); font-size: 27pt; font-weight: 500; letter-spacing: -.04em; line-height: 1.1; }
   .print-programme-edition { margin: var(--space-2) 0 0; color: var(--color-454c44); font-family: var(--mono); font-size: 8pt; }
@@ -1384,9 +1385,9 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
   .print-year-films { margin: 0; padding: 0; list-style: none; }
   .print-film-entry { display: grid; grid-template-columns: 49px minmax(0, 1fr) minmax(118px, max-content); align-items: baseline; gap: var(--space-2); padding: var(--space-1) 0; border-bottom: 1px solid var(--color-e0e2dc); break-inside: avoid; }
   .print-film-number { color: var(--color-8b5038); font-family: var(--mono); font-size: 7pt; }
-  .print-film-details h3 { display: inline; margin: 0; color: var(--ink); font-family: var(--serif); font-size: 10pt; font-weight: 600; }
+  .print-film-details h3 { display: inline; margin: 0; color: var(--color-171a17); font-family: var(--serif); font-size: 10pt; font-weight: 600; }
   .print-film-credits { display: inline; margin: 0 0 0 var(--space-1); color: var(--color-5c625b); font-family: var(--sans); font-size: 7pt; }
-  .print-film-score { margin: 0; color: var(--color-39453b); font-family: var(--mono); font-size: 7pt; text-align: right; }
+  .print-film-score { margin: 0; color: var(--color-39453b); font-family: var(--mono); font-size: 7pt; text-align: right; overflow-wrap: normal; }
   .print-film-score strong { color: var(--color-293a30); font-family: var(--serif); font-size: 12pt; }
   .print-programme-empty { padding: 20px 0; color: var(--color-555); font-family: var(--sans); font-size: 10pt; }
   .print-programme-footer { margin-top: var(--space-4); padding-top: var(--space-2); border-top: 1px solid var(--color-bbc0b7); color: var(--color-5c625b); font-family: var(--mono); font-size: 7pt; }

@@ -1,0 +1,39 @@
+
+> test
+> node --test tests/web.test.js
+
+✔ Python package and browser use the same snapshot schema (1.054333ms)
+✔ snapshot load errors distinguish unreachable, invalid JSON, and invalid catalogue data (0.114042ms)
+✔ edition freshness turns stale at 30 days and ignores future timestamps (0.322792ms)
+✔ future edition timestamps are described explicitly instead of as just updated (30.245334ms)
+✔ edition update descriptions retain present and past wording and handle invalid dates (0.90075ms)
+✔ catalogue CSV handles quoted titles and neutralizes spreadsheet formulas (0.171583ms)
+✔ snapshot contract accepts optional TMDB enrichment fields when omitted (0.435416ms)
+✔ snapshot contract bounds profile and TMDB text while preserving accepted values (1.105708ms)
+✔ snapshot contract treats integer-valued JSON numbers as integers (0.127875ms)
+✔ snapshot contract rejects invalid TMDB identifiers and inconsistent counts (0.298417ms)
+✔ worst-case fixtures keep counts coherent and clear inherited optional TMDB metadata (0.705584ms)
+✔ snapshot validation rejects unsafe profile, film, and list URLs and invalid edition times (0.257ms)
+✔ snapshot metadata provenance fields use the documented values (0.236292ms)
+✔ catalog filters combine genres, director, list, country, decade, and query (1.333417ms)
+✔ runtime filters use clear boundaries and exclude unknown runtimes (0.089834ms)
+✔ catalog search index includes metadata and source list labels (0.052209ms)
+✔ catalog search folds Latin accents and punctuation and matches words in any order (1.622791ms)
+✔ compact source list IDs validate while old per-film list arrays remain supported (0.201667ms)
+✔ catalog sorting uses stable rank as its tie breaker and puts unknown years last (0.55125ms)
+✔ relevance prioritizes exact and title hits, then director hits, with stable rank ties (0.2295ms)
+✔ original language filter supports known and unknown language codes (0.040042ms)
+✔ local preferences tolerate storage errors and imports reject malformed preset shapes (0.245625ms)
+✔ URL state parsing removes duplicate facets and ignores unsupported options (0.086583ms)
+✔ URL state serialization preserves unrelated parameters and supports repeatable filters (0.208375ms)
+✔ URL state round trips language and relevance sort without losing other facets (0.060959ms)
+✔ shared programmes describe facets and restore the full view without unrelated URL state (1.103875ms)
+✔ shared programme language labels tolerate invalid codes in incoming URLs (2.584334ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 116.919292

@@ -274,6 +274,30 @@ def test_snapshot_schema_accepts_shared_fixture_without_optional_tmdb_fields():
     assert snapshot.validate_snapshot(fixture) == fixture
 
 
+@pytest.mark.parametrize("field,limit", [("title", 1024), ("overview", 20000), ("directors", 512)])
+def test_snapshot_text_limits_reject_overflow_before_replacing_output(tmp_path, field, limit):
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["films"][0][field] = ["A" * limit] if field == "directors" else "A" * limit
+    assert snapshot.validate_snapshot(fixture) == fixture
+    fixture["films"][0][field] = ["A" * (limit + 1)] if field == "directors" else "A" * (limit + 1)
+    output = tmp_path / "snapshot.json"
+    output.write_text("previous catalogue", encoding="utf-8")
+    with pytest.raises(ValueError, match=field + r".*supported text length"):
+        snapshot.write_snapshot(fixture, output)
+    assert output.read_text(encoding="utf-8") == "previous catalogue"
+
+
+@pytest.mark.parametrize("field,limit", [("title", 1024), ("overview", 20000), ("directors", 512)])
+def test_snapshot_text_limits_count_unicode_code_points(field, limit):
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    value = "A" * (limit - 1) + "🎬"
+    fixture["films"][0][field] = [value] if field == "directors" else value
+    assert snapshot.validate_snapshot(fixture) == fixture
+    fixture["films"][0][field] = [value + "🎬"] if field == "directors" else value + "🎬"
+    with pytest.raises(ValueError, match=field + r".*supported text length"):
+        snapshot.validate_snapshot(fixture)
+
+
 def test_snapshot_writer_exports_full_ranking_without_private_payload(tmp_path):
     fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
     film = Movie("=SUM(1,1)", "2016", "https://letterboxd.com/film/arrival/")
@@ -475,3 +499,57 @@ def test_rank_movies_fetches_lists_with_worker_local_sessions(monkeypatch):
     assert results[0].liked_in == 4
     assert len(sessions) == 4
     assert all(session.closed for session in sessions)
+
+
+def test_snapshot_timestamp_contract_uses_shared_calendar_cases():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    cases = json.loads((Path(__file__).parent / "fixtures" / "timestamp-cases.json").read_text())
+    for case in cases:
+        fixture["refreshed_at"] = case["timestamp"]
+        if case["valid"]:
+            assert snapshot.validate_snapshot(fixture) == fixture
+        else:
+            with pytest.raises(ValueError, match="refreshed_at"):
+                snapshot.validate_snapshot(fixture)
+
+
+def test_public_snapshot_compacts_legacy_lists_and_preserves_shared_sources():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    original_url = fixture["films"][0]["lists"][0]
+    public = snapshot.public_snapshot_from_full(fixture)
+    assert public["source_lists"] == [original_url]
+    assert public["films"][0]["list_ids"] == [0]
+    assert "lists" not in public["films"][0]
+    assert fixture["films"][0]["lists"] == [original_url]
+    compact = json.loads(json.dumps(fixture))
+    compact["source_lists"] = ["https://letterboxd.com/viewer/list/unused/", original_url]
+    compact["films"][0].pop("lists")
+    compact["films"][0]["list_ids"] = [1]
+    assert snapshot.public_snapshot_from_full(compact)["source_lists"] == [original_url]
+
+
+@pytest.mark.parametrize("metadata,expected", [
+    ({}, 0),
+    ({"metadata_status": "unavailable"}, 0),
+    ({"metadata_status": "complete"}, 0),
+    ({"tmdb_id": None, "metadata_status": "partial"}, 0),
+    ({"tmdb_id": 329865}, 1),
+    ({"tmdb_id": 329865.0}, 1),
+    ({"tmdb_id": 329865, "metadata_status": "id_only"}, 1),
+    ({"tmdb_id": 329865, "metadata_status": "complete"}, 1),
+    ({"tmdb_id": 329865, "metadata_status": "partial"}, 1),
+    ({"tmdb_id": 329865, "metadata_status": "unavailable"}, 1),
+])
+def test_public_snapshot_counts_actual_tmdb_ids_not_missing_metadata_status(metadata, expected):
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["films"][0].update(metadata)
+    assert snapshot.public_snapshot_from_full(fixture)["tmdb_match_count"] == expected
+
+
+def test_public_snapshot_match_count_only_includes_featured_films():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    second = {**fixture["films"][0], "title": "Matched film", "tmdb_id": 329865}
+    fixture["films"].append(second)
+    fixture["film_count"] = fixture["displayed_film_count"] = 2
+    assert snapshot.public_snapshot_from_full(fixture, featured_limit=1)["tmdb_match_count"] == 0
+    assert snapshot.public_snapshot_from_full(fixture, featured_limit=2)["tmdb_match_count"] == 1

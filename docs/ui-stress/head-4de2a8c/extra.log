@@ -1,0 +1,220 @@
+[
+  {
+    "case": "screen-title",
+    "geometry": {
+      "client": 349,
+      "scroll": 349,
+      "width": 348.515625
+    }
+  },
+  {
+    "case": "print-fields",
+    "format": "compact",
+    "rows": [
+      {
+        "title": "Original title and credit boundary",
+        "row": {
+          "x": 0,
+          "y": 169.59375,
+          "width": 696,
+          "height": 114,
+          "top": 169.59375,
+          "right": 696,
+          "bottom": 283.59375,
+          "left": 0
+        },
+        "detailsClient": 513,
+        "detailsScroll": 4635,
+        "titleRight": 262.078125,
+        "creditsRight": 4692.1875,
+        "score": {
+          "x": 578,
+          "y": 173.59375,
+          "width": 118,
+          "height": 21,
+          "top": 173.59375,
+          "right": 696,
+          "bottom": 194.59375,
+          "left": 578
+        },
+        "overview": null
+      },
+      {
+        "title": "ArchiveRestorationReferenceArchiveRestorationRefer",
+        "row": {
+          "x": 0,
+          "y": 331.59375,
+          "width": 696,
+          "height": 51,
+          "top": 331.59375,
+          "right": 696,
+          "bottom": 382.59375,
+          "left": 0
+        },
+        "detailsClient": 513,
+        "detailsScroll": 6805,
+        "titleRight": 6820.9375,
+        "creditsRight": 6862.0625,
+        "score": {
+          "x": 578,
+          "y": 335.59375,
+          "width": 118,
+          "height": 21,
+          "top": 335.59375,
+          "right": 696,
+          "bottom": 356.59375,
+          "left": 578
+        },
+        "overview": null
+      },
+      {
+        "title": "Synopsis and year boundary",
+        "row": {
+          "x": 0,
+          "y": 430.59375,
+          "width": 696,
+          "height": 30,
+          "top": 430.59375,
+          "right": 696,
+          "bottom": 460.59375,
+          "left": 0
+        },
+        "detailsClient": 513,
+        "detailsScroll": 513,
+        "titleRight": 228.125,
+        "creditsRight": 493.015625,
+        "score": {
+          "x": 578,
+          "y": 434.59375,
+          "width": 118,
+          "height": 21,
+          "top": 434.59375,
+          "right": 696,
+          "bottom": 455.59375,
+          "left": 578
+        },
+        "overview": null
+      }
+    ]
+  },
+  {
+    "case": "print-fields",
+    "format": "reader",
+    "rows": [
+      {
+        "title": "Original title and credit boundary",
+        "row": {
+          "x": 0,
+          "y": 207.328125,
+          "width": 696,
+          "height": 144.390625,
+          "top": 207.328125,
+          "right": 696,
+          "bottom": 351.71875,
+          "left": 0
+        },
+        "detailsClient": 513,
+        "detailsScroll": 5296,
+        "titleRight": 570,
+        "creditsRight": 570,
+        "score": {
+          "x": 578,
+          "y": 215.328125,
+          "width": 118,
+          "height": 25,
+          "top": 215.328125,
+          "right": 696,
+          "bottom": 240.328125,
+          "left": 578
+        },
+        "overview": {
+          "client": 590,
+          "scroll": 590
+        }
+      },
+      {
+        "title": "ArchiveRestorationReferenceArchiveRestorationRefer",
+        "row": {
+          "x": 0,
+          "y": 416.71875,
+          "width": 696,
+          "height": 123.171875,
+          "top": 416.71875,
+          "right": 696,
+          "bottom": 539.890625,
+          "left": 0
+        },
+        "detailsClient": 513,
+        "detailsScroll": 10055,
+        "titleRight": 570,
+        "creditsRight": 570,
+        "score": {
+          "x": 578,
+          "y": 424.71875,
+          "width": 118,
+          "height": 25,
+          "top": 424.71875,
+          "right": 696,
+          "bottom": 449.71875,
+          "left": 578
+        },
+        "overview": {
+          "client": 590,
+          "scroll": 845
+        }
+      },
+      {
+        "title": "Synopsis and year boundary",
+        "row": {
+          "x": 0,
+          "y": 604.890625,
+          "width": 696,
+          "height": 88.390625,
+          "top": 604.890625,
+          "right": 696,
+          "bottom": 693.28125,
+          "left": 0
+        },
+        "detailsClient": 513,
+        "detailsScroll": 513,
+        "titleRight": 570,
+        "creditsRight": 570,
+        "score": {
+          "x": 578,
+          "y": 612.890625,
+          "width": 118,
+          "height": 25,
+          "top": 612.890625,
+          "right": 696,
+          "bottom": 637.890625,
+          "left": 578
+        },
+        "overview": {
+          "client": 590,
+          "scroll": 1565
+        }
+      }
+    ]
+  },
+  {
+    "case": "print-query",
+    "format": "compact",
+    "geometry": {
+      "client": 696,
+      "scroll": 979,
+      "text": "1 film · Arranged by release year · Selected view: search: InternationalCinemaPreservationAndRestorationProgramme2026OriginalLanguageRestoredUncutVersionWithEnglishSubtitlesAndCommentaryTrack.mov"
+    }
+  },
+  {
+    "case": "print-query",
+    "format": "reader",
+    "geometry": {
+      "client": 696,
+      "scroll": 979,
+      "text": "1 film · Arranged by release year · Selected view: search: InternationalCinemaPreservationAndRestorationProgramme2026OriginalLanguageRestoredUncutVersionWithEnglishSubtitlesAndCommentaryTrack.mov"
+    }
+  },
+  {
+    "errors": []
+  }
+]

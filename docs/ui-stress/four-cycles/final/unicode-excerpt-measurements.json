@@ -1,0 +1,24 @@
+[
+  {
+    "width": 320,
+    "heading": "The Chronicles of the Last Voyage 🎬…",
+    "headingWellFormed": true,
+    "headingFits": {
+      "client": 195,
+      "scroll": 195
+    },
+    "readerTail": "修復と保存に取り組🎬…",
+    "readerWellFormed": true
+  },
+  {
+    "width": 1440,
+    "heading": "The Chronicles of the Last Voyage 🎬…",
+    "headingWellFormed": true,
+    "headingFits": {
+      "client": 349,
+      "scroll": 349
+    },
+    "readerTail": "修復と保存に取り組🎬…",
+    "readerWellFormed": true
+  }
+]

@@ -1,0 +1,160 @@
+[
+  {
+    "format": "compact",
+    "title": "ArchiveRestorationReferenceArchiveRestoration",
+    "titleGeometry": {
+      "client": 0,
+      "scroll": 0,
+      "lines": 14,
+      "left": 57,
+      "right": 568.359375,
+      "boundLeft": 57,
+      "boundRight": 570
+    },
+    "creditGeometry": {
+      "client": 0,
+      "scroll": 0,
+      "lines": 1,
+      "left": 211.53125,
+      "right": 472.421875,
+      "boundLeft": 57,
+      "boundRight": 570
+    }
+  },
+  {
+    "format": "compact",
+    "title": "Original title and credit boundary",
+    "titleGeometry": {
+      "client": 0,
+      "scroll": 0,
+      "lines": 1,
+      "left": 57,
+      "right": 262.078125,
+      "boundLeft": 57,
+      "boundRight": 570
+    },
+    "creditGeometry": {
+      "client": 0,
+      "scroll": 0,
+      "lines": 17,
+      "left": 57,
+      "right": 569.390625,
+      "boundLeft": 57,
+      "boundRight": 570
+    }
+  },
+  {
+    "format": "compact",
+    "title": "Synopsis and year boundary",
+    "titleGeometry": {
+      "client": 0,
+      "scroll": 0,
+      "lines": 1,
+      "left": 57,
+      "right": 228.125,
+      "boundLeft": 57,
+      "boundRight": 570
+    },
+    "creditGeometry": {
+      "client": 0,
+      "scroll": 0,
+      "lines": 1,
+      "left": 232.125,
+      "right": 493.015625,
+      "boundLeft": 57,
+      "boundRight": 570
+    }
+  },
+  {
+    "format": "reader",
+    "title": "ArchiveRestorationReferenceArchiveRestoration",
+    "titleGeometry": {
+      "client": 513,
+      "scroll": 513,
+      "lines": 20,
+      "left": 57,
+      "right": 569.15625,
+      "boundLeft": 57,
+      "boundRight": 570
+    },
+    "creditGeometry": {
+      "client": 513,
+      "scroll": 513,
+      "lines": 1,
+      "left": 57,
+      "right": 355.078125,
+      "boundLeft": 57,
+      "boundRight": 570
+    }
+  },
+  {
+    "format": "reader",
+    "title": "Original title and credit boundary",
+    "titleGeometry": {
+      "client": 513,
+      "scroll": 513,
+      "lines": 1,
+      "left": 57,
+      "right": 361.53125,
+      "boundLeft": 57,
+      "boundRight": 570
+    },
+    "creditGeometry": {
+      "client": 513,
+      "scroll": 513,
+      "lines": 18,
+      "left": 57,
+      "right": 569.828125,
+      "boundLeft": 57,
+      "boundRight": 570
+    }
+  },
+  {
+    "format": "reader",
+    "title": "Synopsis and year boundary",
+    "titleGeometry": {
+      "client": 513,
+      "scroll": 513,
+      "lines": 1,
+      "left": 57,
+      "right": 311.3125,
+      "boundLeft": 57,
+      "boundRight": 570
+    },
+    "creditGeometry": {
+      "client": 513,
+      "scroll": 513,
+      "lines": 1,
+      "left": 57,
+      "right": 355.078125,
+      "boundLeft": 57,
+      "boundRight": 570
+    }
+  },
+  {
+    "format": "compact",
+    "queryCharacters": 136,
+    "queryGeometry": {
+      "client": 696,
+      "scroll": 696,
+      "lines": 3,
+      "left": 0,
+      "right": 691.203125,
+      "boundLeft": 0,
+      "boundRight": 696
+    }
+  },
+  {
+    "format": "reader",
+    "queryCharacters": 136,
+    "queryGeometry": {
+      "client": 696,
+      "scroll": 696,
+      "lines": 3,
+      "left": 0,
+      "right": 691.203125,
+      "boundLeft": 0,
+      "boundRight": 696
+    }
+  }
+]

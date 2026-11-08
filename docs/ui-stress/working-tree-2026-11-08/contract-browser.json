@@ -1,0 +1,56 @@
+[
+  {
+    "name": "ascii-control",
+    "width": 320,
+    "clientResult": "accepted",
+    "setupVisible": false,
+    "catalogueVisible": true,
+    "setupText": "\n      \n        R ReelRank\n        Preparing @fixture-viewer's ReelRank\n        Site setup\n        Loading the configured profile and its catalogue edition…\n        Retry loading\n        <p>ReelRank needs JavaScript enabled to load and filter the film catalogue.</p>\n        Your site uses public liked lists, list membership, watched status, and source-list links.\n        Preview clearly labelled sample data\n      \n    ",
+    "errors": []
+  },
+  {
+    "name": "ascii-control",
+    "width": 1440,
+    "clientResult": "accepted",
+    "setupVisible": false,
+    "catalogueVisible": true,
+    "setupText": "\n      \n        R ReelRank\n        Preparing @fixture-viewer's ReelRank\n        Site setup\n        Loading the configured profile and its catalogue edition…\n        Retry loading\n        <p>ReelRank needs JavaScript enabled to load and filter the film catalogue.</p>\n        Your site uses public liked lists, list membership, watched status, and source-list links.\n        Preview clearly labelled sample data\n      \n    ",
+    "errors": []
+  },
+  {
+    "name": "ascii-overflow",
+    "width": 320,
+    "clientResult": "snapshot.films[0].overview exceeds the supported text length",
+    "setupVisible": true,
+    "catalogueVisible": false,
+    "setupText": "\n      \n        R ReelRank\n        This site is still being prepared\n        Site setup\n        ReelRank found data/snapshot.json but it does not match the supported catalogue format. Check the catalogue file and try again.\n        Retry loading\n        <p>ReelRank needs JavaScript enabled to load and filter the film catalogue.</p>\n        Your site uses public liked lists, list membership, watched status, and source-list links.\n        Preview clearly labelled sample data\n      \n    ",
+    "errors": []
+  },
+  {
+    "name": "ascii-overflow",
+    "width": 1440,
+    "clientResult": "snapshot.films[0].overview exceeds the supported text length",
+    "setupVisible": true,
+    "catalogueVisible": false,
+    "setupText": "\n      \n        R ReelRank\n        This site is still being prepared\n        Site setup\n        ReelRank found data/snapshot.json but it does not match the supported catalogue format. Check the catalogue file and try again.\n        Retry loading\n        <p>ReelRank needs JavaScript enabled to load and filter the film catalogue.</p>\n        Your site uses public liked lists, list membership, watched status, and source-list links.\n        Preview clearly labelled sample data\n      \n    ",
+    "errors": []
+  },
+  {
+    "name": "unicode-boundary",
+    "width": 320,
+    "clientResult": "snapshot.films[0].overview exceeds the supported text length",
+    "setupVisible": true,
+    "catalogueVisible": false,
+    "setupText": "\n      \n        R ReelRank\n        This site is still being prepared\n        Site setup\n        ReelRank found data/snapshot.json but it does not match the supported catalogue format. Check the catalogue file and try again.\n        Retry loading\n        <p>ReelRank needs JavaScript enabled to load and filter the film catalogue.</p>\n        Your site uses public liked lists, list membership, watched status, and source-list links.\n        Preview clearly labelled sample data\n      \n    ",
+    "errors": []
+  },
+  {
+    "name": "unicode-boundary",
+    "width": 1440,
+    "clientResult": "snapshot.films[0].overview exceeds the supported text length",
+    "setupVisible": true,
+    "catalogueVisible": false,
+    "setupText": "\n      \n        R ReelRank\n        This site is still being prepared\n        Site setup\n        ReelRank found data/snapshot.json but it does not match the supported catalogue format. Check the catalogue file and try again.\n        Retry loading\n        <p>ReelRank needs JavaScript enabled to load and filter the film catalogue.</p>\n        Your site uses public liked lists, list membership, watched status, and source-list links.\n        Preview clearly labelled sample data\n      \n    ",
+    "errors": []
+  }
+]

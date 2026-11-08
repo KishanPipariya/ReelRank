@@ -1,0 +1,26 @@
+[
+  {
+    "case": "ascii-control",
+    "pythonAccepted": true,
+    "written": true,
+    "codePoints": 20000,
+    "utf16Units": 20000,
+    "declaredMaximum": 20000
+  },
+  {
+    "case": "ascii-overflow",
+    "pythonAccepted": true,
+    "written": true,
+    "codePoints": 20001,
+    "utf16Units": 20001,
+    "declaredMaximum": 20000
+  },
+  {
+    "case": "unicode-boundary",
+    "pythonAccepted": true,
+    "written": true,
+    "codePoints": 20000,
+    "utf16Units": 20001,
+    "declaredMaximum": 20000
+  }
+]

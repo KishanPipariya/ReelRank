@@ -1,0 +1,42 @@
+[
+  {
+    "case": "import-capacity",
+    "width": 320,
+    "status": "Imported 1 saved view.Undo",
+    "stored": {
+      "count": 100,
+      "oldestPresent": false,
+      "newPresent": true
+    }
+  },
+  {
+    "case": "query-heading",
+    "width": 320,
+    "query": "The Chronicles of the Last Voyage 🎬 Restoration Notes",
+    "heading": "The Chronicles of the Last Voyage \ud83c…",
+    "wellFormed": false
+  },
+  {
+    "case": "import-capacity",
+    "width": 1440,
+    "status": "Imported 1 saved view.Undo",
+    "stored": {
+      "count": 100,
+      "oldestPresent": false,
+      "newPresent": true
+    }
+  },
+  {
+    "case": "query-heading",
+    "width": 1440,
+    "query": "The Chronicles of the Last Voyage 🎬 Restoration Notes",
+    "heading": "The Chronicles of the Last Voyage \ud83c…",
+    "wellFormed": false
+  },
+  {
+    "case": "reader-excerpt",
+    "text": "映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組む人々の記録。映画の修復と保存に取り組\ud83c…",
+    "wellFormed": false,
+    "tail": "の修復と保存に取り組\ud83c…"
+  }
+]

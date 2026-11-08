@@ -1,0 +1,160 @@
+demo live data passed
+worst live data passed
+empty live data passed
+one live data passed
+100000 live data passed
+[
+  {
+    "mode": "demo",
+    "width": 320,
+    "elapsedMs": 1029,
+    "url": "http://127.0.0.1:4173/",
+    "count": "Showing 43 of 34,509 films",
+    "status": "Local full-metadata edition loaded for 34,509 films.",
+    "pageWidth": 320,
+    "cards": 42
+  },
+  {
+    "mode": "demo",
+    "width": 1440,
+    "elapsedMs": 1088,
+    "url": "http://127.0.0.1:4173/",
+    "count": "Showing 43 of 34,509 films",
+    "status": "Local full-metadata edition loaded for 34,509 films.",
+    "pageWidth": 1440,
+    "cards": 42
+  },
+  {
+    "mode": "demo",
+    "width": 2560,
+    "elapsedMs": 1195,
+    "url": "http://127.0.0.1:4173/",
+    "count": "Showing 43 of 34,509 films",
+    "status": "Local full-metadata edition loaded for 34,509 films.",
+    "pageWidth": 2560,
+    "cards": 42
+  },
+  {
+    "mode": "worst",
+    "width": 320,
+    "elapsedMs": 505,
+    "url": "http://127.0.0.1:4173/?data=worst",
+    "count": "Showing 13 of 13 films",
+    "status": "Development stress fixture: 13 local films with worst-case text and metadata.",
+    "pageWidth": 320,
+    "cards": 12
+  },
+  {
+    "mode": "worst",
+    "width": 1440,
+    "elapsedMs": 563,
+    "url": "http://127.0.0.1:4173/?data=worst",
+    "count": "Showing 13 of 13 films",
+    "status": "Development stress fixture: 13 local films with worst-case text and metadata.",
+    "pageWidth": 1440,
+    "cards": 12
+  },
+  {
+    "mode": "worst",
+    "width": 2560,
+    "elapsedMs": 639,
+    "url": "http://127.0.0.1:4173/?data=worst",
+    "count": "Showing 13 of 13 films",
+    "status": "Development stress fixture: 13 local films with worst-case text and metadata.",
+    "pageWidth": 2560,
+    "cards": 12
+  },
+  {
+    "mode": "empty",
+    "width": 320,
+    "elapsedMs": 387,
+    "url": "http://127.0.0.1:4173/?data=empty",
+    "count": "Showing 0 of 0 films",
+    "status": "Development fixture: this catalogue has no films.",
+    "pageWidth": 320,
+    "cards": 0
+  },
+  {
+    "mode": "empty",
+    "width": 1440,
+    "elapsedMs": 419,
+    "url": "http://127.0.0.1:4173/?data=empty",
+    "count": "Showing 0 of 0 films",
+    "status": "Development fixture: this catalogue has no films.",
+    "pageWidth": 1440,
+    "cards": 0
+  },
+  {
+    "mode": "empty",
+    "width": 2560,
+    "elapsedMs": 437,
+    "url": "http://127.0.0.1:4173/?data=empty",
+    "count": "Showing 0 of 0 films",
+    "status": "Development fixture: this catalogue has no films.",
+    "pageWidth": 2560,
+    "cards": 0
+  },
+  {
+    "mode": "one",
+    "width": 320,
+    "elapsedMs": 398,
+    "url": "http://127.0.0.1:4173/?data=one",
+    "count": "Showing 1 of 1 film",
+    "status": "Development fixture: this catalogue has one film.",
+    "pageWidth": 320,
+    "cards": 0
+  },
+  {
+    "mode": "one",
+    "width": 1440,
+    "elapsedMs": 421,
+    "url": "http://127.0.0.1:4173/?data=one",
+    "count": "Showing 1 of 1 film",
+    "status": "Development fixture: this catalogue has one film.",
+    "pageWidth": 1440,
+    "cards": 0
+  },
+  {
+    "mode": "one",
+    "width": 2560,
+    "elapsedMs": 437,
+    "url": "http://127.0.0.1:4173/?data=one",
+    "count": "Showing 1 of 1 film",
+    "status": "Development fixture: this catalogue has one film.",
+    "pageWidth": 2560,
+    "cards": 0
+  },
+  {
+    "mode": "100000",
+    "width": 320,
+    "elapsedMs": 3271,
+    "url": "http://127.0.0.1:4173/?data=100000",
+    "count": "Showing 43 of 100,000 films",
+    "status": "Development stress fixture: 34,509 local ranking rows padded with 65,491 sparse generated rows.",
+    "pageWidth": 320,
+    "cards": 42
+  },
+  {
+    "mode": "100000",
+    "width": 1440,
+    "elapsedMs": 3296,
+    "url": "http://127.0.0.1:4173/?data=100000",
+    "count": "Showing 43 of 100,000 films",
+    "status": "Development stress fixture: 34,509 local ranking rows padded with 65,491 sparse generated rows.",
+    "pageWidth": 1440,
+    "cards": 42
+  },
+  {
+    "mode": "100000",
+    "width": 2560,
+    "elapsedMs": 3313,
+    "url": "http://127.0.0.1:4173/?data=100000",
+    "count": "Showing 43 of 100,000 films",
+    "status": "Development stress fixture: 34,509 local ranking rows padded with 65,491 sparse generated rows.",
+    "pageWidth": 2560,
+    "cards": 42
+  },
+  {
+    "errors": []
+  }
+]

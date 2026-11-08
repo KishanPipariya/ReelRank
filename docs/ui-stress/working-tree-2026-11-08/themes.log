@@ -1,0 +1,58 @@
+[
+  {
+    "colorScheme": "light",
+    "format": "compact",
+    "first": {
+      "title": "The Third Man",
+      "color": "rgb(34, 37, 31)",
+      "background": "rgb(253, 251, 247)",
+      "ratio": 15.023693343123208,
+      "fontSize": "13.3333px",
+      "darkMatch": false
+    },
+    "titleCount": 8,
+    "errors": []
+  },
+  {
+    "colorScheme": "light",
+    "format": "reader",
+    "first": {
+      "title": "The Third Man",
+      "color": "rgb(34, 37, 31)",
+      "background": "rgb(253, 251, 247)",
+      "ratio": 15.023693343123208,
+      "fontSize": "20px",
+      "darkMatch": false
+    },
+    "titleCount": 8,
+    "errors": []
+  },
+  {
+    "colorScheme": "dark",
+    "format": "compact",
+    "first": {
+      "title": "The Third Man",
+      "color": "rgb(236, 236, 226)",
+      "background": "rgb(253, 251, 247)",
+      "ratio": 1.1503446131678146,
+      "fontSize": "13.3333px",
+      "darkMatch": true
+    },
+    "titleCount": 8,
+    "errors": []
+  },
+  {
+    "colorScheme": "dark",
+    "format": "reader",
+    "first": {
+      "title": "The Third Man",
+      "color": "rgb(236, 236, 226)",
+      "background": "rgb(253, 251, 247)",
+      "ratio": 1.1503446131678146,
+      "fontSize": "20px",
+      "darkMatch": true
+    },
+    "titleCount": 8,
+    "errors": []
+  }
+]

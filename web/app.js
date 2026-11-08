@@ -1,3 +1,4 @@
+import { graphemePrefix } from './display-text.js';
 import { programmeShare } from './programme-share.js';
 import { buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, filmDecade, matchesFilm } from './catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from './snapshot.js';
@@ -1569,7 +1570,7 @@ function programmeHeadingFor(query, defaultRankedView, matching) {
   }
   if (query) {
     const phrase = searchInput.value.trim();
-    return { eyebrow: 'Search results', title: phrase.length > 38 ? `${phrase.slice(0, 35)}…` : phrase };
+    return { eyebrow: 'Search results', title: graphemePrefix(phrase, 38) === phrase ? phrase : `${graphemePrefix(phrase, 35)}…` };
   }
   if (state.filter === 'watched') return { eyebrow: 'Watched collection', title: 'Films seen' };
   if (state.filter === 'unwatched') return { eyebrow: 'Unwatched films', title: 'Films to discover' };

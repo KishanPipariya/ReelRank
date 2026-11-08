@@ -1,0 +1,22 @@
+
+> check:browser
+> node scripts/a11y-scan.mjs
+
+desktop: 43 axe checks passed, no violations.
+desktop: saved visual review screenshot to /tmp/reelrank-visual-desktop.png.
+desktop film details: 29 axe checks passed, no violations.
+expanded programme notes: 29 axe checks passed, no violations.
+no results: 46 axe checks passed, no violations.
+mobile: 43 axe checks passed, no violations.
+mobile: saved visual review screenshot to /tmp/reelrank-visual-mobile.png.
+mobile film details: 30 axe checks passed, no violations.
+dark mode: 43 axe checks passed, no violations.
+dark mode film details: 29 axe checks passed, no violations.
+share programme 1440px: 49 axe checks passed, no violations.
+share programme 320px: 49 axe checks passed, no violations.
+200% zoom equivalent: no horizontal overflow at 720px CSS viewport.
+400% zoom equivalent: no horizontal overflow at 360px CSS viewport.
+narrow mobile: no horizontal overflow at 320px CSS viewport.
+Keyboard navigation, accessible names, and live announcements passed.
+setup screen: 29 axe checks passed, no violations.
+labelled demo preview: 43 axe checks passed, no violations.

@@ -50,6 +50,8 @@ def validate_snapshot(snapshot: object) -> dict:
         or unquote(profile.path).rstrip("/").casefold() != f"/{username}".casefold()
     ):
         raise ValueError("Snapshot profile_url must be the HTTPS Letterboxd profile for its username")
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})", snapshot["refreshed_at"]) is None:
+        raise ValueError("Snapshot refreshed_at must be an ISO 8601 calendar timestamp with a timezone")
     try:
         refreshed_at = datetime.fromisoformat(snapshot["refreshed_at"].replace("Z", "+00:00"))
     except ValueError as error:
@@ -193,6 +195,8 @@ def _validate_schema(value: object, schema: dict, root: dict | None = None, path
         raise ValueError(f"{path} has an unsupported value")
     if isinstance(value, str) and len(value) < schema.get("minLength", 0):
         raise ValueError(f"{path} must not be empty")
+    if isinstance(value, str) and len(value) > schema.get("maxLength", float("inf")):
+        raise ValueError(f"{path} exceeds the supported text length")
     if isinstance(value, str) and "pattern" in schema and re.search(schema["pattern"], value) is None:
         raise ValueError(f"{path} does not match its required text pattern")
     if isinstance(value, (int, float)) and not isinstance(value, bool):
@@ -429,7 +433,12 @@ def public_snapshot_from_full(snapshot: dict, featured_limit: int = 500) -> dict
     public_source_lists: list[str] = []
     source_list_index: dict[str, int] = {}
     for film in films:
-        urls = [source_lists[index] for index in film.get("list_ids", []) if index < len(source_lists)]
+        urls = (
+            [source_lists[index] for index in film["list_ids"] if 0 <= index < len(source_lists)]
+            if isinstance(film.get("list_ids"), list)
+            else film.get("lists", [])
+        )
+        film.pop("lists", None)
         film["list_ids"] = []
         for url in urls:
             if url not in source_list_index:
@@ -441,7 +450,7 @@ def public_snapshot_from_full(snapshot: dict, featured_limit: int = 500) -> dict
     public_snapshot["source_lists"] = public_source_lists
     public_snapshot["displayed_film_count"] = len(films)
     public_snapshot["displayed_unwatched_count"] = sum(not film["watched"] for film in films)
-    public_snapshot["tmdb_match_count"] = sum(film.get("metadata_status") != "unavailable" for film in films)
+    public_snapshot["tmdb_match_count"] = sum(_is_schema_integer(film.get("tmdb_id")) and film["tmdb_id"] >= 0 for film in films)
     poster_galleries = snapshot.get("_poster_galleries")
     if isinstance(poster_galleries, dict):
         featured_ids = {str(film["tmdb_id"]) for film in films if film.get("tmdb_id") is not None}

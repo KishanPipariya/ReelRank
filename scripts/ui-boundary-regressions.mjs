@@ -56,6 +56,21 @@ export async function checkBoundaryRegressions({ openFixture, baseUrl, fixture, 
       await page.locator('#preset-save').click();
       assert.equal((await stored()).length, savedViewLimit);
       assert.equal((await stored()).at(-1).name, newName);
+      const beforeImport = await stored();
+      const importFile = page.locator('#preset-import-file');
+      await importFile.setInputFiles({ name: 'new-view.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ version: 1, presets: [{ name: 'New imported programme', state: { query: 'Arrival' } }] })) });
+      await page.waitForFunction(() => document.querySelector('#preset-status').textContent.startsWith('Import would exceed'));
+      assert.deepEqual(await stored(), beforeImport, 'Rejected import cannot drop existing views');
+      assert.equal(await importFile.inputValue(), '', 'Rejected files can be selected again after making room');
+      const replacementName = beforeImport[0].name.toUpperCase();
+      await importFile.setInputFiles({ name: 'replacement.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ version: 1, presets: [{ name: replacementName, state: { query: 'Arrival' } }] })) });
+      await page.waitForFunction(() => document.querySelector('#preset-status').textContent.startsWith('Imported 1 saved view'));
+      assert.equal((await stored()).length, savedViewLimit);
+      assert.equal((await stored()).at(-1).name, replacementName);
+      assert.equal((await stored()).at(-1).state.query, 'Arrival');
+      await page.locator('#preset-status .preset-undo').click();
+      assert.deepEqual(await stored(), beforeImport);
+      if (profile.name === '320') await page.screenshot({ path: `${outputDirectory}/import-capacity-verified.png`, animations: 'disabled' });
       assert.deepEqual(errors, []);
       await context.close();
     }
@@ -109,7 +124,7 @@ export async function checkBoundaryRegressions({ openFixture, baseUrl, fixture, 
       assert.deepEqual(errors, []);
       await context.close();
     }
-    measurements.push({ profile: profile.name, capacityRefused: true, replacementAtCapacity: true, reloadUndo: true, deleteThenSave: true, posterChoiceImmediatelyVisible: true, resetRemovesEnlarge: true, browseAfterReset: true });
+    measurements.push({ profile: profile.name, capacityRefused: true, replacementAtCapacity: true, reloadUndo: true, deleteThenSave: true, importCapacityPreservesExisting: true, importReplacementUndo: true, posterChoiceImmediatelyVisible: true, resetRemovesEnlarge: true, browseAfterReset: true });
     console.log(`${profile.name}: saved-view capacity, replacement/undo and missing-poster transitions passed`);
   }
   {

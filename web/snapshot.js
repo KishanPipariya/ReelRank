@@ -27,8 +27,11 @@ function validateAgainstSchema(value, schema, path = 'snapshot') {
   if (validType && !validType(value)) throw new Error(`${path} must be ${schema.type}`);
   if ('const' in schema && value !== schema.const) throw new Error(`${path} has an unsupported value`);
   if (schema.enum && !schema.enum.includes(value)) throw new Error(`${path} has an unsupported value`);
-  if (typeof value === 'string' && value.length < (schema.minLength || 0)) throw new Error(`${path} must not be empty`);
-  if (typeof value === 'string' && value.length > (schema.maxLength ?? Infinity)) throw new Error(`${path} exceeds the supported text length`);
+  if (typeof value === 'string') {
+    const length = Array.from(value).length;
+    if (length < (schema.minLength || 0)) throw new Error(`${path} must not be empty`);
+    if (length > (schema.maxLength ?? Infinity)) throw new Error(`${path} exceeds the supported text length`);
+  }
   if (typeof value === 'string' && schema.pattern && !new RegExp(schema.pattern).test(value)) {
     throw new Error(`${path} does not match its required text pattern`);
   }
@@ -64,6 +67,18 @@ function isHttpsLetterboxdUrl(value, pathPattern) {
   }
 }
 
+function isSupportedTimestamp(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,6})?(?:Z|[+-](\d{2}):(\d{2}))$/.exec(value);
+  if (!match) return false;
+  const [year, month, day, hour, minute, second] = match.slice(1, 7).map(Number);
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return year >= 1 && month >= 1 && month <= 12 && day >= 1 && day <= days[month - 1]
+    && hour <= 23 && minute <= 59 && second <= 59
+    && Number(match[7] || 0) <= 23 && Number(match[8] || 0) <= 59
+    && Number.isFinite(Date.parse(value));
+}
+
 export function validateSnapshot(snapshot) {
   const supportedVersion = snapshotSchema.properties.schema_version.const;
   if (!snapshot || snapshot.schema_version !== supportedVersion) {
@@ -77,7 +92,7 @@ export function validateSnapshot(snapshot) {
       || profilePath !== `/${snapshot.username.trim().replace(/^\/+|\/+$/g, '').toLocaleLowerCase()}`) {
     throw new Error('Snapshot profile_url must be the HTTPS Letterboxd profile for its username');
   }
-  if (!/(?:Z|[+-]\d{2}:\d{2})$/i.test(snapshot.refreshed_at) || !Number.isFinite(Date.parse(snapshot.refreshed_at))) {
+  if (!isSupportedTimestamp(snapshot.refreshed_at)) {
     throw new Error('Snapshot refreshed_at must be an ISO 8601 timestamp with a timezone');
   }
   if (Array.isArray(snapshot.source_lists)) {

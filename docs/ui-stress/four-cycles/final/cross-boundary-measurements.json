@@ -1,0 +1,274 @@
+[
+  {
+    "name": "unicode-boundary",
+    "width": 320,
+    "accepted": true,
+    "codePoints": 20000,
+    "utf16Units": 20001
+  },
+  {
+    "name": "ascii-overflow",
+    "width": 320,
+    "accepted": false,
+    "codePoints": 20001,
+    "utf16Units": 20001
+  },
+  {
+    "name": "unicode-boundary",
+    "width": 1440,
+    "accepted": true,
+    "codePoints": 20000,
+    "utf16Units": 20001
+  },
+  {
+    "name": "ascii-overflow",
+    "width": 1440,
+    "accepted": false,
+    "codePoints": 20001,
+    "utf16Units": 20001
+  },
+  {
+    "width": 320,
+    "legacySourcePreserved": true,
+    "legacySourceSearch": true
+  },
+  {
+    "width": 320,
+    "invalidCalendarDateRejected": true
+  },
+  {
+    "width": 320,
+    "absentMetadataHidesAttribution": true,
+    "matchedIdShowsAttribution": true
+  },
+  {
+    "width": 1440,
+    "legacySourcePreserved": true,
+    "legacySourceSearch": true
+  },
+  {
+    "width": 1440,
+    "invalidCalendarDateRejected": true
+  },
+  {
+    "width": 1440,
+    "absentMetadataHidesAttribution": true,
+    "matchedIdShowsAttribution": true
+  },
+  {
+    "colorScheme": "light",
+    "format": "compact",
+    "titles": [
+      {
+        "title": "The Third Man",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Rashomon",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Z",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "The Lunchbox",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Arrival",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Roma",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Portrait of a Lady on Fire",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "A Very Long International Film Title for Narrow Screens",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      }
+    ]
+  },
+  {
+    "colorScheme": "light",
+    "format": "reader",
+    "titles": [
+      {
+        "title": "The Third Man",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Rashomon",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Z",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "The Lunchbox",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Arrival",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Roma",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Portrait of a Lady on Fire",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "A Very Long International Film Title for Narrow Screens",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      }
+    ]
+  },
+  {
+    "colorScheme": "dark",
+    "format": "compact",
+    "titles": [
+      {
+        "title": "The Third Man",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Rashomon",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Z",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "The Lunchbox",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Arrival",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Roma",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Portrait of a Lady on Fire",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "A Very Long International Film Title for Narrow Screens",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      }
+    ]
+  },
+  {
+    "colorScheme": "dark",
+    "format": "reader",
+    "titles": [
+      {
+        "title": "The Third Man",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Rashomon",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Z",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "The Lunchbox",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Arrival",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Roma",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "Portrait of a Lady on Fire",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      },
+      {
+        "title": "A Very Long International Film Title for Narrow Screens",
+        "color": "rgb(23, 26, 23)",
+        "background": "rgb(253, 251, 247)",
+        "contrast": 16.98072006284617
+      }
+    ]
+  }
+]

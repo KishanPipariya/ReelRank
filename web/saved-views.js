@@ -184,7 +184,11 @@ export function bindSavedViewControls(dependencies) {
         if (old >= 0) merged.splice(old, 1);
         merged.push(item);
       });
-      if (!savePreferences({ presets: merged.slice(-savedViewLimit) })) { showStatus('Could not save imported views in this browser.'); return; }
+      if (merged.length > savedViewLimit) {
+        showStatus(`Import would exceed the ${savedViewLimit} saved view limit. Delete a saved view or import replacements for existing names.`);
+        return;
+      }
+      if (!savePreferences({ presets: merged })) { showStatus('Could not save imported views in this browser.'); return; }
       renderPresets();
       presetList.value = '';
       syncPresetActions();
@@ -194,7 +198,7 @@ export function bindSavedViewControls(dependencies) {
         return true;
       }, 'Undo importing saved views', 'Previous saved views restored.', recoveryRecord(previousPreferences, 'Undo importing saved views', 'Previous saved views restored.', 'saved-views'));
     } catch { showStatus('That file is not a valid ReelRank saved views export.'); }
-    event.target.value = '';
+    finally { event.target.value = ''; }
   });
 
   document.querySelector('#reset-posters').addEventListener('click', () => {

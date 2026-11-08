@@ -1,0 +1,106 @@
+[
+  {
+    "profile": "320",
+    "capacityRefused": true,
+    "replacementAtCapacity": true,
+    "reloadUndo": true,
+    "deleteThenSave": true,
+    "importCapacityPreservesExisting": true,
+    "importReplacementUndo": true,
+    "posterChoiceImmediatelyVisible": true,
+    "resetRemovesEnlarge": true,
+    "browseAfterReset": true
+  },
+  {
+    "profile": "1440",
+    "capacityRefused": true,
+    "replacementAtCapacity": true,
+    "reloadUndo": true,
+    "deleteThenSave": true,
+    "importCapacityPreservesExisting": true,
+    "importReplacementUndo": true,
+    "posterChoiceImmediatelyVisible": true,
+    "resetRemovesEnlarge": true,
+    "browseAfterReset": true
+  },
+  {
+    "profile": "2560",
+    "capacityRefused": true,
+    "replacementAtCapacity": true,
+    "reloadUndo": true,
+    "deleteThenSave": true,
+    "importCapacityPreservesExisting": true,
+    "importReplacementUndo": true,
+    "posterChoiceImmediatelyVisible": true,
+    "resetRemovesEnlarge": true,
+    "browseAfterReset": true
+  },
+  {
+    "profile": "720",
+    "capacityRefused": true,
+    "replacementAtCapacity": true,
+    "reloadUndo": true,
+    "deleteThenSave": true,
+    "importCapacityPreservesExisting": true,
+    "importReplacementUndo": true,
+    "posterChoiceImmediatelyVisible": true,
+    "resetRemovesEnlarge": true,
+    "browseAfterReset": true
+  },
+  {
+    "profile": "dark",
+    "capacityRefused": true,
+    "replacementAtCapacity": true,
+    "reloadUndo": true,
+    "deleteThenSave": true,
+    "importCapacityPreservesExisting": true,
+    "importReplacementUndo": true,
+    "posterChoiceImmediatelyVisible": true,
+    "resetRemovesEnlarge": true,
+    "browseAfterReset": true
+  },
+  {
+    "profile": "text200",
+    "capacityRefused": true,
+    "replacementAtCapacity": true,
+    "reloadUndo": true,
+    "deleteThenSave": true,
+    "importCapacityPreservesExisting": true,
+    "importReplacementUndo": true,
+    "posterChoiceImmediatelyVisible": true,
+    "resetRemovesEnlarge": true,
+    "browseAfterReset": true
+  },
+  {
+    "profile": "rtl",
+    "capacityRefused": true,
+    "replacementAtCapacity": true,
+    "reloadUndo": true,
+    "deleteThenSave": true,
+    "importCapacityPreservesExisting": true,
+    "importReplacementUndo": true,
+    "posterChoiceImmediatelyVisible": true,
+    "resetRemovesEnlarge": true,
+    "browseAfterReset": true
+  },
+  {
+    "format": "compact",
+    "rowRight": 696,
+    "scoreRight": 696,
+    "scoreWidth": 246,
+    "scoreScroll": 246,
+    "numberWidth": 151.03125,
+    "numberRight": 600.828125,
+    "text": "9,007,199,254,740,991"
+  },
+  {
+    "format": "reader",
+    "rowRight": 696,
+    "scoreRight": 696,
+    "scoreWidth": 246,
+    "scoreScroll": 246,
+    "numberWidth": 151.03125,
+    "numberRight": 600.828125,
+    "text": "9,007,199,254,740,991"
+  }
+]

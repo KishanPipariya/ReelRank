@@ -1,3 +1,4 @@
+import { graphemePrefix } from '../web/display-text.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -77,6 +78,17 @@ test('snapshot contract bounds profile and TMDB text while preserving accepted v
   bounded.films[0].overview = '';
   bounded.films[0].directors = ['D'.repeat(513)];
   assert.throws(() => validateSnapshot(bounded), /directors/);
+});
+
+test('snapshot text limits count Unicode code points consistently for strings and arrays', () => {
+  for (const [field, limit] of [['title', 1024], ['overview', 20000], ['directors', 512]]) {
+    const value = 'A'.repeat(limit - 1) + '🎬';
+    const bounded = structuredClone(fixture);
+    bounded.films[0][field] = field === 'directors' ? [value] : value;
+    assert.equal(validateSnapshot(bounded), bounded);
+    bounded.films[0][field] = field === 'directors' ? [value + '🎬'] : value + '🎬';
+    assert.throws(() => validateSnapshot(bounded), new RegExp(field));
+  }
 });
 
 test('snapshot contract treats integer-valued JSON numbers as integers', () => {
@@ -303,4 +315,35 @@ test('shared programme language labels tolerate invalid codes in incoming URLs',
   const result = programmeShare('https://example.test/?language=!!!', state, '');
   assert.match(result.description, /Unknown \(!!!\)/);
   assert.equal(new URL(result.url).searchParams.get('language'), '!!!');
+});
+
+
+test('snapshot timestamps use the shared calendar and explicit timezone contract', async () => {
+  const cases = JSON.parse(await readFile(new URL('./fixtures/timestamp-cases.json', import.meta.url), 'utf8'));
+  for (const item of cases) {
+    const value = structuredClone(fixture);
+    value.refreshed_at = item.timestamp;
+    if (item.valid) assert.equal(validateSnapshot(value), value, item.timestamp);
+    else assert.throws(() => validateSnapshot(value), /refreshed_at/, item.timestamp);
+  }
+});
+
+
+test('compacted legacy snapshots preserve source URLs in catalogue downloads', async () => {
+  const value = JSON.parse(await readFile(new URL('./fixtures/public-legacy-snapshot.json', import.meta.url), 'utf8'));
+  validateSnapshot(value);
+  assert.ok(catalogueCsv(value.films, value.source_lists).includes('https://letterboxd.com/viewer/list/favorites/'));
+});
+
+
+test('display prefixes preserve emoji, combining marks and joined graphemes at cutoffs', () => {
+  for (const grapheme of ['🎬', '👩🏽‍💻', 'e\u0301', '🇯🇵']) {
+    const prefix = 'A'.repeat(34) + grapheme;
+    const result = graphemePrefix(prefix + ' Restoration notes', 35);
+    assert.equal(result, prefix);
+    assert.equal(result.isWellFormed(), true);
+  }
+  assert.equal(graphemePrefix('Plain text', 35), 'Plain text');
+  assert.equal(graphemePrefix('Plain text', 0), '');
+  assert.equal(graphemePrefix('A'.repeat(259) + '🎬' + '続きを読む', 260), 'A'.repeat(259) + '🎬');
 });

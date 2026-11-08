@@ -1,3 +1,5 @@
+import { graphemePrefix } from './display-text.js';
+
 export function createProgrammePrinter(dependencies) {
   const {
     printFormatSelect, printProgrammeContainer, printProgrammeTitle,
@@ -96,11 +98,11 @@ export function createProgrammePrinter(dependencies) {
         const synopsis = document.createElement('p');
         synopsis.className = 'print-film-synopsis';
         const overview = film.overview.trim();
-        if (overview.length <= 260) synopsis.textContent = overview;
+        const excerpt = graphemePrefix(overview, 260);
+        if (excerpt === overview) synopsis.textContent = overview;
         else {
-          const excerpt = overview.slice(0, 260);
           const lastSpace = excerpt.lastIndexOf(' ');
-          synopsis.textContent = `${excerpt.slice(0, lastSpace > 180 ? lastSpace : 260).replace(/[.,;:!?]$/, '')}…`;
+          synopsis.textContent = `${(lastSpace > 180 ? excerpt.slice(0, lastSpace) : excerpt).replace(/[.,;:!?]$/, '')}…`;
         }
         entry.append(synopsis);
       }
