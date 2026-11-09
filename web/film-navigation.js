@@ -1,5 +1,52 @@
+import { canonicalLetterboxdFilmUrl } from './letterboxd-film-url.js';
+
+const localIds = new WeakMap();
+const localFingerprints = new WeakMap();
+
+function localFingerprint(film) {
+  if (localFingerprints.has(film)) return localFingerprints.get(film);
+  const text = JSON.stringify([film.title, film.year, film.original_title || '', film.directors || [], film.overview || '']);
+  let first = 0x811c9dc5;
+  let second = 0x9e3779b9;
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    first = Math.imul(first ^ code, 16777619);
+    second = Math.imul(second ^ code, 2246822519);
+  }
+  const key = `local:${(first >>> 0).toString(16).padStart(8, '0')}${(second >>> 0).toString(16).padStart(8, '0')}`;
+  localFingerprints.set(film, key);
+  return key;
+}
+
+export function registerFilmIdentifiers(films) {
+  const occurrences = new Map();
+  for (const film of films) {
+    if (film.letterboxd_url || Number.isSafeInteger(film.tmdb_id)) continue;
+    const key = localFingerprint(film);
+    const occurrence = (occurrences.get(key) || 0) + 1;
+    occurrences.set(key, occurrence);
+    localIds.set(film, `${key}:${occurrence}`);
+  }
+}
+
 export function filmIdentifier(film) {
-  return film.letterboxd_url || `${film.tmdb_id || film.title}-${film.year || ''}`;
+  if (film.letterboxd_url) return film.letterboxd_url;
+  if (Number.isSafeInteger(film.tmdb_id)) return `${film.tmdb_id}-${film.year || ''}`;
+  return localIds.get(film) || `${localFingerprint(film)}:1`;
+}
+
+export function findFilmByIdentifier(films, key) {
+  const exact = films.filter((film) => filmIdentifier(film) === key || film.letterboxd_url === key);
+  if (exact.length) return exact.length === 1 ? exact[0] : undefined;
+  const canonical = canonicalLetterboxdFilmUrl(key);
+  if (canonical) {
+    const aliases = films.filter((film) => canonicalLetterboxdFilmUrl(film.letterboxd_url) === canonical);
+    return aliases.length === 1 ? aliases[0] : undefined;
+  }
+  const aliases = films.filter((film) => key.startsWith('local:')
+    ? (localIds.get(film) || `${localFingerprint(film)}:1`) === key
+    : `${film.tmdb_id || film.title}-${film.year || ''}` === key);
+  return aliases.length === 1 ? aliases[0] : undefined;
 }
 
 export function filmDetailUrl(href, film) {
@@ -13,10 +60,13 @@ export function entryMetadata(historyState, visibleLimit, scrollY) {
   return { ...previous, reelrank: { ...(previous.reelrank || {}), visibleLimit, scrollY } };
 }
 
-export function createFilmNavigation({ browserWindow, getState, getFilms, getDialog, openDetails, restoreCatalogue, collectionTitle }) {
+export function createFilmNavigation({ browserWindow, getState, getFilms, getDialog, openDetails, dismissPosterViewer, restoreCatalogue, findTrigger, collectionTitle }) {
   let activeFilm = null;
   let clickedTrigger = null;
+  let triggerFilm = null;
+  let triggerKind = '';
   let historyCloseCount = 0;
+  let historyRender;
   let scrollTimer;
 
   function rememberPosition() {
@@ -27,13 +77,17 @@ export function createFilmNavigation({ browserWindow, getState, getFilms, getDia
   }
 
   function openFromUi(film, options = {}) {
-    clickedTrigger = browserWindow.document.activeElement;
+    const focused = browserWindow.document.activeElement;
+    clickedTrigger = focused === browserWindow.document.body ? null : focused;
+    triggerFilm = film;
+    triggerKind = clickedTrigger?.classList[0] || '';
     const url = filmDetailUrl(browserWindow.location.href, film);
     activeFilm = url.searchParams.get('film');
     const state = getState();
     browserWindow.history.replaceState(entryMetadata(browserWindow.history.state, state.visibleLimit, browserWindow.scrollY), '', browserWindow.location.href);
     const metadata = entryMetadata(browserWindow.history.state, state.visibleLimit, browserWindow.scrollY);
     metadata.reelrank.filmDialog = true;
+    metadata.reelrank.filmOpener = { key: activeFilm, kind: triggerKind };
     browserWindow.history.pushState(metadata, '', url);
     openDetails(film, options);
   }
@@ -43,37 +97,65 @@ export function createFilmNavigation({ browserWindow, getState, getFilms, getDia
     if (!key) {
       activeFilm = null;
       const dialog = getDialog();
-      if (dialog.open) { historyCloseCount += 1; dialog.close(); }
+      if (dialog.open) {
+        dismissPosterViewer();
+        historyCloseCount += 1;
+        dialog.close();
+      }
       return;
     }
-    const film = getFilms().find((item) => filmIdentifier(item) === key || item.letterboxd_url === key);
+    const film = findFilmByIdentifier(getFilms(), key);
     const dialog = getDialog();
     if (film && (activeFilm !== key || !dialog.open)) {
+      dismissPosterViewer();
       activeFilm = key;
-      if (!clickedTrigger && browserWindow.history.state?.reelrank?.filmDialog && browserWindow.document.activeElement !== browserWindow.document.body && browserWindow.document.activeElement.isConnected) clickedTrigger = browserWindow.document.activeElement;
+      if (!triggerFilm && browserWindow.history.state?.reelrank?.filmDialog) {
+        const opener = browserWindow.history.state.reelrank.filmOpener;
+        triggerFilm = (opener?.key && findFilmByIdentifier(getFilms(), opener.key)) || film;
+        triggerKind = opener?.kind || '';
+        const focused = browserWindow.document.activeElement;
+        clickedTrigger = findTrigger(triggerFilm, triggerKind)
+          || (focused !== browserWindow.document.body && focused.isConnected ? focused : null);
+      }
       openDetails(film);
     }
   }
 
   function handleDialogClose() {
-    if (historyCloseCount > 0) {
+    const historyClosed = historyCloseCount > 0;
+    if (historyClosed) {
       historyCloseCount -= 1;
       if (getDialog().open) return;
+    }
+    const trigger = clickedTrigger;
+    const film = triggerFilm;
+    const kind = triggerKind;
+    clickedTrigger = null;
+    triggerFilm = null;
+    triggerKind = '';
+    function focusOpener() {
+      const target = trigger?.isConnected && trigger.getClientRects().length ? trigger : (film && findTrigger(film, kind)) || collectionTitle();
+      target.focus({ preventScroll: true });
+    }
+    if (historyClosed) {
+      const closedUrl = browserWindow.location.href;
+      const focusAtClose = browserWindow.document.activeElement;
+      void Promise.resolve(historyRender).then(() => {
+        const focused = browserWindow.document.activeElement;
+        if (!getDialog().open && browserWindow.location.href === closedUrl && (focused === focusAtClose || focused === browserWindow.document.body)) focusOpener();
+      });
     } else {
-      const trigger = clickedTrigger;
-      clickedTrigger = null;
-      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
-      else collectionTitle().focus({ preventScroll: true });
-      if (activeFilm && new URLSearchParams(browserWindow.location.search).get('film') === activeFilm) {
-        activeFilm = null;
-        const url = new URL(browserWindow.location.href); url.searchParams.delete('film');
-        browserWindow.history.replaceState(browserWindow.history.state, '', url);
-      }
+      focusOpener();
+    }
+    if (!historyClosed && activeFilm && new URLSearchParams(browserWindow.location.search).get('film') === activeFilm) {
+      activeFilm = null;
+      const url = new URL(browserWindow.location.href); url.searchParams.delete('film');
+      browserWindow.history.replaceState(browserWindow.history.state, '', url);
     }
   }
 
   function handlePopState() {
-    restoreCatalogue();
+    historyRender = restoreCatalogue();
     restoreFromUrl();
   }
 

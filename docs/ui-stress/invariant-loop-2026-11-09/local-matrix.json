@@ -1,0 +1,107 @@
+[
+  {
+    "width": 320,
+    "mode": "demo",
+    "shown": "Showing 43 of 34,509 films",
+    "total": "34,509",
+    "cards": 42
+  },
+  {
+    "width": 320,
+    "mode": "worst",
+    "shown": "Showing 13 of 13 films",
+    "total": "13",
+    "cards": 12
+  },
+  {
+    "width": 320,
+    "mode": "empty",
+    "shown": "Showing 0 of 0 films",
+    "total": "0",
+    "cards": 0
+  },
+  {
+    "width": 320,
+    "mode": "one",
+    "shown": "Showing 1 of 1 film",
+    "total": "1",
+    "cards": 0
+  },
+  {
+    "width": 320,
+    "mode": "100000",
+    "shown": "Showing 43 of 100,000 films",
+    "total": "100,000",
+    "cards": 42
+  },
+  {
+    "width": 1440,
+    "mode": "demo",
+    "shown": "Showing 43 of 34,509 films",
+    "total": "34,509",
+    "cards": 42
+  },
+  {
+    "width": 1440,
+    "mode": "worst",
+    "shown": "Showing 13 of 13 films",
+    "total": "13",
+    "cards": 12
+  },
+  {
+    "width": 1440,
+    "mode": "empty",
+    "shown": "Showing 0 of 0 films",
+    "total": "0",
+    "cards": 0
+  },
+  {
+    "width": 1440,
+    "mode": "one",
+    "shown": "Showing 1 of 1 film",
+    "total": "1",
+    "cards": 0
+  },
+  {
+    "width": 1440,
+    "mode": "100000",
+    "shown": "Showing 43 of 100,000 films",
+    "total": "100,000",
+    "cards": 42
+  },
+  {
+    "width": 2560,
+    "mode": "demo",
+    "shown": "Showing 43 of 34,509 films",
+    "total": "34,509",
+    "cards": 42
+  },
+  {
+    "width": 2560,
+    "mode": "worst",
+    "shown": "Showing 13 of 13 films",
+    "total": "13",
+    "cards": 12
+  },
+  {
+    "width": 2560,
+    "mode": "empty",
+    "shown": "Showing 0 of 0 films",
+    "total": "0",
+    "cards": 0
+  },
+  {
+    "width": 2560,
+    "mode": "one",
+    "shown": "Showing 1 of 1 film",
+    "total": "1",
+    "cards": 0
+  },
+  {
+    "width": 2560,
+    "mode": "100000",
+    "shown": "Showing 43 of 100,000 films",
+    "total": "100,000",
+    "cards": 42
+  }
+]

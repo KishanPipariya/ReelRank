@@ -5,21 +5,21 @@ export function createProgrammePrinter(dependencies) {
   const {
     printFormatSelect, printProgrammeContainer, printProgrammeTitle,
     printProgrammeUsername, printProgrammeDate, printProgrammeContext,
-    printProgrammeFilms, topBilledTitle, profileUsername, searchInput,
-    getCurrentMatchingFilms, getFilms, getState, getAvailableSourceLists,
+    printProgrammeFilms, profileUsername, searchInput,
+    getSelection, rankForFilm, getState, getAvailableSourceLists,
     getSnapshotRefreshedAt, compareFilms, formatEditionDate, languageNameFor,
   } = dependencies;
 
   function buildPrintProgramme() {
     const state = getState();
-    const currentMatchingFilms = getCurrentMatchingFilms();
-    const films = getFilms();
+    const query = searchInput.value.trim();
+    const { matching, title: programmeTitle, loadedCount, rankedCount } = getSelection(query);
     const availableSourceLists = getAvailableSourceLists();
     const snapshotRefreshedAt = getSnapshotRefreshedAt();
     const readerEdition = printFormatSelect.value === 'reader';
     printProgrammeContainer.classList.toggle('print-programme-reader', readerEdition);
-    const filmsForProgramme = [...currentMatchingFilms].sort((left, right) => compareFilms(left, right, 'year-oldest'));
-    printProgrammeTitle.textContent = topBilledTitle.textContent || 'ReelRank film selection';
+    const filmsForProgramme = matching.sort((left, right) => compareFilms(left, right, 'year-oldest'));
+    printProgrammeTitle.textContent = programmeTitle;
     printProgrammeUsername.textContent = profileUsername.textContent;
     printProgrammeDate.textContent = formatEditionDate(snapshotRefreshedAt);
     printProgrammeDate.dateTime = snapshotRefreshedAt;
@@ -32,10 +32,16 @@ export function createProgrammePrinter(dependencies) {
       state.decade !== '' ? `decade: ${state.decade}s` : '',
       state.runtime ? `runtime: ${state.runtime === 'under-90' ? 'under 90 min' : state.runtime === '90-120' ? '90–120 min' : 'over 120 min'}` : '',
       state.genres.length ? `genres: ${state.genres.join(' and ')}` : '',
-      searchInput.value.trim() ? `search: ${searchInput.value.trim()}` : '',
+      query ? `search: ${query}` : '',
     ].filter(Boolean);
-    const selectedView = activeFilters.length ? `Selected view: ${activeFilters.join(' · ')}` : 'Full catalogue';
-    printProgrammeContext.textContent = `${filmsForProgramme.length} ${filmsForProgramme.length === 1 ? 'film' : 'films'} · Arranged by release year · ${selectedView}`;
+    const partialScope = loadedCount < rankedCount
+      ? `Available catalogue: ${loadedCount.toLocaleString()} of ${rankedCount.toLocaleString()} ranked films loaded`
+      : '';
+    const selectedView = activeFilters.length ? `Selected view: ${activeFilters.join(' · ')}` : partialScope ? '' : 'Full catalogue';
+    printProgrammeContext.textContent = [
+      `${filmsForProgramme.length} ${filmsForProgramme.length === 1 ? 'film' : 'films'}`,
+      'Arranged by release year', selectedView, partialScope,
+    ].filter(Boolean).join(' · ');
     printProgrammeFilms.replaceChildren();
 
     if (!filmsForProgramme.length) {
@@ -66,7 +72,7 @@ export function createProgrammePrinter(dependencies) {
       entry.className = 'print-film-entry';
       const catalogueNumber = document.createElement('span');
       catalogueNumber.className = 'print-film-number';
-      catalogueNumber.textContent = `No. ${String(films.indexOf(film) + 1).padStart(3, '0')}`;
+      catalogueNumber.textContent = `No. ${String(rankForFilm(film)).padStart(3, '0')}`;
       const details = document.createElement('div');
       details.className = 'print-film-details';
       const title = document.createElement('h3');
@@ -111,8 +117,15 @@ export function createProgrammePrinter(dependencies) {
     });
   }
 
+  let builtForPrintButton = false;
+  window.addEventListener('beforeprint', () => {
+    if (!builtForPrintButton) buildPrintProgramme();
+  });
+
   return function printProgramme() {
     buildPrintProgramme();
-    window.print();
+    builtForPrintButton = true;
+    try { window.print(); }
+    finally { builtForPrintButton = false; }
   };
 }

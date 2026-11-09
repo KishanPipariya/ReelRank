@@ -1,0 +1,46 @@
+
+> test
+> node --test tests/web.test.js
+
+✔ Python package and browser use the same snapshot schema (1.491625ms)
+✔ snapshot load errors distinguish unreachable, invalid JSON, and invalid catalogue data (0.125375ms)
+✔ edition freshness turns stale at 30 days and ignores future timestamps (0.07675ms)
+✔ future edition timestamps are described explicitly instead of as just updated (21.82675ms)
+✔ edition update descriptions retain present and past wording and handle invalid dates (0.731125ms)
+✔ catalogue CSV handles quoted titles and neutralizes spreadsheet formulas (0.17325ms)
+✔ snapshot contract accepts optional TMDB enrichment fields when omitted (0.481708ms)
+✔ snapshot contract bounds profile and TMDB text while preserving accepted values (0.770209ms)
+✔ snapshot text limits count Unicode code points consistently for strings and arrays (0.436084ms)
+✔ snapshot contract treats integer-valued JSON numbers as integers (0.140125ms)
+✔ snapshot contract rejects invalid TMDB identifiers and inconsistent counts (0.255042ms)
+✔ worst-case fixtures keep counts coherent and clear inherited optional TMDB metadata (0.8135ms)
+✔ snapshot validation rejects unsafe profile, film, and list URLs and invalid edition times (0.333458ms)
+✔ snapshot metadata provenance fields use the documented values (0.105166ms)
+✔ catalog filters combine genres, director, list, country, decade, and query (1.074ms)
+✔ runtime filters use clear boundaries and exclude unknown runtimes (0.048625ms)
+✔ catalog search index includes metadata and source list labels (0.040042ms)
+✔ catalog search folds Latin accents and punctuation and matches words in any order (1.48475ms)
+✔ compact source list IDs validate while old per-film list arrays remain supported (0.133834ms)
+✔ catalog sorting uses stable rank as its tie breaker and puts unknown years last (0.490333ms)
+✔ relevance prioritizes exact and title hits, then director hits, with stable rank ties (0.209708ms)
+✔ original language filter supports known and unknown language codes (0.038375ms)
+✔ local preferences tolerate storage errors and imports reject malformed preset shapes (0.50875ms)
+✔ URL state parsing removes duplicate facets and ignores unsupported options (0.080375ms)
+✔ URL state serialization preserves unrelated parameters and supports repeatable filters (0.201959ms)
+✔ URL state round trips language and relevance sort without losing other facets (0.05925ms)
+✔ shared programmes describe facets and restore the full view without unrelated URL state (1.123458ms)
+✔ shared programme language labels tolerate invalid codes in incoming URLs (2.445416ms)
+✔ snapshot timestamps use the shared calendar and explicit timezone contract (4.147125ms)
+✔ compacted legacy snapshots preserve source URLs in catalogue downloads (0.286333ms)
+✔ display prefixes preserve emoji, combining marks and joined graphemes at cutoffs (0.1335ms)
+✔ ranking metadata requires URL identity or an unambiguous URI-less legacy detail (0.658958ms)
+✔ URL filters retain unavailable values but ignore blank facets and invalid decade syntax (0.058792ms)
+✔ local film links distinguish same-title records and identical occurrences across reload (0.184375ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 120.590833

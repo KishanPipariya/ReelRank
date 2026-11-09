@@ -1,6 +1,18 @@
 import { sourceListLabel } from './source-list-label.js';
 
 export function createFilterControls({ state, sources, elements, actions }) {
+  function bindChipRemoval(chip, container, onRemove, fallback) {
+    chip.addEventListener('click', () => {
+      const index = document.activeElement === chip ? [...container.querySelectorAll('button')].indexOf(chip) : -1;
+      onRemove();
+      if (index < 0 || chip.isConnected) return;
+      const remaining = container.querySelectorAll('button');
+      (remaining[Math.min(index, remaining.length - 1)] || fallback())?.focus({ preventScroll: true });
+    });
+  }
+
+  const activeChipFallback = () => elements.activeViewTools.querySelector('.active-genre-chip') || elements.searchInput;
+
   function appendFacetChip(container, label, ariaLabel, onRemove) {
     container.hidden = false;
     const chip = document.createElement('button');
@@ -8,7 +20,7 @@ export function createFilterControls({ state, sources, elements, actions }) {
     chip.className = 'active-genre-chip';
     chip.textContent = `${label} ×`;
     chip.setAttribute('aria-label', ariaLabel);
-    chip.addEventListener('click', onRemove);
+    bindChipRemoval(chip, container, onRemove, activeChipFallback);
     container.append(chip);
   }
 
@@ -27,7 +39,8 @@ export function createFilterControls({ state, sources, elements, actions }) {
       chip.className = 'selected-genre-chip';
       chip.textContent = `${genre} ×`;
       chip.setAttribute('aria-label', `Remove ${genre} genre filter`);
-      chip.addEventListener('click', () => actions.toggleGenre(genre));
+      bindChipRemoval(chip, elements.selectedGenres, () => actions.toggleGenre(genre),
+        () => elements.selectedGenres.closest('details')?.querySelector('summary'));
       elements.selectedGenres.append(chip);
     });
   }
@@ -48,7 +61,8 @@ export function createFilterControls({ state, sources, elements, actions }) {
       chip.className = 'selected-genre-chip';
       chip.textContent = `${label} ×`;
       chip.setAttribute('aria-label', `Remove ${label} source list filter`);
-      chip.addEventListener('click', () => actions.toggleSourceList(url));
+      bindChipRemoval(chip, elements.selectedSourceLists, () => actions.toggleSourceList(url),
+        () => elements.selectedSourceLists.closest('details')?.querySelector('summary'));
       elements.selectedSourceLists.append(chip);
     });
   }
@@ -76,7 +90,7 @@ export function createFilterControls({ state, sources, elements, actions }) {
       chip.className = 'active-genre-chip active-source-list-chip';
       chip.textContent = `List: ${label} ×`;
       chip.setAttribute('aria-label', `Remove ${label} source list filter`);
-      chip.addEventListener('click', () => actions.toggleSourceList(url));
+      bindChipRemoval(chip, elements.activeSourceListFilters, () => actions.toggleSourceList(url), activeChipFallback);
       elements.activeSourceListFilters.append(chip);
     });
     if (state.country) appendFacetChip(elements.activeGenreFilters, `Country: ${state.country}`, 'Remove production country filter', () => actions.setCountry(''));

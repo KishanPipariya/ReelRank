@@ -1,0 +1,19 @@
+
+> check:invariants
+> node scripts/ui-invariant-scan.mjs --local
+
+Local demo at 320px: Showing 43 of 34,509 films
+Local worst at 320px: Showing 13 of 13 films
+Local empty at 320px: Showing 0 of 0 films
+Local one at 320px: Showing 1 of 1 film
+Local 100000 at 320px: Showing 43 of 100,000 films
+Local demo at 1440px: Showing 43 of 34,509 films
+Local worst at 1440px: Showing 13 of 13 films
+Local empty at 1440px: Showing 0 of 0 films
+Local one at 1440px: Showing 1 of 1 film
+Local 100000 at 1440px: Showing 43 of 100,000 films
+Local demo at 2560px: Showing 43 of 34,509 films
+Local worst at 2560px: Showing 13 of 13 films
+Local empty at 2560px: Showing 0 of 0 films
+Local one at 2560px: Showing 1 of 1 film
+Local 100000 at 2560px: Showing 43 of 100,000 films

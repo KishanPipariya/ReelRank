@@ -1,3 +1,5 @@
+import { normalizeViewFacets } from './url-state.js';
+
 export const savedViewLimit = 100;
 
 export const preferenceKey = 'reelrank.preferences.v1';
@@ -8,7 +10,7 @@ const presetStateKeys = ['query', 'filter', 'sort', 'view', 'genres', 'directors
 function cleanPresetState(saved) {
   const clean = { query: '', filter: 'all', sort: 'rank', view: 'posters', genres: [], directors: [], sourceLists: [], country: '', language: '', decade: '', runtime: '' };
   presetStateKeys.forEach((key) => { if (Object.hasOwn(saved, key)) clean[key] = saved[key]; });
-  return clean;
+  return { ...clean, ...normalizeViewFacets(clean) };
 }
 
 export function validatePreferences(value) {

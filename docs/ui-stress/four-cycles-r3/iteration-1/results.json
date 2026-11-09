@@ -1,0 +1,30 @@
+[
+  {
+    "width": 320,
+    "directorLabel": "Show 1 more directors; 1 remaining for Bill Roberts",
+    "directorFocus": {
+      "tag": "BODY",
+      "cls": ""
+    },
+    "countryLabel": "Show 1 more countries; 1 remaining for Collaborative restoration programme"
+  },
+  {
+    "width": 320,
+    "ledgerLabel": "Show 1 more directors for Collaborative restoration programme",
+    "ledgerFocus": "BODY"
+  },
+  {
+    "width": 1440,
+    "directorLabel": "Show 1 more directors; 1 remaining for Bill Roberts",
+    "directorFocus": {
+      "tag": "BODY",
+      "cls": ""
+    },
+    "countryLabel": "Show 1 more countries; 1 remaining for Collaborative restoration programme"
+  },
+  {
+    "width": 1440,
+    "ledgerLabel": "Show 1 more directors for Collaborative restoration programme",
+    "ledgerFocus": "BODY"
+  }
+]

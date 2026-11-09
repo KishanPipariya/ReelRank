@@ -1,0 +1,126 @@
+[
+  {
+    "width": 320,
+    "metadataFocusPreserved": true,
+    "singularDirector": true,
+    "singularCountry": true,
+    "ledgerKeyboardCollapse": true
+  },
+  {
+    "width": 1440,
+    "metadataFocusPreserved": true,
+    "singularDirector": true,
+    "singularCountry": true,
+    "ledgerKeyboardCollapse": true
+  },
+  {
+    "width": 320,
+    "staleFacet": "sourceLists",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 320,
+    "staleFacet": "genres",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 320,
+    "staleFacet": "directors",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 320,
+    "staleFacet": "country",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 320,
+    "staleFacet": "language",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 320,
+    "staleFacet": "decade",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 320,
+    "staleFacet": "runtime",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 1440,
+    "staleFacet": "sourceLists",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 1440,
+    "staleFacet": "genres",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 1440,
+    "staleFacet": "directors",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 1440,
+    "staleFacet": "country",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 1440,
+    "staleFacet": "language",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 1440,
+    "staleFacet": "decade",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 1440,
+    "staleFacet": "runtime",
+    "reloadPreserves": true,
+    "removable": true,
+    "backPreserves": true
+  },
+  {
+    "width": 320,
+    "distinctLocalLinks": true,
+    "copiedLinkReload": true,
+    "identicalOccurrenceDistinct": true
+  },
+  {
+    "width": 1440,
+    "distinctLocalLinks": true,
+    "copiedLinkReload": true,
+    "identicalOccurrenceDistinct": true
+  }
+]

@@ -3,7 +3,7 @@ import { parsePresetImport, savedViewLimit } from './local-preferences.js';
 export function bindSavedViewControls(dependencies) {
   const {
     readPreferences, savePreferences, replacePreferences, clearPreferences, state, searchInput,
-    syncControls, updateUrlState, render, getFilms, originalPosterByFilm,
+    syncControls, updateUrlState, render, canonicalSourceLists, getFilms, originalPosterByFilm,
     readUndo, saveUndo, clearUndo,
     filmCardByFilm, filmViews,
   } = dependencies;
@@ -145,7 +145,7 @@ export function bindSavedViewControls(dependencies) {
     const preset = savedPresets().find((item) => item.name.toLocaleLowerCase() === name);
     if (!preset) { renderPresets(); showStatus('That saved view is no longer available. Choose another saved view.', null); return; }
     renderPresets();
-    Object.assign(state, preset.state);
+    Object.assign(state, preset.state, { sourceLists: canonicalSourceLists(preset.state.sourceLists) });
     searchInput.value = state.query || '';
     state.visibleLimit = 40;
     syncControls(); updateUrlState(); render();

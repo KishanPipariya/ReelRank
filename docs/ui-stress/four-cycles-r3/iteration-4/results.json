@@ -1,0 +1,30 @@
+[
+  {
+    "width": 320,
+    "openEarly": false,
+    "src": "https://image.tmdb.org/t/p/w500/r3-alternate.jpg",
+    "choices": {},
+    "status": "Poster reset to the catalogue original."
+  },
+  {
+    "width": 320,
+    "openEarly": true,
+    "src": "https://image.tmdb.org/t/p/w500/r3-alternate.jpg",
+    "choices": {},
+    "status": "Poster reset to the catalogue original."
+  },
+  {
+    "width": 1440,
+    "openEarly": false,
+    "src": "https://image.tmdb.org/t/p/w500/r3-alternate.jpg",
+    "choices": {},
+    "status": "Poster reset to the catalogue original."
+  },
+  {
+    "width": 1440,
+    "openEarly": true,
+    "src": "https://image.tmdb.org/t/p/w500/r3-alternate.jpg",
+    "choices": {},
+    "status": "Poster reset to the catalogue original."
+  }
+]

@@ -1,0 +1,16 @@
+
+> check:invariants
+> node scripts/ui-invariant-scan.mjs
+
+Invariant 1 at 320px: passed
+Invariant 1 at 1440px: passed
+Invariant 2 at 320px: passed
+Invariant 2 at 1440px: passed
+Invariant 3 at 320px: passed
+Invariant 3 at 1440px: passed
+Invariant 4 at 320px: passed
+Invariant 4 at 1440px: passed
+Invariant 5 at 320px: passed
+Invariant 5 at 1440px: passed
+Invariant 6 at 320px: passed
+Invariant 6 at 1440px: passed

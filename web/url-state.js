@@ -3,20 +3,35 @@ const validSorts = new Set(['rank', 'title', 'year-newest', 'year-oldest', 'rele
 const validViews = new Set(['posters', 'ledger']);
 const validRuntimes = new Set(['under-90', '90-120', 'over-120']);
 
+export function normalizeViewFacets({ query = '', genres = [], directors = [], country = '', language = '', decade = '' }) {
+  const nonblank = (values) => [...new Set(values.filter((value) => value.trim()))];
+  return {
+    query: query.trim(),
+    genres: nonblank(genres),
+    directors: nonblank(directors),
+    country: country.trim() ? country : '',
+    language: language.trim(),
+    decade: Number.isInteger(decade) && decade >= 1000 && decade <= 9999 ? decade : '',
+  };
+}
+
 export function parseUrlState(search) {
   const params = new URLSearchParams(search);
   const filter = params.get('filter');
   const sort = params.get('sort');
+  const decade = params.get('decade') || '';
   return {
-    query: params.get('q') || '',
+    ...normalizeViewFacets({
+      query: params.get('q') || '',
+      genres: params.getAll('genre'),
+      directors: params.getAll('director'),
+      country: params.get('country') || '',
+      language: params.get('language') || '',
+      decade: /^\d{4}$/.test(decade) ? Number(decade) : '',
+    }),
     filter: validFilters.has(filter) ? filter : 'all',
     sort: validSorts.has(sort) ? sort : 'rank',
-    genres: [...new Set(params.getAll('genre'))],
-    directors: [...new Set(params.getAll('director'))],
     sourceLists: [...new Set(params.getAll('list'))],
-    country: params.get('country') || '',
-    language: params.get('language') || '',
-    decade: /^\d{4}$/.test(params.get('decade') || '') ? Number(params.get('decade')) : '',
     runtime: validRuntimes.has(params.get('runtime')) ? params.get('runtime') : '',
     view: validViews.has(params.get('view')) ? params.get('view') : 'posters',
   };

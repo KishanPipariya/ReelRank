@@ -14,8 +14,13 @@ export function buildSearchText(film, sourceListLabels = []) {
 
 export function normalizeSearchText(value) {
   return String(value || '').normalize('NFKD')
+    .replace(/\p{Variation_Selector}/gu, '')
     .replace(/(\p{Script=Latin})\p{M}+/gu, '$1')
     .toLocaleLowerCase().replace(/[^\p{L}\p{N}\p{M}]+/gu, ' ').trim().replace(/\s+/g, ' ');
+}
+
+function literalSearchText(value) {
+  return String(value || '').normalize('NFKC').replace(/\p{Variation_Selector}/gu, '').trim();
 }
 
 const normalizedSearchCache = new WeakMap();
@@ -40,7 +45,10 @@ export function matchesFilm(film, filters, sourceListUrls = film.lists || [], so
     if (filters.runtime === 'over-120' && runtime <= 120) return false;
   }
   const query = normalizeSearchText(filters.query);
-  if (!query) return true;
+  if (!query) {
+    const literal = literalSearchText(filters.query);
+    return !literal || literalSearchText(searchText).includes(literal);
+  }
   let cached = normalizedSearchCache.get(film);
   if (!cached || cached.source !== searchText) {
     cached = { source: searchText, normalized: normalizeSearchText(searchText) };
@@ -81,7 +89,13 @@ export function compareFilms(left, right, sort, rankByFilm) {
 
 export function relevanceScore(film, query) {
   const normalizedQuery = normalizeSearchText(query);
-  if (!normalizedQuery) return 99;
+  if (!normalizedQuery) {
+    const literal = literalSearchText(query);
+    if (!literal) return 99;
+    const titles = [film.title, film.original_title].map(literalSearchText);
+    if (titles.includes(literal)) return 0;
+    return titles.some((value) => value.includes(literal)) ? 1 : 3;
+  }
   const terms = normalizedQuery.split(' ');
   const title = normalizeSearchText(film.title);
   const originalTitle = normalizeSearchText(film.original_title);

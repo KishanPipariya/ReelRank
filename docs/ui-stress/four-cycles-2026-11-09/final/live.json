@@ -1,0 +1,107 @@
+[
+  {
+    "mode": "demo",
+    "width": 320,
+    "count": "Showing 43 of 34,509 films",
+    "status": "Local full-metadata edition loaded for 34,509 films.",
+    "pageFits": true
+  },
+  {
+    "mode": "worst",
+    "width": 320,
+    "count": "Showing 13 of 13 films",
+    "status": "Development stress fixture: 13 local films with worst-case text and metadata.",
+    "pageFits": true
+  },
+  {
+    "mode": "empty",
+    "width": 320,
+    "count": "Showing 0 of 0 films",
+    "status": "Development fixture: this catalogue has no films.",
+    "pageFits": true
+  },
+  {
+    "mode": "one",
+    "width": 320,
+    "count": "Showing 1 of 1 film",
+    "status": "Development fixture: this catalogue has one film.",
+    "pageFits": true
+  },
+  {
+    "mode": "100000",
+    "width": 320,
+    "count": "Showing 43 of 100,000 films",
+    "status": "Development stress fixture: 34,509 local ranking rows padded with 65,491 sparse generated rows.",
+    "pageFits": true
+  },
+  {
+    "mode": "demo",
+    "width": 1440,
+    "count": "Showing 43 of 34,509 films",
+    "status": "Local full-metadata edition loaded for 34,509 films.",
+    "pageFits": true
+  },
+  {
+    "mode": "worst",
+    "width": 1440,
+    "count": "Showing 13 of 13 films",
+    "status": "Development stress fixture: 13 local films with worst-case text and metadata.",
+    "pageFits": true
+  },
+  {
+    "mode": "empty",
+    "width": 1440,
+    "count": "Showing 0 of 0 films",
+    "status": "Development fixture: this catalogue has no films.",
+    "pageFits": true
+  },
+  {
+    "mode": "one",
+    "width": 1440,
+    "count": "Showing 1 of 1 film",
+    "status": "Development fixture: this catalogue has one film.",
+    "pageFits": true
+  },
+  {
+    "mode": "100000",
+    "width": 1440,
+    "count": "Showing 43 of 100,000 films",
+    "status": "Development stress fixture: 34,509 local ranking rows padded with 65,491 sparse generated rows.",
+    "pageFits": true
+  },
+  {
+    "mode": "demo",
+    "width": 2560,
+    "count": "Showing 43 of 34,509 films",
+    "status": "Local full-metadata edition loaded for 34,509 films.",
+    "pageFits": true
+  },
+  {
+    "mode": "worst",
+    "width": 2560,
+    "count": "Showing 13 of 13 films",
+    "status": "Development stress fixture: 13 local films with worst-case text and metadata.",
+    "pageFits": true
+  },
+  {
+    "mode": "empty",
+    "width": 2560,
+    "count": "Showing 0 of 0 films",
+    "status": "Development fixture: this catalogue has no films.",
+    "pageFits": true
+  },
+  {
+    "mode": "one",
+    "width": 2560,
+    "count": "Showing 1 of 1 film",
+    "status": "Development fixture: this catalogue has one film.",
+    "pageFits": true
+  },
+  {
+    "mode": "100000",
+    "width": 2560,
+    "count": "Showing 43 of 100,000 films",
+    "status": "Development stress fixture: 34,509 local ranking rows padded with 65,491 sparse generated rows.",
+    "pageFits": true
+  }
+]

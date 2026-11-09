@@ -1,3 +1,4 @@
+import { filmIdentifier, registerFilmIdentifiers, findFilmByIdentifier } from '../web/film-navigation.js';
 import { expandSnapshotWithRanking } from '../web/ranking-csv.js';
 import { graphemePrefix } from '../web/display-text.js';
 import test from 'node:test';
@@ -10,6 +11,17 @@ import { createLocalPreferences, parsePresetImport } from '../web/local-preferen
 import { catalogueCsv } from '../web/catalogue-download.js';
 import { editionFreshness, formatUpdatedAt } from '../web/edition-freshness.js';
 import { snapshotForDevMode } from '../web/dev-data.js';
+
+test('symbol-only searches match literal symbols and ignore emoji presentation selectors', () => {
+  const fox = { title: '🦊 Fox', overview: 'A <restoration> with a ❤.' };
+  assert.equal(matchesFilm(fox, { query: '🦊' }), true);
+  assert.equal(matchesFilm(fox, { query: '🐺' }), false);
+  assert.equal(matchesFilm(fox, { query: '❤️' }), true);
+  assert.equal(matchesFilm(fox, { query: '<' }), true);
+  assert.equal(matchesFilm(fox, { query: ' ' }), true);
+  assert.equal(relevanceScore({ title: '🦊' }, '🦊'), 0);
+  assert.equal(relevanceScore(fox, '🦊'), 1);
+});
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/snapshot-minimal.json', import.meta.url), 'utf8'));
 const browserSchema = JSON.parse(await readFile(new URL('../web/snapshot.schema.json', import.meta.url), 'utf8'));
@@ -366,4 +378,76 @@ test('ranking metadata requires URL identity or an unambiguous URI-less legacy d
   assert.ok(expandSnapshotWithRanking(legacy, csv).every((film) => film.overview === ''));
   const unique = { ...legacy, film_count: 1 };
   assert.equal(expandSnapshotWithRanking(unique, catalogueCsv([detail]))[0].overview, detail.overview);
+});
+
+test('ranking sidecars preserve whitespace and literal apostrophes in spreadsheet-safe titles', () => {
+  const snapshot = { ...fixture, films: [], film_count: 1 };
+  const expand = (title, escapedApostrophes) => expandSnapshotWithRanking({
+    ...snapshot, ranking_csv_escaped_apostrophes: escapedApostrophes,
+  }, `Rank,Title,Year,Watched,Liked in lists,Letterboxd URI,List URLs\r\n1,"${title}",2010,no,0,https://letterboxd.com/film/installation/,\r\n`)[0].title;
+  assert.equal(expand("'  + One", false), '  + One');
+  assert.equal(expand("''=Installation", false), "''=Installation");
+  assert.equal(expand("''=Installation", true), "'=Installation");
+  assert.equal(expand("'''=Installation", true), "''=Installation");
+  assert.equal(expand("'  + One", true), '  + One');
+  assert.equal(expand('Installation, 🎬', true), 'Installation, 🎬');
+});
+
+
+test('URL filters retain unavailable values but ignore blank facets and invalid decade syntax', () => {
+  const value = parseUrlState('?genre=Archive+restoration&director=Former+director&country=Switzerland&language=tl&decade=1920');
+  assert.deepEqual(value.genres, ['Archive restoration']);
+  assert.deepEqual(value.directors, ['Former director']);
+  assert.equal(value.country, 'Switzerland');
+  assert.equal(value.language, 'tl');
+  assert.equal(value.decade, 1920);
+  const blank = parseUrlState('?genre=&director=%20%20&country=%20&language=%20&decade=0000');
+  assert.deepEqual(blank.genres, []);
+  assert.deepEqual(blank.directors, []);
+  assert.equal(blank.country, '');
+  assert.equal(blank.language, '');
+  assert.equal(blank.decade, '');
+});
+
+test('imported views serialize and restore the same normalized facet state', () => {
+  const [preset] = parsePresetImport({ presets: [{ name: 'Arrival', state: {
+    query: ' Arrival ', language: ' en ', genres: [' ', 'Science Fiction', 'Science Fiction'],
+    directors: [' ', 'Denis Villeneuve'], country: ' ', decade: 10000, view: 'ledger',
+  } }] });
+  assert.deepEqual(preset.state, parseUrlState(urlForState('https://example.test/', preset.state, preset.state.query).search));
+  assert.equal(preset.state.language, 'en');
+  assert.deepEqual(preset.state.genres, ['Science Fiction']);
+  assert.deepEqual(preset.state.directors, ['Denis Villeneuve']);
+  assert.equal(preset.state.decade, '');
+});
+
+
+test('local film links distinguish same-title records and identical occurrences across reload', () => {
+  const first = { title: 'Home', year: '2019', letterboxd_url: '', tmdb_id: null, directors: ['First team'], overview: 'First synopsis' };
+  const second = { ...first, directors: ['Second team'], overview: 'Second synopsis' };
+  registerFilmIdentifiers([first, second]);
+  const key = filmIdentifier(second);
+  assert.notEqual(key, filmIdentifier(first));
+  const reload = structuredClone([first, second]);
+  registerFilmIdentifiers(reload);
+  assert.equal(findFilmByIdentifier(reload, key), reload[1]);
+  assert.equal(findFilmByIdentifier(reload, 'Home-2019'), undefined);
+  assert.equal(findFilmByIdentifier([first], 'Home-2019'), first);
+  const duplicate = [structuredClone(first), structuredClone(first)];
+  registerFilmIdentifiers(duplicate);
+  assert.notEqual(filmIdentifier(duplicate[0]), filmIdentifier(duplicate[1]));
+  assert.equal(findFilmByIdentifier(duplicate, filmIdentifier(duplicate[1])), duplicate[1]);
+  const canonical = { ...second, letterboxd_url: 'https://letterboxd.com/film/home-2019/' };
+  assert.equal(filmIdentifier(canonical), canonical.letterboxd_url);
+  assert.equal(filmIdentifier({ ...first, tmdb_id: 0 }), '0-2019');
+});
+
+test('film links resolve canonical aliases through ranking refresh without selecting an ambiguous film', () => {
+  const original = { ...fixture.films[0], letterboxd_url: 'https://www.letterboxd.com/film/arrival' };
+  const canonical = { ...original, letterboxd_url: 'https://letterboxd.com/film/arrival/' };
+  const distinct = { ...original, letterboxd_url: 'https://letterboxd.com/film/arrival-2016/' };
+  assert.equal(findFilmByIdentifier([canonical, distinct], original.letterboxd_url), canonical);
+  assert.equal(findFilmByIdentifier([original, distinct], canonical.letterboxd_url), original);
+  assert.equal(findFilmByIdentifier([original, canonical], original.letterboxd_url), original);
+  assert.equal(findFilmByIdentifier([original, canonical], 'https://www.letterboxd.com/film/arrival/'), undefined);
 });

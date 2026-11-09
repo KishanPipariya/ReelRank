@@ -154,7 +154,8 @@ def _is_schema_integer(value: object) -> bool:
 
 def _spreadsheet_safe_cell(value: object) -> object:
     """Prevent untrusted text fields from being interpreted as spreadsheet formulas."""
-    if isinstance(value, str) and re.match(r"^[\x00-\x20]*[=+\-@]", value):
+    # Escape literal apostrophes in the same prefix for the ranking reader.
+    if isinstance(value, str) and re.match(r"^'*[\x00-\x20]*[=+\-@]", value):
         return f"'{value}"
     return value
 
@@ -498,6 +499,7 @@ def write_snapshot(snapshot: dict, output: Path) -> None:
             raise ValueError("Snapshot declares a full-ranking CSV but contains no full ranking data")
         from .letterboxd import movie_is_watched
 
+        public_snapshot["ranking_csv_escaped_apostrophes"] = True
         csv_buffer = io.StringIO(newline="")
         writer = csv.writer(csv_buffer)
         writer.writerow(["Rank", "Title", "Year", "Watched", "Liked in lists", "Letterboxd URI", "List URLs"])

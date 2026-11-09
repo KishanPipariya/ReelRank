@@ -1,3 +1,5 @@
+import { canonicalLetterboxdFilmUrl } from './letterboxd-film-url.js';
+
 function parseCsvRows(text) {
   const rows = [];
   let row = [];
@@ -41,19 +43,6 @@ function parseCsvRows(text) {
   return rows;
 }
 
-function safeFilmUrl(value) {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'https:'
-      && ['letterboxd.com', 'www.letterboxd.com'].includes(url.hostname)
-      && /^\/film\/[^/]+\/?$/.test(url.pathname)
-      ? `${url.origin}${url.pathname.replace(/\/?$/, '/')}`
-      : '';
-  } catch {
-    return '';
-  }
-}
-
 function safeListUrl(value) {
   try {
     const url = new URL(value);
@@ -67,12 +56,16 @@ function safeListUrl(value) {
   }
 }
 
-function readCell(row, index) {
-  const value = String(row[index] ?? '');
-  return /^'[=+\-@]/.test(value) ? value.slice(1) : value;
-}
-
 export function expandSnapshotWithRanking(snapshot, csvText) {
+  // Old sidecars did not escape literal apostrophes. Keep multiple leading
+  // apostrophes intact when reading those files.
+  const escapedCell = snapshot.ranking_csv_escaped_apostrophes
+    ? /^'+[\u0000-\u0020]*[=+\-@]/
+    : /^'[\u0000-\u0020]*[=+\-@]/;
+  const readCell = (row, index) => {
+    const value = String(row[index] ?? '');
+    return escapedCell.test(value) ? value.slice(1) : value;
+  };
   const rows = parseCsvRows(csvText);
   const header = rows.shift()?.map((value) => value.trim()) || [];
   const column = new Map(header.map((value, index) => [value, index]));
@@ -94,7 +87,7 @@ export function expandSnapshotWithRanking(snapshot, csvText) {
     if (year && !/^\d{4}$/.test(year)) throw new Error('Full ranking CSV contains an invalid year');
     if (!['yes', 'no'].includes(watched)) throw new Error('Full ranking CSV contains an invalid watched value');
     if (!/^(0|[1-9]\d*)$/.test(likedIn) || !Number.isSafeInteger(Number(likedIn))) throw new Error('Full ranking CSV contains an invalid list count');
-    if (!safeFilmUrl(readCell(row, column.get('Letterboxd URI')))) throw new Error('Full ranking CSV contains an invalid Letterboxd film URL');
+    if (!canonicalLetterboxdFilmUrl(readCell(row, column.get('Letterboxd URI')))) throw new Error('Full ranking CSV contains an invalid Letterboxd film URL');
     const listUrls = readCell(row, column.get('List URLs')).trim().split(/\s+/).filter(Boolean);
     if (listUrls.some((url) => !safeListUrl(url))) throw new Error('Full ranking CSV contains an invalid source-list URL');
     const titleYearKey = `${title}\u0000${year}`;
@@ -106,8 +99,8 @@ export function expandSnapshotWithRanking(snapshot, csvText) {
   const detailedByUrl = new Map();
   const detailedByTitleYear = new Map();
   for (const film of snapshot.films) {
-    const url = safeFilmUrl(film.letterboxd_url);
-    if (url) detailedByUrl.set(url.replace('https://www.letterboxd.com/', 'https://letterboxd.com/'), film);
+    const url = canonicalLetterboxdFilmUrl(film.letterboxd_url);
+    if (url) detailedByUrl.set(url, film);
     const key = `${(film.letterboxd_title || film.title).trim()}\u0000${(film.letterboxd_year || film.year).trim()}`;
     detailedByTitleYear.set(key, detailedByTitleYear.has(key) ? null : film);
   }
@@ -115,10 +108,10 @@ export function expandSnapshotWithRanking(snapshot, csvText) {
   const films = rankedRows.map(({ row, titleYearKey }) => {
     const title = readCell(row, column.get('Title'));
     const year = readCell(row, column.get('Year')).trim();
-    const letterboxdUrl = safeFilmUrl(readCell(row, column.get('Letterboxd URI')));
+    const letterboxdUrl = canonicalLetterboxdFilmUrl(readCell(row, column.get('Letterboxd URI')));
     const legacy = detailedByTitleYear.get(titleYearKey);
-    const matched = detailedByUrl.get(letterboxdUrl.replace('https://www.letterboxd.com/', 'https://letterboxd.com/'))
-      || (titleYearCounts.get(titleYearKey) === 1 && legacy && !safeFilmUrl(legacy.letterboxd_url) ? legacy : null);
+    const matched = detailedByUrl.get(letterboxdUrl)
+      || (titleYearCounts.get(titleYearKey) === 1 && legacy && !canonicalLetterboxdFilmUrl(legacy.letterboxd_url) ? legacy : null);
     const lists = [...new Set(readCell(row, column.get('List URLs')).split(/\s+/).map(safeListUrl).filter(Boolean))];
     const film = matched ? { ...matched } : {
       title,

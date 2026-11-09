@@ -1,5 +1,5 @@
 import { genresWithSelectedFirst, posterFallbackFor, responsivePosterAttrs, setGenreLabel } from './film-components.js';
-import { filmIdentifier } from './film-navigation.js';
+import { filmIdentifier, findFilmByIdentifier } from './film-navigation.js';
 
 const filmMetadataBatchSize = 8;
 
@@ -255,14 +255,20 @@ posterViewerZoom.addEventListener('click', () => {
   });
 });
 posterViewerRetry.addEventListener('click', () => { void retryPosterPreview?.(); });
+function dismissPosterViewer() {
+  if (!posterViewerDialog.open) return;
+  posterViewerOpener = null;
+  posterViewerDialog.close();
+}
 posterViewerDialog.addEventListener('close', () => {
+  if (posterViewerDialog.open) return;
   posterPreviewRequest += 1;
   posterGalleryRequest += 1;
   activePosterFilm = null;
   retryPosterPreview = null;
   posterViewerRetry.hidden = true;
   posterViewerImage.parentElement.removeAttribute('aria-busy');
-  if (filmDetailDialog.open) {
+  if (filmDetailDialog.open && posterViewerOpener) {
     const opener = posterViewerOpener;
     const target = opener?.isConnected && !opener.disabled && filmDetailDialog.contains(opener)
       ? opener
@@ -399,7 +405,7 @@ function refreshFilmNavigation() {
   if (!filmDetailDialog.open || !detailFilm) return;
   const matching = getCurrentMatchingFilms();
   const identifier = filmIdentifier(detailFilm);
-  const film = getFilms().find((item) => filmIdentifier(item) === identifier) || detailFilm;
+  const film = findFilmByIdentifier(getFilms(), identifier) || detailFilm;
   if (matching === detailNavigationFilms && film === detailFilm) return;
   const previous = filmDetailContent.querySelector('.film-detail-navigation');
   const focused = previous?.contains(document.activeElement) ? document.activeElement.id : '';
@@ -655,7 +661,8 @@ function ledgerRowFor(film) {
   const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
   if (directors.length) {
     const appendDirector = (director, index) => {
-      if (index) directorCell.append(document.createTextNode(', '));
+      const before = directorCell.querySelector('.director-more-button');
+      if (index) directorCell.insertBefore(document.createTextNode(', '), before);
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'director-filter';
@@ -664,7 +671,7 @@ function ledgerRowFor(film) {
       button.setAttribute('aria-pressed', String(state.directors.includes(director)));
       button.setAttribute('aria-label', `Filter by director ${director}`);
       button.addEventListener('click', () => toggleDirector(director));
-      directorCell.append(button);
+      directorCell.insertBefore(button, before);
     };
     const visibleCount = Math.min(2, directors.length);
     directors.slice(0, visibleCount).forEach(appendDirector);
@@ -675,17 +682,15 @@ function ledgerRowFor(film) {
       more.className = 'director-more-button';
       more.textContent = `+${hiddenDirectors.length}`;
       more.setAttribute('aria-expanded', 'false');
-      more.setAttribute('aria-label', `Show ${hiddenDirectors.length} more directors for ${film.title}`);
+      more.setAttribute('aria-label', `Show ${hiddenDirectors.length} more ${hiddenDirectors.length === 1 ? 'director' : 'directors'} for ${film.title}`);
       let expanded = false;
       more.addEventListener('click', () => {
         expanded = !expanded;
         if (expanded) {
-          more.remove();
           hiddenDirectors.forEach((director, index) => appendDirector(director, visibleCount + index));
           directorCell.querySelectorAll('.director-filter').forEach((button, index) => {
             if (index >= visibleCount) button.dataset.extra = 'true';
           });
-          directorCell.append(more);
         } else directorCell.querySelectorAll('.director-filter[data-extra="true"]').forEach((button) => {
           button.previousSibling?.remove();
           button.remove();
@@ -693,7 +698,7 @@ function ledgerRowFor(film) {
         directorCell.classList.toggle('is-expanded', expanded);
         more.textContent = expanded ? '−' : `+${hiddenDirectors.length}`;
         more.setAttribute('aria-expanded', String(expanded));
-        more.setAttribute('aria-label', expanded ? `Show fewer directors for ${film.title}` : `Show ${hiddenDirectors.length} more directors for ${film.title}`);
+        more.setAttribute('aria-label', expanded ? `Show fewer directors for ${film.title}` : `Show ${hiddenDirectors.length} more ${hiddenDirectors.length === 1 ? 'director' : 'directors'} for ${film.title}`);
       });
       directorCell.append(more);
     }
@@ -895,5 +900,5 @@ function updatePosterForFilm(film, url) {
   }
 }
 
-  return { openFilmDetails, refreshFilmNavigation, ledgerRowsFor, featuredFilmFor, updatePosterForFilm };
+  return { openFilmDetails, dismissPosterViewer, refreshFilmNavigation, ledgerRowsFor, featuredFilmFor, updatePosterForFilm };
 }

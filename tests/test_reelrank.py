@@ -311,9 +311,20 @@ def test_snapshot_writer_exports_full_ranking_without_private_payload(tmp_path):
     public_snapshot = json.loads(output.read_text(encoding="utf-8"))
     assert "_full_ranking" not in public_snapshot
     assert "_watched" not in public_snapshot
+    assert public_snapshot["ranking_csv_escaped_apostrophes"] is True
     csv_text = (output.parent / "ranking-20261025T000000Z-0123456789ab.csv").read_text(encoding="utf-8")
     assert "Rank,Title,Year,Watched,Liked in lists,Letterboxd URI,List URLs" in csv_text
     assert "1,\"'=SUM(1,1)\",2016,yes,3," in csv_text
+
+
+@pytest.mark.parametrize("title,expected", [
+    ("  + One", "'  + One"),
+    ("'=Installation", "''=Installation"),
+    ("''=Installation", "'''=Installation"),
+    ("Installation, 🎬", "Installation, 🎬"),
+])
+def test_ranking_csv_escapes_spreadsheet_title_prefixes_reversibly(title, expected):
+    assert snapshot._spreadsheet_safe_cell(title) == expected
 
 
 def test_python_and_browser_snapshot_schemas_are_identical():

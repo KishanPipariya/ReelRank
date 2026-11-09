@@ -1,0 +1,58 @@
+[
+  {
+    "field": "sourceLists",
+    "before": "http://127.0.0.1:4173/?list=https%3A%2F%2Fletterboxd.com%2Ffixture%2Flist%2Fretired-festival-edition%2F",
+    "beforeCount": "Showing 0 of 0 films",
+    "after": "http://127.0.0.1:4173/",
+    "count": "Showing 8 of 8 films",
+    "chips": 0
+  },
+  {
+    "field": "genres",
+    "before": "http://127.0.0.1:4173/?genre=Archive+restoration",
+    "beforeCount": "Showing 0 of 0 films",
+    "after": "http://127.0.0.1:4173/",
+    "count": "Showing 8 of 8 films",
+    "chips": 0
+  },
+  {
+    "field": "directors",
+    "before": "http://127.0.0.1:4173/?director=Aleksandra+Wi%C5%9Bniewska-Kowalczyk",
+    "beforeCount": "Showing 0 of 0 films",
+    "after": "http://127.0.0.1:4173/",
+    "count": "Showing 8 of 8 films",
+    "chips": 0
+  },
+  {
+    "field": "country",
+    "before": "http://127.0.0.1:4173/?country=Switzerland",
+    "beforeCount": "Showing 0 of 0 films",
+    "after": "http://127.0.0.1:4173/",
+    "count": "Showing 8 of 8 films",
+    "chips": 0
+  },
+  {
+    "field": "language",
+    "before": "http://127.0.0.1:4173/?language=tl",
+    "beforeCount": "Showing 8 of 8 films",
+    "after": "http://127.0.0.1:4173/",
+    "count": "Showing 8 of 8 films",
+    "chips": 0
+  },
+  {
+    "field": "decade",
+    "before": "http://127.0.0.1:4173/?decade=1920",
+    "beforeCount": "Showing 0 of 0 films",
+    "after": "http://127.0.0.1:4173/",
+    "count": "Showing 8 of 8 films",
+    "chips": 0
+  },
+  {
+    "field": "runtime",
+    "before": "http://127.0.0.1:4173/?runtime=over-120",
+    "beforeCount": "Showing 0 of 0 films",
+    "after": "http://127.0.0.1:4173/",
+    "count": "Showing 8 of 8 films",
+    "chips": 0
+  }
+]
