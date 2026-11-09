@@ -19,9 +19,16 @@ function localFingerprint(film) {
 }
 
 export function registerFilmIdentifiers(films) {
+  const tmdbOccurrences = new Map();
+  for (const film of films) {
+    if (film.letterboxd_url || !Number.isSafeInteger(film.tmdb_id)) continue;
+    const key = tmdbIdentifier(film);
+    tmdbOccurrences.set(key, (tmdbOccurrences.get(key) || 0) + 1);
+  }
   const occurrences = new Map();
   for (const film of films) {
-    if (film.letterboxd_url || Number.isSafeInteger(film.tmdb_id)) continue;
+    localIds.delete(film);
+    if (film.letterboxd_url || (Number.isSafeInteger(film.tmdb_id) && tmdbOccurrences.get(tmdbIdentifier(film)) === 1)) continue;
     const key = localFingerprint(film);
     const occurrence = (occurrences.get(key) || 0) + 1;
     occurrences.set(key, occurrence);
@@ -29,10 +36,16 @@ export function registerFilmIdentifiers(films) {
   }
 }
 
+function tmdbIdentifier(film) {
+  return `${film.tmdb_id}-${film.year || ''}`;
+}
+
 export function filmIdentifier(film) {
   if (film.letterboxd_url) return film.letterboxd_url;
-  if (Number.isSafeInteger(film.tmdb_id)) return `${film.tmdb_id}-${film.year || ''}`;
-  return localIds.get(film) || `${localFingerprint(film)}:1`;
+  const localId = localIds.get(film);
+  if (localId) return localId;
+  if (Number.isSafeInteger(film.tmdb_id)) return tmdbIdentifier(film);
+  return `${localFingerprint(film)}:1`;
 }
 
 export function findFilmByIdentifier(films, key) {
@@ -45,7 +58,7 @@ export function findFilmByIdentifier(films, key) {
   }
   const aliases = films.filter((film) => key.startsWith('local:')
     ? (localIds.get(film) || `${localFingerprint(film)}:1`) === key
-    : `${film.tmdb_id || film.title}-${film.year || ''}` === key);
+    : (Number.isSafeInteger(film.tmdb_id) ? tmdbIdentifier(film) : `${film.title}-${film.year || ''}`) === key);
   return aliases.length === 1 ? aliases[0] : undefined;
 }
 
@@ -144,7 +157,8 @@ export function createFilmNavigation({ browserWindow, getState, getFilms, getDia
         const focused = browserWindow.document.activeElement;
         if (!getDialog().open && browserWindow.location.href === closedUrl && (focused === focusAtClose || focused === browserWindow.document.body)) focusOpener();
       });
-    } else {
+    } else if (browserWindow.document.activeElement !== collectionTitle()) {
+      // A filter applied from details already focuses the results heading.
       focusOpener();
     }
     if (!historyClosed && activeFilm && new URLSearchParams(browserWindow.location.search).get('film') === activeFilm) {

@@ -419,6 +419,9 @@ test('imported views serialize and restore the same normalized facet state', () 
   assert.deepEqual(preset.state.genres, ['Science Fiction']);
   assert.deepEqual(preset.state.directors, ['Denis Villeneuve']);
   assert.equal(preset.state.decade, '');
+  const [blankRelevance] = parsePresetImport({ presets: [{ name: 'Relevance', state: { query: ' ', sort: 'relevance' } }] });
+  assert.equal(blankRelevance.state.sort, 'rank');
+  assert.equal(parseUrlState('?q=+&sort=relevance').sort, 'rank');
 });
 
 
@@ -440,6 +443,16 @@ test('local film links distinguish same-title records and identical occurrences 
   const canonical = { ...second, letterboxd_url: 'https://letterboxd.com/film/home-2019/' };
   assert.equal(filmIdentifier(canonical), canonical.letterboxd_url);
   assert.equal(filmIdentifier({ ...first, tmdb_id: 0 }), '0-2019');
+  const sameTmdb = [{ ...first, tmdb_id: 0 }, { ...second, tmdb_id: 0 }];
+  registerFilmIdentifiers(sameTmdb);
+  const editionKey = filmIdentifier(sameTmdb[1]);
+  assert.notEqual(editionKey, filmIdentifier(sameTmdb[0]));
+  const reloadedEditions = structuredClone(sameTmdb);
+  registerFilmIdentifiers(reloadedEditions);
+  assert.equal(findFilmByIdentifier(reloadedEditions, editionKey), reloadedEditions[1]);
+  assert.equal(findFilmByIdentifier(reloadedEditions, '0-2019'), undefined);
+  registerFilmIdentifiers(reloadedEditions.slice(0, 1));
+  assert.equal(filmIdentifier(reloadedEditions[0]), '0-2019');
 });
 
 test('film links resolve canonical aliases through ranking refresh without selecting an ambiguous film', () => {

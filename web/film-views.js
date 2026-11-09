@@ -3,16 +3,17 @@ import { filmIdentifier, findFilmByIdentifier } from './film-navigation.js';
 
 const filmMetadataBatchSize = 8;
 
-function appendProgressiveGenreTags(container, genres, genreChipFor, initialCount = 2, selectedGenres = []) {
+function appendProgressiveGenreTags(container, genres, genreChipFor, { initialCount = 2, expandedCount = initialCount, selectedGenres = [] } = {}) {
   genres = genresWithSelectedFirst(genres, selectedGenres);
   container.dataset.activeGenreFilters = JSON.stringify(selectedGenres);
-  let visibleCount = Math.min(initialCount, genres.length);
+  const collapsedCount = Math.min(initialCount, genres.length);
+  let visibleCount = Math.min(Math.max(collapsedCount, expandedCount), genres.length);
   genres.slice(0, visibleCount).forEach((genre, index) => {
     const tag = genreChipFor(genre);
-    if (index >= 2) tag.classList.add('genre-extra-tag');
+    if (index >= collapsedCount) tag.classList.add('genre-extra-tag');
     container.append(tag);
   });
-  if (genres.length <= 2) return;
+  if (genres.length <= collapsedCount) return;
 
   const more = document.createElement('button');
   more.type = 'button';
@@ -24,7 +25,7 @@ function appendProgressiveGenreTags(container, genres, genreChipFor, initialCoun
       ? `Show ${Math.min(filmMetadataBatchSize, remaining)} more ${remaining === 1 ? 'genre' : 'genres'}; ${remaining} remaining`
       : 'Show fewer genres');
   };
-  const initiallyExpanded = visibleCount > 2;
+  const initiallyExpanded = visibleCount > collapsedCount;
   container.classList.toggle('is-expanded', initiallyExpanded);
   more.setAttribute('aria-expanded', String(initiallyExpanded));
   updateLabel();
@@ -40,9 +41,9 @@ function appendProgressiveGenreTags(container, genres, genreChipFor, initialCoun
       visibleCount = end;
     } else {
       container.querySelectorAll('.genre-extra-tag').forEach((tag) => tag.remove());
-      visibleCount = Math.min(initialCount, genres.length);
+      visibleCount = collapsedCount;
     }
-    const expanded = visibleCount > initialCount;
+    const expanded = visibleCount > collapsedCount;
     container.classList.toggle('is-expanded', expanded);
     more.setAttribute('aria-expanded', String(expanded));
     updateLabel();
@@ -76,8 +77,10 @@ let posterViewerOpener = null;
 let retryPosterPreview = null;
 const featuredFilmByFilm = new WeakMap();
 function posterVariant(url, size) {
-  try { const parsed = new URL(url); if (parsed.hostname !== 'image.tmdb.org') return url; return url.replace(/\/t\/p\/w\d+(?=\/)/, `/t/p/${size}`); }
-  catch { return url; }
+  const parsed = new URL(url);
+  if (parsed.hostname !== 'image.tmdb.org') return url;
+  parsed.pathname = parsed.pathname.replace(/^\/t\/p\/(?:w\d+|original)(?=\/)/, `/t/p/${size}`);
+  return parsed.href;
 }
 
 async function previewPoster(film, url, { save = false, caption = '', canonicalUrl = url, zoomed = false, selectedButton = null, onReady = null } = {}) {
@@ -86,6 +89,7 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
   posterViewerRetry.hidden = true;
   posterViewerFeedback.textContent = 'Loading poster…';
   const stage = posterViewerImage.parentElement;
+  if (posterViewerImage.hidden) stage.classList.add('is-fit');
   stage.setAttribute('aria-busy', 'true');
   const candidate = new Image();
   candidate.referrerPolicy = 'no-referrer';
@@ -108,6 +112,7 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
   posterViewerImage.alt = `${film.title} poster`;
   posterViewerImage.hidden = false;
   posterViewerImage.classList.toggle('is-zoomed', zoomed);
+  stage.classList.toggle('is-fit', !zoomed);
   posterViewerCaption.dataset.posterUrl = canonicalUrl;
   posterViewerCaption.textContent = caption || [film.title, film.year].filter(Boolean).join(' · ');
   posterViewerZoom.disabled = false;
@@ -143,6 +148,7 @@ function openPosterViewer(film, showGallery = false) {
   posterViewerImage.removeAttribute('src');
   posterViewerImage.alt = '';
   posterViewerImage.classList.remove('is-zoomed');
+  posterViewerImage.parentElement.classList.toggle('is-fit', Boolean(posterUrl));
   posterViewerZoom.disabled = true;
   posterViewerZoom.setAttribute('aria-pressed', 'false');
   posterViewerZoom.textContent = 'View at actual size';
@@ -248,7 +254,7 @@ posterViewerZoom.addEventListener('click', () => {
   const selected = posterViewerCaption.dataset.posterUrl;
   if (!selected || !activePosterFilm) return;
   const zoomed = posterViewerZoom.getAttribute('aria-pressed') !== 'true';
-  void previewPoster(activePosterFilm, posterVariant(selected, zoomed ? 'original' : '500'), {
+  void previewPoster(activePosterFilm, posterVariant(selected, zoomed ? 'original' : 'w500'), {
     canonicalUrl: selected,
     caption: posterViewerCaption.textContent,
     zoomed,
@@ -559,7 +565,7 @@ function renderFilmDetails(film, retainFocus = false) {
         collectionTitle.scrollIntoView({ behavior, block: 'start' });
       });
       return button;
-    }, 6, state.genres);
+    }, { initialCount: 6, selectedGenres: state.genres });
     copy.append(genreList);
   }
   const notes = filmProgrammeNotesFor(film, { includeOriginalFacts: false });
@@ -718,10 +724,9 @@ function ledgerRowFor(film) {
   return row;
 }
 
-function ledgerRowsFor(shownFilms) {
+function ledgerRowsFor(shownFilms, previousYear = null) {
   const rows = [];
   const groupByYear = state.sort === 'year-newest' || state.sort === 'year-oldest';
-  let previousYear = null;
   shownFilms.forEach((film) => {
     const year = film.year?.trim() || 'Year unknown';
     if (groupByYear && year !== previousYear) {
@@ -768,7 +773,7 @@ function featuredFilmFor(film) {
         nextGenreTags.className = 'genre-tags featured-film-genres';
         nextGenreTags.setAttribute('role', 'group');
         nextGenreTags.setAttribute('aria-label', `Genres for ${film.title}, ${genres.length} total`);
-        appendProgressiveGenreTags(nextGenreTags, genres, genreChipFor, visibleCount, state.genres);
+        appendProgressiveGenreTags(nextGenreTags, genres, genreChipFor, { expandedCount: visibleCount, selectedGenres: state.genres });
         genreTags?.replaceWith(nextGenreTags);
       } else {
         genreTags?.remove();
@@ -874,7 +879,7 @@ function featuredFilmFor(film) {
     genreTags.className = 'genre-tags featured-film-genres';
     genreTags.setAttribute('role', 'group');
     genreTags.setAttribute('aria-label', `Genres for ${film.title}, ${genres.length} total`);
-    appendProgressiveGenreTags(genreTags, genres, genreChipFor, 2, state.genres);
+    appendProgressiveGenreTags(genreTags, genres, genreChipFor, { selectedGenres: state.genres });
     copy.append(genreTags);
   }
   copy.append(filmAppearanceCountFor(film, 'featured-film-count'));

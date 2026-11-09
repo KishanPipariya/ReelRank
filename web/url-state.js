@@ -3,10 +3,12 @@ const validSorts = new Set(['rank', 'title', 'year-newest', 'year-oldest', 'rele
 const validViews = new Set(['posters', 'ledger']);
 const validRuntimes = new Set(['under-90', '90-120', 'over-120']);
 
-export function normalizeViewFacets({ query = '', genres = [], directors = [], country = '', language = '', decade = '' }) {
+export function normalizeViewFacets({ query = '', sort = 'rank', genres = [], directors = [], country = '', language = '', decade = '' }) {
   const nonblank = (values) => [...new Set(values.filter((value) => value.trim()))];
+  const search = query.trim();
   return {
-    query: query.trim(),
+    query: search,
+    sort: validSorts.has(sort) && (sort !== 'relevance' || search) ? sort : 'rank',
     genres: nonblank(genres),
     directors: nonblank(directors),
     country: country.trim() ? country : '',
@@ -18,11 +20,11 @@ export function normalizeViewFacets({ query = '', genres = [], directors = [], c
 export function parseUrlState(search) {
   const params = new URLSearchParams(search);
   const filter = params.get('filter');
-  const sort = params.get('sort');
   const decade = params.get('decade') || '';
   return {
     ...normalizeViewFacets({
       query: params.get('q') || '',
+      sort: params.get('sort'),
       genres: params.getAll('genre'),
       directors: params.getAll('director'),
       country: params.get('country') || '',
@@ -30,7 +32,6 @@ export function parseUrlState(search) {
       decade: /^\d{4}$/.test(decade) ? Number(decade) : '',
     }),
     filter: validFilters.has(filter) ? filter : 'all',
-    sort: validSorts.has(sort) ? sort : 'rank',
     sourceLists: [...new Set(params.getAll('list'))],
     runtime: validRuntimes.has(params.get('runtime')) ? params.get('runtime') : '',
     view: validViews.has(params.get('view')) ? params.get('view') : 'posters',

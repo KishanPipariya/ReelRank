@@ -64,11 +64,12 @@ export async function checkR2Regressions({ openFixture, baseUrl, fixture, output
       assert.match(await page.locator('#results-announcement').textContent(), /original language: unknown/);
       const one = { ...fixture, films: [fixture.films[0]], film_count: 1, displayed_film_count: 1, unwatched_count: 0, displayed_unwatched_count: 0, tmdb_match_count: 0 };
       await context.route('**/data/snapshot.json', (route) => route.fulfill({ json: one }));
-      await page.goto(`${baseUrl}/?sort=relevance`, { waitUntil: 'domcontentloaded' });
+      await page.goto(`${baseUrl}/?sort=relevance&q=+`, { waitUntil: 'domcontentloaded' });
       await page.waitForFunction(() => document.querySelector('#matching-films-count').textContent === 'Showing 1 of 1 film');
-      assert.equal(await page.locator('#top-billed-title').textContent(), '1 film');
+      assert.equal(await page.locator('#sort-select').inputValue(), 'rank');
+      assert.equal(await page.locator('#top-billed-title').textContent(), 'Most listed');
       assert.deepEqual(errors, []);
-      measurements.push({ width, languageHeading: true, languageAnnouncement: true, unknownLanguage: true, singularFallback: true });
+      measurements.push({ width, languageHeading: true, languageAnnouncement: true, unknownLanguage: true, singleResultWithBlankRelevance: true });
     } finally { await context.close(); }
   }
   const retired = 'https://letterboxd.com/fixture/list/retired-festival-edition/';

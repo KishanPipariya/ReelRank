@@ -6,7 +6,8 @@
     "test": "node --test tests/web.test.js",
     "check:browser": "node scripts/a11y-scan.mjs",
     "check:stress": "node scripts/ui-stress-scan.mjs",
-    "check:invariants": "node scripts/ui-invariant-scan.mjs"
+    "check:invariants": "node scripts/ui-invariant-scan.mjs",
+    "check:safety": "node scripts/ui-safety-scan.mjs"
   },
   "devDependencies": {
     "axe-core": "4.13.0",

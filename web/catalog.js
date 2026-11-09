@@ -24,6 +24,18 @@ function literalSearchText(value) {
 }
 
 const normalizedSearchCache = new WeakMap();
+let lastSearchQuery;
+
+function searchQueryFor(value) {
+  if (lastSearchQuery?.value === value) return lastSearchQuery;
+  const normalized = normalizeSearchText(value);
+  lastSearchQuery = {
+    value,
+    terms: normalized ? normalized.split(' ') : [],
+    literal: normalized ? '' : literalSearchText(value),
+  };
+  return lastSearchQuery;
+}
 
 export function matchesFilm(film, filters, sourceListUrls = film.lists || [], sourceListLabels = [], searchText = buildSearchText(film, sourceListLabels)) {
   const genres = Array.isArray(film.genres) ? film.genres : [];
@@ -44,18 +56,16 @@ export function matchesFilm(film, filters, sourceListUrls = film.lists || [], so
     if (filters.runtime === '90-120' && (runtime < 90 || runtime > 120)) return false;
     if (filters.runtime === 'over-120' && runtime <= 120) return false;
   }
-  const query = normalizeSearchText(filters.query);
-  if (!query) {
-    const literal = literalSearchText(filters.query);
-    return !literal || literalSearchText(searchText).includes(literal);
-  }
+  if (!filters.query) return true;
+  const { terms, literal } = searchQueryFor(filters.query);
+  if (!terms.length) return !literal || literalSearchText(searchText).includes(literal);
   let cached = normalizedSearchCache.get(film);
   if (!cached || cached.source !== searchText) {
     cached = { source: searchText, normalized: normalizeSearchText(searchText) };
     normalizedSearchCache.set(film, cached);
   }
   const normalizedText = cached.normalized;
-  return query.split(' ').every((term) => normalizedText.includes(term));
+  return terms.every((term) => normalizedText.includes(term));
 }
 
 function titleSortKey(value) {
