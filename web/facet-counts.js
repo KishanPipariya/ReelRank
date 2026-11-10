@@ -1,32 +1,66 @@
 import { filmDecade } from './catalog.js';
 
-export function countGenres(films) {
-  const counts = new Map();
-  for (const film of films) {
-    for (const genre of new Set(Array.isArray(film.genres) ? film.genres : [])) {
-      if (typeof genre === 'string' && genre.trim()) counts.set(genre, (counts.get(genre) || 0) + 1);
-    }
+function increment(counts, value) {
+  counts.set(value, (counts.get(value) || 0) + 1);
+}
+
+function incrementNamedValues(counts, values) {
+  if (!Array.isArray(values)) return;
+  for (const value of new Set(values)) {
+    if (typeof value === 'string' && value.trim()) increment(counts, value);
   }
+}
+
+function languageFor(film) {
+  return String(film.original_language || '').trim() || 'unknown';
+}
+
+export function countLanguages(films) {
+  const counts = new Map();
+  for (const film of films) increment(counts, languageFor(film));
   return counts;
 }
 
-export function countCountriesAndDecades(films) {
-  const countries = new Map();
-  const decades = new Map();
-  for (const film of films) {
-    for (const country of new Set(Array.isArray(film.countries) ? film.countries : [])) {
-      if (typeof country === 'string' && country.trim()) countries.set(country, (countries.get(country) || 0) + 1);
-    }
-    const decade = filmDecade(film);
-    if (decade !== null) decades.set(decade, (decades.get(decade) || 0) + 1);
-  }
-  return { countries, decades };
-}
+export function createContextualFacetCounter(filters, { matches, matchesWatch, sourceListUrlsForFilm }) {
+  const countryContext = { ...filters, country: '' };
+  const decadeContext = { ...filters, decade: '' };
+  const sourceListContext = { ...filters, sourceLists: [] };
+  const languageContext = { ...filters, language: '' };
+  const runtimeContext = { ...filters, runtime: '' };
+  const counts = {
+    countries: new Map(), decades: new Map(), decadeTotal: 0,
+    genres: new Map(), sourceLists: new Map(), languages: new Map(), runtimes: new Map(),
+  };
 
-export function countSourceLists(films, sourceListUrlsForFilm) {
-  const counts = new Map();
-  for (const film of films) {
-    for (const url of sourceListUrlsForFilm(film)) counts.set(url, (counts.get(url) || 0) + 1);
+  function countLanguage(film) {
+    if (matches(film, languageContext)) increment(counts.languages, languageFor(film));
   }
-  return counts;
+
+  function addFilm(film) {
+    if (!matchesWatch(film)) return;
+    if (matches(film, countryContext)) incrementNamedValues(counts.countries, film.countries);
+    if (matches(film, decadeContext)) {
+      counts.decadeTotal += 1;
+      const decade = filmDecade(film);
+      if (decade !== null) increment(counts.decades, decade);
+    }
+    // Genre counts retain every selected genre because selections combine with AND.
+    if (matches(film, filters)) incrementNamedValues(counts.genres, film.genres);
+    if (matches(film, sourceListContext)) incrementNamedValues(counts.sourceLists, sourceListUrlsForFilm(film));
+    countLanguage(film);
+    if (matches(film, runtimeContext)) {
+      increment(counts.runtimes, '');
+      const runtime = Number(film.runtime_minutes);
+      if (Number.isInteger(runtime) && runtime > 0) {
+        const bucket = runtime < 90 ? 'under-90' : runtime <= 120 ? '90-120' : 'over-120';
+        increment(counts.runtimes, bucket);
+      }
+    }
+  }
+
+  function addLanguage(film) {
+    if (matchesWatch(film)) countLanguage(film);
+  }
+
+  return { counts, addFilm, addLanguage };
 }

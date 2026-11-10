@@ -8,7 +8,7 @@ import { parseUrlState, urlForState } from './url-state.js';
 import { createFilterControls } from './filter-controls.js';
 import { createFilmViews } from './film-views.js';
 import { createDirectorFilmography } from './director-filmography.js';
-import { countCountriesAndDecades, countGenres, countSourceLists } from './facet-counts.js';
+import { countLanguages, createContextualFacetCounter } from './facet-counts.js';
 import { createProgrammePrinter } from './print-programme.js';
 import { createLocalPreferences } from './local-preferences.js';
 import { compareRelevance } from './catalog.js';
@@ -221,12 +221,6 @@ function yieldToBrowser() {
   return new Promise((resolve) => window.setTimeout(resolve, 0));
 }
 
-function incrementFilmCounts(counts, values) {
-  for (const value of new Set(values)) {
-    if (typeof value === 'string' && value.trim()) counts.set(value, (counts.get(value) || 0) + 1);
-  }
-}
-
 function largeCatalogueMatchKey(query) {
   return JSON.stringify([
     query, state.filter, state.genres, state.directors, state.sourceLists,
@@ -285,85 +279,52 @@ async function findLargeCatalogueMatches(query, requestId) {
 }
 
 async function updateLargeFacetCounts(query, requestId) {
-  const countryCounts = new Map();
-  const decadeCounts = new Map();
-  const genreCounts = new Map();
-  const sourceListCounts = new Map();
-  const languageCounts = new Map();
-  const runtimeCounts = new Map([['', 0], ['under-90', 0], ['90-120', 0], ['over-120', 0]]);
-  let decadeTotal = 0;
-
-  for (let start = 0; start < films.length; start += 2000) {
-    const end = Math.min(start + 2000, films.length);
-    for (let index = start; index < end; index += 1) {
-      const film = films[index];
-      if (!matchesWatchFilter(film)) continue;
-
-      if (matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { country: '' })) {
-        incrementFilmCounts(countryCounts, Array.isArray(film.countries) ? film.countries : []);
-      }
-      if (matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { decade: '' })) {
-        decadeTotal += 1;
-        const decade = filmDecade(film);
-        if (decade !== null) decadeCounts.set(decade, (decadeCounts.get(decade) || 0) + 1);
-      }
-      if (matchesSearchAndGenres(film, query, state.genres)) {
-        incrementFilmCounts(genreCounts, Array.isArray(film.genres) ? film.genres : []);
-      }
-      if (matchesSearchAndGenres(film, query, state.genres, [])) {
-        incrementFilmCounts(sourceListCounts, filmSourceListUrls(film));
-      }
-      if (matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { language: '' })) {
-        const language = String(film.original_language || '').trim() || 'unknown';
-        languageCounts.set(language, (languageCounts.get(language) || 0) + 1);
-      }
-      if (matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { runtime: '' })) {
-        runtimeCounts.set('', runtimeCounts.get('') + 1);
-        const runtime = Number(film.runtime_minutes);
-        if (Number.isInteger(runtime) && runtime > 0) {
-          const bucket = runtime < 90 ? 'under-90' : runtime <= 120 ? '90-120' : 'over-120';
-          runtimeCounts.set(bucket, runtimeCounts.get(bucket) + 1);
-        }
-      }
-    }
-    if (end < films.length) {
+  const catalogue = films;
+  const { counts, addFilm } = createCatalogueFacetCounter(query);
+  for (let start = 0; start < catalogue.length; start += 2000) {
+    const end = Math.min(start + 2000, catalogue.length);
+    for (let index = start; index < end; index += 1) addFilm(catalogue[index]);
+    if (end < catalogue.length) {
       await yieldToBrowser();
       if (requestId !== catalogueRenderRequest) return false;
     }
   }
+  updateFacetOptionCounts(counts);
+  updateLanguageOptionCounts(counts.languages);
+  return true;
+}
 
+function updateFacetOptionCounts({ countries, decades, decadeTotal, genres, sourceLists, runtimes }) {
   countryIndexOptions.querySelectorAll('[data-country]').forEach((button) => {
-    const count = countryCounts.get(button.dataset.country) || 0;
+    const count = countries.get(button.dataset.country) || 0;
     button.querySelector('small').textContent = count.toLocaleString();
     button.setAttribute('aria-label', `Filter by production country ${button.dataset.country}, ${count} ${count === 1 ? 'film' : 'films'}`);
   });
-  decadeOptions.querySelectorAll('.decade-option').forEach((button) => {
-    const count = button.dataset.decade === '' ? decadeTotal : decadeCounts.get(Number(button.dataset.decade)) || 0;
+  decadeOptions.querySelectorAll('[data-decade]').forEach((button) => {
+    const count = button.dataset.decade === '' ? decadeTotal : decades.get(Number(button.dataset.decade)) || 0;
     button.querySelector('.decade-option-count').textContent = count.toLocaleString();
   });
   genreOptions.querySelectorAll('.genre-option').forEach((option) => {
-    const count = genreCounts.get(option.querySelector('input').value) || 0;
+    const count = genres.get(option.querySelector('input').value) || 0;
     option.dataset.currentGenreCount = String(count);
     option.querySelector('.genre-option-count').textContent = count.toLocaleString();
   });
   sourceListOptions.querySelectorAll('.genre-option').forEach((option) => {
-    option.querySelector('.genre-option-count').textContent = (sourceListCounts.get(option.dataset.sourceList) || 0).toLocaleString();
+    option.querySelector('.genre-option-count').textContent = (sourceLists.get(option.dataset.sourceList) || 0).toLocaleString();
   });
+  runtimeOptions.querySelectorAll('[data-runtime]').forEach((button) => {
+    const count = runtimes.get(button.dataset.runtime) || 0;
+    button.querySelector('.runtime-option-count').textContent = count.toLocaleString();
+    button.setAttribute('aria-label', `${button.firstChild.textContent.trim()}, ${count} ${count === 1 ? 'film' : 'films'}`);
+  });
+}
+
+function updateLanguageOptionCounts(counts) {
   languageIndexOptions.querySelectorAll('[data-language]').forEach((button) => {
-    const count = languageCounts.get(button.dataset.language) || 0;
+    const count = counts.get(button.dataset.language) || 0;
     button.querySelector('small').textContent = count.toLocaleString();
     const label = button.querySelector('span')?.textContent || button.dataset.languageLabel;
     button.setAttribute('aria-label', `Filter by original language ${label}, ${count} ${count === 1 ? 'film' : 'films'}`);
-  });
-  updateRuntimeOptionCounts(runtimeCounts);
-  return true;
-}
-
-function updateRuntimeOptionCounts(counts) {
-  runtimeOptions.querySelectorAll('[data-runtime]').forEach((button) => {
-    const count = counts.get(button.dataset.runtime) || 0;
-    button.querySelector('.runtime-option-count').textContent = count.toLocaleString();
-    button.setAttribute('aria-label', `${button.firstChild.textContent.trim()}, ${count} ${count === 1 ? 'film' : 'films'}`);
   });
 }
 
@@ -898,16 +859,28 @@ function programmeNoteFor(catalogue) {
   return `${catalogue.length.toLocaleString()} ${catalogue.length === 1 ? 'film' : 'films'}${details.length ? ` · ${details.join(' · ')}` : ''}`;
 }
 
-function matchesSearchAndGenres(
-  film,
-  query,
-  selectedGenreList = state.genres,
-  selectedSourceListUrls = state.sourceLists,
-  { country = state.country, language = state.language, decade = state.decade, runtime = state.runtime } = {},
-) {
+function catalogueFiltersFor(query) {
+  const { genres, directors, sourceLists, country, language, decade, runtime } = state;
+  return { query, genres, directors, sourceLists, country, language, decade, runtime };
+}
+
+function createCatalogueFacetCounter(query) {
+  const watchFilter = state.filter;
+  return createContextualFacetCounter(catalogueFiltersFor(query), {
+    matches: matchesCatalogueFilm,
+    matchesWatch: (film) => matchesWatchFilter(film, watchFilter),
+    sourceListUrlsForFilm: filmSourceListUrls,
+  });
+}
+
+function matchesSearchAndGenres(film, query) {
+  return matchesCatalogueFilm(film, catalogueFiltersFor(query));
+}
+
+function matchesCatalogueFilm(film, filters) {
   const sourceLists = filmSourceListUrls(film);
   let searchText = '';
-  if (query) {
+  if (filters.query) {
     searchText = searchTextByFilm.get(film);
     if (searchText === undefined) {
       const labels = sourceLists.map((url) => {
@@ -918,16 +891,7 @@ function matchesSearchAndGenres(
       searchTextByFilm.set(film, searchText);
     }
   }
-  return matchesFilm(film, {
-    query,
-    genres: selectedGenreList,
-    directors: state.directors,
-    sourceLists: selectedSourceListUrls,
-    country,
-    language,
-    decade,
-    runtime,
-  }, sourceLists, [], searchText);
+  return matchesFilm(film, filters, sourceLists, [], searchText);
 }
 
 function languageLabel(code) {
@@ -936,23 +900,15 @@ function languageLabel(code) {
   catch { return `Unknown (${code})`; }
 }
 
-function renderLanguageOptions() {
+function renderLanguageOptions(contextCounts) {
   const focusedCode = languageIndexOptions.contains(document.activeElement) ? document.activeElement.dataset.language : undefined;
-  const totalCounts = new Map();
-  films.forEach((film) => {
-    const code = String(film.original_language || '').trim() || 'unknown';
-    totalCounts.set(code, (totalCounts.get(code) || 0) + 1);
-  });
+  if (!contextCounts) {
+    const { counts, addLanguage } = createCatalogueFacetCounter(searchInput.value.trim().toLocaleLowerCase());
+    films.forEach(addLanguage);
+    contextCounts = counts.languages;
+  }
 
-  const contextCounts = new Map();
-  const query = searchInput.value.trim().toLocaleLowerCase();
-  films.forEach((film) => {
-    if (!matchesWatchFilter(film) || !matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { language: '' })) return;
-    const code = String(film.original_language || '').trim() || 'unknown';
-    contextCounts.set(code, (contextCounts.get(code) || 0) + 1);
-  });
-
-  const atlas = [...totalCounts]
+  const atlas = [...countLanguages(films)]
     .map(([code, total]) => ({ code, total, label: languageLabel(code) }))
     .sort((left, right) => right.total - left.total || left.label.localeCompare(right.label));
   languageAtlasSize = atlas.length;
@@ -960,7 +916,6 @@ function renderLanguageOptions() {
   languageIndexToggle.hidden = atlas.length <= facetQuickPickLimit;
   let focusReplacement;
   languageIndexOptions.replaceChildren(...atlas.map((language, index) => {
-    const count = contextCounts.get(language.code) || 0;
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'country-index-option';
@@ -969,15 +924,13 @@ function renderLanguageOptions() {
     if (language.code === focusedCode) focusReplacement = button;
     button.dataset.languageLabel = language.label.toLocaleLowerCase();
     button.setAttribute('aria-pressed', String(language.code === state.language));
-    button.setAttribute('aria-label', `Filter by original language ${language.label}, ${count} ${count === 1 ? 'film' : 'films'}`);
     const name = document.createElement('span');
     name.textContent = language.label;
-    const total = document.createElement('small');
-    total.textContent = count.toLocaleString();
-    button.append(name, total);
+    button.append(name, document.createElement('small'));
     button.addEventListener('click', () => toggleLanguage(language.code));
     return button;
   }));
+  updateLanguageOptionCounts(contextCounts);
   const selectedIndex = atlas.findIndex((language) => language.code === state.language);
   const wasExpanded = languageIndexOptions.classList.contains('is-expanded');
   setLanguageIndexExpanded(selectedIndex >= facetQuickPickLimit || wasExpanded);
@@ -985,8 +938,8 @@ function renderLanguageOptions() {
   else if (focusedCode !== undefined) languageIndex.closest('details')?.querySelector('summary')?.focus({ preventScroll: true });
 }
 
-function matchesWatchFilter(film) {
-  return state.filter === 'all' || (state.filter === 'watched' ? film.watched : !film.watched);
+function matchesWatchFilter(film, filter = state.filter) {
+  return filter === 'all' || (filter === 'watched' ? film.watched : !film.watched);
 }
 
 function updateWatchFilterCounts(query) {
@@ -996,64 +949,6 @@ function updateWatchFilterCounts(query) {
   document.querySelector('#unwatched-tab-count').textContent = unwatchedCount.toLocaleString();
   document.querySelector('#watched-tab-count').textContent = watchedCount.toLocaleString();
   document.querySelector('#all-tab-count').textContent = contextualFilms.length.toLocaleString();
-}
-
-function updateCountryAndDecadeCounts(query) {
-  const filmsForCountries = films.filter((film) => matchesWatchFilter(film)
-    && matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { country: '' }));
-  const { countries: countryCounts } = countCountriesAndDecades(filmsForCountries);
-  countryIndexOptions.querySelectorAll('[data-country]').forEach((button) => {
-    const count = countryCounts.get(button.dataset.country) || 0;
-    button.querySelector('small').textContent = count.toLocaleString();
-    button.setAttribute('aria-label', `Filter by production country ${button.dataset.country}, ${count} ${count === 1 ? 'film' : 'films'}`);
-  });
-
-  const filmsForDecades = films.filter((film) => matchesWatchFilter(film)
-    && matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { decade: '' }));
-  const { decades: decadeCounts } = countCountriesAndDecades(filmsForDecades);
-  decadeOptions.querySelectorAll('[data-decade]').forEach((button) => {
-    const count = button.dataset.decade === ''
-      ? filmsForDecades.length
-      : decadeCounts.get(Number(button.dataset.decade)) || 0;
-    button.querySelector('.decade-option-count').textContent = count.toLocaleString();
-  });
-
-  const runtimeCounts = new Map([['', 0], ['under-90', 0], ['90-120', 0], ['over-120', 0]]);
-  films.forEach((film) => {
-    if (!matchesWatchFilter(film)
-      || !matchesSearchAndGenres(film, query, state.genres, state.sourceLists, { runtime: '' })) return;
-    runtimeCounts.set('', runtimeCounts.get('') + 1);
-    const runtime = Number(film.runtime_minutes);
-    if (!Number.isInteger(runtime) || runtime <= 0) return;
-    const bucket = runtime < 90 ? 'under-90' : runtime <= 120 ? '90-120' : 'over-120';
-    runtimeCounts.set(bucket, runtimeCounts.get(bucket) + 1);
-  });
-  updateRuntimeOptionCounts(runtimeCounts);
-}
-
-function updateGenreOptionCounts(query) {
-  const contextFilms = films.filter((film) => {
-    if (!matchesWatchFilter(film)) return false;
-    return matchesSearchAndGenres(film, query, state.genres);
-  });
-  const counts = countGenres(contextFilms);
-  genreOptions.querySelectorAll('.genre-option').forEach((option) => {
-    const count = counts.get(option.querySelector('input').value) || 0;
-    option.dataset.currentGenreCount = String(count);
-    option.querySelector('.genre-option-count').textContent = count.toLocaleString();
-  });
-}
-
-function updateSourceListOptionCounts(query) {
-  const contextFilms = films.filter((film) => {
-    if (!matchesWatchFilter(film)) return false;
-    return matchesSearchAndGenres(film, query, state.genres, []);
-  });
-  const counts = countSourceLists(contextFilms, filmSourceListUrls);
-  sourceListOptions.querySelectorAll('.genre-option').forEach((option) => {
-    const url = option.dataset.sourceList;
-    option.querySelector('.genre-option-count').textContent = (counts.get(url) || 0).toLocaleString();
-  });
 }
 
 function cardFor(film, index) {
@@ -1768,11 +1663,11 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
     if (needsLargeFacetCounts) setFilterCountsUpdating(false);
     document.querySelector('.catalogue-results').removeAttribute('aria-busy');
   } else {
-    renderLanguageOptions();
+    const { counts, addFilm } = createCatalogueFacetCounter(query);
+    films.forEach(addFilm);
+    renderLanguageOptions(counts.languages);
     updateWatchFilterCounts(query);
-    updateCountryAndDecadeCounts(query);
-    updateGenreOptionCounts(query);
-    updateSourceListOptionCounts(query);
+    updateFacetOptionCounts(counts);
     if (sortGenresOnOpen) sortGenreOptionsByCurrentCount();
     searchScopeCount = films.filter((film) => matchesWatchFilter(film) && matchesSearchAndGenres(film, '')).length;
     matching = films.filter((film) => {
