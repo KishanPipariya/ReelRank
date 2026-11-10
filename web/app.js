@@ -1,7 +1,7 @@
 import { sourceListLabel } from './source-list-label.js';
 import { graphemePrefix } from './display-text.js';
 import { programmeShare } from './programme-share.js';
-import { buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, filmDecade, matchesFilm } from './catalog.js';
+import { buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, createCatalogueSelection, filmDecade, matchesFilm } from './catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from './snapshot.js';
 import { cardFor as createFilmCard, updateFilmCard, setGenreLabel } from './film-components.js';
 import { parseUrlState, urlForState } from './url-state.js';
@@ -194,11 +194,8 @@ let searchUrlTimer;
 let currentShownCount = 0;
 let currentMatchCount = 0;
 let currentMatchingFilms = [];
-let currentLargeMatchingFilms = [];
-let currentLargeMatchKey = '';
-let currentLargeSearchScopeCount = 0;
+let currentLargeMatch = null;
 let currentLargeFacetKey = '';
-let currentLargeHighestScore = 1;
 let currentLargeSortedFilms = [];
 let currentLargeSortedKey = '';
 let currentHighestScore = 1;
@@ -248,34 +245,17 @@ function setFilterCountsUpdating(updating) {
 }
 
 async function findLargeCatalogueMatches(query, requestId) {
-  const matching = [];
-  let watchedCount = 0;
-  let unwatchedCount = 0;
-  let highestScore = 1;
-  let searchScopeCount = 0;
-
-  for (let start = 0; start < films.length; start += 2000) {
-    const end = Math.min(start + 2000, films.length);
-    for (let index = start; index < end; index += 1) {
-      const film = films[index];
-      if (matchesWatchFilter(film) && matchesSearchAndGenres(film, '')) searchScopeCount += 1;
-      if (!matchesSearchAndGenres(film, query)) continue;
-      if (film.watched) watchedCount += 1;
-      else unwatchedCount += 1;
-      if (!matchesWatchFilter(film)) continue;
-      matching.push(film);
-      highestScore = Math.max(highestScore, Number(film.liked_in) || 0);
-    }
-    if (end < films.length) {
+  const catalogue = films;
+  const { selection, addFilm } = createCatalogueSelectionFor(query);
+  for (let start = 0; start < catalogue.length; start += 2000) {
+    const end = Math.min(start + 2000, catalogue.length);
+    for (let index = start; index < end; index += 1) addFilm(catalogue[index]);
+    if (end < catalogue.length) {
       await yieldToBrowser();
       if (requestId !== catalogueRenderRequest) return null;
     }
   }
-
-  document.querySelector('#unwatched-tab-count').textContent = unwatchedCount.toLocaleString();
-  document.querySelector('#watched-tab-count').textContent = watchedCount.toLocaleString();
-  document.querySelector('#all-tab-count').textContent = (unwatchedCount + watchedCount).toLocaleString();
-  return { matching, highestScore, searchScopeCount };
+  return selection;
 }
 
 async function updateLargeFacetCounts(query, requestId) {
@@ -864,6 +844,17 @@ function catalogueFiltersFor(query) {
   return { query, genres, directors, sourceLists, country, language, decade, runtime };
 }
 
+function createCatalogueSelectionFor(query) {
+  const filters = catalogueFiltersFor(query);
+  const searchScopeFilters = { ...filters, query: '' };
+  const watchFilter = state.filter;
+  return createCatalogueSelection({
+    matches: (film) => matchesCatalogueFilm(film, filters),
+    matchesSearchScope: (film) => matchesCatalogueFilm(film, searchScopeFilters),
+    matchesWatch: (film) => matchesWatchFilter(film, watchFilter),
+  });
+}
+
 function createCatalogueFacetCounter(query) {
   const watchFilter = state.filter;
   return createContextualFacetCounter(catalogueFiltersFor(query), {
@@ -942,13 +933,10 @@ function matchesWatchFilter(film, filter = state.filter) {
   return filter === 'all' || (filter === 'watched' ? film.watched : !film.watched);
 }
 
-function updateWatchFilterCounts(query) {
-  const contextualFilms = films.filter((film) => matchesSearchAndGenres(film, query));
-  const watchedCount = contextualFilms.filter((film) => film.watched).length;
-  const unwatchedCount = contextualFilms.length - watchedCount;
+function updateWatchFilterCounts({ watchedCount, unwatchedCount }) {
   document.querySelector('#unwatched-tab-count').textContent = unwatchedCount.toLocaleString();
   document.querySelector('#watched-tab-count').textContent = watchedCount.toLocaleString();
-  document.querySelector('#all-tab-count').textContent = contextualFilms.length.toLocaleString();
+  document.querySelector('#all-tab-count').textContent = (watchedCount + unwatchedCount).toLocaleString();
 }
 
 function cardFor(film, index) {
@@ -1628,9 +1616,7 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
   sortSelect.value = state.sort;
   clearQueryButton.hidden = !query;
   filterControls.renderActiveViewFilters();
-  let matching;
-  let highestScore = 1;
-  let searchScopeCount = 0;
+  let selection;
   let sortKey = '';
   if (largeCatalogue) {
     const matchKey = largeCatalogueMatchKey(query);
@@ -1638,22 +1624,15 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
     const needsLargeFacetCounts = catalogFilters.open && currentLargeFacetKey !== matchKey;
     document.querySelector('.catalogue-results').setAttribute('aria-busy', 'true');
     if (catalogFilters.open) setFilterCountsUpdating(needsLargeFacetCounts);
-    if (matchKey === currentLargeMatchKey) {
-      matching = currentLargeMatchingFilms;
-      highestScore = currentLargeHighestScore;
-      searchScopeCount = currentLargeSearchScopeCount;
+    if (matchKey === currentLargeMatch?.key) {
+      selection = currentLargeMatch.selection;
     } else {
       matchingFilmsCount.textContent = `Searching ${films.length.toLocaleString()} films…`;
       document.querySelector('#results-announcement').textContent = `Searching ${films.length.toLocaleString()} films.`;
-      const result = await findLargeCatalogueMatches(query, requestId);
-      if (!result || requestId !== catalogueRenderRequest) return;
-      currentLargeMatchingFilms = result.matching;
-      currentLargeMatchKey = matchKey;
-      currentLargeHighestScore = result.highestScore;
-      currentLargeSearchScopeCount = result.searchScopeCount;
-      matching = result.matching;
-      highestScore = result.highestScore;
-      searchScopeCount = result.searchScopeCount;
+      selection = await findLargeCatalogueMatches(query, requestId);
+      if (!selection || requestId !== catalogueRenderRequest) return;
+      currentLargeMatch = { key: matchKey, selection };
+      updateWatchFilterCounts(selection);
     }
     if (catalogFilters.open && currentLargeFacetKey !== matchKey) {
       if (!await updateLargeFacetCounts(query, requestId) || requestId !== catalogueRenderRequest) return;
@@ -1666,15 +1645,14 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
     const { counts, addFilm } = createCatalogueFacetCounter(query);
     films.forEach(addFilm);
     renderLanguageOptions(counts.languages);
-    updateWatchFilterCounts(query);
+    const collector = createCatalogueSelectionFor(query);
+    films.forEach(collector.addFilm);
+    selection = collector.selection;
+    updateWatchFilterCounts(selection);
     updateFacetOptionCounts(counts);
     if (sortGenresOnOpen) sortGenreOptionsByCurrentCount();
-    searchScopeCount = films.filter((film) => matchesWatchFilter(film) && matchesSearchAndGenres(film, '')).length;
-    matching = films.filter((film) => {
-      if (!matchesWatchFilter(film)) return false;
-      return matchesSearchAndGenres(film, query);
-    });
   }
+  let { matching } = selection;
   if (largeCatalogue && sortKey === currentLargeSortedKey) matching = currentLargeSortedFilms;
   else {
     matching.sort((left, right) => compareFilms(left, right));
@@ -1689,14 +1667,11 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
     films,
     matchingFilms: matching,
   });
-  updateSearchScopeCount(searchScopeCount);
+  updateSearchScopeCount(selection.searchScopeCount);
   const hasActiveSelection = Boolean(query) || state.filter !== 'all' || state.genres.length > 0 || state.directors.length > 0 || state.sourceLists.length > 0 || Boolean(state.country) || Boolean(state.language) || state.decade !== '' || Boolean(state.runtime);
   programmeNote.hidden = matching.length === 0 || !hasActiveSelection;
   programmeNoteCopy.textContent = programmeNoteFor(matching);
-  currentHighestScore = highestScore;
-  if (!largeCatalogue) {
-    for (const film of matching) currentHighestScore = Math.max(currentHighestScore, Number(film.liked_in) || 0);
-  }
+  currentHighestScore = selection.highestScore;
   const ledgerView = state.view === 'ledger';
   const rankedPosterView = !ledgerView && state.sort === 'rank';
   const highlighted = rankedPosterView ? matching.slice(0, 3) : [];
@@ -1801,8 +1776,7 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   const snapshotUsername = snapshot.username.trim();
   films = (fullRankingFilms || snapshot.films).map((film) => ({ ...film }));
   registerFilmIdentifiers(films);
-  currentLargeMatchingFilms = [];
-  currentLargeMatchKey = '';
+  currentLargeMatch = null;
   currentLargeFacetKey = '';
   currentLargeSortedFilms = [];
   currentLargeSortedKey = '';

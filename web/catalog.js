@@ -68,6 +68,24 @@ export function matchesFilm(film, filters, sourceListUrls = film.lists || [], so
   return terms.every((term) => normalizedText.includes(term));
 }
 
+export function createCatalogueSelection({ matches, matchesSearchScope, matchesWatch }) {
+  const selection = { matching: [], watchedCount: 0, unwatchedCount: 0, searchScopeCount: 0, highestScore: 1 };
+
+  function addFilm(film) {
+    const inWatchTab = matchesWatch(film);
+    // Search scope ignores the query, and watch badges ignore the active watch tab.
+    if (inWatchTab && matchesSearchScope(film)) selection.searchScopeCount += 1;
+    if (!matches(film)) return;
+    if (film.watched) selection.watchedCount += 1;
+    else selection.unwatchedCount += 1;
+    if (!inWatchTab) return;
+    selection.matching.push(film);
+    selection.highestScore = Math.max(selection.highestScore, Number(film.liked_in) || 0);
+  }
+
+  return { selection, addFilm };
+}
+
 function titleSortKey(value) {
   const title = String(value || '').trim();
   const withoutArticle = title.replace(/^the\s+(.+)$/i, '$1');
