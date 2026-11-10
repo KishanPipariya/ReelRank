@@ -453,6 +453,13 @@ function syncControls() {
   updateSourceListOptionVisibility();
 }
 
+function commitCatalogueChange() {
+  state.visibleLimit = 40;
+  syncControls();
+  updateUrlState();
+  render();
+}
+
 function buildGenreFilter() {
   const counts = new Map();
   films.forEach((film) => {
@@ -644,20 +651,14 @@ function toggleGenre(genre) {
   state.genres = state.genres.includes(genre)
     ? state.genres.filter((selected) => selected !== genre)
     : [...state.genres, genre].sort((left, right) => left.localeCompare(right));
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
 }
 
 function toggleSourceList(url) {
   state.sourceLists = state.sourceLists.includes(url)
     ? state.sourceLists.filter((selected) => selected !== url)
     : [...state.sourceLists, url].sort(compareSourceListUrls);
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
 }
 
 function updateSourceListOptionVisibility() {
@@ -680,10 +681,7 @@ function toggleDirector(director) {
   state.directors = state.directors.includes(director)
     ? state.directors.filter((selected) => selected !== director)
     : [...state.directors, director].sort((left, right) => left.localeCompare(right));
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
   const collectionTitle = document.querySelector('#collection-title');
   collectionTitle.focus({ preventScroll: true });
   const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
@@ -692,25 +690,18 @@ function toggleDirector(director) {
 
 function setCountry(country) {
   state.country = country;
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
 }
 
 function setWatchFilter(filter) {
   window.clearTimeout(searchUrlTimer);
   state.filter = ['all', 'watched', 'unwatched'].includes(filter) ? filter : 'all';
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
 }
 
 function setLanguage(language) {
   state.language = language;
-  state.visibleLimit = 40;
-  syncControls(); updateUrlState(); render();
+  commitCatalogueChange();
 }
 
 function toggleLanguage(language) {
@@ -718,11 +709,7 @@ function toggleLanguage(language) {
 }
 
 function toggleCountry(country) {
-  state.country = state.country === country ? '' : country;
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  setCountry(state.country === country ? '' : country);
   const collectionTitle = document.querySelector('#collection-title');
   collectionTitle.focus({ preventScroll: true });
   const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
@@ -731,27 +718,18 @@ function toggleCountry(country) {
 
 function setDecade(decade) {
   state.decade = decade === '' ? '' : Number(decade);
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
 }
 
 function setRuntime(runtime) {
   state.runtime = runtime;
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
 }
 
 function setView(view) {
   state.view = view === 'ledger' ? 'ledger' : 'posters';
   savePreferences({ view: state.view });
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
 }
 
 function updateUrlState({ replace = false } = {}) {
@@ -804,6 +782,25 @@ function restoreUrlState() {
   const rendered = render();
   if (Number.isFinite(entry?.scrollY)) requestAnimationFrame(() => window.scrollTo({ top: entry.scrollY, behavior: 'instant' }));
   return rendered;
+}
+
+function captureSavedView() {
+  return {
+    query: searchInput.value.trim(), filter: state.filter, sort: state.sort,
+    genres: [...state.genres], directors: [...state.directors], sourceLists: [...state.sourceLists],
+    country: state.country, language: state.language, decade: state.decade,
+    runtime: state.runtime, view: state.view,
+  };
+}
+
+function applySavedView(view) {
+  Object.assign(state, view, { sourceLists: canonicalSourceLists(view.sourceLists) });
+  searchInput.value = state.query || '';
+  commitCatalogueChange();
+}
+
+function getViewWithoutUrlOverride() {
+  if (!new URLSearchParams(window.location.search).has('view')) return state.view;
 }
 
 function safeUrl(value, allowedHosts) {
@@ -1429,6 +1426,24 @@ function resetPosterChoice(film) {
   return true;
 }
 
+function applyLocalPreferences({ view, posterChoices = {} } = {}) {
+  if (view !== undefined) {
+    state.view = view;
+    syncControls();
+    updateUrlState({ replace: true });
+  }
+  for (const film of films) {
+    const original = originalPosterByFilm.get(film);
+    const selected = Number.isSafeInteger(film.tmdb_id) ? posterChoices[String(film.tmdb_id)] : '';
+    if (selected) film.poster_url = selected;
+    else if (original === undefined) delete film.poster_url;
+    else film.poster_url = original;
+    filmCardByFilm.delete(film);
+    filmViews.updatePosterForFilm(film, film.poster_url);
+  }
+  render();
+}
+
 const filmViews = createFilmViews({
   getFilms: () => films,
   state,
@@ -1690,9 +1705,7 @@ programmeShareCopy.addEventListener('click', async () => {
 invalidatePreferencesUndo = bindSavedViewControls({
   readPreferences, savePreferences, replacePreferences, clearPreferences: preferences.clear,
   readUndo: preferences.readUndo, saveUndo: preferences.saveUndo, clearUndo: preferences.clearUndo,
-  state, searchInput, syncControls, updateUrlState, render,
-  canonicalSourceLists,
-  getFilms: () => films, originalPosterByFilm, filmCardByFilm, filmViews,
+  captureSavedView, applySavedView, getViewWithoutUrlOverride, applyLocalPreferences,
 });
 
 document.querySelector('#ranking-download').addEventListener('click', (event) => {
@@ -2173,10 +2186,7 @@ function resetCatalogView({ clearQueryText = false } = {}) {
   state.language = '';
   state.decade = '';
   state.runtime = '';
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
   searchInput.focus();
 }
 emptyClearFilters.addEventListener('click', () => resetCatalogView());
@@ -2214,10 +2224,7 @@ genreOptionsToggle.addEventListener('click', () => {
 clearSearchStateButton.addEventListener('click', () => resetCatalogView({ clearQueryText: true }));
 clearGenresButton.addEventListener('click', () => {
   state.genres = [];
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
 });
 sourceListSearch.addEventListener('input', updateSourceListOptionVisibility);
 sourceListOptionsToggle.addEventListener('click', () => {
@@ -2226,10 +2233,7 @@ sourceListOptionsToggle.addEventListener('click', () => {
 });
 clearSourceListsButton.addEventListener('click', () => {
   state.sourceLists = [];
-  state.visibleLimit = 40;
-  syncControls();
-  updateUrlState();
-  render();
+  commitCatalogueChange();
 });
 countryIndexToggle.addEventListener('click', () => {
   setCountryIndexExpanded(countryIndexToggle.getAttribute('aria-expanded') !== 'true');

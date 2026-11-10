@@ -2,10 +2,9 @@ import { parsePresetImport, savedViewLimit } from './local-preferences.js';
 
 export function bindSavedViewControls(dependencies) {
   const {
-    readPreferences, savePreferences, replacePreferences, clearPreferences, state, searchInput,
-    syncControls, updateUrlState, render, canonicalSourceLists, getFilms, originalPosterByFilm,
+    readPreferences, savePreferences, replacePreferences, clearPreferences,
     readUndo, saveUndo, clearUndo,
-    filmCardByFilm, filmViews,
+    captureSavedView, applySavedView, getViewWithoutUrlOverride, applyLocalPreferences,
   } = dependencies;
   const presetName = document.querySelector('#preset-name');
   const presetList = document.querySelector('#preset-list');
@@ -62,13 +61,10 @@ export function bindSavedViewControls(dependencies) {
   function restorePreferencesFromJournal(recovery) {
     if (!replacePreferences(recovery.before)) return false;
     renderPresets();
-    const viewIsInUrl = new URLSearchParams(window.location.search).has('view');
-    if (!viewIsInUrl) {
-      state.view = recovery.before.view || 'posters';
-      syncControls();
-      updateUrlState({ replace: true });
-    }
-    restorePosterChoices(recovery.before.posterChoices || {});
+    applyLocalPreferences({
+      view: getViewWithoutUrlOverride() === undefined ? undefined : recovery.before.view || 'posters',
+      posterChoices: recovery.before.posterChoices,
+    });
     return true;
   }
 
@@ -95,28 +91,6 @@ export function bindSavedViewControls(dependencies) {
 
   presetList.addEventListener('change', syncPresetActions);
 
-  function capturePresetState() {
-    return {
-      query: searchInput.value.trim(), filter: state.filter, sort: state.sort,
-      genres: [...state.genres], directors: [...state.directors], sourceLists: [...state.sourceLists],
-      country: state.country, language: state.language, decade: state.decade,
-      runtime: state.runtime, view: state.view,
-    };
-  }
-
-  function restorePosterChoices(choices = {}) {
-    getFilms().forEach((film) => {
-      const original = originalPosterByFilm.get(film);
-      const selected = Number.isSafeInteger(film.tmdb_id) ? choices[String(film.tmdb_id)] : '';
-      if (selected) film.poster_url = selected;
-      else if (original === undefined) delete film.poster_url;
-      else film.poster_url = original;
-      filmCardByFilm.delete(film);
-      filmViews.updatePosterForFilm(film, film.poster_url);
-    });
-    render();
-  }
-
   document.querySelector('#preset-save').addEventListener('click', () => {
     const name = presetName.value.trim();
     if (!name) { showStatus('Enter a name for this preset.'); presetName.focus(); return; }
@@ -127,7 +101,7 @@ export function bindSavedViewControls(dependencies) {
       presetName.focus();
       return;
     }
-    presets.push({ name, state: capturePresetState() });
+    presets.push({ name, state: captureSavedView() });
     if (!savePreferences({ presets })) { showStatus('Could not save this view in this browser.'); return; }
     renderPresets();
     presetList.value = '';
@@ -145,10 +119,7 @@ export function bindSavedViewControls(dependencies) {
     const preset = savedPresets().find((item) => item.name.toLocaleLowerCase() === name);
     if (!preset) { renderPresets(); showStatus('That saved view is no longer available. Choose another saved view.', null); return; }
     renderPresets();
-    Object.assign(state, preset.state, { sourceLists: canonicalSourceLists(preset.state.sourceLists) });
-    searchInput.value = state.query || '';
-    state.visibleLimit = 40;
-    syncControls(); updateUrlState(); render();
+    applySavedView(preset.state);
     showStatus(`Applied “${preset.name}”.`, null);
   });
 
@@ -215,10 +186,10 @@ export function bindSavedViewControls(dependencies) {
   document.querySelector('#reset-posters').addEventListener('click', () => {
     const previousPreferences = readPreferences();
     if (!savePreferences({ posterChoices: {} })) { showStatus('Could not save the poster reset in this browser.'); return; }
-    restorePosterChoices();
+    applyLocalPreferences();
     showStatus('Poster choices reset to the catalogue originals.', () => {
       if (!replacePreferences(previousPreferences)) return false;
-      restorePosterChoices(readPreferences().posterChoices || {});
+      applyLocalPreferences({ posterChoices: readPreferences().posterChoices });
       return true;
     }, 'Undo resetting poster choices', 'Poster choices restored.', recoveryRecord(previousPreferences, 'Undo resetting poster choices', 'Poster choices restored.', 'local-settings'));
   });
@@ -229,17 +200,12 @@ export function bindSavedViewControls(dependencies) {
     const cleared = clearPreferences();
     if (!cleared) { showStatus('Could not clear local preferences in this browser.'); return; }
     renderPresets();
-    const previousView = state.view;
-    const viewIsInUrl = new URLSearchParams(window.location.search).has('view');
-    if (!new URLSearchParams(window.location.search).has('view') && state.view !== 'posters') {
-      state.view = 'posters'; syncControls(); updateUrlState({ replace: true });
-    }
-    restorePosterChoices();
+    const previousView = getViewWithoutUrlOverride();
+    applyLocalPreferences({ view: previousView === 'ledger' ? 'posters' : undefined });
     showStatus('Local preferences cleared. Saved views and poster choices were removed.', () => {
       if (!replacePreferences(previousPreferences)) return false;
       renderPresets();
-      if (!viewIsInUrl) { state.view = previousView; syncControls(); updateUrlState({ replace: true }); }
-      restorePosterChoices(readPreferences().posterChoices || {});
+      applyLocalPreferences({ view: previousView, posterChoices: readPreferences().posterChoices });
       return true;
     }, 'Undo clearing local preferences', 'Local preferences restored.', recoveryRecord(previousPreferences, 'Undo clearing local preferences', 'Local preferences restored.', 'local-settings'));
   });
