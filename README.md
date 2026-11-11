@@ -1,83 +1,169 @@
 # ReelRank
 
-Find films that appear most often across the public lists you’ve liked on Letterboxd. Enter your username; no export file is needed.
+ReelRank ranks films by how often they appear in public Letterboxd lists that you liked. Use your Letterboxd username to get the results.
 
-```sh
-uv sync
-uv run reelrank YOUR_USERNAME
-```
+## Run ReelRank
 
-To exclude films you’ve marked as watched:
+1. Install the dependencies.
+
+   ```sh
+   uv sync
+   ```
+
+2. Run ReelRank. Replace `YOUR_USERNAME` with your Letterboxd username.
+
+   ```sh
+   uv run reelrank YOUR_USERNAME
+   ```
+
+ReelRank writes the results to `liked-list-movies.csv`. Use `--output ranked.csv` to set a different path.
+
+### Filter the results
+
+Use `--unwatched` to exclude watched films. Your Films page must be public for this option.
 
 ```sh
 uv run reelrank YOUR_USERNAME --unwatched
 ```
 
-To include only films in a Letterboxd genre:
+Use `--genre` to select a genre. You can combine it with `--unwatched`.
 
 ```sh
-uv run reelrank YOUR_USERNAME --genre Drama
+uv run reelrank YOUR_USERNAME --genre Comedy --unwatched
 ```
 
-You can combine filters, for example `--genre Comedy --unwatched`. Genre filtering scans Letterboxd’s paginated genre catalog and matches it against your ranked films. If Letterboxd serves a genre page without its film grid, the tool uses the TMDB API when `TMDB_API_KEY` is set, with a local TMDB `movies_metadata.csv` as a fallback. TMDB genre results are cached in `.reelrank-cache/` for 30 days, so repeat runs only do an in-memory title/year match.
+ReelRank scans the Letterboxd genre pages and matches them against your ranked films. If Letterboxd does not show the film grid, ReelRank uses TMDB. It uses the TMDB API if you set an API key. Otherwise, it uses a local TMDB metadata CSV file if one is available.
 
-Create an unwatched CSV for every TMDB movie genre with:
-
-```sh
-uv run reelrank YOUR_USERNAME --all-genres
-```
-
-This writes files such as `genre-lists/horror-unwatched.csv`. The cache is built with one shared TMDB discovery scan and is reused for 30 days. Set a different output directory with `--genre-output-dir`.
-
-Put your TMDB v3 API key in `.env`:
-
-```env
-TMDB_API_KEY=your_tmdb_v3_api_key
-```
-
-This workspace has a blank `.env`; `.env.example` is the template for fresh checkouts. The `.env` file is ignored by Git so your key stays local. You can also set `TMDB_API_KEY` in your shell or choose a different env file with `--env-file`.
-
-Choose a different TMDB metadata file with `--metadata`:
+Use `--metadata` to set the path to the metadata file. Use the TMDB `movies_metadata.csv` column names, including `title`, `release_date`, and `genres`.
 
 ```sh
 uv run reelrank YOUR_USERNAME --genre Horror --metadata data/tmdb-movies.csv --unwatched --output horror.csv
 ```
 
-The metadata file should use TMDB’s `movies_metadata.csv` columns, including `title`, `release_date`, and `genres`. It is only used when Letterboxd’s genre grid is unavailable and no TMDB API key is set.
+Use `--all-genres` to write one unwatched CSV file for each TMDB genre.
 
-Results are saved to `liked-list-movies.csv`. Choose a different path with `--output`, for example `--output ranked.csv`. Liked lists must be publicly accessible; `--unwatched` also requires your Films page to be public.
+```sh
+uv run reelrank YOUR_USERNAME --all-genres
+```
 
-## Make your own site
+ReelRank writes files such as `genre-lists/horror-unwatched.csv`. Use `--genre-output-dir` to set a different directory. ReelRank uses one TMDB discovery scan for all genres. It stores TMDB genre results in `.reelrank-cache/` for 30 days.
 
-The web demo is a static site backed by a checked-in snapshot. The GitHub Actions workflow that contacted Letterboxd to refresh it has been removed; the remaining workflow runs quality and accessibility checks only.
+### Set the TMDB API key
 
-1. Create your own copy of the repository. Once the repository is marked as a GitHub template, use **Use this template**; otherwise, fork it.
-2. In `web/site-config.json`, replace `intelkishan` with your Letterboxd username.
-3. Supply a snapshot in `web/data/snapshot.json` whose username matches the configured username, using a data source you are authorized to use.
-4. Connect your copy to Vercel and set the project root directory to `web`.
+Use `.env.example` as the template for `.env`. Put your TMDB v3 API key in `.env`.
 
-Until the snapshot matches the configured username, the site shows a setup screen rather than another profile's data. You can opt into a clearly labelled demo preview from that screen. If configuration or catalogue loading fails, use the visible Retry loading control. Snapshot updates are manual: commit the replacement snapshot, edition-specific poster gallery, and full-ranking CSV and gzip sidecar named by their `poster_gallery_url`, `ranking_csv_url`, and `ranking_gzip_url` fields together, then deploy them. The detailed snapshot appears first while the compressed full ranking loads in the background. Alternate-poster data is loaded only when a viewer opens a film's poster gallery. Shared programme and film links use the current site address; set an optional `public_site_url` in `web/site-config.json` to make links copied from local previews point to the public deployment. Layout choice, selected alternate posters, and named filter presets are stored locally in each browser; they are not shared with the public site or an account. The repository's snapshot command reads Letterboxd pages and may be denied; only use automated access in a way Letterboxd authorizes. See [Letterboxd's Terms of Use](https://letterboxd.com/legal/terms-of-use/). If you use the command, the liked lists and Films page must be public.
+```env
+TMDB_API_KEY=your_tmdb_v3_api_key
+```
 
-The public site displays ranked films, how many liked lists each film appears in, watched status, and source-list links. A matching full-ranking CSV sidecar makes every ranked film searchable and browseable; the top 500 retain enriched poster, genre, and credit details. If an older edition has no matching sidecar, the page clearly identifies its smaller searchable set. Filters for director, production country, decade, and runtime use available film metadata; expanded details include original title and language when TMDB provides them. A visible notice appears when an edition is at least 30 days old. Use a public deployment only if you are comfortable sharing that information.
+Git ignores `.env`. You can also set `TMDB_API_KEY` in your shell. Use `--env-file` to select a different file.
+
+## Set up your site
+
+1. Select **Use this template** on GitHub to create your own repository.
+2. Set your Letterboxd username in `web/site-config.json`.
+3. Put a snapshot for that username in `web/data/snapshot.json`.
+4. Connect your repository to Vercel.
+5. Set the Vercel project root to `web`.
+
+If the snapshot username differs from the configured username, the site shows a setup screen. You can open the labelled demo from that screen. Select **Retry loading** if the configuration or catalogue fails to load.
+
+The site shows the detailed films first. It loads the compressed full ranking in the background. The ranking makes all ranked films available for search and browsing. If the full ranking is unavailable, the site shows the smaller set that you can search. The detailed snapshot contains metadata for up to 500 films. The site shows a notice when the snapshot is at least 30 days old.
+
+Set `public_site_url` in `web/site-config.json` if you want links copied from a local preview to use the public site address.
+
+### Generate a snapshot
+
+Use the snapshot command only if Letterboxd authorizes your access. The liked lists and Films page must be public. See the [Letterboxd Terms of Use](https://letterboxd.com/legal/terms-of-use/).
+
+1. Install the dependencies.
+
+   ```sh
+   uv sync
+   ```
+
+2. Generate the snapshot.
+
+   ```sh
+   uv run reelrank-snapshot
+   ```
+
+The command reads the username from `web/site-config.json`. Use `--username YOUR_USERNAME` to select a different username. If pagination stops advancing or reaches its safety limit, the command reports an error.
+
+The command reads TMDB IDs from Letterboxd film pages. If you set a TMDB API key, it uses those IDs to get film metadata. If a film page has no TMDB link, the command can search TMDB by title and year. Metadata includes genres, directors, production countries, runtime, original title, and original language. The command also saves up to 24 alternate poster paths per matched film in the detailed set. The site requests this data when you open a poster gallery.
+
+Use `--include-local-full` to add metadata for every ranked film. This option requires `TMDB_API_KEY` and can take longer. It creates `web/data/local/snapshot.json` and its data files. Git and Vercel ignore the local edition. On localhost, the site uses the public snapshot if the local edition is missing or invalid. If local enrichment fails, the command still updates the public snapshot and reports an error.
+
+Version 2 snapshots require a `source_lists` URL table and integer `list_ids` on each film. Regenerate earlier snapshots with the current command. The command validates the snapshot before it replaces the current file.
+
+To publish an update, commit the snapshot and the files named in `poster_gallery_url`, `ranking_csv_url`, and `ranking_gzip_url` together. Then deploy the site. GitHub Actions runs quality checks. Snapshot generation is manual.
 
 ### Data and privacy
 
-ReelRank is a static catalogue: it has no sign-in, account database, or analytics code. The site loads its checked-in public snapshot and requests poster images from TMDB or Letterboxd image hosts; it also loads its typefaces from Google Fonts. Opening external profile or source-list links takes you to Letterboxd. Layout choice, poster selections, and saved views stay in that browser's local storage and are not sent to ReelRank. The optional TMDB API key is used only by the local snapshot/CLI commands and belongs in the ignored `.env` file, never in a public snapshot or commit.
+The public snapshot includes film rankings, list counts, watched status, and links to source lists. Publish the site only if you want to share this data.
 
-Vercel deployments apply a Content Security Policy and standard browser security headers. Local development uses the same browser code but does not emulate those hosting headers.
+ReelRank has no sign-in, account database, or analytics code. The site requests poster images from TMDB or Letterboxd and fonts from Google Fonts. External profile and source-list links open Letterboxd.
 
-Version 2 snapshots require a top-level `source_lists` URL table and integer `list_ids` on each film. Regenerate earlier snapshots and their sidecars with `uv run reelrank-snapshot`. Saved-view imports use the versioned JSON object produced by Export saved views.
+Layout, poster choices, and saved views stay in the browser. Use **Export saved views** to create the JSON file that the import control accepts.
 
-The username is the only required site setting. Snapshot generation reads each featured film’s TMDB ID from its Letterboxd film page and records it, then uses that ID to fetch metadata when `TMDB_API_KEY` is configured. This includes genres, director credits, production countries, runtime, original title, and original language. When the key is configured, it also writes up to 24 alternate poster paths per matched top-500 film to an edition-specific file under `web/data/`; the snapshot's `poster_gallery_url` points to that file, and the compact main snapshot stays unchanged. If a page has no TMDB link, title/year matching is used as a fallback. Each film records the metadata source, enrichment status, and fetch time; metadata cache entries expire after 30 days. Without an API key, linked IDs are still recorded, while titles and poster image URLs come from fetched Letterboxd list pages and TMDB metadata such as genres and credits is empty. The GitHub Actions workflow does not need a TMDB secret because it does not refresh snapshots.
+The TMDB API key is for local commands. Keep it in the ignored `.env` file. Keep it out of snapshots and commits.
 
-If you are authorized to use the snapshot command, run `uv sync` and then `uv run reelrank-snapshot`. It reads the username from `web/site-config.json`; pass `--username YOUR_USERNAME` to override it. The default refresh keeps the existing deployable edition with metadata for the top 500 films. To also create a full-metadata edition for local browsing, add `--include-local-full`; this requires `TMDB_API_KEY` and can take substantially longer because it enriches every ranked film. It writes the deployable snapshot and sidecars as usual, plus `web/data/local/snapshot.json` and its sidecars. The local edition is ignored by Git and Vercel, and the app uses it only on localhost; if it is absent or invalid, localhost falls back to the deployable snapshot. The local snapshot uses the same ranking data and refresh timestamp as the deployable edition. A failed local enrichment refreshes the public snapshot only and exits with an error. Snapshot files carry a schema version and are validated before they replace the current file. Commit the deployable snapshot, edition-specific poster gallery, and full-ranking CSV and gzip sidecars together.
+Vercel applies the Content Security Policy and other browser security headers. The local static server does not apply the Vercel headers.
 
-Pagination stops with an explicit error if a Letterboxd collection exceeds its safety limit or stops advancing, rather than returning partial data as if it were complete.
+## Run checks
 
-Pull requests and pushes to `main` run parser/snapshot checks and browser accessibility checks in separate jobs. The Playwright scan uses a fixed fixture in `tests/fixtures/browser-snapshot.json`; it runs axe across desktop, mobile, dark mode, expanded programme notes, empty results, setup, and demo-preview states. It also checks sorting, country filters, display modes, browser Back and Forward, card expansion across rerenders, cached score and director state, the details dialog, keyboard focus, accessible names, result announcements, featured-film layout, and reflow at 200% and 400% zoom-equivalent viewport widths. Catalogue layout checks enforce that controls, display options, and results remain separate, appear in order, and do not overlap or overflow at desktop, mobile, and narrow reflow widths. Visible and screen-reader search descriptions are checked against the same field list. Desktop and mobile screenshots are uploaded for review without comparing them against image baselines; responsive layout assertions continue to run in CI. Failed browser checks save screenshots and traces as workflow artifacts. These automated checks do not replace testing with a real screen reader.
+1. Install the Python development dependencies.
 
-For local checks, run `uv sync --locked --group dev`, `uv run --locked pytest`, and `npm ci && npm test`. Start a static server with `python3 -m http.server 4173 --directory web`, then run `npm run check:browser` in another terminal. Run one browser scenario with `npm run check:browser -- --scenario=catalogue` (also `sharing`, `preferences`, `recovery`, `accessibility`, or `reflow`). The browser checks use the fixed fixture and do not contact Letterboxd or TMDB. Before merging changes to the catalogue controls or dialogs, follow the [manual screen-reader review](docs/screen-reader-review.md); automated browser checks cannot replace this pass.
+   ```sh
+   uv sync --locked --group dev
+   ```
 
-For the worst-case UI regression pass, keep the same static server running and run `npm run check:stress`. It operates the local development data toggle through Demo, Worst case, Empty, One, and 100,000 rows across seven layout settings, then checks shared-film navigation and a delayed full-ranking refresh. It also checks genre hover contrast, fallback titles, new-film scroll position, full country names, future timestamps, singular labels, and poster failure/retry/cancellation behavior. After screenshots and measurements are saved in `/tmp/reelrank-ui-stress-fixed/`.
+2. Run the Python tests.
 
-To enable **Use this template** on the upstream repository, open **Settings → General** and select **Template repository**. Until that setting is enabled, users should fork the repository.
+   ```sh
+   uv run --locked pytest
+   ```
+
+3. Install the JavaScript dependencies.
+
+   ```sh
+   npm ci
+   ```
+
+4. Run the JavaScript tests.
+
+   ```sh
+   npm test
+   ```
+
+5. Install Chromium for Playwright.
+
+   ```sh
+   npx playwright-core install chromium
+   ```
+
+6. Start the local server.
+
+   ```sh
+   python3 -m http.server 4173 --directory web
+   ```
+
+7. Run the browser checks in a second terminal.
+
+   ```sh
+   npm run check:browser
+   ```
+
+The browser checks use `tests/fixtures/browser-snapshot.json`. They check keyboard navigation, screen-reader labels, and layout at desktop and mobile widths. GitHub Actions runs these checks on pull requests and pushes to `main`. It saves screenshots and saves traces when browser checks fail.
+
+To run one scenario, use `npm run check:browser -- --scenario=catalogue`. Other scenarios are `sharing`, `preferences`, `recovery`, `accessibility`, and `reflow`.
+
+Keep the server running for these checks.
+
+| Command | What it checks |
+| --- | --- |
+| `npm run check:stress` | Five data states across seven layouts, plus known UI bugs. |
+| `npm run check:invariants` | Catalogue behavior across linked views, history, and other combined actions. |
+| `npm run check:safety` | Film links, focus, filters, genre lists, and poster zoom. |
+
+Before you merge changes to catalogue controls or dialogs, follow the [manual screen-reader review](docs/screen-reader-review.md).
