@@ -137,7 +137,7 @@ test('worst-case fixtures keep counts coherent and clear inherited optional TMDB
   const worst = snapshotForDevMode(fixture, 'worst');
   assert.equal(Math.max(...worst.films.map((film) => film.liked_in)), worst.list_count);
   assert.equal(validateSnapshot(worst), worst);
-  assert.deepEqual(worst.films[0].list_ids.map((id) => worst.source_lists[id]), worst.films[0].lists);
+  assert.equal(worst.films[0].list_ids.length, 12);
   const sparseFilm = worst.films.find((film) => film.title === '🦊 Fox');
   assert.deepEqual(sparseFilm.directors, []);
   assert.deepEqual(sparseFilm.genres, []);
@@ -152,7 +152,7 @@ test('snapshot validation rejects unsafe profile, film, and list URLs and invali
   assert.throws(() => validateSnapshot(externalProfile), /profile_url/);
 
   const externalList = structuredClone(fixture);
-  externalList.films[0].lists = ['https://example.com/user/list/favorites/'];
+  externalList.source_lists = ['https://example.com/user/list/favorites/'];
   assert.throws(() => validateSnapshot(externalList), /HTTPS Letterboxd list URLs/);
 
   const externalFilm = structuredClone(fixture);
@@ -171,7 +171,7 @@ test('snapshot metadata provenance fields use the documented values', () => {
   enriched.films[0].metadata_fetched_at = '2026-10-25T00:00:00Z';
   assert.equal(validateSnapshot(enriched), enriched);
   enriched.films[0].metadata_source = 'legacy';
-  assert.equal(validateSnapshot(enriched), enriched);
+  assert.throws(() => validateSnapshot(enriched), /unsupported value/);
   enriched.films[0].metadata_source = 'guess';
   assert.throws(() => validateSnapshot(enriched), /unsupported value/);
 });
@@ -179,15 +179,15 @@ test('snapshot metadata provenance fields use the documented values', () => {
 test('catalog filters combine genres, director, list, country, decade, and query', () => {
   const film = { ...fixture.films[0], directors: ['Denis Villeneuve'], countries: ['United States of America'], original_title: 'La llegada' };
   const filters = {
-    genres: ['Science Fiction'], directors: ['Denis Villeneuve'], sourceLists: [film.lists[0]],
+    genres: ['Science Fiction'], directors: ['Denis Villeneuve'], sourceLists: [fixture.source_lists[film.list_ids[0]]],
     country: 'United States of America', decade: 2010, query: 'villeneuve',
   };
   assert.equal(filmDecade(film), 2010);
-  assert.equal(matchesFilm(film, filters, film.lists, ['Favorites']), true);
-  assert.equal(matchesFilm(film, { ...filters, genres: ['Drama', 'Science Fiction'] }, film.lists, ['Favorites']), true);
-  assert.equal(matchesFilm(film, { ...filters, genres: ['Science Fiction', 'Comedy'] }, film.lists, ['Favorites']), false);
-  assert.equal(matchesFilm(film, { ...filters, genres: ['Comedy'] }, film.lists, ['Favorites']), false);
-  assert.equal(matchesFilm(film, { ...filters, query: 'la llegada' }, film.lists, ['Favorites']), true);
+  assert.equal(matchesFilm(film, filters, fixture.source_lists, ['Favorites']), true);
+  assert.equal(matchesFilm(film, { ...filters, genres: ['Drama', 'Science Fiction'] }, fixture.source_lists, ['Favorites']), true);
+  assert.equal(matchesFilm(film, { ...filters, genres: ['Science Fiction', 'Comedy'] }, fixture.source_lists, ['Favorites']), false);
+  assert.equal(matchesFilm(film, { ...filters, genres: ['Comedy'] }, fixture.source_lists, ['Favorites']), false);
+  assert.equal(matchesFilm(film, { ...filters, query: 'la llegada' }, fixture.source_lists, ['Favorites']), true);
 });
 
 test('runtime filters use clear boundaries and exclude unknown runtimes', () => {
@@ -215,15 +215,18 @@ test('catalog search folds Latin accents and punctuation and matches words in an
   assert.equal(matchesFilm(japanese, { query: 'となりのトトロ' }), true);
 });
 
-test('compact source list IDs validate while old per-film list arrays remain supported', () => {
+test('snapshots require compact source list IDs', () => {
   const compact = structuredClone(fixture);
   compact.source_lists = ['https://letterboxd.com/user/list/favorites/'];
   compact.films[0].list_ids = [0];
-  delete compact.films[0].lists;
+  const old = structuredClone(compact);
+  delete old.films[0].list_ids;
+  old.films[0].lists = old.source_lists;
+  assert.throws(() => validateSnapshot(old), /list_ids/);
   assert.equal(validateSnapshot(compact), compact);
   const missingTable = structuredClone(compact);
   delete missingTable.source_lists;
-  assert.throws(() => validateSnapshot(missingTable), /source list IDs/);
+  assert.throws(() => validateSnapshot(missingTable), /source_lists/);
   const duplicateIds = structuredClone(compact);
   duplicateIds.films[0].list_ids = [0, 0];
   assert.throws(() => validateSnapshot(duplicateIds), /list_ids cannot contain duplicates/);
@@ -269,8 +272,8 @@ test('local preferences tolerate storage errors and imports reject malformed pre
   assert.deepEqual(prefs.read(), {});
   assert.equal(prefs.save({ view: 'ledger' }), false);
   assert.equal(prefs.clear(), false);
-  assert.equal(parsePresetImport({ presets: [{ name: 'Safe', state: { query: 'film', __proto__: { pollute: true }, visibleLimit: 999 } }] })[0].state.visibleLimit, undefined);
-  assert.equal(parsePresetImport({ presets: [{ name: '', state: {} }] }), null);
+  assert.equal(parsePresetImport({ version: 1, presets: [{ name: 'Safe', state: { query: 'film', __proto__: { pollute: true }, visibleLimit: 999 } }] })[0].state.visibleLimit, undefined);
+  assert.equal(parsePresetImport({ version: 1, presets: [{ name: '', state: {} }] }), null);
 });
 
 test('URL state parsing removes duplicate facets and ignores unsupported options', () => {
@@ -342,8 +345,8 @@ test('snapshot timestamps use the shared calendar and explicit timezone contract
 });
 
 
-test('compacted legacy snapshots preserve source URLs in catalogue downloads', async () => {
-  const value = JSON.parse(await readFile(new URL('./fixtures/public-legacy-snapshot.json', import.meta.url), 'utf8'));
+test('compact snapshots preserve source URLs in catalogue downloads', async () => {
+  const value = JSON.parse(await readFile(new URL('./fixtures/public-compact-snapshot.json', import.meta.url), 'utf8'));
   validateSnapshot(value);
   assert.ok(catalogueCsv(value.films, value.source_lists).includes('https://letterboxd.com/viewer/list/favorites/'));
 });
@@ -362,7 +365,7 @@ test('display prefixes preserve emoji, combining marks and joined graphemes at c
 });
 
 
-test('ranking metadata requires URL identity or an unambiguous URI-less legacy detail', () => {
+test('ranking metadata requires URL identity', () => {
   const detail = { ...fixture.films[0], title: 'Home', letterboxd_title: 'Home', year: '2019', letterboxd_year: '2019', letterboxd_url: 'https://letterboxd.com/film/home-2019/', overview: 'First-only restoration synopsis', directors: ['Mariam Kapanadze'], tmdb_id: 91234 };
   const other = { ...detail, letterboxd_url: 'https://letterboxd.com/film/home-2019-1/' };
   const snapshot = { ...fixture, films: [detail], film_count: 2 };
@@ -377,20 +380,16 @@ test('ranking metadata requires URL identity or an unambiguous URI-less legacy d
   const legacy = { ...snapshot, films: [{ ...detail, letterboxd_url: '' }] };
   assert.ok(expandSnapshotWithRanking(legacy, csv).every((film) => film.overview === ''));
   const unique = { ...legacy, film_count: 1 };
-  assert.equal(expandSnapshotWithRanking(unique, catalogueCsv([detail]))[0].overview, detail.overview);
+  assert.equal(expandSnapshotWithRanking(unique, catalogueCsv([detail]))[0].overview, '');
 });
 
 test('ranking sidecars preserve whitespace and literal apostrophes in spreadsheet-safe titles', () => {
   const snapshot = { ...fixture, films: [], film_count: 1 };
-  const expand = (title, escapedApostrophes) => expandSnapshotWithRanking({
-    ...snapshot, ranking_csv_escaped_apostrophes: escapedApostrophes,
-  }, `Rank,Title,Year,Watched,Liked in lists,Letterboxd URI,List URLs\r\n1,"${title}",2010,no,0,https://letterboxd.com/film/installation/,\r\n`)[0].title;
-  assert.equal(expand("'  + One", false), '  + One');
-  assert.equal(expand("''=Installation", false), "''=Installation");
-  assert.equal(expand("''=Installation", true), "'=Installation");
-  assert.equal(expand("'''=Installation", true), "''=Installation");
-  assert.equal(expand("'  + One", true), '  + One');
-  assert.equal(expand('Installation, 🎬', true), 'Installation, 🎬');
+  const expand = (title) => expandSnapshotWithRanking(snapshot, `Rank,Title,Year,Watched,Liked in lists,Letterboxd URI,List URLs\r\n1,"${title}",2010,no,0,https://letterboxd.com/film/installation/,\r\n`)[0].title;
+  assert.equal(expand("''=Installation"), "'=Installation");
+  assert.equal(expand("'''=Installation"), "''=Installation");
+  assert.equal(expand("'  + One"), '  + One');
+  assert.equal(expand('Installation, 🎬'), 'Installation, 🎬');
 });
 
 
@@ -410,7 +409,7 @@ test('URL filters retain unavailable values but ignore blank facets and invalid 
 });
 
 test('imported views serialize and restore the same normalized facet state', () => {
-  const [preset] = parsePresetImport({ presets: [{ name: 'Arrival', state: {
+  const [preset] = parsePresetImport({ version: 1, presets: [{ name: 'Arrival', state: {
     query: ' Arrival ', language: ' en ', genres: [' ', 'Science Fiction', 'Science Fiction'],
     directors: [' ', 'Denis Villeneuve'], country: ' ', decade: 10000, view: 'ledger',
   } }] });
@@ -419,7 +418,7 @@ test('imported views serialize and restore the same normalized facet state', () 
   assert.deepEqual(preset.state.genres, ['Science Fiction']);
   assert.deepEqual(preset.state.directors, ['Denis Villeneuve']);
   assert.equal(preset.state.decade, '');
-  const [blankRelevance] = parsePresetImport({ presets: [{ name: 'Relevance', state: { query: ' ', sort: 'relevance' } }] });
+  const [blankRelevance] = parsePresetImport({ version: 1, presets: [{ name: 'Relevance', state: { query: ' ', sort: 'relevance' } }] });
   assert.equal(blankRelevance.state.sort, 'rank');
   assert.equal(parseUrlState('?q=+&sort=relevance').sort, 'rank');
 });
@@ -435,7 +434,7 @@ test('local film links distinguish same-title records and identical occurrences 
   registerFilmIdentifiers(reload);
   assert.equal(findFilmByIdentifier(reload, key), reload[1]);
   assert.equal(findFilmByIdentifier(reload, 'Home-2019'), undefined);
-  assert.equal(findFilmByIdentifier([first], 'Home-2019'), first);
+  assert.equal(findFilmByIdentifier([first], 'Home-2019'), undefined);
   const duplicate = [structuredClone(first), structuredClone(first)];
   registerFilmIdentifiers(duplicate);
   assert.notEqual(filmIdentifier(duplicate[0]), filmIdentifier(duplicate[1]));

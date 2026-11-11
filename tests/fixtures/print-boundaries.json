@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "username": "fixture-viewer",
   "profile_url": "https://letterboxd.com/fixture-viewer/",
   "refreshed_at": "2026-10-25T00:00:00Z",
@@ -27,9 +27,6 @@
         "Thriller",
         "Mystery"
       ],
-      "lists": [
-        "https://letterboxd.com/fixture/list/halliwells-top-1000-the-ultimate-movie-countdown-and-criterion-watchlist/"
-      ],
       "directors": [
         "Carol Reed"
       ],
@@ -43,7 +40,10 @@
       "tmdb_rating": null,
       "metadata_source": "",
       "metadata_fetched_at": "",
-      "metadata_status": "unavailable"
+      "metadata_status": "unavailable",
+      "list_ids": [
+        0
+      ]
     },
     {
       "title": "Original title and credit boundary",
@@ -62,9 +62,6 @@
         "Thriller",
         "Mystery"
       ],
-      "lists": [
-        "https://letterboxd.com/fixture/list/halliwells-top-1000-the-ultimate-movie-countdown-and-criterion-watchlist/"
-      ],
       "directors": [
         "ArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiveCreditReferenceArchiv"
       ],
@@ -78,7 +75,10 @@
       "tmdb_rating": null,
       "metadata_source": "",
       "metadata_fetched_at": "",
-      "metadata_status": "unavailable"
+      "metadata_status": "unavailable",
+      "list_ids": [
+        0
+      ]
     },
     {
       "title": "Synopsis and year boundary",
@@ -97,9 +97,6 @@
         "Thriller",
         "Mystery"
       ],
-      "lists": [
-        "https://letterboxd.com/fixture/list/halliwells-top-1000-the-ultimate-movie-countdown-and-criterion-watchlist/"
-      ],
       "directors": [
         "Carol Reed"
       ],
@@ -113,7 +110,13 @@
       "tmdb_rating": null,
       "metadata_source": "",
       "metadata_fetched_at": "",
-      "metadata_status": "unavailable"
+      "metadata_status": "unavailable",
+      "list_ids": [
+        0
+      ]
     }
+  ],
+  "source_lists": [
+    "https://letterboxd.com/fixture/list/halliwells-top-1000-the-ultimate-movie-countdown-and-criterion-watchlist/"
   ]
 }

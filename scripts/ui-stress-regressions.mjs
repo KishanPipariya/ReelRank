@@ -98,7 +98,7 @@ export async function checkRetestRegressions({ openFixture, baseUrl, fixture, ou
     let releaseClosed;
     const lateGate = new Promise((resolve) => { releaseLate = resolve; });
     const closedGate = new Promise((resolve) => { releaseClosed = resolve; });
-    await context.route('**/data/poster-galleries.json', (route) => route.fulfill({ json: {
+    await context.route('**/data/poster-galleries-fixture.json', (route) => route.fulfill({ json: {
       snapshot_refreshed_at: fixture.refreshed_at,
       galleries: { 421017: [{ path: '/retest-failed.jpg', language: 'fr' }, { path: '/retest-working.jpg', language: 'en' }, { path: '/retest-late.jpg', language: 'de' }, { path: '/retest-closed.jpg', language: 'it' }] },
     } }));

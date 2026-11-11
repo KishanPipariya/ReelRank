@@ -26,41 +26,45 @@ export async function checkCrossBoundaryRegressions({ openFixture, baseUrl, fixt
       await context.close();
     }
   }
-  const legacy = JSON.parse(await readFile(new URL('../tests/fixtures/public-legacy-snapshot.json', import.meta.url), 'utf8'));
-  assert.equal(legacy.tmdb_match_count, 0);
+  const compact = JSON.parse(await readFile(new URL('../tests/fixtures/public-compact-snapshot.json', import.meta.url), 'utf8'));
+  assert.equal(compact.tmdb_match_count, 0);
   for (const width of [320, 1440]) {
     const { context, page, errors } = await openFixture({ viewport: { width, height: 900 } });
-    await context.route('**/site-config.json', (route) => route.fulfill({ json: { letterboxd_username: legacy.username } }));
-    await context.route('**/data/snapshot.json', (route) => route.fulfill({ json: legacy }));
+    await context.route('**/site-config.json', (route) => route.fulfill({ json: { letterboxd_username: compact.username } }));
+    await context.route('**/data/snapshot.json', (route) => route.fulfill({ json: compact }));
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await page.locator('#site-shell:not([hidden])').waitFor();
     await page.waitForFunction(() => document.querySelector('#matching-films-count').textContent.startsWith('Showing'));
-    assert.equal(await page.locator('#tmdb-credit').isVisible(), legacy.tmdb_match_count > 0);
-    if (width === 320) await page.screenshot({ path: `${outputDirectory}/legacy-no-attribution-verified.png`, fullPage: true, animations: 'disabled' });
+    assert.equal(await page.locator('#tmdb-credit').isVisible(), compact.tmdb_match_count > 0);
+    if (width === 320) await page.screenshot({ path: `${outputDirectory}/compact-no-attribution-verified.png`, fullPage: true, animations: 'disabled' });
     await page.locator('.featured-film .film-detail-trigger').click();
     const source = page.locator('.film-note-sources .list-links a');
     assert.equal(await source.count(), 1);
-    assert.equal(await source.first().getAttribute('href'), legacy.source_lists[0]);
-    if (width === 320) await page.screenshot({ path: `${outputDirectory}/legacy-source-verified.png`, animations: 'disabled' });
+    assert.equal(await source.first().getAttribute('href'), compact.source_lists[0]);
+    if (width === 320) await page.screenshot({ path: `${outputDirectory}/compact-source-verified.png`, animations: 'disabled' });
     await page.locator('#film-detail-close').click();
     await page.waitForFunction(() => !new URLSearchParams(location.search).has('film'));
     await page.locator('#search-input').fill('favorites');
     await page.waitForFunction(() => document.querySelector('#matching-films-count').textContent === 'Showing 1 of 1 film');
-    measurements.push({ width, legacySourcePreserved: true, legacySourceSearch: true });
-    const invalidDate = { ...legacy, refreshed_at: '2026-02-30T00:00:00Z' };
+    await page.waitForFunction(() => new URLSearchParams(location.search).get('q') === 'favorites');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.querySelector('#matching-films-count').textContent.startsWith('Showing'));
+    assert.equal(await page.locator('#matching-films-count').textContent(), 'Showing 1 of 1 film');
+    measurements.push({ width, compactSourcePreserved: true, compactSourceSearch: true });
+    const invalidDate = { ...compact, refreshed_at: '2026-02-30T00:00:00Z' };
     await context.route('**/data/snapshot.json', (route) => route.fulfill({ json: invalidDate }));
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await page.locator('#retry-loading:not([hidden])').waitFor();
     assert.equal(await page.locator('#site-shell').isVisible(), false);
     measurements.push({ width, invalidCalendarDateRejected: true });
-    const matched = structuredClone(legacy);
+    const matched = structuredClone(compact);
     matched.films[0].tmdb_id = 329865;
     matched.tmdb_match_count = 1;
     await context.route('**/data/snapshot.json', (route) => route.fulfill({ json: matched }));
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await page.locator('#site-shell:not([hidden])').waitFor();
     assert.equal(await page.locator('#tmdb-credit').isVisible(), true);
-    measurements.push({ width, absentMetadataHidesAttribution: legacy.tmdb_match_count === 0, matchedIdShowsAttribution: true });
+    measurements.push({ width, absentMetadataHidesAttribution: compact.tmdb_match_count === 0, matchedIdShowsAttribution: true });
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -100,5 +104,5 @@ export async function checkCrossBoundaryRegressions({ openFixture, baseUrl, fixt
     await context.close();
   }
   await writeFile(`${outputDirectory}/cross-boundary-measurements.json`, JSON.stringify(measurements, null, 2));
-  console.log('Unicode/date contracts, legacy source provenance/search, and light/dark print contrast passed');
+  console.log('Unicode/date contracts, compact source provenance/search, and light/dark print contrast passed');
 }

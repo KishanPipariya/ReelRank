@@ -1,6 +1,6 @@
 function csvCell(value) {
   let text = String(value ?? '');
-  if (/^[\u0000-\u0020]*[=+\-@]/.test(text)) text = `'${text}`;
+  if (/^'*[\u0000-\u0020]*[=+\-@]/.test(text)) text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }
 
@@ -11,7 +11,7 @@ export function catalogueCsv(films, sourceLists = []) {
       ? film._sourceListUrls
       : Array.isArray(film.list_ids)
         ? film.list_ids.map((id) => sourceLists[id]).filter((url) => typeof url === 'string')
-        : Array.isArray(film.lists) ? film.lists : [];
+        : [];
     rows.push([
       index + 1,
       film.letterboxd_title || film.title,

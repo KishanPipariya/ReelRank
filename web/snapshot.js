@@ -103,9 +103,6 @@ export function validateSnapshot(snapshot) {
       throw new Error('Snapshot source_lists must contain HTTPS Letterboxd list URLs');
     }
   }
-  if (!Array.isArray(snapshot.films) || snapshot.films.some((film) => !Array.isArray(film.lists) && !Array.isArray(film.list_ids))) {
-    throw new Error('Snapshot films must include lists or list_ids');
-  }
   for (const [index, film] of snapshot.films.entries()) {
     if (film.liked_in > snapshot.list_count) {
       throw new Error(`snapshot.films[${index}].liked_in cannot exceed list_count`);
@@ -113,18 +110,11 @@ export function validateSnapshot(snapshot) {
     if (film.letterboxd_url && !isHttpsLetterboxdUrl(film.letterboxd_url, /^\/film\/[^/]+\/?$/)) {
       throw new Error(`snapshot.films[${index}].letterboxd_url must be an HTTPS Letterboxd film URL`);
     }
-    if (Array.isArray(film.lists)) {
-      if (new Set(film.lists).size !== film.lists.length) throw new Error(`snapshot.films[${index}].lists cannot contain duplicates`);
-      if (film.lists.some((url) => !isHttpsLetterboxdUrl(url, /^\/[^/]+\/list\/[^/]+\/?$/))) {
-        throw new Error(`snapshot.films[${index}].lists must contain HTTPS Letterboxd list URLs`);
-      }
-    }
-    if (Array.isArray(film.list_ids) && new Set(film.list_ids).size !== film.list_ids.length) {
+    if (new Set(film.list_ids).size !== film.list_ids.length) {
       throw new Error(`snapshot.films[${index}].list_ids cannot contain duplicates`);
     }
   }
-  if (snapshot.films.some((film) => Array.isArray(film.list_ids)
-      && (!Array.isArray(snapshot.source_lists) || film.list_ids.some((id) => !Number.isSafeInteger(id) || id < 0 || id >= snapshot.source_lists.length)))) {
+  if (snapshot.films.some((film) => film.list_ids.some((id) => id >= snapshot.source_lists.length))) {
     throw new Error('Snapshot source list IDs are invalid');
   }
   if (snapshot.displayed_film_count !== snapshot.films.length
@@ -133,7 +123,7 @@ export function validateSnapshot(snapshot) {
       || snapshot.displayed_unwatched_count > snapshot.displayed_film_count
       || snapshot.tmdb_match_count > snapshot.displayed_film_count
       || snapshot.displayed_unwatched_count !== snapshot.films.filter((film) => !film.watched).length) {
-    throw new Error('Snapshot does not match schema version 1');
+    throw new Error(`Snapshot does not match schema version ${supportedVersion}`);
   }
   return snapshot;
 }

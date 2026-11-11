@@ -188,7 +188,7 @@ async function checkCatalogInteractions(page) {
   await directorCard.locator('.director-filter[data-director="Céline Sciamma"]').click();
   check(await directorCard.locator('.director-filter[data-director="Céline Sciamma"]').getAttribute('aria-pressed') === 'true', 'Cached director controls reflect the selected filter.');
   check(await directorCard.locator('.film-score-meter').evaluate((meter) => meter.style.getPropertyValue('--score-share')) === '100%', 'Cached score bars rescale to the filtered results.');
-  const longListUrl = snapshot.films.flatMap((film) => film.lists || []).find((url) => url.includes('halliwells-top-1000'));
+  const longListUrl = snapshot.source_lists.find((url) => url.includes('halliwells-top-1000'));
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto(`${baseUrl}/?list=${encodeURIComponent(longListUrl)}`, { waitUntil: 'domcontentloaded' });
   const sourceFilterChip = page.locator('#active-source-list-filters .active-source-list-chip');
@@ -372,13 +372,13 @@ async function checkBrokenPosterFallback() {
 }
 
 async function checkSavedPreferences() {
-  const { context, page } = await openSite({ localPreferences: { view: 'ledger' }, compactSnapshot: true });
+  const { context, page } = await openSite({ localPreferences: { view: 'ledger' } });
   await page.route('**/chosen-poster.jpg', (route) => route.fulfill({
     status: 200,
     contentType: 'image/png',
     body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Fe8AAAAASUVORK5CYII=', 'base64'),
   }));
-  await page.route('**/data/poster-galleries.json', (route) => route.fulfill({ json: {
+  await page.route('**/data/poster-galleries-fixture.json', (route) => route.fulfill({ json: {
     snapshot_refreshed_at: snapshot.refreshed_at,
     galleries: { '329865': [{ path: '/chosen-poster.jpg', language: 'fr' }] },
   } }));
@@ -470,7 +470,7 @@ async function checkRetryLoading() {
 }
 
 async function openSite(options = {}) {
-  const { configUsername, path, localPreferences, compactSnapshot = false, ...contextOptions } = options;
+  const { configUsername, path, localPreferences, ...contextOptions } = options;
   const context = await browser.newContext(contextOptions);
   if (localPreferences) await context.addInitScript((value) => {
     if (localStorage.getItem('reelrank.preferences.v1') === null) localStorage.setItem('reelrank.preferences.v1', JSON.stringify(value));
@@ -484,16 +484,9 @@ async function openSite(options = {}) {
     contentType: 'application/json',
     body: JSON.stringify({ letterboxd_username: configUsername || snapshot.username }),
   }));
-  const siteSnapshot = compactSnapshot ? (() => {
-    const result = structuredClone(snapshot);
-    result.source_lists = [...new Set(result.films.flatMap((film) => film.lists || []))];
-    const listIndex = new Map(result.source_lists.map((url, index) => [url, index]));
-    result.films.forEach((film) => { film.list_ids = (film.lists || []).map((url) => listIndex.get(url)); delete film.lists; });
-    return result;
-  })() : snapshot;
   await page.route('**/data/snapshot.json', (route) => route.fulfill({
     contentType: 'application/json',
-    body: JSON.stringify(siteSnapshot),
+    body: JSON.stringify(snapshot),
   }));
   await page.goto(`${baseUrl}${path || '/'}`, { waitUntil: 'domcontentloaded' });
   return { context, page };

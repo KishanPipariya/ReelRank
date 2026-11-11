@@ -186,7 +186,6 @@ let availableDirectors = [];
 let availableDecades = [];
 let availableCountries = [];
 let availableSourceLists = [];
-const sourceListUrlsByFilm = new WeakMap();
 const searchTextByFilm = new WeakMap();
 const searchListLabels = new Map();
 const filmCardByFilm = new WeakMap();
@@ -207,7 +206,7 @@ const facetQuickPickLimit = 4;
 const filmMetadataBatchSize = 8;
 let leadingDecades = [];
 let snapshotRefreshedAt = '';
-let posterGalleryUrl = '/data/poster-galleries.json';
+let posterGalleryUrl;
 let sourceListsForDownload = [];
 let catalogueRenderRequest = 0;
 let snapshotFilmRestorePending = false;
@@ -439,13 +438,11 @@ function buildGenreFilter() {
 
 function buildCatalogFilters() {
   const sourceListCounts = new Map();
-  films.forEach((film) => {
-    const urls = filmSourceListUrls(film);
-    sourceListUrlsByFilm.set(film, urls);
-    urls.forEach((url) => {
+  for (const film of films) {
+    for (const url of filmSourceListUrls(film)) {
       sourceListCounts.set(url, (sourceListCounts.get(url) || 0) + 1);
-    });
-  });
+    }
+  }
   availableSourceLists = [...sourceListCounts]
     .map(([url, count]) => ({ url, count, label: listLabel(url) }))
     .sort((left, right) => right.count - left.count || compareAlphabeticallyIgnoringThe(left.label, right.label));
@@ -781,14 +778,24 @@ function sourceListUrl(value) {
   return url.href;
 }
 
-function canonicalSourceLists(values) {
-  return [...new Set(values.map(sourceListUrl).filter(Boolean))];
+function canonicalSourceLists(values, normalize = sourceListUrl) {
+  return [...new Set(values.map(normalize).filter(Boolean))];
+}
+
+function prepareFilmsWithSourceLists(records, sourceLists) {
+  const canonicalListUrls = new Map();
+  const normalize = (url) => {
+    if (!canonicalListUrls.has(url)) canonicalListUrls.set(url, sourceListUrl(url));
+    return canonicalListUrls.get(url);
+  };
+  return records.map((film) => {
+    const urls = film._sourceListUrls ?? film.list_ids.map((id) => sourceLists[id]);
+    return { ...film, _sourceListUrls: canonicalSourceLists(urls, normalize) };
+  });
 }
 
 function filmSourceListUrls(film) {
-  if (Array.isArray(film._sourceListUrls)) return film._sourceListUrls;
-  if (sourceListUrlsByFilm.has(film)) return sourceListUrlsByFilm.get(film);
-  return [...new Set((Array.isArray(film.lists) ? film.lists : []).map(sourceListUrl).filter(Boolean))];
+  return film._sourceListUrls;
 }
 
 function formatEditionDate(value) {
@@ -1211,7 +1218,7 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
 }
 
 function sourceListNotesFor(film, visibleCount = 4) {
-  const sourceListUrls = [...new Set(filmSourceListUrls(film).map(sourceListUrl).filter(Boolean))];
+  const sourceListUrls = filmSourceListUrls(film);
   if (!sourceListUrls.length) return null;
   const section = document.createElement('section');
   section.className = 'film-note-section film-note-sources';
@@ -1775,7 +1782,7 @@ function showDemoState(configuredUsername, snapshotUsername) {
 function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed = false) {
   activeSnapshot = snapshot;
   const snapshotUsername = snapshot.username.trim();
-  films = (fullRankingFilms || snapshot.films).map((film) => ({ ...film }));
+  films = prepareFilmsWithSourceLists(fullRankingFilms || snapshot.films, snapshot.source_lists);
   registerFilmIdentifiers(films);
   currentLargeMatch = null;
   currentLargeFacetKey = '';
@@ -1789,14 +1796,6 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
     const choice = Number.isSafeInteger(film.tmdb_id) ? posterChoices[String(film.tmdb_id)] : '';
     if (typeof choice === 'string' && choice.startsWith('https://image.tmdb.org/t/p/')) film.poster_url = choice;
   });
-  const canonicalListUrls = new Map();
-  const canonicalizeList = (value) => {
-    if (!canonicalListUrls.has(value)) canonicalListUrls.set(value, sourceListUrl(value));
-    return canonicalListUrls.get(value);
-  };
-  films.forEach((film) => { film._sourceListUrls = [...new Set((Array.isArray(film._sourceListUrls) ? film._sourceListUrls : Array.isArray(film.list_ids) && Array.isArray(snapshot.source_lists)
-    ? film.list_ids.map((id) => snapshot.source_lists[id]).filter((url) => typeof url === 'string')
-    : Array.isArray(film.lists) ? film.lists : []).map(canonicalizeList).filter(Boolean))]; });
   rankByFilm.clear();
   films.forEach((film, index) => rankByFilm.set(film, index));
   snapshotRefreshedAt = snapshot.refreshed_at;
@@ -1813,7 +1812,7 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
     rankingDownload.removeAttribute('download');
     rankingDownload.textContent = `Download displayed ${films.length.toLocaleString()} ${films.length === 1 ? 'film' : 'films'} (CSV)`;
   }
-  posterGalleryUrl = snapshot.poster_gallery_url || '/data/poster-galleries.json';
+  posterGalleryUrl = snapshot.poster_gallery_url;
   const colophon = editionColophonFor(films);
   const colophonElement = document.querySelector('#edition-colophon');
   const decadeElement = document.querySelector('#edition-leading-decade');

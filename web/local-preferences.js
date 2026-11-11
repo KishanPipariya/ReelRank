@@ -80,7 +80,7 @@ export function createLocalPreferences(storage) {
 }
 
 export function parsePresetImport(value) {
-  const presets = Array.isArray(value) ? value : value && Array.isArray(value.presets) ? value.presets : null;
+  const presets = value?.version === 1 && Array.isArray(value.presets) ? value.presets : null;
   if (!presets || presets.length > savedViewLimit) return null;
   const valid = validatePreferences({ presets }).presets || [];
   if (valid.length !== presets.length) return null;

@@ -17,7 +17,7 @@ async function settled(page) {
 
 async function inspectRankingTitles({ context, page, width }) {
   const snapshot = { ...fixture, film_count: 10, unwatched_count: fixture.unwatched_count + 2,
-    ranking_csv_url: '/data/ranking-invariant.csv', ranking_csv_escaped_apostrophes: true };
+    ranking_csv_url: '/data/ranking-invariant.csv' };
   const csv = catalogueCsv(fixture.films).trimEnd()
     + `\r\n9,"'  + One",2010,no,0,https://letterboxd.com/film/plus-one-invariant/,\r\n10,"''=Installation",2010,no,0,https://letterboxd.com/film/installation-invariant/,\r\n`;
   await context.route('**/data/snapshot.json', (route) => route.fulfill({ json: snapshot }));

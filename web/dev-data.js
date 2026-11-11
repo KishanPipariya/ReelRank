@@ -33,7 +33,7 @@ function syntheticFilm(base, index, overrides = {}) {
     watched: overrides.watched ?? index % 2 === 0,
     liked_in: overrides.liked_in ?? Math.max(1, 1000 - index),
     list_ids: [],
-    lists: overrides.lists ?? [],
+    _sourceListUrls: overrides.lists ?? [],
   };
 }
 
@@ -60,9 +60,7 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
     films = Array.from({ length: 100000 }, (_, index) => {
       const film = rankingFilms?.[index];
       if (!film) return syntheticFilm(base, index);
-      const row = { ...film, lists: Array.isArray(film.lists) ? film.lists : [] };
-      delete row.list_ids;
-      return row;
+      return { ...film, _sourceListUrls: film._sourceListUrls ?? film.list_ids.map((id) => snapshot.source_lists[id]) };
     });
   } else {
     films = [
@@ -143,8 +141,15 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
       }),
     ];
   }
-  const fixtureSourceLists = [...new Set(films.flatMap((film) => film.lists || []))];
-  if (mode === 'worst') films.forEach((film) => { film.list_ids = film.lists.map((url) => fixtureSourceLists.indexOf(url)); });
+  const listIndex = new Map();
+  films = films.map(({ _sourceListUrls, ...film }) => {
+    film.list_ids = _sourceListUrls.map((url) => {
+      if (!listIndex.has(url)) listIndex.set(url, listIndex.size);
+      return listIndex.get(url);
+    });
+    return film;
+  });
+  const fixtureSourceLists = [...listIndex.keys()];
   const unwatchedCount = films.filter((film) => !film.watched).length;
   const stressSnapshot = {
     ...snapshot,

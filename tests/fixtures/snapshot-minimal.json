@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "username": "viewer",
   "profile_url": "https://letterboxd.com/viewer/",
   "refreshed_at": "2026-10-25T00:00:00Z",
@@ -22,8 +22,16 @@
       "tmdb_url": "",
       "watched": true,
       "liked_in": 1,
-      "genres": ["Drama", "Science Fiction"],
-      "lists": ["https://letterboxd.com/viewer/list/favorites/"]
+      "genres": [
+        "Drama",
+        "Science Fiction"
+      ],
+      "list_ids": [
+        0
+      ]
     }
+  ],
+  "source_lists": [
+    "https://letterboxd.com/viewer/list/favorites/"
   ]
 }

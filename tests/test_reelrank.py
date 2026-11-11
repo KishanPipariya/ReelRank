@@ -87,7 +87,7 @@ def test_snapshot_without_tmdb_uses_letterboxd_poster(monkeypatch, tmp_path):
 
     generated_snapshot = create_snapshot("new-viewer")
 
-    assert generated_snapshot["schema_version"] == 1
+    assert generated_snapshot["schema_version"] == 2
     assert generated_snapshot["username"] == "new-viewer"
     assert generated_snapshot["tmdb_match_count"] == 0
     assert generated_snapshot["films"][0]["poster_url"] == "https://a.ltrbxd.com/poster.jpg"
@@ -247,7 +247,8 @@ def test_snapshot_schema_rejects_unknown_version_and_preserves_existing_file(tmp
 def test_snapshot_schema_rejects_inconsistent_display_counts():
     with pytest.raises(ValueError, match="must match films"):
         snapshot.validate_snapshot({
-            "schema_version": 1,
+            "schema_version": 2,
+            "source_lists": [],
             "username": "viewer",
             "profile_url": "https://letterboxd.com/viewer/",
             "refreshed_at": "2026-10-25T00:00:00Z",
@@ -311,7 +312,6 @@ def test_snapshot_writer_exports_full_ranking_without_private_payload(tmp_path):
     public_snapshot = json.loads(output.read_text(encoding="utf-8"))
     assert "_full_ranking" not in public_snapshot
     assert "_watched" not in public_snapshot
-    assert public_snapshot["ranking_csv_escaped_apostrophes"] is True
     csv_text = (output.parent / "ranking-20261025T000000Z-0123456789ab.csv").read_text(encoding="utf-8")
     assert "Rank,Title,Year,Watched,Liked in lists,Letterboxd URI,List URLs" in csv_text
     assert "1,\"'=SUM(1,1)\",2016,yes,3," in csv_text
@@ -354,7 +354,7 @@ def test_snapshot_schema_rejects_invalid_metadata_type_and_unsafe_counts():
 def test_snapshot_schema_rejects_boolean_schema_version():
     fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
     fixture["schema_version"] = True
-    with pytest.raises(ValueError, match="schema_version"):
+    with pytest.raises(ValueError, match="Unsupported snapshot schema version"):
         snapshot.validate_snapshot(fixture)
 
 
@@ -370,7 +370,7 @@ def test_snapshot_validation_rejects_unsafe_urls_and_invalid_edition_time():
         snapshot.validate_snapshot(fixture)
 
     fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
-    fixture["films"][0]["lists"] = ["https://example.com/user/list/favorites/"]
+    fixture["source_lists"] = ["https://example.com/user/list/favorites/"]
     with pytest.raises(ValueError, match="HTTPS Letterboxd list URLs"):
         snapshot.validate_snapshot(fixture)
 
@@ -443,13 +443,10 @@ def test_metadata_cache_requires_a_recent_enrichment_timestamp():
     assert not snapshot._metadata_cache_is_fresh(entry, now, needs_details=True)
 
 
-def test_old_metadata_cache_uses_file_time_as_migration_timestamp(tmp_path):
+def test_old_metadata_cache_is_ignored(tmp_path):
     cache_path = tmp_path / "metadata.json"
     cache_path.write_text(json.dumps({"arrival": {"tmdb_id": 329865}}), encoding="utf-8")
-    migrated = tmdb._load_tmdb_metadata_cache(cache_path)["arrival"]
-    assert migrated["metadata_source"] == "legacy"
-    assert migrated["metadata_status"] == "id_only"
-    assert migrated["metadata_fetched_at"]
+    assert tmdb._load_tmdb_metadata_cache(cache_path) == {}
 
 
 def test_thread_local_session_pool_reuses_and_closes_one_session_per_worker():
@@ -524,17 +521,16 @@ def test_snapshot_timestamp_contract_uses_shared_calendar_cases():
                 snapshot.validate_snapshot(fixture)
 
 
-def test_public_snapshot_compacts_legacy_lists_and_preserves_shared_sources():
+def test_public_snapshot_remaps_compact_source_lists():
     fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
-    original_url = fixture["films"][0]["lists"][0]
+    original_url = fixture["source_lists"][0]
     public = snapshot.public_snapshot_from_full(fixture)
     assert public["source_lists"] == [original_url]
     assert public["films"][0]["list_ids"] == [0]
     assert "lists" not in public["films"][0]
-    assert fixture["films"][0]["lists"] == [original_url]
+    assert fixture["films"][0]["list_ids"] == [0]
     compact = json.loads(json.dumps(fixture))
     compact["source_lists"] = ["https://letterboxd.com/viewer/list/unused/", original_url]
-    compact["films"][0].pop("lists")
     compact["films"][0]["list_ids"] = [1]
     assert snapshot.public_snapshot_from_full(compact)["source_lists"] == [original_url]
 

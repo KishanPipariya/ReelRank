@@ -59,30 +59,21 @@ def validate_snapshot(snapshot: object) -> dict:
     if refreshed_at.tzinfo is None:
         raise ValueError("Snapshot refreshed_at must be an ISO 8601 timestamp with a timezone")
 
-    films = snapshot.get("films")
-    source_lists = snapshot.get("source_lists")
-    if isinstance(source_lists, list):
-        if len(set(source_lists)) != len(source_lists):
-            raise ValueError("Snapshot source_lists cannot contain duplicates")
-        if any(not _is_letterboxd_list_url(url) for url in source_lists):
-            raise ValueError("Snapshot source_lists must contain HTTPS Letterboxd list URLs")
+    films = snapshot["films"]
+    source_lists = snapshot["source_lists"]
+    if len(set(source_lists)) != len(source_lists):
+        raise ValueError("Snapshot source_lists cannot contain duplicates")
+    if any(not _is_letterboxd_list_url(url) for url in source_lists):
+        raise ValueError("Snapshot source_lists must contain HTTPS Letterboxd list URLs")
     for index, film in enumerate(films):
         if film["liked_in"] > snapshot["list_count"]:
             raise ValueError(f"snapshot.films[{index}].liked_in cannot exceed list_count")
-        if "lists" not in film and "list_ids" not in film:
-            raise ValueError(f"snapshot.films[{index}] must include lists or list_ids")
         if film["letterboxd_url"] and not _is_letterboxd_film_url(film["letterboxd_url"]):
             raise ValueError(f"snapshot.films[{index}].letterboxd_url must be an HTTPS Letterboxd film URL")
-        if "lists" in film:
-            if len(set(film["lists"])) != len(film["lists"]):
-                raise ValueError(f"snapshot.films[{index}].lists cannot contain duplicates")
-            if any(not _is_letterboxd_list_url(url) for url in film["lists"]):
-                raise ValueError(f"snapshot.films[{index}].lists must contain HTTPS Letterboxd list URLs")
-        if "list_ids" in film:
-            if not isinstance(source_lists, list) or any(not _is_nonnegative_integer(item) or item >= len(source_lists) for item in film["list_ids"]):
-                raise ValueError(f"snapshot.films[{index}].list_ids references an unavailable source list")
-            if len(set(film["list_ids"])) != len(film["list_ids"]):
-                raise ValueError(f"snapshot.films[{index}].list_ids cannot contain duplicates")
+        if any(item >= len(source_lists) for item in film["list_ids"]):
+            raise ValueError(f"snapshot.films[{index}].list_ids references an unavailable source list")
+        if len(set(film["list_ids"])) != len(film["list_ids"]):
+            raise ValueError(f"snapshot.films[{index}].list_ids cannot contain duplicates")
     if snapshot["displayed_film_count"] != len(films) or snapshot["displayed_film_count"] > snapshot["film_count"]:
         raise ValueError("Snapshot displayed_film_count must match films and not exceed film_count")
     if snapshot["unwatched_count"] > snapshot["film_count"]:
@@ -415,11 +406,7 @@ def create_snapshot(
         "tmdb_match_count": tmdb_match_count,
         "films": films,
         "source_lists": source_lists,
-        "_poster_galleries": {
-            "schema_version": 1,
-            "snapshot_refreshed_at": generated_at_text,
-            "galleries": poster_galleries,
-        },
+        "_poster_galleries": poster_galleries,
         "_full_ranking": results,
         "_watched": watched,
     }
@@ -430,16 +417,11 @@ def public_snapshot_from_full(snapshot: dict, featured_limit: int = 500) -> dict
     """Return the deployable top-film edition from a fully enriched local snapshot."""
     public_snapshot = {key: value for key, value in snapshot.items()}
     films = [dict(film) for film in snapshot["films"][:featured_limit]]
-    source_lists = snapshot.get("source_lists", [])
+    source_lists = snapshot["source_lists"]
     public_source_lists: list[str] = []
     source_list_index: dict[str, int] = {}
     for film in films:
-        urls = (
-            [source_lists[index] for index in film["list_ids"] if 0 <= index < len(source_lists)]
-            if isinstance(film.get("list_ids"), list)
-            else film.get("lists", [])
-        )
-        film.pop("lists", None)
+        urls = [source_lists[int(index)] for index in film["list_ids"]]
         film["list_ids"] = []
         for url in urls:
             if url not in source_list_index:
@@ -456,11 +438,8 @@ def public_snapshot_from_full(snapshot: dict, featured_limit: int = 500) -> dict
     if isinstance(poster_galleries, dict):
         featured_ids = {str(film["tmdb_id"]) for film in films if film.get("tmdb_id") is not None}
         public_snapshot["_poster_galleries"] = {
-            **poster_galleries,
-            "galleries": {
-                tmdb_id: gallery for tmdb_id, gallery in poster_galleries.get("galleries", {}).items()
-                if tmdb_id in featured_ids
-            },
+            tmdb_id: gallery for tmdb_id, gallery in poster_galleries.items()
+            if tmdb_id in featured_ids
         }
     return validate_snapshot(public_snapshot)
 
@@ -478,19 +457,13 @@ def local_snapshot_paths(snapshot: dict) -> dict:
 def write_snapshot(snapshot: dict, output: Path) -> None:
     """Write the snapshot and sidecar files using atomic file replacements."""
     validate_snapshot(snapshot)
-    gallery_name = Path(snapshot.get("poster_gallery_url", "/data/poster-galleries.json")).name
-    gallery_output = output.parent / gallery_name
+    gallery_url = snapshot.get("poster_gallery_url")
     ranking_name = Path(snapshot.get("ranking_csv_url", "")).name
     ranking_output = output.parent / ranking_name if ranking_name else None
     ranking_gzip_name = Path(snapshot.get("ranking_gzip_url", "")).name
     ranking_gzip_output = output.parent / ranking_gzip_name if ranking_gzip_name else None
     private_fields = {"_poster_galleries", "_full_ranking", "_watched"}
     public_snapshot = {key: value for key, value in snapshot.items() if key not in private_fields}
-    gallery_payload = snapshot.get("_poster_galleries") or {
-        "schema_version": 1,
-        "snapshot_refreshed_at": snapshot["refreshed_at"],
-        "galleries": {},
-    }
     full_ranking = snapshot.get("_full_ranking")
     watched = snapshot.get("_watched", set())
     ranking_csv = None
@@ -499,7 +472,6 @@ def write_snapshot(snapshot: dict, output: Path) -> None:
             raise ValueError("Snapshot declares a full-ranking CSV but contains no full ranking data")
         from .letterboxd import movie_is_watched
 
-        public_snapshot["ranking_csv_escaped_apostrophes"] = True
         csv_buffer = io.StringIO(newline="")
         writer = csv.writer(csv_buffer)
         writer.writerow(["Rank", "Title", "Year", "Watched", "Liked in lists", "Letterboxd URI", "List URLs"])
@@ -515,10 +487,16 @@ def write_snapshot(snapshot: dict, output: Path) -> None:
             ])
         ranking_csv = csv_buffer.getvalue()
 
-    atomic_write_text(
-        gallery_output,
-        json.dumps(gallery_payload, ensure_ascii=False, separators=(",", ":")) + "\n",
-    )
+    if gallery_url:
+        gallery_payload = {
+            "schema_version": SNAPSHOT_SCHEMA_VERSION,
+            "snapshot_refreshed_at": snapshot["refreshed_at"],
+            "galleries": snapshot.get("_poster_galleries", {}),
+        }
+        atomic_write_text(
+            output.parent / Path(gallery_url).name,
+            json.dumps(gallery_payload, ensure_ascii=False, separators=(",", ":")) + "\n",
+        )
     if ranking_output is not None and ranking_csv is not None:
         atomic_write_text(ranking_output, ranking_csv)
         if ranking_gzip_output is not None:

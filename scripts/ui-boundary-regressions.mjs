@@ -81,7 +81,7 @@ export async function checkBoundaryRegressions({ openFixture, baseUrl, fixture, 
       const snapshot = { ...fixture, films: [film], film_count: 1, displayed_film_count: 1, unwatched_count: film.watched ? 0 : 1, displayed_unwatched_count: film.watched ? 0 : 1, tmdb_match_count: 1 };
       validateSnapshot(snapshot);
       await context.route('**/data/snapshot.json', (route) => route.fulfill({ json: snapshot }));
-      await context.route('**/data/poster-galleries.json', (route) => route.fulfill({ json: {
+      await context.route('**/data/poster-galleries-fixture.json', (route) => route.fulfill({ json: {
         snapshot_refreshed_at: snapshot.refreshed_at,
         galleries: { [film.tmdb_id]: [{ path: '/boundary-valid-poster.jpg', language: 'en' }] },
       } }));

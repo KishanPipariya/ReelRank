@@ -37,7 +37,7 @@ function searchQueryFor(value) {
   return lastSearchQuery;
 }
 
-export function matchesFilm(film, filters, sourceListUrls = film.lists || [], sourceListLabels = [], searchText = buildSearchText(film, sourceListLabels)) {
+export function matchesFilm(film, filters, sourceListUrls = film._sourceListUrls || [], sourceListLabels = [], searchText = buildSearchText(film, sourceListLabels)) {
   const genres = Array.isArray(film.genres) ? film.genres : [];
   if (filters.genres?.length && !filters.genres.every((genre) => genres.includes(genre))) return false;
   const directors = Array.isArray(film.directors) ? film.directors : [];

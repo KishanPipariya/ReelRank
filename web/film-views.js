@@ -161,12 +161,13 @@ function openPosterViewer(film, showGallery = false) {
 }
 
 async function loadPosterGallery(film, currentPosterUrl, request) {
-  if (!Number.isSafeInteger(film.tmdb_id)) {
+  const galleryUrl = getPosterGalleryUrl();
+  if (!galleryUrl || !Number.isSafeInteger(film.tmdb_id)) {
     posterViewerStatus.textContent = 'Alternate posters are not available for this film.';
     return;
   }
   if (!posterGalleryDataPromise) {
-    posterGalleryDataPromise = fetch(getPosterGalleryUrl(), { cache: 'force-cache' })
+    posterGalleryDataPromise = fetch(galleryUrl, { cache: 'force-cache' })
       .then((response) => response.ok ? response.json() : null)
       .catch(() => null);
   }
@@ -174,7 +175,7 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
   if (!payload) posterGalleryDataPromise = undefined;
   if (request !== posterGalleryRequest) return;
   if (payload && payload.snapshot_refreshed_at !== getSnapshotRefreshedAt()) {
-    payload = await fetch(getPosterGalleryUrl(), { cache: 'no-store' })
+    payload = await fetch(galleryUrl, { cache: 'no-store' })
       .then((response) => response.ok ? response.json() : null)
       .catch(() => null);
     posterGalleryDataPromise = payload ? Promise.resolve(payload) : undefined;

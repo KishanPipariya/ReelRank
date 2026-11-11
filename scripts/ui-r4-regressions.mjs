@@ -45,7 +45,7 @@ export async function checkR4Regressions({ openFixture, baseUrl, outputDirectory
       await page.locator('#catalogue-tools>summary').click();
       await page.locator('#saved-views>summary').click();
       await page.locator('.saved-view-portability>summary').click();
-      const source = fixture.films[0].lists[0];
+      const source = fixture.source_lists[fixture.films[0].list_ids[0]];
       const alias = source.replace('https://letterboxd.com/', 'https://www.letterboxd.com/').replace(/\/$/, '') + '?sort=popular#films';
       await page.locator('#preset-import-file').setInputFiles({
         name: 'festival-selection.json', mimeType: 'application/json',

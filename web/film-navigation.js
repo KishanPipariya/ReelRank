@@ -56,10 +56,7 @@ export function findFilmByIdentifier(films, key) {
     const aliases = films.filter((film) => canonicalLetterboxdFilmUrl(film.letterboxd_url) === canonical);
     return aliases.length === 1 ? aliases[0] : undefined;
   }
-  const aliases = films.filter((film) => key.startsWith('local:')
-    ? (localIds.get(film) || `${localFingerprint(film)}:1`) === key
-    : (Number.isSafeInteger(film.tmdb_id) ? tmdbIdentifier(film) : `${film.title}-${film.year || ''}`) === key);
-  return aliases.length === 1 ? aliases[0] : undefined;
+  return undefined;
 }
 
 export function filmDetailUrl(href, film) {
