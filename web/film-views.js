@@ -85,9 +85,17 @@ function posterVariant(url, size) {
 }
 
 async function previewPoster(film, url, { save = false, caption = '', canonicalUrl = url, zoomed = false, selectedButton = null, onReady = null } = {}) {
+  const retryHadFocus = document.activeElement === posterViewerRetry && !posterViewerRetry.hidden;
   const request = ++posterPreviewRequest;
   retryPosterPreview = null;
-  posterViewerRetry.hidden = true;
+  posterViewerRetry.hidden = !retryHadFocus;
+  if (retryHadFocus) {
+    posterViewerRetry.textContent = 'Retrying poster…';
+    posterViewerRetry.setAttribute('aria-disabled', 'true');
+  } else {
+    posterViewerRetry.textContent = 'Retry poster';
+    posterViewerRetry.removeAttribute('aria-disabled');
+  }
   posterViewerFeedback.textContent = 'Loading poster…';
   const stage = posterViewerImage.parentElement;
   if (posterViewerImage.hidden) stage.classList.add('is-fit');
@@ -102,6 +110,9 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
       posterViewerFeedback.textContent = 'Could not load this poster. Your current poster choice is unchanged. Try again or choose another poster.';
       retryPosterPreview = () => previewPoster(film, url, { save, caption, canonicalUrl, zoomed, selectedButton, onReady });
       posterViewerRetry.hidden = false;
+      posterViewerRetry.textContent = 'Retry poster';
+      posterViewerRetry.removeAttribute('aria-disabled');
+      if (retryHadFocus && document.activeElement === document.body) posterViewerRetry.focus({ preventScroll: true });
     }
     return false;
   } finally {
@@ -114,6 +125,9 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
   posterViewerImage.hidden = false;
   posterViewerImage.classList.toggle('is-zoomed', zoomed);
   stage.classList.toggle('is-fit', !zoomed);
+  posterViewerRetry.hidden = true;
+  posterViewerRetry.textContent = 'Retry poster';
+  posterViewerRetry.removeAttribute('aria-disabled');
   posterViewerCaption.dataset.posterUrl = canonicalUrl;
   posterViewerCaption.textContent = caption || [film.title, film.year].filter(Boolean).join(' · ');
   posterViewerZoom.disabled = false;
@@ -130,6 +144,7 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
     option.setAttribute('aria-pressed', String(option === selectedButton));
   });
   onReady?.();
+  if (retryHadFocus && document.activeElement === posterViewerRetry) posterViewerZoom.focus({ preventScroll: true });
   return true;
 }
 
@@ -141,6 +156,8 @@ function openPosterViewer(film, showGallery = false) {
   posterViewerOpener = document.activeElement;
   retryPosterPreview = null;
   posterViewerRetry.hidden = true;
+  posterViewerRetry.textContent = 'Retry poster';
+  posterViewerRetry.removeAttribute('aria-disabled');
   posterViewerFeedback.textContent = '';
   posterViewerTitle.textContent = `${film.title} poster`;
   posterViewerCaption.textContent = [film.title, film.year].filter(Boolean).join(' · ');
@@ -263,7 +280,10 @@ posterViewerZoom.addEventListener('click', () => {
     zoomed,
   });
 });
-posterViewerRetry.addEventListener('click', () => { void retryPosterPreview?.(); });
+posterViewerRetry.addEventListener('click', () => {
+  if (posterViewerRetry.getAttribute('aria-disabled') === 'true') return;
+  void retryPosterPreview?.();
+});
 function dismissPosterViewer() {
   if (!posterViewerDialog.open) return;
   posterViewerOpener = null;
@@ -277,6 +297,8 @@ posterViewerDialog.addEventListener('close', () => {
   activePosterFilm = null;
   retryPosterPreview = null;
   posterViewerRetry.hidden = true;
+  posterViewerRetry.textContent = 'Retry poster';
+  posterViewerRetry.removeAttribute('aria-disabled');
   posterViewerImage.parentElement.removeAttribute('aria-busy');
   if (filmDetailDialog.open && posterViewerOpener) {
     const opener = posterViewerOpener;
@@ -489,8 +511,12 @@ function renderFilmDetails(film, retainFocus = false) {
   resetPosterButton.type = 'button'; resetPosterButton.className = 'film-detail-gallery-button';
   resetPosterButton.textContent = 'Reset poster';
   resetPosterButton.setAttribute('aria-label', `Reset poster for ${film.title} to the catalogue original`);
-  const resetStatus = document.createElement('span'); resetStatus.className = 'sr-only'; resetStatus.setAttribute('role', 'status'); resetStatus.setAttribute('aria-live', 'polite');
-  resetPosterButton.addEventListener('click', () => { resetStatus.textContent = resetPosterChoice(film) ? 'Poster reset to the catalogue original.' : 'Could not save the poster reset in this browser.'; });
+  const resetStatus = document.createElement('span'); resetStatus.className = 'film-detail-action-status'; resetStatus.setAttribute('role', 'status'); resetStatus.setAttribute('aria-live', 'polite');
+  resetPosterButton.addEventListener('click', () => {
+    resetStatus.textContent = resetPosterChoice(film)
+      ? 'Poster reset to the catalogue original.'
+      : 'Could not save the poster reset in this browser.';
+  });
   posterColumn.append(resetPosterButton, resetStatus);
   const copy = document.createElement('div');
   copy.className = 'film-detail-copy';
@@ -564,10 +590,10 @@ function renderFilmDetails(film, retainFocus = false) {
       setGenreLabel(button, genre, { full: true });
       button.setAttribute('aria-label', `Filter by ${genre}`);
       button.setAttribute('aria-pressed', String(state.genres.includes(genre)));
-      button.addEventListener('click', (event) => {
+      button.addEventListener('click', () => {
         closeFilmDetailsForFilter();
         toggleGenre(genre);
-        focusCollectionTitleAfterFilter(event);
+        focusCollectionTitleAfterFilter();
       });
       return button;
     }, { initialCount: 6, selectedGenres: state.genres });
@@ -588,10 +614,10 @@ function renderFilmDetails(film, retainFocus = false) {
   shareInput.setAttribute('aria-label', `Share link for ${film.title}`);
   const copyLink = document.createElement('button');
   copyLink.type = 'button'; copyLink.className = 'film-detail-external-link'; copyLink.textContent = 'Copy film link';
-  const copyStatus = document.createElement('span'); copyStatus.className = 'sr-only'; copyStatus.setAttribute('role', 'status'); copyStatus.setAttribute('aria-live', 'polite');
+  const copyStatus = document.createElement('span'); copyStatus.className = 'film-detail-action-status'; copyStatus.setAttribute('role', 'status'); copyStatus.setAttribute('aria-live', 'polite');
   copyLink.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(shareInput.value); copyStatus.textContent = 'Film link copied.'; }
-    catch { shareInput.focus(); shareInput.select(); copyStatus.classList.remove('sr-only'); copyStatus.textContent = 'Select and copy the film link above.'; }
+    catch { shareInput.focus(); shareInput.select(); copyStatus.textContent = 'Select and copy the film link above.'; }
   });
   links.append(shareInput, copyLink, copyStatus);
   copy.append(links);
@@ -681,7 +707,7 @@ function ledgerRowFor(film) {
       button.title = director;
       button.setAttribute('aria-pressed', String(state.directors.includes(director)));
       button.setAttribute('aria-label', `Filter by director ${director}`);
-      button.addEventListener('click', (event) => toggleDirector(director, event));
+      button.addEventListener('click', () => toggleDirector(director));
       directorCell.insertBefore(button, before);
     };
     const visibleCount = Math.min(2, directors.length);

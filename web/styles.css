@@ -830,6 +830,9 @@ html[data-input-modality='keyboard'] button.country-more-button:not(:disabled):a
 @media (hover: hover) and (pointer: fine) {
   .film-detail-gallery-button:hover { border-color: var(--rust-ink); background: var(--rust-ink); color: var(--filter-active-ink); }
 }
+.film-detail-action-status { margin: 0; color: var(--muted); font-family: var(--mono); font-size: var(--type-caption); line-height: 1.4; overflow-wrap: anywhere; }
+.film-detail-action-status:empty { line-height: 0; }
+.film-detail-links .film-detail-action-status:not(:empty) { flex: 1 0 100%; }
 .film-detail-poster-fallback { gap: var(--space-2); padding: var(--space-3); font-size: var(--type-body); }
 .film-detail-poster img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .poster-viewer-dialog:not([open]) { display: none; }
@@ -1455,7 +1458,7 @@ html[data-input-modality='keyboard'] a:active { transform: none; outline: 1px so
 .ledger-poster { padding: 0; color: inherit; cursor: pointer; }
 .film-detail-share-url { width: min(100%, 480px); font-family: var(--mono); font-size: var(--type-caption); }
 .film-detail-links { align-items: center; }
-button.film-detail-external-link { padding: 0; border: 0; background: transparent; text-decoration: underline; cursor: pointer; }
+button.film-detail-external-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0; border: 0; background: transparent; text-decoration: underline; cursor: pointer; }
 /* Keep compact catalogue labels readable on small displays. */
 .snapshot-label, .edition-colophon-heading, .edition-colophon-item > span,
 .country-index-heading, .country-index-option small, .country-index-toggle,

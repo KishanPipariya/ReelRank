@@ -231,6 +231,40 @@ def _metadata_cache_is_fresh(
     return timedelta(0) <= age <= timedelta(days=METADATA_CACHE_DAYS)
 
 
+def _prefer_cached_metadata(
+    cached: object,
+    refreshed: dict | None,
+    require_poster_gallery: bool,
+    now: datetime,
+) -> bool:
+    """Keep richer cached metadata when a refresh returns a partial result."""
+    if not isinstance(cached, dict) or not isinstance(refreshed, dict):
+        return False
+    if not _is_nonnegative_integer(cached.get("tmdb_id")) or not cached["tmdb_id"]:
+        return False
+    if cached.get("tmdb_id") != refreshed.get("tmdb_id"):
+        return False
+    fetched_at = cached.get("metadata_fetched_at")
+    if not isinstance(fetched_at, str):
+        return False
+    try:
+        cached_at = datetime.fromisoformat(fetched_at.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if cached_at.tzinfo is None:
+        return False
+    cached_age = now - cached_at
+    if cached_age < timedelta(0) or cached_age > timedelta(days=90):
+        return False
+    if cached.get("metadata_details_loaded") and not refreshed.get("metadata_details_loaded"):
+        return True
+    if require_poster_gallery:
+        cached_gallery = cached.get("metadata_poster_gallery_loaded", "poster_gallery" in cached)
+        refreshed_gallery = refreshed.get("metadata_poster_gallery_loaded", "poster_gallery" in refreshed)
+        return bool(cached_gallery and not refreshed_gallery)
+    return False
+
+
 def create_snapshot(
     username: str,
     include_all_metadata: bool = False,
@@ -267,20 +301,25 @@ def create_snapshot(
         tmdb_match_count = 0
         tmdb_cache_path = Path(".reelrank-cache") / "tmdb-film-metadata-v6.json"
         tmdb_cache = _load_tmdb_metadata_cache(tmdb_cache_path)
-        missing_metadata: list[tuple[int, MovieResult, str]] = []
+        missing_metadata: list[tuple[int, MovieResult, str, dict | None]] = []
         metadata_task = progress.add_task("Checking cached film metadata", total=len(featured_results)) if progress else None
         for index, result in enumerate(featured_results):
             cache_key = _tmdb_metadata_key(result.movie)
             if cache_key in tmdb_cache:
                 cached = tmdb_cache[cache_key]
-                if _metadata_cache_is_fresh(cached, generated_at, bool(tmdb_api_key), index < 500):
+                if _metadata_cache_is_fresh(
+                    cached,
+                    generated_at,
+                    bool(tmdb_api_key),
+                    bool(tmdb_api_key) and index < 500,
+                ):
                     metadata[index] = cached
                     if progress and metadata_task is not None:
                         progress.advance(metadata_task)
                 else:
-                    missing_metadata.append((index, result, cache_key))
+                    missing_metadata.append((index, result, cache_key, cached))
             else:
-                missing_metadata.append((index, result, cache_key))
+                missing_metadata.append((index, result, cache_key, None))
 
         if progress and metadata_task is not None:
             progress.update(
@@ -291,8 +330,8 @@ def create_snapshot(
         if missing_metadata:
             genre_names = _fetch_tmdb_movie_genres(client, tmdb_api_key) if tmdb_api_key else {}
 
-            def fetch_tmdb_metadata(entry: tuple[int, MovieResult, str]) -> tuple[int, str, dict | None, bool]:
-                index, result, cache_key = entry
+            def fetch_tmdb_metadata(entry: tuple[int, MovieResult, str, dict | None]) -> tuple[int, str, dict | None, bool, dict | None]:
+                index, result, cache_key, cached = entry
                 worker_client = worker_sessions.get()
                 value, cacheable, source = resolve_movie_metadata(
                     worker_client,
@@ -307,13 +346,22 @@ def create_snapshot(
                         "metadata_fetched_at": generated_at_text,
                         "metadata_status": "complete" if value.get("metadata_details_loaded") else ("id_only" if value.get("tmdb_id") else "partial"),
                     })
-                return index, cache_key, value, cacheable
+                return index, cache_key, value, cacheable, cached
 
             with ThreadLocalSessionPool() as worker_sessions:
                 with ThreadPoolExecutor(max_workers=6) as executor:
-                    for index, cache_key, value, cacheable in executor.map(fetch_tmdb_metadata, missing_metadata):
-                        metadata[index] = value
-                        if cacheable and value is not None:
+                    for index, cache_key, value, cacheable, cached in executor.map(fetch_tmdb_metadata, missing_metadata):
+                        keep_cached = _prefer_cached_metadata(
+                            cached,
+                            value,
+                            bool(tmdb_api_key) and index < 500,
+                            generated_at,
+                        )
+                        if keep_cached:
+                            metadata[index] = cached
+                        else:
+                            metadata[index] = value
+                        if cacheable and value is not None and not keep_cached:
                             tmdb_cache[cache_key] = value
                         if progress and metadata_task is not None:
                             progress.advance(metadata_task)

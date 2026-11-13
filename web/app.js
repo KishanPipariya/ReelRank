@@ -156,6 +156,11 @@ function unlockModalScroll(dialog) {
 
 function registerBackdropDismiss(dialog) {
   let outsidePointerId = null;
+  const clearTrackedPointer = (pointerId, releaseCapture = false) => {
+    if (outsidePointerId !== pointerId) return;
+    outsidePointerId = null;
+    if (releaseCapture && dialog.hasPointerCapture?.(pointerId)) dialog.releasePointerCapture(pointerId);
+  };
   const isOutsideDialog = (event) => {
     const bounds = dialog.getBoundingClientRect();
     return event.clientX < bounds.left || event.clientX > bounds.right
@@ -163,16 +168,24 @@ function registerBackdropDismiss(dialog) {
   };
 
   dialog.addEventListener('pointerdown', (event) => {
-    outsidePointerId = event.isPrimary && event.button === 0 && isOutsideDialog(event)
-      ? event.pointerId
-      : null;
+    if (!event.isPrimary || event.button !== 0 || outsidePointerId !== null) return;
+    if (!isOutsideDialog(event)) return;
+    outsidePointerId = event.pointerId;
+    try {
+      dialog.setPointerCapture(event.pointerId);
+    } catch { /* Keep the pointer ID so a normal pointerup can still close the dialog. */ }
   });
   dialog.addEventListener('pointerup', (event) => {
-    const shouldClose = outsidePointerId === event.pointerId && isOutsideDialog(event);
-    outsidePointerId = null;
+    if (outsidePointerId !== event.pointerId) return;
+    const shouldClose = isOutsideDialog(event);
+    clearTrackedPointer(event.pointerId, true);
     if (shouldClose && dialog.open) dialog.close();
   });
-  dialog.addEventListener('pointercancel', () => { outsidePointerId = null; });
+  dialog.addEventListener('pointercancel', (event) => clearTrackedPointer(event.pointerId));
+  dialog.addEventListener('lostpointercapture', (event) => clearTrackedPointer(event.pointerId));
+  dialog.addEventListener('close', () => {
+    if (outsidePointerId !== null) clearTrackedPointer(outsidePointerId, true);
+  });
 }
 
 const searchInput = document.querySelector('#search-input');
@@ -578,7 +591,7 @@ function buildCatalogFilters() {
     const total = document.createElement('small');
     total.textContent = count.toLocaleString();
     button.append(name, total);
-    button.addEventListener('click', (event) => toggleCountry(country, event));
+    button.addEventListener('click', () => toggleCountry(country));
     return button;
   }));
   countryIndexToggle.hidden = countryAtlasSize <= facetQuickPickLimit;
@@ -695,18 +708,18 @@ function scrollBehaviorForActivation(event) {
     : 'auto';
 }
 
-function focusCollectionTitleAfterFilter(event) {
+function focusCollectionTitleAfterFilter() {
   const collectionTitle = document.querySelector('#collection-title');
   collectionTitle.focus({ preventScroll: true });
-  collectionTitle.scrollIntoView({ behavior: scrollBehaviorForActivation(event), block: 'start' });
+  collectionTitle.scrollIntoView({ behavior: 'auto', block: 'start' });
 }
 
-function toggleDirector(director, event) {
+function toggleDirector(director) {
   state.directors = state.directors.includes(director)
     ? state.directors.filter((selected) => selected !== director)
     : [...state.directors, director].sort((left, right) => left.localeCompare(right));
   commitCatalogueChange();
-  focusCollectionTitleAfterFilter(event);
+  focusCollectionTitleAfterFilter();
 }
 
 function setCountry(country) {
@@ -729,9 +742,9 @@ function toggleLanguage(language) {
   setLanguage(state.language === language ? '' : language);
 }
 
-function toggleCountry(country, event) {
+function toggleCountry(country) {
   setCountry(state.country === country ? '' : country);
-  focusCollectionTitleAfterFilter(event);
+  focusCollectionTitleAfterFilter();
 }
 
 function setDecade(decade) {
@@ -1088,9 +1101,9 @@ function genreChipFor(genre) {
   setGenreLabel(tag, genre);
   tag.setAttribute('aria-label', `Filter by ${genre}`);
   tag.setAttribute('aria-pressed', String(state.genres.includes(genre)));
-  tag.addEventListener('click', (event) => {
+  tag.addEventListener('click', () => {
     toggleGenre(genre);
-    focusCollectionTitleAfterFilter(event);
+    focusCollectionTitleAfterFilter();
   });
   return tag;
 }
@@ -1113,9 +1126,9 @@ function directorCreditFor(directors, className, beforeFilter) {
     button.title = director;
     button.setAttribute('aria-pressed', String(state.directors.includes(director)));
     button.setAttribute('aria-label', `Filter by director ${director}`);
-    button.addEventListener('click', (event) => {
+    button.addEventListener('click', () => {
       beforeFilter?.();
-      toggleDirector(director, event);
+      toggleDirector(director);
     });
     credit.insertBefore(button, before);
     return button;
@@ -1226,7 +1239,7 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
       button.setAttribute('aria-pressed', String(state.country === country));
       button.addEventListener('click', (event) => {
         beforeFilter?.();
-        toggleCountry(country, event);
+        toggleCountry(country);
       });
       return button;
     };
