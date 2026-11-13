@@ -1,4 +1,5 @@
 import { filmDetailUrl } from './film-navigation.js';
+import { html, render } from 'lit';
 
 const filmMetadataBatchSize = 8;
 
@@ -98,18 +99,13 @@ function syncCardGenreTags(card, film, state, genreChipFor) {
 export function posterFallbackFor(film, className = 'poster-fallback') {
   const cover = document.createElement('div');
   cover.className = className;
-  const label = document.createElement('span');
-  label.className = 'poster-fallback-label';
-  label.textContent = 'ReelRank · Catalogue';
-  const title = document.createElement('strong');
-  title.className = 'poster-fallback-title';
-  title.textContent = film.title || 'Untitled film';
-  const details = document.createElement('span');
-  details.className = 'poster-fallback-details';
   const director = Array.isArray(film.directors) ? film.directors.find((name) => typeof name === 'string' && name.trim()) : '';
-  details.textContent = [film.year, director].filter(Boolean).join(' · ');
-  details.title = details.textContent;
-  cover.append(label, title, details);
+  const details = [film.year, director].filter(Boolean).join(' · ');
+  render(html`
+    <span class="poster-fallback-label">ReelRank · Catalogue</span>
+    <strong class="poster-fallback-title">${film.title || 'Untitled film'}</strong>
+    <span class="poster-fallback-details" title=${details}>${details}</span>
+  `, cover);
   return cover;
 }
 

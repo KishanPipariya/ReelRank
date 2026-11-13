@@ -26,6 +26,16 @@ const emptyClearFilters = document.querySelector('#empty-clear-filters');
 const emptyEditGenres = document.querySelector('#empty-edit-genres');
 const selectionEnd = document.querySelector('#selection-end');
 
+document.addEventListener('keydown', () => {
+  document.documentElement.dataset.inputModality = 'keyboard';
+}, true);
+document.addEventListener('pointerdown', () => {
+  document.documentElement.dataset.inputModality = 'pointer';
+}, true);
+document.addEventListener('click', (event) => {
+  document.documentElement.dataset.inputModality = event.detail > 0 ? 'pointer' : 'keyboard';
+}, true);
+
 const programmeShareDetails = document.querySelector('#programme-share');
 const programmeShareDescription = document.querySelector('#programme-share-description');
 const programmeShareUrl = document.querySelector('#programme-share-url');
@@ -102,6 +112,69 @@ const posterViewerStatus = document.querySelector('#poster-viewer-status');
 const posterViewerFeedback = document.querySelector('#poster-viewer-feedback');
 const posterViewerRetry = document.querySelector('#poster-viewer-retry');
 const posterViewerGallery = document.querySelector('#poster-viewer-gallery');
+const lockedDialogs = new Set();
+let lockedPageScrollY = 0;
+let bodyStylesBeforeModalLock;
+
+function lockModalScroll(dialog) {
+  if (lockedDialogs.has(dialog)) return;
+  if (lockedDialogs.size === 0) {
+    lockedPageScrollY = window.scrollY;
+    const body = document.body;
+    bodyStylesBeforeModalLock = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      paddingRight: body.style.paddingRight,
+    };
+    const scrollbarGap = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    document.documentElement.dataset.modalScrollLocked = 'true';
+    body.style.position = 'fixed';
+    body.style.top = `-${lockedPageScrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    body.style.paddingRight = `${scrollbarGap}px`;
+  }
+  lockedDialogs.add(dialog);
+}
+
+function unlockModalScroll(dialog) {
+  if (dialog.open || !lockedDialogs.delete(dialog) || lockedDialogs.size > 0) return;
+  const body = document.body;
+  document.documentElement.removeAttribute('data-modal-scroll-locked');
+  for (const [property, value] of Object.entries(bodyStylesBeforeModalLock || {})) {
+    body.style[property] = value;
+  }
+  bodyStylesBeforeModalLock = null;
+  window.scrollTo(0, lockedPageScrollY);
+}
+
+function registerBackdropDismiss(dialog) {
+  let outsidePointerId = null;
+  const isOutsideDialog = (event) => {
+    const bounds = dialog.getBoundingClientRect();
+    return event.clientX < bounds.left || event.clientX > bounds.right
+      || event.clientY < bounds.top || event.clientY > bounds.bottom;
+  };
+
+  dialog.addEventListener('pointerdown', (event) => {
+    outsidePointerId = event.isPrimary && event.button === 0 && isOutsideDialog(event)
+      ? event.pointerId
+      : null;
+  });
+  dialog.addEventListener('pointerup', (event) => {
+    const shouldClose = outsidePointerId === event.pointerId && isOutsideDialog(event);
+    outsidePointerId = null;
+    if (shouldClose && dialog.open) dialog.close();
+  });
+  dialog.addEventListener('pointercancel', () => { outsidePointerId = null; });
+}
+
 const searchInput = document.querySelector('#search-input');
 const searchScopeLabel = document.querySelector('label[for="search-input"]');
 const searchHelp = document.querySelector('#search-help');
@@ -505,7 +578,7 @@ function buildCatalogFilters() {
     const total = document.createElement('small');
     total.textContent = count.toLocaleString();
     button.append(name, total);
-    button.addEventListener('click', () => toggleCountry(country));
+    button.addEventListener('click', (event) => toggleCountry(country, event));
     return button;
   }));
   countryIndexToggle.hidden = countryAtlasSize <= facetQuickPickLimit;
@@ -616,15 +689,24 @@ function updateSourceListOptionVisibility() {
   sourceListEmpty.hidden = visibleCount > 0;
 }
 
-function toggleDirector(director) {
+function scrollBehaviorForActivation(event) {
+  return event?.detail > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ? 'smooth'
+    : 'auto';
+}
+
+function focusCollectionTitleAfterFilter(event) {
+  const collectionTitle = document.querySelector('#collection-title');
+  collectionTitle.focus({ preventScroll: true });
+  collectionTitle.scrollIntoView({ behavior: scrollBehaviorForActivation(event), block: 'start' });
+}
+
+function toggleDirector(director, event) {
   state.directors = state.directors.includes(director)
     ? state.directors.filter((selected) => selected !== director)
     : [...state.directors, director].sort((left, right) => left.localeCompare(right));
   commitCatalogueChange();
-  const collectionTitle = document.querySelector('#collection-title');
-  collectionTitle.focus({ preventScroll: true });
-  const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-  collectionTitle.scrollIntoView({ behavior, block: 'start' });
+  focusCollectionTitleAfterFilter(event);
 }
 
 function setCountry(country) {
@@ -647,12 +729,9 @@ function toggleLanguage(language) {
   setLanguage(state.language === language ? '' : language);
 }
 
-function toggleCountry(country) {
+function toggleCountry(country, event) {
   setCountry(state.country === country ? '' : country);
-  const collectionTitle = document.querySelector('#collection-title');
-  collectionTitle.focus({ preventScroll: true });
-  const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-  collectionTitle.scrollIntoView({ behavior, block: 'start' });
+  focusCollectionTitleAfterFilter(event);
 }
 
 function setDecade(decade) {
@@ -1009,12 +1088,9 @@ function genreChipFor(genre) {
   setGenreLabel(tag, genre);
   tag.setAttribute('aria-label', `Filter by ${genre}`);
   tag.setAttribute('aria-pressed', String(state.genres.includes(genre)));
-  tag.addEventListener('click', () => {
+  tag.addEventListener('click', (event) => {
     toggleGenre(genre);
-    const collectionTitle = document.querySelector('#collection-title');
-    collectionTitle.focus({ preventScroll: true });
-    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-    collectionTitle.scrollIntoView({ behavior, block: 'start' });
+    focusCollectionTitleAfterFilter(event);
   });
   return tag;
 }
@@ -1037,9 +1113,9 @@ function directorCreditFor(directors, className, beforeFilter) {
     button.title = director;
     button.setAttribute('aria-pressed', String(state.directors.includes(director)));
     button.setAttribute('aria-label', `Filter by director ${director}`);
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (event) => {
       beforeFilter?.();
-      toggleDirector(director);
+      toggleDirector(director, event);
     });
     credit.insertBefore(button, before);
     return button;
@@ -1148,9 +1224,9 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
       button.tabIndex = tabIndex;
       button.setAttribute('aria-label', `Filter by production country ${country}`);
       button.setAttribute('aria-pressed', String(state.country === country));
-      button.addEventListener('click', () => {
+      button.addEventListener('click', (event) => {
         beforeFilter?.();
-        toggleCountry(country);
+        toggleCountry(country, event);
       });
       return button;
     };
@@ -1348,11 +1424,15 @@ const filmViews = createFilmViews({
   filmAppearanceCountFor,
   toggleDirector,
   toggleGenre,
+  focusCollectionTitleAfterFilter,
   originalFilmFactsFor,
   sourceListNotesFor,
   filmProgrammeNotesFor,
   filmDetailContent,
   filmDetailDialog,
+  lockModalScroll,
+  unlockModalScroll,
+  registerBackdropDismiss,
   posterViewerDialog,
   posterViewerImage,
   posterViewerTitle,
@@ -1439,10 +1519,9 @@ function filmAppearanceCountFor(film, className = 'film-count') {
   return count;
 }
 
-function posterGridItemsFor(shownFilms, { previousYear = null, startIndex = 0, arriving = false } = {}) {
+function posterGridItemsFor(shownFilms, { previousYear = null, startIndex = 0 } = {}) {
   const items = [];
   const groupByYear = state.sort === 'year-newest' || state.sort === 'year-oldest';
-  const animate = arriving && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   shownFilms.forEach((film, offset) => {
     const year = film.year?.trim() || 'Year unknown';
     if (groupByYear && year !== previousYear) {
@@ -1457,14 +1536,6 @@ function posterGridItemsFor(shownFilms, { previousYear = null, startIndex = 0, a
       previousYear = year;
     }
     const card = cardFor(film, startIndex + offset);
-    if (animate) {
-      card.classList.add('is-arriving');
-      card.style.animationDelay = `${Math.min(offset * 14, 180)}ms`;
-      card.addEventListener('animationend', () => {
-        card.classList.remove('is-arriving');
-        card.style.removeProperty('animation-delay');
-      }, { once: true });
-    }
     items.push(card);
   });
   return items;
@@ -1473,6 +1544,7 @@ function posterGridItemsFor(shownFilms, { previousYear = null, startIndex = 0, a
 function renderCatalogueResults(shown, highlighted, appendResults) {
   const key = JSON.stringify([largeCatalogueMatchKey(searchInput.value.trim()), state.sort, state.view]);
   const previous = renderedCatalogue;
+  let firstNewFilmTarget = null;
   const append = appendResults && previous?.catalogue === films && previous.key === key
     && previous.shown.length > 0 && previous.shown.length < shown.length
     && previous.shown.every((film, index) => film === shown[index]);
@@ -1480,12 +1552,22 @@ function renderCatalogueResults(shown, highlighted, appendResults) {
     const start = previous.shown.length;
     const next = shown.slice(start);
     const previousYear = shown[start - 1].year?.trim() || 'Year unknown';
-    if (state.view === 'ledger') filmLedgerRows.append(...filmViews.ledgerRowsFor(next, previousYear));
-    else grid.append(...posterGridItemsFor(next, {
-      previousYear,
-      startIndex: start - highlighted.length,
-      arriving: true,
-    }));
+    if (state.view === 'ledger') {
+      const nextRows = filmViews.ledgerRowsFor(next, previousYear);
+      filmLedgerRows.append(...nextRows);
+      firstNewFilmTarget = nextRows
+        .find((row) => row.querySelector('.film-detail-trigger'))
+        ?.querySelector('.film-detail-trigger') || null;
+    } else {
+      const nextItems = posterGridItemsFor(next, {
+        previousYear,
+        startIndex: start - highlighted.length,
+      });
+      grid.append(...nextItems);
+      firstNewFilmTarget = nextItems
+        .find((item) => item.classList.contains('film-card'))
+        ?.querySelector('.film-detail-trigger') || null;
+    }
   } else if (state.view === 'ledger') {
     filmLedgerRows.replaceChildren(...filmViews.ledgerRowsFor(shown));
   } else {
@@ -1496,6 +1578,7 @@ function renderCatalogueResults(shown, highlighted, appendResults) {
     grid.replaceChildren(...posterGridItemsFor(shown.slice(highlighted.length)));
   }
   renderedCatalogue = { catalogue: films, key, shown };
+  return firstNewFilmTarget;
 }
 
 function programmeHeadingFor(query, matching) {
@@ -1693,7 +1776,7 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
   const programmeHeading = programmeHeadingFor(query, matching);
   topBilledEyebrow.textContent = programmeHeading.eyebrow;
   topBilledTitle.textContent = programmeHeading.title;
-  renderCatalogueResults(shown, highlighted, appendResults);
+  const firstNewFilmTarget = renderCatalogueResults(shown, highlighted, appendResults);
   statusMessage.classList.toggle('is-visible', matching.length === 0);
   const hasFacetFilters = state.genres.length > 0 || state.directors.length > 0 || state.sourceLists.length > 0 || Boolean(state.country) || Boolean(state.language) || state.decade !== '' || Boolean(state.runtime);
   const emptyContext = query && hasFacetFilters
@@ -1741,6 +1824,7 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
     snapshotFilmRestorePending = false;
     restoreFilmFromUrl();
   }
+  return firstNewFilmTarget;
 }
 
 catalogFilters.addEventListener('toggle', () => {
@@ -2121,12 +2205,15 @@ ledgerDisplayButton.addEventListener('click', () => setView('ledger'));
 printProgrammeButton.addEventListener('click', printProgramme);
 filmDetailClose.addEventListener('click', () => filmDetailDialog.close());
 filmDetailDialog.addEventListener('close', () => {
-  if (!filmDetailDialog.open) filmViews.dismissPosterViewer();
+  if (filmDetailDialog.open) {
+    filmNavigation.handleDialogClose();
+    return;
+  }
+  unlockModalScroll(filmDetailDialog);
+  filmViews.dismissPosterViewer();
   filmNavigation.handleDialogClose();
 });
-filmDetailDialog.addEventListener('click', (event) => {
-  if (event.target === filmDetailDialog) filmDetailDialog.close();
-});
+registerBackdropDismiss(filmDetailDialog);
 decadeOptions.addEventListener('click', (event) => {
   const button = event.target.closest('[data-decade]');
   if (button) setDecade(button.dataset.decade);
@@ -2150,14 +2237,21 @@ document.addEventListener('pointerdown', (event) => {
   if (sourceListFilter.open && !eventPath.includes(sourceListFilter)) sourceListFilter.open = false;
 });
 const savedViewsGroup = document.querySelector('#saved-views');
-loadMoreButton.addEventListener('click', () => {
+loadMoreButton.addEventListener('click', async (event) => {
+  const keyboardActivation = event.detail === 0;
+  const loadMoreHadFocus = document.activeElement === loadMoreButton;
   state.visibleLimit += 40;
   filmNavigation.rememberPosition();
-  void render({ appendResults: true });
+  const firstNewFilmTarget = await render({ appendResults: true });
+  const focusWasNotMoved = document.activeElement === loadMoreButton || document.activeElement === document.body;
+  if (keyboardActivation && loadMoreHadFocus && focusWasNotMoved && firstNewFilmTarget?.isConnected) firstNewFilmTarget.focus();
 });
-backToFiltersButton.addEventListener('click', () => {
+backToFiltersButton.addEventListener('click', (event) => {
   searchInput.focus({ preventScroll: true });
-  document.querySelector('#collection-controls').scrollIntoView({ block: 'start' });
+  document.querySelector('#collection-controls').scrollIntoView({
+    behavior: scrollBehaviorForActivation(event),
+    block: 'start',
+  });
 });
 window.addEventListener('scroll', updateBackToFiltersVisibility, { passive: true });
 document.addEventListener('click', (event) => {

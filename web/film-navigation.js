@@ -133,10 +133,8 @@ export function createFilmNavigation({ browserWindow, getState, getFilms, getDia
 
   function handleDialogClose() {
     const historyClosed = historyCloseCount > 0;
-    if (historyClosed) {
-      historyCloseCount -= 1;
-      if (getDialog().open) return;
-    }
+    if (historyClosed) historyCloseCount -= 1;
+    if (getDialog().open) return;
     const trigger = clickedTrigger;
     const film = triggerFilm;
     const kind = triggerKind;

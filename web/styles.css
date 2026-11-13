@@ -198,7 +198,8 @@
 }
 
 * { box-sizing: border-box; }
-html { overflow-x: clip; scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
+html { overflow-x: clip; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
+html[data-modal-scroll-locked='true'] { overflow: hidden; overscroll-behavior: none; }
 body { margin: 0; overflow-x: clip; background: var(--paper); color: var(--ink); font-family: var(--sans); }
 a { color: inherit; }
 button, input { font: inherit; }
@@ -221,7 +222,7 @@ button, input { font: inherit; }
 :focus-visible { outline: 3px solid var(--focus-terracotta); outline-offset: 3px; }
 strong, b { font-weight: 600; }
 .search-box:focus-within { outline: 3px solid var(--focus-terracotta); outline-offset: 3px; }
-button:active, summary:active, a:active { transform: translateY(1px); }
+button:not(:disabled):active, summary:active, a:active { transform: translateY(1px); }
 button, summary, [role="button"] { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 button, a, summary, [role="button"] { touch-action: manipulation; }
 button:disabled, input:disabled, select:disabled { cursor: not-allowed; opacity: .58; }
@@ -334,7 +335,7 @@ h1 { margin: 0; font-size: clamp(48px, 7vw, 78px); line-height: .99; letter-spac
 .decade-options { width: 100%; max-width: 380px; display: flex; gap: var(--space-2); overflow-x: auto; padding: 0px 0px var(--space-1); scrollbar-width: thin; }
 .decade-options.is-expanded { max-width: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr)); overflow-x: hidden; }
 .decade-scroll-hint { margin: 0px 0 0; color: var(--muted); font-size: var(--type-caption); }
-.decade-option { min-width: 79px; min-height: var(--control-min-height); flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-2); border: 1px solid var(--line); border-radius: 2px; background: var(--surface); color: var(--control-ink); cursor: pointer; text-align: left; transition: border-color .16s ease, background .16s ease, color .16s ease; }
+.decade-option { min-width: 79px; min-height: var(--control-min-height); flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-2); border: 1px solid var(--line); border-radius: 2px; background: var(--surface); color: var(--control-ink); cursor: pointer; text-align: left; }
 .decade-option[hidden] { display: none; }
 .decade-option-all { min-width: 102px; }
 @media (hover: hover) and (pointer: fine) {
@@ -524,7 +525,7 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(34px, 5vw, 47px); fo
 .search-box input::placeholder { color: var(--muted-copy); opacity: 1; }
 .search-box kbd { color: var(--muted-copy); font-family: var(--mono); font-size: var(--type-caption); }
 .filter-tabs { width: 100%; height: auto; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(var(--control-min-height), auto); padding: 0; border-radius: 3px; outline: 1px solid var(--control-border); outline-offset: -1px; background: var(--surface-soft); }
-.filter-button { width: 100%; height: auto; min-height: var(--control-min-height); min-width: 0; padding: var(--space-1) var(--space-2); border: 0; border-radius: 2px; background: transparent; color: var(--control-ink); cursor: pointer; font-size: var(--type-caption); line-height: 1.2; overflow-wrap: anywhere; white-space: normal; transition: background .18s ease, color .18s ease; }
+.filter-button { width: 100%; height: auto; min-height: var(--control-min-height); min-width: 0; padding: var(--space-1) var(--space-2); border: 0; border-radius: 2px; background: transparent; color: var(--control-ink); cursor: pointer; font-size: var(--type-caption); line-height: 1.2; overflow-wrap: anywhere; white-space: normal; }
 .filter-button:first-child { border-radius: 3px 0 0 3px; }
 .filter-button:last-child { border-radius: 0 3px 3px 0; }
 .filter-button span { margin-left: var(--space-1); color: var(--muted-copy); font-family: var(--mono); font-size: var(--type-caption); }
@@ -666,7 +667,7 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(34px, 5vw, 47px); fo
 .featured-film-genres .genre-tag { border-color: var(--color-d4e6c74d); background: var(--color-101b164d); color: var(--color-dce8d1); }
 .featured-film-genres .genre-tag[aria-pressed='true'] { border-color: var(--night-highlight-bright); background: var(--night-highlight-bright); color: var(--color-17231d); }
 @media (hover: hover) and (pointer: fine) {
-  .featured-film-genres .genre-tag:hover { border-color: var(--night-highlight-bright); background: var(--night-highlight-bright); color: var(--color-17231d); }
+  .featured-film-genres .genre-tag:not([aria-pressed='true']):hover { border-color: var(--night-highlight-bright); }
 }
 .featured-film-count { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-4) 0 0; color: var(--color-e0e3da); font-family: var(--mono); font-size: var(--type-caption); }
 .featured-film-count { width: fit-content; max-width: 100%; padding: var(--space-1) 0; border: 0; background: transparent; cursor: pointer; text-align: left; }
@@ -704,15 +705,11 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(34px, 5vw, 47px); fo
 .top-billed-grid .film-count { font-size: var(--type-caption); }
 .top-billed-grid .film-count strong { font-size: var(--type-rank); }
 .film-card { min-width: 0; }
-.film-card.is-arriving { animation: catalogue-entry .48s cubic-bezier(.16, 1, .3, 1) both; }
-@keyframes catalogue-entry { from { opacity: .45; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
-.poster-link { display: block; position: relative; overflow: hidden; aspect-ratio: 2 / 3; border: 1px solid var(--color-383c301c); background: var(--line); box-shadow: 0 2px 6px var(--color-24251d12), 0 10px 22px var(--color-24251d0d); text-decoration: none; transition: transform .25s ease; }
+.poster-link { display: block; position: relative; overflow: hidden; aspect-ratio: 2 / 3; border: 1px solid var(--color-383c301c); background: var(--line); box-shadow: 0 2px 6px var(--color-24251d12), 0 10px 22px var(--color-24251d0d); text-decoration: none; }
 .poster-link::after { position: absolute; inset: 0; content: ''; border: 1px solid var(--color-f7f1e72b); pointer-events: none; }
-.poster-image { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .4s cubic-bezier(.2,.75,.25,1); }
-.poster-link:focus-visible { transform: translateY(-3px); box-shadow: 0 5px 10px var(--color-24251d1c), 0 16px 28px var(--color-24251d17); }
+.poster-image { width: 100%; height: 100%; display: block; object-fit: cover; }
 @media (hover: hover) and (pointer: fine) {
-  .poster-link:hover { transform: translateY(-3px); box-shadow: 0 5px 10px var(--color-24251d1c), 0 16px 28px var(--color-24251d17); }
-  .poster-link:hover .poster-image { transform: scale(1.035); }
+  .poster-link:hover::after { border-color: var(--forest); }
 }
 .poster-fallback { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); overflow: hidden; padding: var(--space-5) var(--space-4); background: var(--color-e8e4d5); color: var(--forest); text-align: center; }
 .poster-fallback::before { position: absolute; inset: var(--space-2); border: 1px solid var(--color-294b3a55); content: ''; pointer-events: none; }
@@ -750,10 +747,12 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(34px, 5vw, 47px); fo
   .featured-film-facts .country-filter-button:hover { color: var(--terracotta-on-dark); }
 }
 .cinephile-country-extra { display: inline-block; white-space: normal; }
-html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; transform: translateX(-3px); white-space: nowrap; transition: opacity .18s ease, transform .18s ease; }
-.cinephile-country-group.is-expanded .cinephile-country-extra { max-width: 32rem; opacity: 1; transform: translateX(0); white-space: normal; }
-.country-more-button { min-width: 32px; min-height: 32px; flex: 0 0 auto; padding: 0 var(--space-1); border: 0; background: transparent; color: var(--forest); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 2px; }
-.cinephile-country-group.has-more:not(.is-expanded) .country-more-button { position: absolute; top: calc(50% + 0px); right: 0; transform: translateY(-50%); }
+html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; white-space: nowrap; }
+.cinephile-country-group.is-expanded .cinephile-country-extra { max-width: 32rem; opacity: 1; white-space: normal; }
+.country-more-button { min-width: 32px; min-height: 32px; flex: 0 0 auto; padding: 0 var(--space-1); border: 0; background: transparent; color: var(--forest); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 2px; transition: transform 120ms cubic-bezier(.23, 1, .32, 1); }
+.cinephile-country-group.has-more:not(.is-expanded) .country-more-button { position: absolute; top: 50%; right: 0; translate: 0 -50%; }
+html[data-input-modality='pointer'] button.country-more-button:not(:disabled):active { transform: scale(.97); }
+html[data-input-modality='keyboard'] button.country-more-button:not(:disabled):active { transform: none; }
 .cinephile-runtime { min-width: 0; flex: 0 1 auto; white-space: normal; }
 .cinephile-runtime::before { margin: 0 var(--space-1); content: '·'; }
 .cinephile-meta.is-expanded { flex-wrap: wrap; overflow: visible; white-space: normal; }
@@ -785,7 +784,7 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
 .genre-tag-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .genre-tag[aria-pressed='true'] { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); }
 @media (hover: hover) and (pointer: fine) {
-  .genre-tag:hover { border-color: var(--forest); background: var(--filter-active); color: var(--filter-active-ink); }
+  .genre-tag:not([aria-pressed='true']):hover { border-color: var(--forest); }
 }
 .genre-tag-more { display: inline-flex; flex: 0 0 auto; }
 .film-notes { margin-top: var(--space-2); padding-top: var(--space-2); border-top: 1px dotted var(--line); }
@@ -804,12 +803,12 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
 @media (hover: hover) and (pointer: fine) {
   .featured-film .film-detail-trigger:hover { color: var(--color-ffc19e); }
 }
-.film-detail-dialog { width: min(820px, calc(100% - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); max-width: none; max-height: min(90vh, 780px); padding: 0; overflow: auto; border: 1px solid var(--line); border-top: 3px solid var(--poster-accent, var(--orange)); background: var(--surface); color: var(--ink); }
+.film-detail-dialog { width: min(820px, calc(100% - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); max-width: none; max-height: min(90vh, 780px); padding: 0; overflow: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-top: 3px solid var(--poster-accent, var(--orange)); background: var(--surface); color: var(--ink); }
 .film-detail-dialog::backdrop { background: var(--color-151915b8); }
 .film-detail-close { position: sticky; z-index: 2; top: var(--space-2); float: right; width: 44px; height: 44px; margin: var(--space-2) var(--space-2) -56px 0; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; font-size: var(--type-count); line-height: 1; }
 .film-detail-navigation { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; gap: var(--space-2) var(--space-2); margin: 0 56px var(--space-4) 0; padding-bottom: var(--space-3); border-bottom: 1px solid var(--line); }
 .film-detail-position { color: var(--muted); font-family: var(--mono); font-size: var(--type-caption); text-align: center; }
-.film-detail-step { min-width: 0; min-height: 48px; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: var(--space-1); padding: var(--space-2) var(--space-2); border: 1px solid var(--filter-active); border-radius: 2px; background: var(--filter-active); color: var(--filter-active-ink); cursor: pointer; text-align: left; transition: background-color .16s ease, border-color .16s ease, transform .16s ease; }
+.film-detail-step { min-width: 0; min-height: 48px; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: var(--space-1); padding: var(--space-2) var(--space-2); border: 1px solid var(--filter-active); border-radius: 2px; background: var(--filter-active); color: var(--filter-active-ink); cursor: pointer; text-align: left; transition: background-color .16s ease, border-color .16s ease, transform 120ms cubic-bezier(.23, 1, .32, 1); }
 .film-detail-step:last-child { justify-self: end; }
 .film-detail-step-label { font-family: var(--mono); font-size: var(--type-caption); font-weight: 500; color: inherit; }
 .film-detail-step-title { max-width: 100%; overflow: hidden; font-size: var(--type-caption); line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
@@ -834,19 +833,50 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
 .film-detail-poster-fallback { gap: var(--space-2); padding: var(--space-3); font-size: var(--type-body); }
 .film-detail-poster img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .poster-viewer-dialog:not([open]) { display: none; }
-.poster-viewer-dialog { width: min(860px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); max-width: none; max-height: min(96vh, 980px); position: relative; display: grid; justify-items: center; gap: var(--space-3); overflow: auto; padding: 56px var(--space-4) var(--space-4); border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.poster-viewer-dialog { width: min(860px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); max-width: none; max-height: min(96vh, 980px); position: relative; display: grid; justify-items: center; gap: var(--space-3); overflow: auto; overscroll-behavior: contain; padding: 56px var(--space-4) var(--space-4); border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
 .poster-viewer-dialog::backdrop { background: var(--color-111611d9); }
 .film-detail-dialog, .poster-viewer-dialog {
   opacity: 0;
   transform: scale(.96);
-  transition: opacity 250ms cubic-bezier(.23, 1, .32, 1), transform 250ms cubic-bezier(.23, 1, .32, 1), display 250ms allow-discrete, overlay 250ms allow-discrete;
+  transition: opacity 150ms cubic-bezier(.23, 1, .32, 1), transform 150ms cubic-bezier(.23, 1, .32, 1), display 150ms allow-discrete, overlay 150ms allow-discrete;
 }
-.film-detail-dialog[open], .poster-viewer-dialog[open] { opacity: 1; transform: scale(1); }
+.film-detail-dialog[open], .poster-viewer-dialog[open] { opacity: 1; transform: scale(1); transition-duration: 250ms; }
 .film-detail-dialog[open]::backdrop, .poster-viewer-dialog[open]::backdrop { opacity: 1; transition: opacity 250ms cubic-bezier(.23, 1, .32, 1); }
-.film-detail-dialog::backdrop, .poster-viewer-dialog::backdrop { opacity: 0; transition: opacity 250ms cubic-bezier(.23, 1, .32, 1); }
+.film-detail-dialog::backdrop, .poster-viewer-dialog::backdrop { opacity: 0; transition: opacity 150ms cubic-bezier(.23, 1, .32, 1); }
 @starting-style {
   .film-detail-dialog[open], .poster-viewer-dialog[open] { opacity: 0; transform: scale(.96); }
   .film-detail-dialog[open]::backdrop, .poster-viewer-dialog[open]::backdrop { opacity: 0; }
+}
+html[data-input-modality='keyboard'] .film-detail-dialog,
+html[data-input-modality='keyboard'] .poster-viewer-dialog,
+html[data-input-modality='keyboard'] .film-detail-dialog[open],
+html[data-input-modality='keyboard'] .poster-viewer-dialog[open] {
+  transform: none;
+  transition-duration: 0ms;
+}
+html[data-input-modality='keyboard'] .film-detail-dialog::backdrop,
+html[data-input-modality='keyboard'] .poster-viewer-dialog::backdrop,
+html[data-input-modality='keyboard'] .film-detail-dialog[open]::backdrop,
+html[data-input-modality='keyboard'] .poster-viewer-dialog[open]::backdrop {
+  transition-duration: 0ms;
+}
+html[data-input-modality='keyboard'] .catalogue-tool-group > summary::after,
+html[data-input-modality='keyboard'] .saved-view-portability > summary::after,
+html[data-input-modality='keyboard'] .catalog-filters-toggle::after,
+html[data-input-modality='keyboard'] .more-filters > summary::after,
+html[data-input-modality='keyboard'] .genre-filter-toggle::after,
+html[data-input-modality='keyboard'] .country-more-button,
+html[data-input-modality='keyboard'] .decade-option { transition-duration: 0ms; }
+html[data-input-modality='keyboard'] .film-detail-step { transition-duration: 0ms; }
+html[data-input-modality='keyboard'] button:not(:disabled):active,
+html[data-input-modality='keyboard'] summary:active,
+html[data-input-modality='keyboard'] a:active { transform: none; outline: 1px solid currentColor; outline-offset: 1px; }
+@starting-style {
+  html[data-input-modality='keyboard'] .film-detail-dialog[open],
+  html[data-input-modality='keyboard'] .poster-viewer-dialog[open] {
+    opacity: 0;
+    transform: none;
+  }
 }
 .poster-viewer-close { position: absolute; z-index: 1; top: var(--space-2); right: var(--space-2); width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; font-size: var(--type-count); line-height: 1; }
 .poster-viewer-figure { width: 100%; min-width: 0; display: grid; justify-items: center; gap: var(--space-2); max-width: 100%; margin: 0; }
@@ -923,11 +953,11 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
 .status-message.is-visible { display: block; }
 .status-message-kicker { display: inline-block; margin-bottom: var(--space-2); padding: var(--space-1) var(--space-2); border: 1px solid var(--line); color: var(--rust-ink); font-family: var(--mono); font-size: var(--type-caption); }
 .status-message > p { margin: 0; }
-.clear-search-state { min-height: var(--control-min-height); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); margin-left: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--filter-active); border-radius: 2px; background: var(--filter-active); color: var(--filter-active-ink); cursor: pointer; font-family: var(--mono); font-size: var(--type-caption); font-weight: 500; transition: filter .18s ease; }
+.clear-search-state { min-height: var(--control-min-height); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); margin-left: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--filter-active); border-radius: 2px; background: var(--filter-active); color: var(--filter-active-ink); cursor: pointer; font-family: var(--mono); font-size: var(--type-caption); font-weight: 500; }
 .clear-search-state > span { color: var(--orange); font-family: var(--sans); font-size: var(--type-control); font-weight: 500; line-height: 1; }
 .clear-search-state[hidden] { display: none; }
 @media (hover: hover) and (pointer: fine) {
-  .clear-search-state:hover { filter: brightness(1.12); }
+  .clear-search-state:hover { border-color: var(--orange); }
 }
 .load-more { display: block; margin: 36px auto 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--color-c9c9bc); border-radius: 2px; background: transparent; color: var(--forest); cursor: pointer; font-family: var(--mono); font-size: var(--type-caption); transition: background .18s ease, border-color .18s ease; }
 .load-more[hidden] { display: none; }
@@ -972,22 +1002,17 @@ html.js .cinephile-country-extra { max-width: 0; overflow: hidden; opacity: 0; t
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .film-detail-dialog, .poster-viewer-dialog { transform: none; transition: opacity 120ms cubic-bezier(.23, 1, .32, 1), display 120ms allow-discrete, overlay 120ms allow-discrete; }
+  .film-detail-dialog, .poster-viewer-dialog,
+  .film-detail-dialog[open], .poster-viewer-dialog[open] { transform: none; transition: opacity 120ms cubic-bezier(.23, 1, .32, 1), display 120ms allow-discrete, overlay 120ms allow-discrete; transition-duration: 120ms; }
   .film-detail-dialog[open], .poster-viewer-dialog[open] { transform: none; }
   .film-detail-dialog::backdrop, .poster-viewer-dialog::backdrop,
   .film-detail-dialog[open]::backdrop, .poster-viewer-dialog[open]::backdrop { transition: opacity 120ms cubic-bezier(.23, 1, .32, 1); }
-  .film-card.is-arriving { animation: none; }
-  .poster-link:focus-visible { transform: none; }
-  @media (hover: hover) and (pointer: fine) {
-    .poster-link:hover, .poster-link:hover .poster-image { transform: none; }
-  }
-  .poster-image { transition: none; }
-  html.js .cinephile-country-extra { transform: none; transition: opacity .12s ease; }
   .film-detail-step { transition: background-color .16s ease, border-color .16s ease, color .16s ease; }
   .catalogue-tool-group > summary::after, .saved-view-portability > summary::after,
   .catalog-filters-toggle::after, .more-filters > summary::after,
   .genre-filter-toggle::after { transition: none; }
+  button:not(:disabled):active, summary:active, a:active { transform: none; outline: 1px solid currentColor; outline-offset: 1px; }
+  html[data-input-modality='pointer'] button.country-more-button:not(:disabled):active { transform: none; }
 }
 
 @container (max-width: 420px) {
