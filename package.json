@@ -13,8 +13,5 @@
     "axe-core": "4.13.0",
     "playwright-core": "1.62.1",
     "puppeteer-core": "25.16.0"
-  },
-  "dependencies": {
-    "lit": "3.3.3"
   }
 }
