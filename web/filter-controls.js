@@ -58,7 +58,7 @@ export function createFilterControls({ state, sources, elements, actions }) {
       const label = sourceListLabel(url, sources());
       const chip = document.createElement('button');
       chip.type = 'button';
-      chip.className = 'selected-genre-chip';
+      chip.className = 'selected-genre-chip selected-source-list-chip';
       chip.textContent = `${label} ×`;
       chip.setAttribute('aria-label', `Remove ${label} source list filter`);
       bindChipRemoval(chip, elements.selectedSourceLists, () => actions.toggleSourceList(url),

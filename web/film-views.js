@@ -513,7 +513,7 @@ function renderFilmDetails(film, retainFocus = false) {
   posterColumn.className = 'film-detail-poster-column';
   const poster = detailPosterFor(film, posterUrl);
   posterColumn.append(poster);
-  if (Number.isSafeInteger(film.tmdb_id)) {
+  if (Number.isSafeInteger(film.tmdb_id) && getPosterGalleryUrl()) {
     const galleryButton = document.createElement('button');
     galleryButton.type = 'button';
     galleryButton.className = 'film-detail-gallery-button film-detail-browse-posters';
@@ -565,6 +565,7 @@ function renderFilmDetails(film, retainFocus = false) {
     fullTitle.hidden = !expanded;
     titleToggle.textContent = expanded ? 'Hide full title' : 'Show full title';
     titleToggle.setAttribute('aria-expanded', String(expanded));
+    if (expanded) window.requestAnimationFrame(() => fullTitle.scrollIntoView({ block: 'nearest', behavior: 'instant' }));
   });
   const year = document.createElement('span');
   year.className = 'film-detail-year';
@@ -661,7 +662,7 @@ function renderFilmDetails(film, retainFocus = false) {
     catch { shareInput.focus(); shareInput.select(); copyStatus.textContent = 'Select and copy the film link above.'; }
   });
   links.append(shareInput, copyLink, copyStatus);
-  supporting.append(links);
+  copy.insertBefore(links, year);
   layout.append(copy, posterColumn, supporting);
   filmDetailContent.append(layout);
   const accentRequest = ++posterAccentRequest;
