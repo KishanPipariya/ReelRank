@@ -119,6 +119,11 @@
                   <button id="clear-query" class="clear-query" type="button" hidden aria-label="Clear search">Clear</button>
                   <kbd>/</kbd>
                 </div>
+                <div id="search-result-preview" class="search-result-preview" hidden>
+                  <span class="search-result-preview-label">Top match</span>
+                  <button id="search-result-preview-film" class="search-result-preview-film" type="button"></button>
+                  <span id="search-result-preview-count" class="search-result-preview-count"></span>
+                </div>
                 <span id="search-help" class="sr-only"></span>
                 <div class="filter-tabs" role="group" aria-label="Filter films">
                   <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All <span id="all-tab-count"></span></button>
@@ -342,7 +347,7 @@
               <div id="active-genre-filters" class="active-genre-filters" aria-label="Active filters" hidden></div>
               <div id="active-director-filters" class="active-genre-filters" aria-label="Active director filters" hidden></div>
               <div id="active-source-list-filters" class="active-genre-filters" aria-label="Active source list filters" hidden></div>
-              <button id="clear-search-state" class="clear-search-state" type="button" aria-label="Clear search and filters">
+              <button id="clear-search-state" class="clear-search-state" type="button" aria-label="Clear search and filters" hidden>
                 <span aria-hidden="true">×</span> Clear all
               </button>
             </div>
@@ -350,7 +355,7 @@
               <div id="director-filmography" class="director-filmography" hidden></div>
               <div class="collection-display-actions">
                 <div class="collection-view-tools">
-                  <span id="matching-films-count" class="matching-films-count" aria-live="polite"></span>
+                  <span id="matching-films-count" class="matching-films-count"></span>
                   <label class="sort-control toolbar-sort-control" for="sort-select">
                     <span>Sort</span>
                     <select id="sort-select" aria-label="Sort films">
@@ -389,7 +394,11 @@
             <p id="results-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
             <div id="film-grid" class="film-grid"></div>
             <div id="film-ledger-view" class="film-ledger-view" hidden>
-              <div class="film-ledger-scroll" tabindex="0" aria-label="Film catalogue table; scroll horizontally to see all columns">
+              <div class="ledger-filter-shortcut">
+                <button id="ledger-back-to-filters" class="back-to-filters" type="button" aria-label="Return to search and filters" hidden>Filters</button>
+              </div>
+              <p id="film-ledger-scroll-hint" class="film-ledger-scroll-hint">Scroll sideways to see director, country, and list appearances →</p>
+              <div class="film-ledger-scroll" tabindex="0" aria-label="Film catalogue table">
                 <table class="film-ledger-table">
                   <caption class="sr-only">Films in the current catalogue view</caption>
                   <thead>
@@ -426,16 +435,18 @@
     </dialog>
     <dialog id="poster-viewer-dialog" class="poster-viewer-dialog" aria-labelledby="poster-viewer-title">
       <button id="poster-viewer-close" class="poster-viewer-close" type="button" aria-label="Close poster viewer" autofocus>×</button>
-      <h2 id="poster-viewer-title" class="sr-only">Film poster</h2>
-      <figure class="poster-viewer-figure">
-        <div id="poster-viewer-stage" class="poster-viewer-stage" tabindex="0" role="region" aria-label="Poster image"></div>
-        <figcaption id="poster-viewer-caption" class="poster-viewer-caption"></figcaption>
-      </figure>
-      <p id="poster-viewer-feedback" class="poster-viewer-status" role="status" aria-live="polite"></p>
-      <button id="poster-viewer-retry" class="poster-viewer-zoom" type="button" hidden>Retry poster</button>
-      <p id="poster-viewer-status" class="poster-viewer-status" role="status" aria-live="polite"></p>
-      <div id="poster-viewer-gallery" class="poster-viewer-gallery" role="group" aria-label="Choose a poster" hidden></div>
-      <button id="poster-viewer-zoom" class="poster-viewer-zoom" type="button" aria-pressed="false">View at actual size</button>
+      <div class="poster-viewer-content">
+        <h2 id="poster-viewer-title" class="sr-only">Film poster</h2>
+        <figure class="poster-viewer-figure">
+          <div id="poster-viewer-stage" class="poster-viewer-stage" tabindex="0" role="region" aria-label="Poster image"></div>
+          <figcaption id="poster-viewer-caption" class="poster-viewer-caption"></figcaption>
+        </figure>
+        <p id="poster-viewer-feedback" class="poster-viewer-status" role="status" aria-live="polite"></p>
+        <button id="poster-viewer-retry" class="poster-viewer-zoom" type="button" hidden>Retry poster</button>
+        <p id="poster-viewer-status" class="poster-viewer-status" role="status" aria-live="polite"></p>
+        <div id="poster-viewer-gallery" class="poster-viewer-gallery" role="group" aria-label="Choose a poster" hidden></div>
+        <button id="poster-viewer-zoom" class="poster-viewer-zoom" type="button" aria-pressed="false">View at actual size</button>
+      </div>
     </dialog>
     <main id="print-programme" class="print-programme" hidden aria-label="Printable film selection">
       <header class="print-programme-header">

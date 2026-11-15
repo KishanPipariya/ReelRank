@@ -59,10 +59,8 @@ const topBilledMobileLayout = window.matchMedia('(max-width: 700px)');
 function placeTopBilledForViewport() {
   const collection = document.querySelector('#collection');
   if (topBilledMobileLayout.matches) {
-    collection.classList.add('has-leading-feature');
-    collection.prepend(topBilled);
+    document.querySelector('.catalogue-actions').after(topBilled);
   } else {
-    collection.classList.remove('has-leading-feature');
     document.querySelector('.catalogue-results').insertBefore(topBilled, statusMessage);
   }
 }
@@ -191,6 +189,13 @@ function registerBackdropDismiss(dialog) {
 const searchInput = document.querySelector('#search-input');
 const searchScopeLabel = document.querySelector('label[for="search-input"]');
 const searchHelp = document.querySelector('#search-help');
+const searchResultPreview = document.querySelector('#search-result-preview');
+const searchResultPreviewFilm = document.querySelector('#search-result-preview-film');
+const searchResultPreviewCount = document.querySelector('#search-result-preview-count');
+let searchPreviewFilm = null;
+searchResultPreviewFilm.addEventListener('click', () => {
+  if (searchPreviewFilm) openFilmDetailsFromUi(searchPreviewFilm);
+});
 const searchFieldsCopy = 'title, year, director, genre, synopsis, and source list';
 searchHelp.textContent = 'Results follow the selected sort. Press slash to focus search; Escape to clear it.';
 const loadMoreButton = document.querySelector('#load-more');
@@ -232,10 +237,53 @@ const metadataFilterScope = document.querySelector('#metadata-filter-scope');
 const matchingFilmsCount = document.querySelector('#matching-films-count');
 const genreOptionsToggle = document.querySelector('#genre-options-toggle');
 const sourceListOptionsToggle = document.querySelector('#source-list-options-toggle');
+const scoreKey = document.querySelector('.score-key');
+const scoreKeySummary = scoreKey.querySelector('summary');
+const scoreKeyCopy = scoreKey.querySelector('.score-key-copy');
 const topBilledEyebrow = document.querySelector('#top-billed-eyebrow');
 const topBilledTitle = document.querySelector('#top-billed-title');
 const backToFiltersButton = document.querySelector('#back-to-filters');
+const ledgerBackToFiltersButton = document.querySelector('#ledger-back-to-filters');
 const clearSearchStateButton = document.querySelector('#clear-search-state');
+let scoreKeyPositionFrame = 0;
+function scheduleScoreKeyPosition() {
+  if (!scoreKey.open || scoreKeyPositionFrame) return;
+  scoreKeyPositionFrame = window.requestAnimationFrame(() => {
+    scoreKeyPositionFrame = 0;
+    if (!scoreKey.open) return;
+    const trigger = scoreKeySummary.getBoundingClientRect();
+    if (trigger.bottom <= 0 || trigger.top >= window.innerHeight) {
+      scoreKey.open = false;
+      return;
+    }
+    const margin = 16;
+    const width = scoreKeyCopy.getBoundingClientRect().width;
+    const left = Math.max(margin, Math.min(trigger.left, window.innerWidth - width - margin));
+    const copyHeight = scoreKeyCopy.getBoundingClientRect().height;
+    const below = trigger.bottom + 8;
+    const preferredTop = below + copyHeight <= window.innerHeight - margin
+      ? below
+      : trigger.top - copyHeight - 8;
+    const maxTop = Math.max(margin, window.innerHeight - copyHeight - margin);
+    const top = Math.max(margin, Math.min(preferredTop, maxTop));
+    scoreKeyCopy.style.left = `${left}px`;
+    scoreKeyCopy.style.top = `${top}px`;
+    scoreKeyCopy.classList.add('is-positioned');
+  });
+}
+scoreKey.addEventListener('toggle', () => {
+  if (!scoreKey.open) {
+    scoreKeyCopy.classList.remove('is-positioned');
+    return;
+  }
+  scoreKeyCopy.classList.remove('is-positioned');
+  scheduleScoreKeyPosition();
+});
+scoreKey.addEventListener('focusout', (event) => {
+  if (!scoreKey.contains(event.relatedTarget)) scoreKey.open = false;
+});
+window.addEventListener('resize', scheduleScoreKeyPosition);
+document.addEventListener('scroll', scheduleScoreKeyPosition, { capture: true, passive: true });
 const setupState = document.querySelector('#setup-state');
 const retryButton = document.querySelector('#retry-loading');
 const setupTitle = document.querySelector('#setup-title');
@@ -1061,9 +1109,45 @@ function compareFilms(left, right, sort = state.sort) {
 }
 
 function updateBackToFiltersVisibility() {
-  const hidden = currentShownCount === 0 || window.scrollY < 600;
-  if (backToFiltersButton.hidden !== hidden) backToFiltersButton.hidden = hidden;
+  const controls = document.querySelector('#collection-controls');
+  const bounds = controls.getBoundingClientRect();
+  const controlsHavePassed = bounds.bottom <= 0;
+  const inLedger = !filmLedgerView.hidden;
+  const hidden = currentShownCount === 0 || !controlsHavePassed;
+  const floatingHidden = hidden || inLedger;
+  if (backToFiltersButton.hidden !== floatingHidden) backToFiltersButton.hidden = floatingHidden;
+  const ledgerShortcutHidden = hidden || !inLedger;
+  if (ledgerBackToFiltersButton.hidden !== ledgerShortcutHidden) ledgerBackToFiltersButton.hidden = ledgerShortcutHidden;
+  ledgerBackToFiltersButton.parentElement.hidden = ledgerShortcutHidden;
 }
+
+function updateLedgerOverflowHint() {
+  const ledger = document.querySelector('#film-ledger-view');
+  const scroll = ledger.querySelector('.film-ledger-scroll');
+  const hasOverflow = !ledger.hidden && scroll.scrollWidth > scroll.clientWidth + 1;
+  ledger.classList.toggle('has-horizontal-overflow', hasOverflow);
+  if (hasOverflow) scroll.setAttribute('aria-describedby', 'film-ledger-scroll-hint');
+  else scroll.removeAttribute('aria-describedby');
+}
+
+filmLedgerView.querySelector('.film-ledger-scroll').addEventListener('focusin', (event) => {
+  if (document.documentElement.dataset.inputModality !== 'keyboard') return;
+  const target = event.target.closest('a, button, [tabindex]');
+  if (!target) return;
+  window.requestAnimationFrame(() => {
+    if (document.activeElement !== target) return;
+    const scroll = filmLedgerView.querySelector('.film-ledger-scroll');
+    const scrollBounds = scroll.getBoundingClientRect();
+    const targetBounds = target.getBoundingClientRect();
+    const shortcut = ledgerBackToFiltersButton.parentElement;
+    const shortcutBounds = shortcut.getBoundingClientRect();
+    const shortcutIsPinned = !shortcut.hidden && shortcutBounds.top <= 0 && shortcutBounds.bottom > 0;
+    const safeTop = shortcutIsPinned ? Math.max(scrollBounds.top, shortcutBounds.bottom + 8) : scrollBounds.top + 8;
+    const block = targetBounds.top < safeTop ? 'start' : targetBounds.bottom > scrollBounds.bottom ? 'end' : 'nearest';
+    const inline = targetBounds.left < scrollBounds.left ? 'start' : targetBounds.right > scrollBounds.right ? 'end' : 'nearest';
+    target.scrollIntoView({ block, inline, behavior: 'instant' });
+  });
+});
 
 function updateBackToFiltersLabel() {
   const filterLabel = state.filter === 'all' ? 'All films' : `${state.filter[0].toLocaleUpperCase()}${state.filter.slice(1)}`;
@@ -1079,7 +1163,9 @@ function updateBackToFiltersLabel() {
     searchInput.value.trim() ? `search ${searchInput.value.trim()}` : '',
     state.sort !== 'rank' ? `sorted by ${sortSelect.options[sortSelect.selectedIndex].text}` : '',
   ].filter(Boolean).join(', ');
-  backToFiltersButton.setAttribute('aria-label', `Showing ${currentShownCount} of ${currentMatchCount} matching films. ${viewDescription}. Return to search and filters.`);
+  const label = `Showing ${currentShownCount} of ${currentMatchCount} matching films. ${viewDescription}. Return to search and filters.`;
+  backToFiltersButton.setAttribute('aria-label', label);
+  ledgerBackToFiltersButton.setAttribute('aria-label', label);
 }
 
 function makeLink(label, href, className = '') {
@@ -1232,7 +1318,9 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
       const button = document.createElement('button');
       button.className = className;
       button.type = 'button';
-      button.textContent = country;
+      const label = document.createElement('span');
+      label.textContent = country;
+      button.append(label);
       button.dataset.country = country;
       button.tabIndex = tabIndex;
       button.setAttribute('aria-label', `Filter by production country ${country}`);
@@ -1714,6 +1802,9 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
   const requestId = ++catalogueRenderRequest;
   updateProgrammeShare();
   const query = searchInput.value.trim().toLocaleLowerCase();
+  document.querySelector('#collection').classList.toggle('has-search-query', Boolean(query));
+  searchResultPreview.hidden = true;
+  searchPreviewFilm = null;
   const largeCatalogue = films.length > largeCatalogueThreshold;
   const relevanceOption = sortSelect.querySelector('option[value="relevance"]');
   if (relevanceOption) relevanceOption.disabled = !query;
@@ -1766,6 +1857,16 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
     }
   }
   currentMatchingFilms = matching;
+  searchPreviewFilm = query
+    ? matching.reduce((best, film) => !best || compareRelevance(film, best, searchInput.value, rankByFilm) < 0 ? film : best, null)
+    : null;
+  searchResultPreview.hidden = !searchPreviewFilm;
+  if (searchPreviewFilm) {
+    const title = [searchPreviewFilm.title, searchPreviewFilm.year].filter(Boolean).join(' · ');
+    searchResultPreviewFilm.textContent = title;
+    searchResultPreviewFilm.setAttribute('aria-label', `Open top search match: ${title}`);
+    searchResultPreviewCount.textContent = `${matching.length.toLocaleString()} ${matching.length === 1 ? 'match' : 'matches'}`;
+  }
   directorFilmography.update({
     director: state.directors.length === 1 ? state.directors[0] : null,
     films,
@@ -1778,7 +1879,7 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
   currentHighestScore = selection.highestScore;
   const ledgerView = state.view === 'ledger';
   const rankedPosterView = !ledgerView && state.sort === 'rank';
-  const highlighted = rankedPosterView ? matching.slice(0, 3) : [];
+  const highlighted = rankedPosterView && !query ? matching.slice(0, 3) : [];
   const shown = matching.slice(0, state.visibleLimit + highlighted.length);
   currentShownCount = shown.length;
   currentMatchCount = matching.length;
@@ -1790,6 +1891,7 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
   topBilledEyebrow.textContent = programmeHeading.eyebrow;
   topBilledTitle.textContent = programmeHeading.title;
   const firstNewFilmTarget = renderCatalogueResults(shown, highlighted, appendResults);
+  updateLedgerOverflowHint();
   statusMessage.classList.toggle('is-visible', matching.length === 0);
   const hasFacetFilters = state.genres.length > 0 || state.directors.length > 0 || state.sourceLists.length > 0 || Boolean(state.country) || Boolean(state.language) || state.decade !== '' || Boolean(state.runtime);
   const emptyContext = query && hasFacetFilters
@@ -1814,6 +1916,7 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
     statusMessageCopy.textContent = 'No films match the current view.';
   }
   const canClearFilters = hasFacetFilters || state.filter !== 'all';
+  clearSearchStateButton.hidden = !canClearFilters;
   emptyResultActions.hidden = matching.length !== 0 || (!query && !canClearFilters);
   emptyClearQuery.hidden = !query;
   emptyClearFilters.hidden = !canClearFilters;
@@ -2189,18 +2292,22 @@ genreOptionsToggle.addEventListener('click', () => {
   updateGenreOptionVisibility();
 });
 clearSearchStateButton.addEventListener('click', () => resetCatalogView({ clearQueryText: true }));
-clearGenresButton.addEventListener('click', () => {
+clearGenresButton.addEventListener('click', (event) => {
+  const shouldRestoreFocus = event.detail === 0 && document.activeElement === clearGenresButton;
   state.genres = [];
   commitCatalogueChange();
+  if (shouldRestoreFocus) genreSearchInput.focus({ preventScroll: true });
 });
 sourceListSearch.addEventListener('input', updateSourceListOptionVisibility);
 sourceListOptionsToggle.addEventListener('click', () => {
   sourceListOptionsToggle.setAttribute('aria-expanded', String(sourceListOptionsToggle.getAttribute('aria-expanded') !== 'true'));
   updateSourceListOptionVisibility();
 });
-clearSourceListsButton.addEventListener('click', () => {
+clearSourceListsButton.addEventListener('click', (event) => {
+  const shouldRestoreFocus = event.detail === 0 && document.activeElement === clearSourceListsButton;
   state.sourceLists = [];
   commitCatalogueChange();
+  if (shouldRestoreFocus) sourceListSearch.focus({ preventScroll: true });
 });
 countryIndexToggle.addEventListener('click', () => {
   setCountryIndexExpanded(countryIndexToggle.getAttribute('aria-expanded') !== 'true');
@@ -2249,6 +2356,11 @@ document.addEventListener('pointerdown', (event) => {
   if (genreFilter.open && !eventPath.includes(genreFilter)) genreFilter.open = false;
   if (sourceListFilter.open && !eventPath.includes(sourceListFilter)) sourceListFilter.open = false;
 });
+catalogFilters.addEventListener('toggle', () => {
+  if (catalogFilters.open) return;
+  genreFilter.open = false;
+  sourceListFilter.open = false;
+});
 const savedViewsGroup = document.querySelector('#saved-views');
 loadMoreButton.addEventListener('click', async (event) => {
   const keyboardActivation = event.detail === 0;
@@ -2259,16 +2371,23 @@ loadMoreButton.addEventListener('click', async (event) => {
   const focusWasNotMoved = document.activeElement === loadMoreButton || document.activeElement === document.body;
   if (keyboardActivation && loadMoreHadFocus && focusWasNotMoved && firstNewFilmTarget?.isConnected) firstNewFilmTarget.focus();
 });
-backToFiltersButton.addEventListener('click', (event) => {
+function returnToFilters(event) {
   searchInput.focus({ preventScroll: true });
-  document.querySelector('#collection-controls').scrollIntoView({
-    behavior: scrollBehaviorForActivation(event),
+  searchInput.closest('.search-box').scrollIntoView({
+    behavior: 'instant',
     block: 'start',
   });
-});
+}
+backToFiltersButton.addEventListener('click', returnToFilters);
+ledgerBackToFiltersButton.addEventListener('click', returnToFilters);
 window.addEventListener('scroll', updateBackToFiltersVisibility, { passive: true });
+window.addEventListener('resize', () => {
+  updateBackToFiltersVisibility();
+  updateLedgerOverflowHint();
+});
 document.addEventListener('click', (event) => {
   const eventPath = event.composedPath();
+  if (scoreKey.open && !eventPath.includes(scoreKey)) scoreKey.open = false;
   if (catalogueToolsDisclosure.open && !eventPath.includes(catalogueToolsDisclosure)) catalogueToolsDisclosure.open = false;
   if (catalogFilters.open && !eventPath.includes(catalogFilters)) catalogFilters.open = false;
   const presetStatusRegion = document.querySelector('#preset-status');
@@ -2276,27 +2395,56 @@ document.addEventListener('click', (event) => {
     if (!eventPath.includes(disclosure) && !eventPath.includes(presetStatusRegion)) disclosure.open = false;
   });
 });
+catalogueToolsDisclosure.addEventListener('toggle', () => {
+  if (catalogueToolsDisclosure.open) return;
+  catalogueToolsDisclosure.querySelectorAll('.catalogue-tool-group[open]').forEach((disclosure) => {
+    disclosure.open = false;
+  });
+});
 document.addEventListener('keydown', (event) => {
   if (filmDetailDialog.open || posterViewerDialog.open) return;
-  if (event.key === 'Escape' && genreFilter.open) {
+  if (event.key === 'Escape' && document.activeElement === searchInput) {
+    window.clearTimeout(searchUrlTimer);
+    if (!state.searchEditing && !searchInput.value.trim()) {
+      searchInput.blur();
+      return;
+    }
+    clearQuery();
+    searchInput.blur();
+    return;
+  }
+  if (event.key === 'Escape' && scoreKey.open) {
+    event.preventDefault();
+    const restoreFocus = scoreKey.contains(document.activeElement);
+    scoreKey.open = false;
+    if (restoreFocus) scoreKeySummary.focus();
+    return;
+  }
+  if (event.key === 'Escape' && genreFilter.open && genreFilter.getClientRects().length > 0) {
     event.preventDefault();
     genreFilter.open = false;
     genreFilterTrigger.focus();
     return;
   }
-  if (event.key === 'Escape' && sourceListFilter.open) {
+  if (event.key === 'Escape' && sourceListFilter.open && sourceListFilter.getClientRects().length > 0) {
     event.preventDefault();
     sourceListFilter.open = false;
     sourceListFilter.querySelector('summary').focus();
     return;
   }
-  if (event.key === 'Escape' && programmeShareDetails.open) {
+  if (
+    event.key === 'Escape'
+    && programmeShareDetails.open
+    && programmeShareDetails.contains(document.activeElement)
+    && programmeShareDetails.getClientRects().length > 0
+  ) {
     event.preventDefault();
     programmeShareDetails.open = false;
     programmeShareDetails.querySelector('summary').focus();
     return;
   }
-  const openCatalogueToolGroup = document.querySelector('.catalogue-tool-group[open]');
+  const openCatalogueToolGroup = [...document.querySelectorAll('.catalogue-tool-group[open]')]
+    .find((disclosure) => disclosure.getClientRects().length > 0);
   if (event.key === 'Escape' && openCatalogueToolGroup) {
     event.preventDefault();
     openCatalogueToolGroup.open = false;
@@ -2318,15 +2466,6 @@ document.addEventListener('keydown', (event) => {
   if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
     event.preventDefault();
     searchInput.focus();
-  }
-  if (event.key === 'Escape' && document.activeElement === searchInput) {
-    window.clearTimeout(searchUrlTimer);
-    if (!state.searchEditing && !searchInput.value.trim()) {
-      searchInput.blur();
-      return;
-    }
-    clearQuery();
-    searchInput.blur();
   }
   if (event.key === 'Enter' && document.activeElement === searchInput) {
     commitSearchEdit();

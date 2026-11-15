@@ -29,10 +29,13 @@ function appendProgressiveGenreTags(container, genres, genreChipFor, { initialCo
   container.classList.toggle('is-expanded', initiallyExpanded);
   more.setAttribute('aria-expanded', String(initiallyExpanded));
   updateLabel();
-  more.addEventListener('click', () => {
+  more.addEventListener('click', (event) => {
+    let shouldMoveFocus = false;
+    let extra = [];
     if (visibleCount < genres.length) {
+      shouldMoveFocus = event.detail === 0 || document.documentElement.dataset.inputModality === 'keyboard';
       const end = Math.min(genres.length, visibleCount + filmMetadataBatchSize);
-      const extra = genres.slice(visibleCount, end).map((genre) => {
+      extra = genres.slice(visibleCount, end).map((genre) => {
         const tag = genreChipFor(genre);
         tag.classList.add('genre-extra-tag');
         return tag;
@@ -47,6 +50,7 @@ function appendProgressiveGenreTags(container, genres, genreChipFor, { initialCo
     container.classList.toggle('is-expanded', expanded);
     more.setAttribute('aria-expanded', String(expanded));
     updateLabel();
+    if (expanded && shouldMoveFocus) extra[0]?.focus();
   });
   container.append(more);
 }
@@ -107,7 +111,7 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
     await candidate.decode();
   } catch {
     if (request === posterPreviewRequest && posterViewerDialog.open) {
-      posterViewerFeedback.textContent = 'Could not load this poster. Your current poster choice is unchanged. Try again or choose another poster.';
+      posterViewerFeedback.textContent = 'Could not load this poster. Your current poster choice is unchanged. You can retry.';
       retryPosterPreview = () => previewPoster(film, url, { save, caption, canonicalUrl, zoomed, selectedButton, onReady });
       posterViewerRetry.hidden = false;
       posterViewerRetry.textContent = 'Retry poster';
@@ -125,12 +129,15 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
   posterViewerImage.hidden = false;
   posterViewerImage.classList.toggle('is-zoomed', zoomed);
   stage.classList.toggle('is-fit', !zoomed);
-  posterViewerRetry.hidden = true;
-  posterViewerRetry.textContent = 'Retry poster';
-  posterViewerRetry.removeAttribute('aria-disabled');
   posterViewerCaption.dataset.posterUrl = canonicalUrl;
   posterViewerCaption.textContent = caption || [film.title, film.year].filter(Boolean).join(' · ');
   posterViewerZoom.disabled = false;
+  if (retryHadFocus && document.activeElement === posterViewerRetry) {
+    posterViewerZoom.focus({ preventScroll: true });
+  }
+  posterViewerRetry.hidden = true;
+  posterViewerRetry.textContent = 'Retry poster';
+  posterViewerRetry.removeAttribute('aria-disabled');
   posterViewerZoom.setAttribute('aria-pressed', String(zoomed));
   posterViewerZoom.textContent = zoomed ? 'Fit to screen' : 'View at actual size';
   posterViewerFeedback.textContent = '';
@@ -144,7 +151,6 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
     option.setAttribute('aria-pressed', String(option === selectedButton));
   });
   onReady?.();
-  if (retryHadFocus && document.activeElement === posterViewerRetry) posterViewerZoom.focus({ preventScroll: true });
   return true;
 }
 
@@ -160,6 +166,7 @@ function openPosterViewer(film, showGallery = false) {
   posterViewerRetry.removeAttribute('aria-disabled');
   posterViewerFeedback.textContent = '';
   posterViewerTitle.textContent = `${film.title} poster`;
+  posterViewerDialog.classList.toggle('has-gallery', showGallery);
   posterViewerCaption.textContent = [film.title, film.year].filter(Boolean).join(' · ');
   posterViewerCaption.dataset.posterUrl = '';
   posterViewerImage.hidden = true;
@@ -175,6 +182,8 @@ function openPosterViewer(film, showGallery = false) {
   posterViewerStatus.textContent = showGallery ? 'Loading alternate posters…' : '';
   lockModalScroll(posterViewerDialog);
   posterViewerDialog.showModal();
+  const posterViewerContent = posterViewerDialog.querySelector('.poster-viewer-content');
+  if (posterViewerContent) posterViewerContent.scrollTop = 0;
   if (posterUrl) void previewPoster(film, posterUrl);
   if (showGallery) void loadPosterGallery(film, posterUrl, request);
 }
@@ -220,7 +229,7 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
     return;
   }
 
-  posterViewerStatus.textContent = `${posters.length} poster ${posters.length === 1 ? 'option' : 'options'}. Choose one to preview.`;
+  posterViewerStatus.textContent = `${posters.length} poster ${posters.length === 1 ? 'option' : 'options'}. Choose one to use on this device.`;
   posters.forEach((poster, index) => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -292,6 +301,7 @@ function dismissPosterViewer() {
 posterViewerDialog.addEventListener('close', () => {
   unlockModalScroll(posterViewerDialog);
   if (posterViewerDialog.open) return;
+  posterViewerDialog.classList.remove('has-gallery');
   posterPreviewRequest += 1;
   posterGalleryRequest += 1;
   activePosterFilm = null;
@@ -448,7 +458,12 @@ function refreshFilmNavigation() {
   const next = detailNavigationFor(film);
   if (previous && next) previous.replaceWith(next);
   else if (previous) previous.remove();
-  else if (next) filmDetailContent.querySelector('.film-detail-copy')?.prepend(next);
+  else if (next) {
+    const copy = filmDetailContent.querySelector('.film-detail-copy');
+    const headingEnd = copy?.querySelector('.film-detail-year') || copy?.querySelector('#film-detail-title');
+    if (headingEnd) headingEnd.after(next);
+    else copy?.append(next);
+  }
   detailFilm = film;
   detailNavigationFilms = matching;
   if (focused) {
@@ -525,10 +540,32 @@ function renderFilmDetails(film, retainFocus = false) {
   kicker.className = 'film-detail-kicker';
   kicker.textContent = `Catalogue no. ${String(rank).padStart(3, '0')} · ${film.watched ? 'Watched' : 'Unwatched'}`;
   const navigation = detailNavigationFor(film);
-  if (navigation) copy.append(navigation);
   const title = document.createElement('h2');
   title.id = 'film-detail-title';
   title.textContent = film.title;
+  const titleToggle = document.createElement('button');
+  titleToggle.type = 'button';
+  titleToggle.className = 'film-detail-title-toggle';
+  titleToggle.textContent = 'Show full title';
+  const fullTitle = document.createElement('div');
+  fullTitle.id = 'film-detail-title-full';
+  fullTitle.className = 'film-detail-full-title';
+  fullTitle.setAttribute('role', 'region');
+  fullTitle.setAttribute('aria-label', 'Full film title');
+  fullTitle.tabIndex = 0;
+  fullTitle.textContent = film.title;
+  fullTitle.hidden = true;
+  titleToggle.setAttribute('aria-controls', fullTitle.id);
+  titleToggle.setAttribute('aria-expanded', 'false');
+  const hasLongTitle = film.title.length > 180;
+  if (hasLongTitle) title.classList.add('is-clamped');
+  titleToggle.hidden = !hasLongTitle;
+  titleToggle.addEventListener('click', () => {
+    const expanded = fullTitle.hidden;
+    fullTitle.hidden = !expanded;
+    titleToggle.textContent = expanded ? 'Hide full title' : 'Show full title';
+    titleToggle.setAttribute('aria-expanded', String(expanded));
+  });
   const year = document.createElement('span');
   year.className = 'film-detail-year';
   year.textContent = film.year || 'Year unknown';
@@ -545,7 +582,11 @@ function renderFilmDetails(film, retainFocus = false) {
   scoreValue.textContent = (Number(film.liked_in) || 0).toLocaleString();
   score.classList.toggle('has-long-count', scoreValue.textContent.length > 12);
   score.append(scoreValue, ` ${Number(film.liked_in) === 1 ? 'list appearance' : 'list appearances'}`);
+  const supporting = document.createElement('div');
+  supporting.className = 'film-detail-supporting';
   copy.append(kicker, title, year);
+  if (navigation) copy.append(navigation);
+  if (hasLongTitle) copy.append(titleToggle, fullTitle);
   const originalFacts = originalFilmFactsFor(film);
   if (originalFacts) {
     const originalTitle = originalFacts.querySelector('dd[lang]');
@@ -600,7 +641,7 @@ function renderFilmDetails(film, retainFocus = false) {
     copy.append(genreList);
   }
   const notes = filmProgrammeNotesFor(film, { includeOriginalFacts: false });
-  if (notes) copy.append(notes);
+  if (notes) supporting.append(notes);
   const links = document.createElement('div');
   links.className = 'film-detail-links';
   const tmdbUrl = safeUrl(film.tmdb_url, ['themoviedb.org']);
@@ -620,8 +661,8 @@ function renderFilmDetails(film, retainFocus = false) {
     catch { shareInput.focus(); shareInput.select(); copyStatus.textContent = 'Select and copy the film link above.'; }
   });
   links.append(shareInput, copyLink, copyStatus);
-  copy.append(links);
-  layout.append(posterColumn, copy);
+  supporting.append(links);
+  layout.append(copy, posterColumn, supporting);
   filmDetailContent.append(layout);
   const accentRequest = ++posterAccentRequest;
   filmDetailDialog.style.removeProperty('--poster-accent');

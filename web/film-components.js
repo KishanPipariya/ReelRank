@@ -56,10 +56,13 @@ function genreTagsFor(film, state, genreChipFor, initialVisibleCount = 2) {
   genreTags.classList.toggle('is-expanded', initiallyExpanded);
   more.setAttribute('aria-expanded', String(initiallyExpanded));
   updateMoreLabel();
-  more.addEventListener('click', () => {
+  more.addEventListener('click', (event) => {
+    let shouldMoveFocus = false;
+    let extraTags = [];
     if (visibleCount < orderedGenres.length) {
+      shouldMoveFocus = event.detail === 0 || document.documentElement.dataset.inputModality === 'keyboard';
       const end = Math.min(orderedGenres.length, visibleCount + filmMetadataBatchSize);
-      const extraTags = orderedGenres.slice(visibleCount, end).map((genre) => {
+      extraTags = orderedGenres.slice(visibleCount, end).map((genre) => {
         const tag = genreChipFor(genre);
         tag.classList.add('genre-extra-tag');
         return tag;
@@ -74,6 +77,7 @@ function genreTagsFor(film, state, genreChipFor, initialVisibleCount = 2) {
     genreTags.classList.toggle('is-expanded', expanded);
     more.setAttribute('aria-expanded', String(expanded));
     updateMoreLabel();
+    if (expanded && shouldMoveFocus) extraTags[0]?.focus();
   });
   genreTags.append(more);
   return genreTags;

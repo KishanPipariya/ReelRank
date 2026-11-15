@@ -68,7 +68,7 @@ export function createFilterControls({ state, sources, elements, actions }) {
   }
 
   function renderActiveViewFilters() {
-    const hasActiveView = Boolean(elements.searchInput.value.trim()) || state.filter !== 'all' || state.sort !== 'rank'
+    const hasActiveView = state.filter !== 'all'
       || state.genres.length || state.directors.length || state.sourceLists.length || state.country || state.language || state.decade !== '' || state.runtime;
     elements.activeViewTools.hidden = !hasActiveView;
     elements.activeGenreFilters.replaceChildren();
