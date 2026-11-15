@@ -2145,12 +2145,14 @@ async function loadSnapshot() {
     setupTitle.textContent = `Preparing @${configuredUsername}'s ReelRank`;
     setupCopy.textContent = 'Loading the configured profile and its catalogue edition…';
     let rawSnapshotData = null;
+    let rawSnapshotValidated = false;
     if (isLocalDevHost()) {
       try {
         const localResponse = await fetch('/data/local/snapshot.json', { cache: 'default' });
         if (localResponse.ok) {
           const localData = await localResponse.json();
           validateSnapshot(localData);
+          rawSnapshotValidated = true;
           rawSnapshotData = localData;
         }
       } catch (error) {
@@ -2172,7 +2174,14 @@ async function loadSnapshot() {
     devFixtureRankedFilmCount = devMode === '100000' ? Math.min(rankingFilms?.length || 0, 100000) : 0;
     const snapshotData = snapshotForDevMode(rawSnapshotData, devMode, rankingFilms);
     snapshotFailureKind = 'schema';
-    const snapshot = validateSnapshot(snapshotData);
+    let snapshot;
+    if (devMode === '100000') {
+      // Validate the real input once. The 100,000 generated fixture rows are app-created test data.
+      if (!rawSnapshotValidated) validateSnapshot(rawSnapshotData);
+      snapshot = snapshotData;
+    } else {
+      snapshot = validateSnapshot(snapshotData);
+    }
     snapshotFailureKind = 'initialization';
     if (!showDemoState(configuredUsername, snapshot.username.trim())) return;
     initializeSnapshot(snapshot);
@@ -2351,11 +2360,6 @@ closeSourceListsButton.addEventListener('click', () => {
   sourceListFilter.querySelector('summary').focus();
 });
 const catalogueToolsDisclosure = document.querySelector('#catalogue-tools');
-document.addEventListener('pointerdown', (event) => {
-  const eventPath = event.composedPath();
-  if (genreFilter.open && !eventPath.includes(genreFilter)) genreFilter.open = false;
-  if (sourceListFilter.open && !eventPath.includes(sourceListFilter)) sourceListFilter.open = false;
-});
 catalogFilters.addEventListener('toggle', () => {
   if (catalogFilters.open) return;
   genreFilter.open = false;
@@ -2387,6 +2391,8 @@ window.addEventListener('resize', () => {
 });
 document.addEventListener('click', (event) => {
   const eventPath = event.composedPath();
+  if (genreFilter.open && !eventPath.includes(genreFilter)) genreFilter.open = false;
+  if (sourceListFilter.open && !eventPath.includes(sourceListFilter)) sourceListFilter.open = false;
   if (scoreKey.open && !eventPath.includes(scoreKey)) scoreKey.open = false;
   if (catalogueToolsDisclosure.open && !eventPath.includes(catalogueToolsDisclosure)) catalogueToolsDisclosure.open = false;
   if (catalogFilters.open && !eventPath.includes(catalogFilters)) catalogFilters.open = false;
@@ -2441,6 +2447,13 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     programmeShareDetails.open = false;
     programmeShareDetails.querySelector('summary').focus();
+    return;
+  }
+  const focusedOpenDisclosure = document.activeElement.closest('details[open]');
+  if (event.key === 'Escape' && focusedOpenDisclosure && catalogFilters.contains(focusedOpenDisclosure)) {
+    event.preventDefault();
+    focusedOpenDisclosure.open = false;
+    focusedOpenDisclosure.querySelector(':scope > summary')?.focus();
     return;
   }
   const openCatalogueToolGroup = [...document.querySelectorAll('.catalogue-tool-group[open]')]

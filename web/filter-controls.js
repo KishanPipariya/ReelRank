@@ -88,7 +88,14 @@ export function createFilterControls({ state, sources, elements, actions }) {
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'active-genre-chip active-source-list-chip';
-      chip.textContent = `List: ${label} ×`;
+      const labelNode = document.createElement('span');
+      labelNode.className = 'active-source-list-label';
+      labelNode.textContent = `List: ${label}`;
+      const removeMark = document.createElement('span');
+      removeMark.className = 'active-source-list-remove';
+      removeMark.setAttribute('aria-hidden', 'true');
+      removeMark.textContent = '×';
+      chip.append(labelNode, removeMark);
       chip.setAttribute('aria-label', `Remove ${label} source list filter`);
       bindChipRemoval(chip, elements.activeSourceListFilters, () => actions.toggleSourceList(url), activeChipFallback);
       elements.activeSourceListFilters.append(chip);
