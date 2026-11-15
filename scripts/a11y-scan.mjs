@@ -128,7 +128,9 @@ async function checkFeaturedVisualLayout(page, label) {
     const filmGrid = document.querySelector('#film-grid');
     return {
       posterRight: poster.right,
+      posterBottom: poster.bottom,
       copyLeft: copy.left,
+      copyTop: copy.top,
       copyWidth: copy.width,
       posterAspectRatio: poster.width / poster.height,
       featuredColumns: getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/).length,
@@ -139,7 +141,11 @@ async function checkFeaturedVisualLayout(page, label) {
   });
   const profile = label === 'mobile' ? 'mobile' : 'desktop';
   const baseline = visualLayout[profile];
-  check(geometry.copyLeft >= geometry.posterRight - 2, `${label} featured poster and copy columns do not overlap.`);
+  if (baseline.featuredColumns === 1) {
+    check(geometry.copyTop >= geometry.posterBottom - 2, `${label} stacked featured poster and copy do not overlap.`);
+  } else {
+    check(geometry.copyLeft >= geometry.posterRight - 2, `${label} featured poster and copy columns do not overlap.`);
+  }
   check(geometry.copyWidth >= 110, `${label} featured copy remains readable (${geometry.copyWidth}px).`);
   check(geometry.pageWidth <= geometry.viewportWidth, `${label} has no horizontal page overflow.`);
   check(geometry.gridColumns === baseline.gridColumns, `${label} poster grid has ${geometry.gridColumns} columns; expected ${baseline.gridColumns}.`);

@@ -7,7 +7,7 @@
   },
   "mobile": {
     "gridColumns": 2,
-    "featuredColumns": 2,
+    "featuredColumns": 1,
     "posterAspectRatio": 0.6667,
     "posterRatioTolerance": 0.02
   }
