@@ -161,8 +161,10 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
     displayed_film_count: films.length,
     unwatched_count: unwatchedCount,
     displayed_unwatched_count: unwatchedCount,
-    tmdb_match_count: 0,
-    list_count: mode === 'one' || mode === 'empty' ? (mode === 'one' ? 1 : 0) : mode === 'worst' ? Number.MAX_SAFE_INTEGER : 1284,
+    ...(mode === '100000' ? {} : {
+      tmdb_match_count: 0,
+      list_count: mode === 'one' || mode === 'empty' ? (mode === 'one' ? 1 : 0) : mode === 'worst' ? Number.MAX_SAFE_INTEGER : 1284,
+    }),
     films,
     source_lists: fixtureSourceLists,
   };

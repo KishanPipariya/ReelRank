@@ -431,7 +431,7 @@ h1 { margin: 0; font-size: clamp(48px, 7vw, 78px); line-height: .99; letter-spac
 .collection-display-actions { width: 100%; display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
 .collection-view-tools { width: 100%; display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2) var(--space-3); }
 .matching-films-count { color: var(--ink); font-family: var(--serif); font-size: var(--type-utility); white-space: nowrap; }
-.sort-control.toolbar-sort-control { width: 270px; display: flex; align-items: center; gap: var(--space-2); color: var(--muted); font-family: var(--mono); font-size: var(--type-caption); }
+.sort-control.toolbar-sort-control { width: 320px; display: flex; align-items: center; gap: var(--space-2); color: var(--muted); font-family: var(--mono); font-size: var(--type-caption); }
 .toolbar-sort-control select { width: 0; min-width: 0; min-height: 44px; flex: 1 1 0; }
 .score-count-explainer { color: var(--muted); font-size: var(--type-caption); line-height: 1.4; }
 .score-key { position: static; }
@@ -583,9 +583,10 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(34px, 5vw, 47px); fo
 .filter-button.is-active { background: var(--filter-active); color: var(--filter-active-ink); }
 .filter-button.is-active span { color: var(--filter-active-count); }
 @media (max-width: 760px) {
-  .filter-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .filter-button:first-child { grid-column: 1 / -1; }
-  .filter-button { overflow-wrap: normal; }
+  .filter-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .filter-button:first-child { grid-column: auto; }
+  .filter-button { min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; overflow-wrap: normal; }
+  .filter-button span { margin-left: 0; }
 }
 .catalog-filters { min-width: 0; }
 .catalog-filters[open] { z-index: 8; }
@@ -903,7 +904,7 @@ html[data-input-modality='keyboard'] button.country-more-button:not(:disabled):a
 .film-detail-poster-fallback { gap: var(--space-2); padding: var(--space-3); font-size: var(--type-body); }
 .film-detail-poster img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .poster-viewer-dialog:not([open]) { display: none; }
-.poster-viewer-dialog { width: min(860px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); max-width: none; max-height: min(96vh, 980px); position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); align-items: start; overflow: hidden; padding: var(--space-2) var(--space-4) var(--space-4); border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.poster-viewer-dialog { width: min(860px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); max-width: none; max-height: min(96dvh, 1160px); position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); align-items: start; overflow: hidden; padding: var(--space-2) var(--space-4) var(--space-4); border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
 .poster-viewer-dialog::backdrop { background: var(--color-111611d9); }
 .film-detail-dialog, .poster-viewer-dialog {
   opacity: 0;
@@ -935,6 +936,7 @@ html[data-input-modality='keyboard'] .saved-view-portability > summary::after,
 html[data-input-modality='keyboard'] .catalog-filters-toggle::after,
 html[data-input-modality='keyboard'] .more-filters > summary::after,
 html[data-input-modality='keyboard'] .genre-filter-toggle::after,
+html[data-input-modality='keyboard'] .film-detail-share-indicator,
 html[data-input-modality='keyboard'] .country-more-button,
 html[data-input-modality='keyboard'] .decade-option { transition-duration: 0ms; }
 html[data-input-modality='keyboard'] .film-detail-step { transition-duration: 0ms; }
@@ -1017,6 +1019,12 @@ html[data-input-modality='keyboard'] a:active { transform: none; outline: 1px so
 .film-note-sources:focus { outline: 3px solid var(--orange); outline-offset: 5px; }
 .film-detail-supporting .film-note-sources .list-links a { color: var(--muted); font-size: var(--type-caption); }
 .film-detail-links { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.film-detail-share { min-width: 0; flex: 1 1 100%; }
+.film-detail-share summary { width: fit-content; min-height: 44px; display: flex; align-items: center; color: var(--forest); font-family: var(--mono); font-size: var(--type-caption); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.film-detail-share-indicator { display: inline-block; transform: rotate(-90deg); transition: transform 150ms ease-out; }
+.film-detail-share[open] > summary .film-detail-share-indicator { transform: rotate(0); }
+.film-detail-share summary:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+.film-detail-share .film-detail-share-url { margin: var(--space-2) var(--space-2) 0 0; }
 .film-detail-external-link { color: var(--forest); font-family: var(--mono); font-size: var(--type-caption); text-underline-offset: 3px; }
 .original-film-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-1) var(--space-2); margin: var(--space-1) 0 0; color: var(--muted); font-size: var(--type-caption); line-height: 1.45; }
 .original-film-facts dt { font-family: var(--mono); }
@@ -1096,7 +1104,7 @@ html[data-input-modality='keyboard'] a:active { transform: none; outline: 1px so
   .film-detail-step { transition: background-color .16s ease, border-color .16s ease, color .16s ease; }
   .catalogue-tool-group > summary::after, .saved-view-portability > summary::after,
   .catalog-filters-toggle::after, .more-filters > summary::after,
-  .genre-filter-toggle::after { transition: none; }
+  .genre-filter-toggle::after, .film-detail-share-indicator { transition: none; }
   button:not(:disabled):active, summary:active, a:active { transform: none; outline: 1px solid currentColor; outline-offset: 1px; }
   html[data-input-modality='pointer'] button.country-more-button:not(:disabled):active { transform: none; }
 }
@@ -1228,7 +1236,7 @@ html[data-input-modality='pointer'] .search-box kbd { display: none; }
   .score-key-copy { right: 0; left: auto; }
   .collection-view-tools { align-items: stretch; }
   .matching-films-count { width: 100%; }
-  .sort-control.toolbar-sort-control { width: min(100%, 230px); }
+  .sort-control.toolbar-sort-control { width: 100%; }
   .genre-filter { width: 100%; }
   .genre-filter-menu { width: 100%; min-width: 0; max-width: 100%; }
   .genre-filter-toggle { justify-content: space-between; }
@@ -1304,8 +1312,8 @@ html[data-input-modality='pointer'] .search-box kbd { display: none; }
   .watched-chip { top: auto; bottom: var(--space-2); }
   .film-grid, .top-billed-grid { grid-template-columns: minmax(0, 1fr); }
   .top-billed-grid .film-card { width: 100%; justify-self: stretch; }
-  .filter-tabs { height: auto; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 2px; }
-  .filter-button { height: auto; min-height: var(--control-min-height); white-space: normal; line-height: 1.2; overflow-wrap: anywhere; }
+  .filter-tabs { height: auto; gap: 2px; padding: 2px; }
+  .filter-button { height: auto; white-space: normal; line-height: 1.2; overflow-wrap: anywhere; }
   .collection-view-control { width: 100%; height: auto; min-height: var(--control-min-height); flex-wrap: wrap; }
   .collection-view-button { height: auto; min-height: var(--control-min-height); min-width: 0; flex: 1 1 8rem; padding: var(--space-1); white-space: normal; overflow-wrap: anywhere; line-height: 1.2; }
 }
@@ -1746,7 +1754,7 @@ button.film-detail-external-link { min-height: 44px; display: inline-flex; align
 
 @supports (height: 100dvh) {
   .film-detail-dialog { max-height: min(90dvh, 780px); }
-  .poster-viewer-dialog { max-height: min(96dvh, 980px); }
+  .poster-viewer-dialog { max-height: min(96dvh, 1160px); }
   .poster-viewer-stage, .poster-viewer-image { max-height: 82dvh; }
   .poster-viewer-stage.is-fit { width: min(100%, 500px, calc(82dvh * 2 / 3)); }
 }

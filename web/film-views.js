@@ -197,6 +197,7 @@ function openPosterViewer(film, showGallery = false) {
   posterViewerZoom.setAttribute('aria-pressed', 'false');
   posterViewerZoom.textContent = 'View at actual size';
   posterViewerGallery.replaceChildren();
+  posterViewerGallery.scrollLeft = 0;
   posterViewerGallery.hidden = true;
   posterViewerStatus.textContent = showGallery ? 'Loading alternate posters…' : '';
   lockModalScroll(posterViewerDialog);
@@ -301,6 +302,7 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
     posterViewerGallery.append(button);
   });
   posterViewerGallery.hidden = false;
+  posterViewerGallery.scrollLeft = 0;
 }
 
 posterViewerZoom.addEventListener('click', () => {
@@ -685,6 +687,16 @@ function renderFilmDetails(film, retainFocus = false) {
   const letterboxdUrl = safeUrl(film.letterboxd_url, ['letterboxd.com']);
   if (letterboxdUrl) links.append(makeLink('Open on Letterboxd ↗', letterboxdUrl, 'film-detail-external-link'));
   const shareUrl = getFilmShareUrl(film);
+  const shareDetails = document.createElement('details');
+  shareDetails.className = 'film-detail-share';
+  const shareSummary = document.createElement('summary');
+  const shareLabel = document.createElement('span');
+  shareLabel.textContent = 'Share film link';
+  const shareIndicator = document.createElement('span');
+  shareIndicator.className = 'film-detail-share-indicator';
+  shareIndicator.setAttribute('aria-hidden', 'true');
+  shareIndicator.textContent = '⌄';
+  shareSummary.append(shareLabel, shareIndicator);
   const shareInput = document.createElement('input');
   shareInput.className = 'film-detail-share-url';
   shareInput.type = 'url'; shareInput.readOnly = true; shareInput.value = shareUrl;
@@ -694,10 +706,16 @@ function renderFilmDetails(film, retainFocus = false) {
   const copyStatus = document.createElement('span'); copyStatus.className = 'film-detail-action-status'; copyStatus.setAttribute('role', 'status'); copyStatus.setAttribute('aria-live', 'polite');
   copyLink.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(shareInput.value); copyStatus.textContent = 'Film link copied.'; }
-    catch { shareInput.focus(); shareInput.select(); copyStatus.textContent = 'Select and copy the film link above.'; }
+    catch {
+      shareDetails.open = true;
+      shareInput.focus();
+      shareInput.select();
+      copyStatus.textContent = 'Select and copy the film link above.';
+    }
   });
-  links.append(shareInput, copyLink, copyStatus);
-  copy.insertBefore(links, year);
+  shareDetails.append(shareSummary, shareInput, copyLink, copyStatus);
+  links.append(shareDetails);
+  copy.append(links);
   layout.append(copy, posterColumn, supporting);
   filmDetailContent.append(layout);
   const accentRequest = ++posterAccentRequest;
@@ -815,6 +833,7 @@ function ledgerRowFor(film) {
         more.textContent = expanded ? '−' : `+${hiddenDirectors.length}`;
         more.setAttribute('aria-expanded', String(expanded));
         more.setAttribute('aria-label', expanded ? `Show fewer directors for ${film.title}` : `Show ${hiddenDirectors.length} more ${hiddenDirectors.length === 1 ? 'director' : 'directors'} for ${film.title}`);
+        if (expanded) directorCell.querySelector('.director-filter[data-extra="true"]')?.focus();
       });
       directorCell.append(more);
     }

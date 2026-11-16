@@ -1250,10 +1250,13 @@ function directorCreditFor(directors, className, beforeFilter) {
     updateMoreLabel();
     more.setAttribute('aria-expanded', 'false');
     more.addEventListener('click', () => {
+      let firstAddedDirector = null;
       if (visibleCount < directors.length) {
         const end = Math.min(directors.length, visibleCount + filmMetadataBatchSize);
         for (let index = visibleCount; index < end; index += 1) {
-          appendDirector(directors[index], index).dataset.extra = 'true';
+          const button = appendDirector(directors[index], index);
+          button.dataset.extra = 'true';
+          firstAddedDirector ||= button;
         }
         visibleCount = end;
       } else {
@@ -1267,6 +1270,7 @@ function directorCreditFor(directors, className, beforeFilter) {
       credit.classList.toggle('is-expanded', expanded);
       more.setAttribute('aria-expanded', String(expanded));
       updateMoreLabel();
+      if (expanded) firstAddedDirector?.focus();
     });
     credit.append(more);
   }
@@ -1443,6 +1447,7 @@ function sourceListNotesFor(film, visibleCount = 4) {
       hiddenEntries.forEach((entry) => { entry.hidden = !expanded; });
       toggle.setAttribute('aria-expanded', String(expanded));
       toggle.textContent = expanded ? 'Show fewer lists' : `Show all ${sourceListUrls.length.toLocaleString()} lists`;
+      if (expanded) hiddenEntries[0]?.querySelector('a')?.focus();
     });
     section.append(toggle);
   }
@@ -1620,7 +1625,7 @@ function filmAppearanceCountFor(film, className = 'film-count') {
   if (count instanceof HTMLButtonElement) {
     count.type = 'button';
     count.dataset.filmOpener = filmIdentifier(film);
-    count.setAttribute('aria-label', `View the ${likedListCount.toLocaleString()} source lists that include ${film.title}`);
+    count.setAttribute('aria-label', `View ${sourceLists.length.toLocaleString()} linked source lists for ${film.title}; appears in ${likedListCount.toLocaleString()} liked lists`);
     count.addEventListener('click', () => openFilmDetailsFromUi(film, { focusProvenance: true }));
   } else {
     count.setAttribute('aria-label', `Appears in ${likedListCount.toLocaleString()} source lists`);
@@ -2025,7 +2030,7 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   } else {
     rankingDownload.href = '#';
     rankingDownload.removeAttribute('download');
-    rankingDownload.textContent = `Download displayed ${films.length.toLocaleString()} ${films.length === 1 ? 'film' : 'films'} (CSV)`;
+    rankingDownload.textContent = `Download all ${films.length.toLocaleString()} loaded ${films.length === 1 ? 'film' : 'films'} (CSV)`;
   }
   posterGalleryUrl = snapshot.poster_gallery_url;
   const colophon = editionColophonFor(films);

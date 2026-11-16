@@ -357,15 +357,16 @@
                   <span id="matching-films-count" class="matching-films-count"></span>
                   <label class="sort-control toolbar-sort-control" for="sort-select">
                     <span>Sort</span>
-                    <select id="sort-select" aria-label="Sort films">
+                    <select id="sort-select" aria-label="Sort films" aria-describedby="sort-help">
                       <option value="rank">Rank</option>
-                      <option value="relevance" disabled>Relevance (search results)</option>
-                      <option value="title">Title A to Z (ignores “The”)</option>
+                      <option value="relevance" disabled>Relevance</option>
+                      <option value="title">Title A to Z</option>
                       <optgroup label="Release year">
                         <option value="year-newest">Newest first</option>
                         <option value="year-oldest">Oldest first</option>
                       </optgroup>
                     </select>
+                    <span id="sort-help" class="sr-only">Relevance sorts search results by match. Title A to Z ignores a leading “The”.</span>
                   </label>
                   <div class="collection-view-control" role="group" aria-label="Choose film layout">
                     <button id="poster-display-button" class="collection-view-button is-active" type="button" aria-pressed="true">Poster wall</button>

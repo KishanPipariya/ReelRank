@@ -142,8 +142,10 @@ export function createFilmNavigation({ browserWindow, getState, getFilms, getDia
     triggerFilm = null;
     triggerKind = '';
     function focusOpener() {
-      const target = trigger?.isConnected && trigger.getClientRects().length ? trigger : (film && findTrigger(film, kind)) || collectionTitle();
+      const opener = trigger?.isConnected && trigger.getClientRects().length ? trigger : (film && findTrigger(film, kind));
+      const target = opener || collectionTitle();
       target.focus({ preventScroll: true });
+      if (!opener) target.scrollIntoView({ behavior: 'auto', block: 'start' });
     }
     if (historyClosed) {
       const closedUrl = browserWindow.location.href;
