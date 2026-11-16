@@ -82,6 +82,21 @@ let activePosterFilm = null;
 let posterViewerOpener = null;
 let retryPosterPreview = null;
 const featuredFilmByFilm = new WeakMap();
+const failedPosterUrlsByFilm = new WeakMap();
+
+function posterUrlFailed(film, url) {
+  return Boolean(url && failedPosterUrlsByFilm.get(film)?.has(url));
+}
+
+function rememberFailedPosterUrl(film, url) {
+  if (!url) return;
+  let failedUrls = failedPosterUrlsByFilm.get(film);
+  if (!failedUrls) {
+    failedUrls = new Set();
+    failedPosterUrlsByFilm.set(film, failedUrls);
+  }
+  failedUrls.add(url);
+}
 
 function updatePosterGallerySelection(selectedButton) {
   posterViewerGallery.querySelectorAll('.poster-viewer-option').forEach((option) => {
@@ -173,8 +188,8 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
   return true;
 }
 
-function openPosterViewer(film, showGallery = false) {
-  const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
+function openPosterViewer(film, showGallery = false, retryUrl = '') {
+  const posterUrl = safeUrl(retryUrl || film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
   const request = ++posterGalleryRequest;
   posterPreviewRequest += 1;
   activePosterFilm = film;
@@ -204,16 +219,26 @@ function openPosterViewer(film, showGallery = false) {
   posterViewerDialog.showModal();
   const posterViewerContent = posterViewerDialog.querySelector('.poster-viewer-content');
   if (posterViewerContent) posterViewerContent.scrollTop = 0;
-  if (posterUrl) void previewPoster(film, posterUrl);
+  if (posterUrl && !posterUrlFailed(film, posterUrl)) {
+    void previewPoster(film, posterUrl, {
+      onReady: retryUrl ? () => {
+        if (detailFilm !== film) return;
+        failedPosterUrlsByFilm.get(film)?.delete(posterUrl);
+        filmDetailContent.querySelector('.film-detail-poster')?.replaceWith(detailPosterFor(film, posterUrl));
+        void updateFailedPosterGalleryAction(film, posterUrl);
+      } : null,
+    }).then((loaded) => {
+      if (!retryUrl || loaded || !posterViewerDialog.open || activePosterFilm !== film) return;
+      rememberFailedPosterUrl(film, posterUrl);
+      void updateFailedPosterGalleryAction(film, posterUrl);
+    });
+  }
   if (showGallery) void loadPosterGallery(film, posterUrl, request);
 }
 
-async function loadPosterGallery(film, currentPosterUrl, request) {
+async function loadPosterGalleryData() {
   const galleryUrl = getPosterGalleryUrl();
-  if (!galleryUrl || !Number.isSafeInteger(film.tmdb_id)) {
-    posterViewerStatus.textContent = 'Alternate posters are not available for this film.';
-    return;
-  }
+  if (!galleryUrl) return null;
   if (!posterGalleryDataPromise) {
     posterGalleryDataPromise = fetch(galleryUrl, { cache: 'force-cache' })
       .then((response) => response.ok ? response.json() : null)
@@ -221,24 +246,23 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
   }
   let payload = await posterGalleryDataPromise;
   if (!payload) posterGalleryDataPromise = undefined;
-  if (request !== posterGalleryRequest) return;
   if (payload && payload.snapshot_refreshed_at !== getSnapshotRefreshedAt()) {
     payload = await fetch(galleryUrl, { cache: 'no-store' })
       .then((response) => response.ok ? response.json() : null)
       .catch(() => null);
     posterGalleryDataPromise = payload ? Promise.resolve(payload) : undefined;
   }
-  if (request !== posterGalleryRequest) return;
-  if (!payload || payload.snapshot_refreshed_at !== getSnapshotRefreshedAt()) {
-    posterViewerStatus.textContent = 'Alternate posters are not included in this catalogue edition.';
-    return;
-  }
+  return payload?.snapshot_refreshed_at === getSnapshotRefreshedAt() ? payload : null;
+}
 
-  const records = payload.galleries?.[String(film.tmdb_id)];
+function posterOptionsForFilm(film, currentPosterUrl, records) {
+  const currentFailed = posterUrlFailed(film, currentPosterUrl);
   const currentRecord = Array.isArray(records) && currentPosterUrl
     ? records.find((record) => typeof record?.path === 'string' && record.path.startsWith('/') && currentPosterUrl.endsWith(record.path))
     : null;
-  const posters = currentPosterUrl ? [{ url: currentPosterUrl, language: currentRecord?.language || '', current: true }] : [];
+  const posters = currentPosterUrl && !currentFailed
+    ? [{ url: currentPosterUrl, language: currentRecord?.language || '', current: true }]
+    : [];
   if (Array.isArray(records)) {
     records.forEach((record) => {
       if (typeof record?.path !== 'string' || !record.path.startsWith('/')) return;
@@ -247,7 +271,59 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
       posters.push({ url, language: typeof record.language === 'string' ? record.language : '', current: false });
     });
   }
-  if (posters.length === 0 || (posters.length < 2 && currentPosterUrl)) {
+  return posters;
+}
+
+async function updateFailedPosterGalleryAction(film, failedPosterUrl) {
+  const button = filmDetailContent.querySelector('.film-detail-browse-posters');
+  if (!button || detailFilm !== film || !Number.isSafeInteger(film.tmdb_id)) return;
+  button.disabled = true;
+  button.setAttribute('aria-busy', 'true');
+  button.textContent = 'Checking poster options…';
+  const payload = await loadPosterGalleryData();
+  if (!button.isConnected || detailFilm !== film) return;
+  button.removeAttribute('aria-busy');
+  button.disabled = false;
+  if (!payload) {
+    button.textContent = 'Browse posters';
+    button.setAttribute('aria-label', `Browse posters for ${film.title}`);
+    return;
+  }
+  const records = payload.galleries?.[String(film.tmdb_id)];
+  const alternatives = posterOptionsForFilm(film, failedPosterUrl, records).some((poster) => !poster.current);
+  if (!alternatives) {
+    if (!posterUrlFailed(film, failedPosterUrl)) {
+      button.remove();
+      return;
+    }
+    button.dataset.retryPosterUrl = failedPosterUrl;
+    button.textContent = 'Retry poster';
+    button.setAttribute('aria-label', `Retry the poster for ${film.title}`);
+    return;
+  }
+  delete button.dataset.retryPosterUrl;
+  button.textContent = 'Browse posters';
+  button.setAttribute('aria-label', `Browse posters for ${film.title}`);
+}
+
+async function loadPosterGallery(film, currentPosterUrl, request) {
+  const galleryUrl = getPosterGalleryUrl();
+  if (!galleryUrl || !Number.isSafeInteger(film.tmdb_id)) {
+    posterViewerStatus.textContent = 'Alternate posters are not available for this film.';
+    return;
+  }
+  const payload = await loadPosterGalleryData();
+  if (request !== posterGalleryRequest) return;
+  if (!payload) {
+    posterViewerStatus.textContent = 'Alternate posters are not included in this catalogue edition.';
+    return;
+  }
+
+  const records = payload.galleries?.[String(film.tmdb_id)];
+  const posters = posterOptionsForFilm(film, currentPosterUrl, records);
+  const hasCurrentPoster = posters.some((poster) => poster.current);
+  const hasAlternatePoster = posters.some((poster) => !poster.current);
+  if (!posters.length || (hasCurrentPoster && !hasAlternatePoster)) {
     posterViewerStatus.textContent = 'No alternate posters are available for this film.';
     return;
   }
@@ -355,7 +431,12 @@ registerBackdropDismiss(posterViewerDialog);
 
 filmDetailDialog.addEventListener('keydown', (event) => {
   if (event.altKey || event.ctrlKey || event.metaKey || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
-  const selector = event.key === 'ArrowLeft' ? '#film-detail-previous' : event.key === 'ArrowRight' ? '#film-detail-next' : '';
+  const isRtl = getComputedStyle(filmDetailDialog).direction === 'rtl';
+  const selector = event.key === 'ArrowLeft'
+    ? (isRtl ? '#film-detail-next' : '#film-detail-previous')
+    : event.key === 'ArrowRight'
+      ? (isRtl ? '#film-detail-previous' : '#film-detail-next')
+      : '';
   if (!selector) return;
   const button = filmDetailContent.querySelector(selector);
   if (!button || button.disabled) return;
@@ -455,7 +536,11 @@ function detailNavigationFor(film) {
       button.disabled = !destination;
       const label = document.createElement('span');
       label.className = 'film-detail-step-label';
-      label.textContent = isPrevious ? '← Previous' : 'Next →';
+      label.dir = 'ltr';
+      const isRtl = getComputedStyle(filmDetailDialog).direction === 'rtl';
+      label.textContent = isPrevious
+        ? (isRtl ? 'Previous →' : '← Previous')
+        : (isRtl ? '← Next' : 'Next →');
       const title = document.createElement('span');
       title.className = 'film-detail-step-title';
       const fullTitle = destination?.title || boundaryLabel;
@@ -519,8 +604,11 @@ function detailPosterFor(film, posterUrl) {
     image.alt = '';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
+      rememberFailedPosterUrl(film, posterUrl);
       poster.replaceWith(detailPosterFor(film, ''));
+      void updateFailedPosterGalleryAction(film, posterUrl);
     }, { once: true });
+    image.addEventListener('load', () => failedPosterUrlsByFilm.get(film)?.delete(posterUrl), { once: true });
     poster.append(image);
     const cue = document.createElement('span');
     cue.className = 'poster-enlarge-cue';
@@ -552,7 +640,15 @@ function renderFilmDetails(film, retainFocus = false) {
     galleryButton.className = 'film-detail-gallery-button film-detail-browse-posters';
     galleryButton.textContent = posterUrl ? 'View other posters' : 'Browse posters';
     galleryButton.setAttribute('aria-label', `${posterUrl ? 'View other posters for' : 'Browse posters for'} ${film.title}`);
-    galleryButton.addEventListener('click', () => openPosterViewer(film, true));
+    galleryButton.addEventListener('click', () => {
+      const retryUrl = galleryButton.dataset.retryPosterUrl;
+      if (retryUrl) {
+        failedPosterUrlsByFilm.get(film)?.delete(retryUrl);
+        openPosterViewer(film, false, retryUrl);
+        return;
+      }
+      openPosterViewer(film, true);
+    });
     posterColumn.append(galleryButton);
   }
   const resetPosterButton = document.createElement('button');
@@ -1029,6 +1125,7 @@ function updatePosterForFilm(film, url) {
   filmDetailContent.querySelector('.film-detail-poster')?.replaceWith(detailPosterFor(film, posterUrl));
   const galleryButton = filmDetailContent.querySelector('.film-detail-browse-posters');
   if (galleryButton) {
+    delete galleryButton.dataset.retryPosterUrl;
     galleryButton.textContent = posterUrl ? 'View other posters' : 'Browse posters';
     galleryButton.setAttribute('aria-label', `${posterUrl ? 'View other posters for' : 'Browse posters for'} ${film.title}`);
   }

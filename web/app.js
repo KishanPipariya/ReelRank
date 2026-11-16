@@ -1421,7 +1421,7 @@ function sourceListNotesFor(film, visibleCount = 4) {
   section.tabIndex = -1;
   section.setAttribute('aria-label', `Source lists containing ${film.title}`);
   const heading = document.createElement('h4');
-  heading.textContent = `Appears in ${sourceListUrls.length.toLocaleString()} ${sourceListUrls.length === 1 ? 'list' : 'lists'}`;
+  heading.textContent = `${sourceListUrls.length.toLocaleString()} linked source ${sourceListUrls.length === 1 ? 'list' : 'lists'}`;
   const list = document.createElement('ol');
   list.className = 'list-links film-note-list-links';
   const entries = sourceListUrls.map((url) => {
