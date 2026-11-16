@@ -16,11 +16,29 @@ export function normalizeSearchText(value) {
   return String(value || '').normalize('NFKD')
     .replace(/\p{Variation_Selector}/gu, '')
     .replace(/(\p{Script=Latin})\p{M}+/gu, '$1')
+    .replace(/[Đđ]/g, (letter) => letter === 'Đ' ? 'D' : 'd')
     .toLocaleLowerCase().replace(/[^\p{L}\p{N}\p{M}]+/gu, ' ').trim().replace(/\s+/g, ' ');
 }
 
 function literalSearchText(value) {
   return String(value || '').normalize('NFKC').replace(/\p{Variation_Selector}/gu, '').trim();
+}
+
+function emojiSearchTermsFor(value) {
+  const literal = literalSearchText(value).toLocaleLowerCase();
+  if (typeof Intl.Segmenter !== 'function') return [];
+  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  return [...segmenter.segment(literal)]
+    .map(({ segment }) => segment)
+    .filter((segment) => /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u.test(segment));
+}
+
+function emojiGraphemesFor(value) {
+  if (typeof Intl.Segmenter !== 'function') return [];
+  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  return [...segmenter.segment(literalSearchText(value).toLocaleLowerCase())]
+    .map(({ segment }) => segment)
+    .filter((segment) => /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u.test(segment));
 }
 
 const normalizedSearchCache = new WeakMap();
@@ -32,6 +50,7 @@ function searchQueryFor(value) {
   lastSearchQuery = {
     value,
     terms: normalized ? normalized.split(' ') : [],
+    emojiTerms: emojiSearchTermsFor(value),
     literal: normalized ? '' : literalSearchText(value),
   };
   return lastSearchQuery;
@@ -57,15 +76,25 @@ export function matchesFilm(film, filters, sourceListUrls = film._sourceListUrls
     if (filters.runtime === 'over-120' && runtime <= 120) return false;
   }
   if (!filters.query) return true;
-  const { terms, literal } = searchQueryFor(filters.query);
-  if (!terms.length) return !literal || literalSearchText(searchText).includes(literal);
+  const { terms, emojiTerms, literal } = searchQueryFor(filters.query);
   let cached = normalizedSearchCache.get(film);
   if (!cached || cached.source !== searchText) {
-    cached = { source: searchText, normalized: normalizeSearchText(searchText) };
+    cached = {
+      source: searchText,
+      normalized: normalizeSearchText(searchText),
+      literal: literalSearchText(searchText).toLocaleLowerCase(),
+    };
     normalizedSearchCache.set(film, cached);
   }
+  if (emojiTerms.length && !cached.emojiGraphemes) cached.emojiGraphemes = new Set(emojiGraphemesFor(searchText));
+  if (!terms.length) {
+    const otherLiteral = emojiTerms.reduce((remaining, term) => remaining.replaceAll(term, ''), literal.toLocaleLowerCase()).trim();
+    return emojiTerms.every((term) => cached.emojiGraphemes?.has(term))
+      && (!otherLiteral || cached.literal.includes(otherLiteral));
+  }
   const normalizedText = cached.normalized;
-  return terms.every((term) => normalizedText.includes(term));
+  return terms.every((term) => normalizedText.includes(term))
+    && emojiTerms.every((term) => cached.emojiGraphemes?.has(term));
 }
 
 export function createCatalogueSelection({ matches, matchesSearchScope, matchesWatch }) {

@@ -7,7 +7,9 @@ export async function checkR4Regressions({ openFixture, baseUrl, outputDirectory
       await page.goto(`${baseUrl}/?data=worst&q=${encodeURIComponent('🦊')}`, { waitUntil: 'domcontentloaded' });
       await page.waitForFunction(() => document.querySelector('#matching-films-count').textContent === 'Showing 1 of 1 film');
       assert.match(await page.locator('#results-announcement').textContent(), /1 matching film for 🦊/);
-      assert.equal(await page.locator('.featured-film-title').textContent(), '🦊 Fox');
+      const searchPreview = page.locator('#search-result-preview-film');
+      if (await searchPreview.isVisible()) assert.match(await searchPreview.textContent(), /^🦊 Fox/);
+      else assert.equal(await page.locator('#film-grid .film-title').first().textContent(), '🦊 Fox');
       await page.locator('#collection-title').scrollIntoViewIfNeeded();
       await page.screenshot({ path: `${outputDirectory}/r4-symbol-search-${width}.png`, animations: 'disabled' });
       assert.deepEqual(errors, []);

@@ -1,4 +1,4 @@
-import { filmIdentifier, registerFilmIdentifiers, findFilmByIdentifier } from '../web/film-navigation.js';
+import { filmDetailUrl, filmIdentifier, registerFilmIdentifiers, findFilmByIdentifier } from '../web/film-navigation.js';
 import { expandSnapshotWithRanking } from '../web/ranking-csv.js';
 import { graphemePrefix } from '../web/display-text.js';
 import test from 'node:test';
@@ -21,6 +21,15 @@ test('symbol-only searches match literal symbols and ignore emoji presentation s
   assert.equal(matchesFilm(fox, { query: ' ' }), true);
   assert.equal(relevanceScore({ title: '🦊' }, '🦊'), 0);
   assert.equal(relevanceScore(fox, '🦊'), 1);
+});
+
+test('emoji search matches whole graphemes and does not match parts of joined emoji', () => {
+  const joined = { title: '👩🏽‍💻 Dang' };
+  const separate = { title: '👩💻 Dang' };
+  assert.equal(matchesFilm(joined, { query: '👩💻 Dang' }), false);
+  assert.equal(matchesFilm(separate, { query: '👩💻 Dang' }), true);
+  assert.equal(matchesFilm(joined, { query: '💻' }), false);
+  assert.equal(matchesFilm(separate, { query: '💻' }), true);
 });
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/snapshot-minimal.json', import.meta.url), 'utf8'));
@@ -300,6 +309,25 @@ test('URL state serialization preserves unrelated parameters and supports repeat
   assert.equal(parseUrlState(url.search).runtime, '90-120');
 });
 
+test('URL state serialization keeps oversized searches out of the URL', () => {
+  const state = {
+    filter: 'all', sort: 'rank', genres: [], directors: [], sourceLists: [],
+    country: '', language: '', decade: '', runtime: '', view: 'posters',
+  };
+  const url = urlForState('https://example.test/', state, 'archive note '.repeat(10000));
+  assert.equal(url.searchParams.has('q'), false);
+  assert.ok(url.href.length <= 7800);
+  const incoming = urlForState(`https://example.test/?tracking=${'x'.repeat(9000)}`, state, 'short');
+  assert.ok(incoming.href.length <= 7800);
+  assert.equal(incoming.searchParams.get('q'), 'short');
+  const fragment = urlForState('https://example.test/#'.concat('x'.repeat(9000)), state, 'short');
+  assert.equal(fragment.searchParams.get('q'), 'short');
+  const longFilmUrl = `https://letterboxd.com/film/${'a'.repeat(2020)}/`;
+  const detail = filmDetailUrl(`https://example.test/?q=${'search+'.repeat(900)}`, { letterboxd_url: longFilmUrl });
+  assert.ok(detail.href.length <= 7800);
+  assert.equal(detail.searchParams.get('film'), longFilmUrl);
+});
+
 test('URL state round trips language and relevance sort without losing other facets', () => {
   const parsed = parseUrlState('?q=amelie&sort=relevance&language=fr&country=France');
   assert.equal(parsed.sort, 'relevance');
@@ -314,6 +342,7 @@ test('shared programmes describe facets and restore the full view without unrela
   const { programmeShare } = await import('../web/programme-share.js');
   const state = parseUrlState('?country=Japan&decade=1960&filter=unwatched&genre=Drama&director=Akira+Kurosawa&list=https%3A%2F%2Fletterboxd.com%2Flist%2Fexample%2F&runtime=under-90&sort=year-oldest&view=ledger');
   const share = programmeShare('https://example.com/catalogue/?tracking=private&demo=1#film-42', state, '  samurai  ', [{ url: state.sourceLists[0], label: 'Favourites' }]);
+  assert.equal(share.shareable, true);
   assert.match(share.description, /Japan · 1960s · Directed by Akira Kurosawa · Drama · From Favourites · Under 90 minutes · Unwatched · Search: “samurai”/);
   assert.deepEqual(parseUrlState(new URL(share.url).search), { ...state, query: 'samurai' });
   assert.equal(new URL(share.url).pathname, '/catalogue/');
@@ -323,6 +352,16 @@ test('shared programmes describe facets and restore the full view without unrela
   const defaultProgramme = programmeShare('https://example.com/', parseUrlState(''), '');
   assert.equal(defaultProgramme.description, 'All films');
   assert.equal(new URL(defaultProgramme.url).searchParams.get('view'), 'posters');
+});
+
+test('shared programmes block links that cannot preserve the active selection', async () => {
+  const { programmeShare } = await import('../web/programme-share.js');
+  const state = parseUrlState('?filter=unwatched&genre=Drama');
+  const query = 'archive note '.repeat(1000);
+  const share = programmeShare('https://example.test/', state, query);
+  assert.equal(share.shareable, false);
+  assert.equal(share.url, '');
+  assert.match(share.description, /Search:/);
 });
 
 test('shared programme language labels tolerate invalid codes in incoming URLs', async () => {
@@ -442,6 +481,13 @@ test('local film links distinguish same-title records and identical occurrences 
   const canonical = { ...second, letterboxd_url: 'https://letterboxd.com/film/home-2019/' };
   assert.equal(filmIdentifier(canonical), canonical.letterboxd_url);
   assert.equal(filmIdentifier({ ...first, tmdb_id: 0 }), '0-2019');
+  const maximumUnicodeUrl = `https://letterboxd.com/film/${'🎬'.repeat(2048)}/`;
+  const unicodeFilm = { title: 'Archive', year: '2026', letterboxd_url: maximumUnicodeUrl };
+  const compactIdentifier = filmIdentifier(unicodeFilm);
+  assert.ok(compactIdentifier.length < 64);
+  assert.equal(findFilmByIdentifier([unicodeFilm], compactIdentifier), unicodeFilm);
+  assert.equal(findFilmByIdentifier([unicodeFilm], maximumUnicodeUrl), unicodeFilm, 'legacy raw URL links still resolve');
+  assert.ok(filmDetailUrl('https://example.test/', unicodeFilm).href.length <= 7800);
   const sameTmdb = [{ ...first, tmdb_id: 0 }, { ...second, tmdb_id: 0 }];
   registerFilmIdentifiers(sameTmdb);
   const editionKey = filmIdentifier(sameTmdb[1]);

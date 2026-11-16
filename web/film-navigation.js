@@ -1,4 +1,5 @@
 import { canonicalLetterboxdFilmUrl } from './letterboxd-film-url.js';
+import { fitStateUrlBudget } from './url-state.js';
 
 const localIds = new WeakMap();
 const localFingerprints = new WeakMap();
@@ -16,6 +17,18 @@ function localFingerprint(film) {
   const key = `local:${(first >>> 0).toString(16).padStart(8, '0')}${(second >>> 0).toString(16).padStart(8, '0')}`;
   localFingerprints.set(film, key);
   return key;
+}
+
+function letterboxdIdentifier(url) {
+  if (new URLSearchParams({ film: url }).toString().length <= 4000) return url;
+  let first = 0x811c9dc5;
+  let second = 0x9e3779b9;
+  for (let index = 0; index < url.length; index += 1) {
+    const code = url.charCodeAt(index);
+    first = Math.imul(first ^ code, 16777619);
+    second = Math.imul(second ^ code, 2246822519);
+  }
+  return `letterboxd:${(first >>> 0).toString(16).padStart(8, '0')}${(second >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 export function registerFilmIdentifiers(films) {
@@ -41,7 +54,7 @@ function tmdbIdentifier(film) {
 }
 
 export function filmIdentifier(film) {
-  if (film.letterboxd_url) return film.letterboxd_url;
+  if (film.letterboxd_url) return letterboxdIdentifier(film.letterboxd_url);
   const localId = localIds.get(film);
   if (localId) return localId;
   if (Number.isSafeInteger(film.tmdb_id)) return tmdbIdentifier(film);
@@ -62,7 +75,7 @@ export function findFilmByIdentifier(films, key) {
 export function filmDetailUrl(href, film) {
   const url = new URL(href);
   url.searchParams.set('film', filmIdentifier(film));
-  return url;
+  return fitStateUrlBudget(url, { preserve: ['film'] });
 }
 
 export function entryMetadata(historyState, visibleLimit, scrollY) {

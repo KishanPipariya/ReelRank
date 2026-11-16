@@ -18,10 +18,15 @@ export async function checkR3Regressions({ openFixture, baseUrl, fixture, output
       await page.locator('.featured-film .film-detail-trigger').click();
       const more = page.locator('.film-detail-director .director-more-button');
       await more.click();
-      assert.equal(await more.evaluate((element) => element === document.activeElement), true);
+      const firstExtraDirector = page.locator('.film-detail-director .director-filter[data-extra="true"]').first();
+      assert.equal(await firstExtraDirector.evaluate((element) => element === document.activeElement), true);
+      assert.equal(await page.locator('.film-detail-director .director-filter').count(), 10);
       assert.match(await more.getAttribute('aria-label'), /^Show 1 more director;/);
+      await more.focus();
       await more.press('Enter');
       assert.equal(await page.locator('.film-detail-director .director-filter').count(), 11);
+      assert.equal(await page.locator('.film-detail-director .director-filter[data-extra="true"]').last().evaluate((element) => element === document.activeElement), true);
+      await more.focus();
       await more.press('Enter');
       assert.equal(await page.locator('.film-detail-director .director-filter').count(), 2);
       assert.equal(await more.evaluate((element) => element === document.activeElement), true);
@@ -38,7 +43,8 @@ export async function checkR3Regressions({ openFixture, baseUrl, fixture, output
       await ledgerMore.waitFor();
       assert.match(await ledgerMore.getAttribute('aria-label'), /^Show 1 more director for/);
       await ledgerMore.click();
-      assert.equal(await ledgerMore.evaluate((element) => element === document.activeElement), true);
+      assert.equal(await page.locator('.ledger-director-cell .director-filter[data-extra="true"]').first().evaluate((element) => element === document.activeElement), true);
+      await ledgerMore.focus();
       await ledgerMore.press('Enter');
       assert.equal(await page.locator('.ledger-director-cell .director-filter').count(), 2);
       assert.deepEqual(errors, []);
@@ -102,7 +108,7 @@ export async function checkR3Regressions({ openFixture, baseUrl, fixture, output
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.locator('#film-detail-dialog[open]').waitFor();
       assert.equal(await page.locator('#film-detail-position').textContent(), 'Film 2 of 2');
-      assert.ok((await page.locator('.film-detail-copy').textContent()).includes('Second-only'));
+      assert.ok((await page.locator('.film-note-synopsis').textContent()).includes('Second-only'));
       await page.goto(share, { waitUntil: 'domcontentloaded' });
       await page.locator('#film-detail-dialog[open]').waitFor();
       assert.equal(await page.locator('#film-detail-position').textContent(), 'Film 2 of 2');

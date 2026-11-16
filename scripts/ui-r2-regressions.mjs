@@ -144,12 +144,13 @@ export async function checkR2Regressions({ openFixture, baseUrl, fixture, output
       await page.locator('#film-detail-dialog[open]').waitFor();
       await page.waitForFunction(() => document.querySelector('#matching-films-count').textContent === 'Showing 2 of 2 films');
       assert.equal(await page.locator('#film-detail-position').textContent(), 'Film 2 of 2');
+      const synopsis = (await page.locator('.film-note-synopsis').allTextContents()).join(' ');
+      assert.ok(!synopsis.includes(detail.overview));
       const copy = await page.locator('.film-detail-copy').textContent();
-      assert.ok(!copy.includes(detail.overview));
       assert.ok(!copy.includes('Mariam Kapanadze'));
       if (width === 320) await page.screenshot({ path: `${outputDirectory}/r2-ranking-identity.png`, animations: 'disabled' });
       await page.locator('#film-detail-previous').click();
-      assert.ok((await page.locator('.film-detail-copy').textContent()).includes(detail.overview));
+      assert.equal(await page.locator('.film-note-synopsis').textContent(), detail.overview);
       assert.deepEqual(errors, []);
       measurements.push({ width, distinctRankingUrlPreservesIdentity: true, matchedMetadataRetained: true });
     } finally { await context.close(); }

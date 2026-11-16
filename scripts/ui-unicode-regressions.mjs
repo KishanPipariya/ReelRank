@@ -18,14 +18,26 @@ export async function checkUnicodeExcerptRegressions({ openFixture, baseUrl, fix
       await page.waitForFunction(() => document.querySelector('#matching-films-count').textContent.startsWith('Showing'));
       await page.locator('#search-input').fill(query);
       await page.waitForFunction(() => document.querySelector('#matching-films-count').textContent === 'Showing 1 of 1 film');
-      const heading = page.locator('#top-billed-title');
-      assert.equal(await heading.isVisible(), true);
-      const text = await heading.textContent();
-      assert.equal(text, 'The Chronicles of the Last Voyage 🎬…');
+      const preview = page.locator('#search-result-preview-film');
+      const previewVisible = await preview.isVisible();
+      let text;
+      let geometry = null;
+      if (width <= 700) {
+        assert.equal(previewVisible, true);
+        text = await preview.textContent();
+        const expectedMatch = [snapshot.films[0].title, snapshot.films[0].year].filter(Boolean).join(' · ');
+        assert.equal(text, expectedMatch);
+        assert.match(await preview.getAttribute('aria-label'), /^Open top search match:/);
+        geometry = await preview.evaluate((element) => ({ client: element.clientWidth, scroll: element.scrollWidth }));
+        assert.ok(geometry.scroll <= geometry.client + 1);
+        await preview.scrollIntoViewIfNeeded();
+      } else {
+        assert.equal(previewVisible, false);
+        const firstResultTitle = page.locator('#film-grid .film-title').first();
+        text = await firstResultTitle.textContent();
+        assert.equal(text, snapshot.films[0].title);
+      }
       assert.equal(text.isWellFormed(), true);
-      const geometry = await heading.evaluate((element) => ({ client: element.clientWidth, scroll: element.scrollWidth }));
-      assert.ok(geometry.scroll <= geometry.client + 1);
-      await heading.scrollIntoViewIfNeeded();
       await page.screenshot({ path: `${outputDirectory}/unicode-query-${width}-verified.png`, animations: 'disabled' });
       await page.locator('#search-input').fill('');
       await page.waitForFunction(() => document.querySelector('#matching-films-count').textContent === 'Showing 8 of 8 films');

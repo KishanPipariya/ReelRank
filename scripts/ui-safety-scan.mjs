@@ -25,7 +25,7 @@ async function checkOpener({ context, page, width }) {
   const focus = await page.evaluate(() => ({ tag: document.activeElement.tagName, label: document.activeElement.getAttribute('aria-label') }));
   await page.screenshot({ path: `${evidence}/source-opener-${width}.png`, animations: 'disabled' });
   assert.equal(focus.tag, 'BUTTON', JSON.stringify(focus));
-  assert.match(focus.label, /source lists that include The Third Man/);
+  assert.match(focus.label, /linked source list for The Third Man/);
   await page.goForward();
   await dialog.waitFor();
   await dialog.locator('#film-detail-close').press('Enter');
@@ -119,7 +119,7 @@ async function checkGenreDisclosure({ context, page, width }) {
       assert.equal(await more.getAttribute('aria-expanded'), 'false');
       await more.press('Enter');
       assert.deepEqual(await visibleGenres(), genres);
-      assert.equal(await more.evaluate((button) => document.activeElement === button), true);
+      assert.equal(await group.locator('.genre-extra-tag[data-genre]').first().evaluate((button) => document.activeElement === button), true);
     }
     await group.scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${evidence}/genres-${count}-${width}.png`, animations: 'disabled' });

@@ -65,7 +65,7 @@ export async function checkRetestRegressions({ openFixture, baseUrl, fixture, ou
     }
     await page.goto(`${baseUrl}/?data=one${suffix}`, { waitUntil: 'domcontentloaded' });
     await page.locator('#site-shell:not([hidden])').waitFor();
-    assert.equal(await page.locator('#ranking-download').textContent(), 'Download displayed 1 film (CSV)');
+    assert.equal(await page.locator('#ranking-download').textContent(), 'Download all 1 loaded film (CSV)');
     assert.deepEqual(errors, []);
     measurements.push({ profile: profile.name, fallbackTitleHeight: fallback.height, newFilmScrollTop: 0, countryFits: true, futureTooltip: true, singularDownload: true });
     await context.close();
@@ -102,6 +102,7 @@ export async function checkRetestRegressions({ openFixture, baseUrl, fixture, ou
       snapshot_refreshed_at: fixture.refreshed_at,
       galleries: { 421017: [{ path: '/retest-failed.jpg', language: 'fr' }, { path: '/retest-working.jpg', language: 'en' }, { path: '/retest-late.jpg', language: 'de' }, { path: '/retest-closed.jpg', language: 'it' }] },
     } }));
+    await context.route('**/reelrank-missing-poster.jpg', (route) => route.fulfill({ contentType: 'image/png', body: png }));
     await context.route('**/retest-working.jpg', (route) => route.fulfill({ contentType: 'image/png', body: png }));
     await context.route('**/retest-failed.jpg', (route) => allowRetry ? route.fulfill({ contentType: 'image/png', body: png }) : route.abort());
     await context.route('**/retest-late.jpg', async (route) => { await lateGate; await route.fulfill({ contentType: 'image/png', body: png }); });

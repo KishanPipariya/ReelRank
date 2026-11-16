@@ -2,6 +2,8 @@ const validFilters = new Set(['all', 'unwatched', 'watched']);
 const validSorts = new Set(['rank', 'title', 'year-newest', 'year-oldest', 'relevance']);
 const validViews = new Set(['posters', 'ledger']);
 const validRuntimes = new Set(['under-90', '90-120', 'over-120']);
+// Leave room for a film-detail identifier or an explicit shared-view value.
+export const maxStateUrlLength = 7800;
 
 export function normalizeViewFacets({ query = '', sort = 'rank', genres = [], directors = [], country = '', language = '', decade = '' }) {
   const nonblank = (values) => [...new Set(values.filter((value) => value.trim()))];
@@ -38,6 +40,47 @@ export function parseUrlState(search) {
   };
 }
 
+export function fitStateUrlBudget(url, { preserve = [] } = {}) {
+  const kept = new Set(preserve);
+  if (url.href.length > maxStateUrlLength) {
+    url.hash = '';
+    const stateKeys = new Set([
+      'q', 'filter', 'sort', 'genre', 'director', 'list', 'country', 'language',
+      'decade', 'runtime', 'view', 'film', 'data', 'demo',
+    ]);
+    for (const key of new Set(url.searchParams.keys())) {
+      if (url.href.length <= maxStateUrlLength) break;
+      if (!stateKeys.has(key)) url.searchParams.delete(key);
+    }
+  }
+  if (url.href.length > maxStateUrlLength && !kept.has('q')) url.searchParams.delete('q');
+  for (const key of ['list', 'director', 'genre']) {
+    while (url.href.length > maxStateUrlLength && url.searchParams.has(key) && !kept.has(key)) {
+      const values = url.searchParams.getAll(key);
+      url.searchParams.delete(key);
+      values.slice(0, -1).forEach((value) => url.searchParams.append(key, value));
+    }
+  }
+  for (const key of ['country', 'language', 'decade', 'runtime', 'sort', 'filter', 'view', 'data', 'demo']) {
+    if (url.href.length <= maxStateUrlLength) break;
+    if (!kept.has(key)) url.searchParams.delete(key);
+  }
+  if (url.href.length > maxStateUrlLength) {
+    for (const key of new Set(url.searchParams.keys())) {
+      if (url.href.length <= maxStateUrlLength) break;
+      if (!kept.has(key)) url.searchParams.delete(key);
+    }
+  }
+  if (url.href.length > maxStateUrlLength) {
+    const preserved = [...kept].flatMap((key) => url.searchParams.getAll(key).map((value) => [key, value]));
+    url.pathname = '/';
+    url.search = '';
+    url.hash = '';
+    preserved.forEach(([key, value]) => url.searchParams.append(key, value));
+  }
+  return url;
+}
+
 export function urlForState(href, state, query) {
   const url = new URL(href);
   if (query.trim()) url.searchParams.set('q', query.trim());
@@ -60,5 +103,5 @@ export function urlForState(href, state, query) {
   else url.searchParams.delete('runtime');
   if (state.view === 'ledger') url.searchParams.set('view', state.view);
   else url.searchParams.delete('view');
-  return url;
+  return fitStateUrlBudget(url);
 }

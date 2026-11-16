@@ -297,7 +297,7 @@
                             <summary>Share this view</summary>
                             <div class="programme-share-panel">
                               <p id="programme-share-description" class="programme-share-description"></p>
-                              <p class="programme-share-help">Opens this selection with the same filters, sorting, and layout. Results follow the current catalogue.</p>
+                              <p id="programme-share-help" class="programme-share-help">Opens this selection with the same filters, sorting, and layout. Results follow the current catalogue.</p>
                               <label for="programme-share-url">View link</label>
                               <input id="programme-share-url" type="url" readonly />
                               <button id="programme-share-copy" class="print-programme-button" type="button">Copy view link</button>
@@ -315,6 +315,7 @@
                               <p>Prints films matching your current search and filters, arranged by release year.</p>
                               <button id="print-programme-button" class="print-programme-button" type="button">Print selection</button>
                             </div>
+                            <p id="print-programme-status" class="programme-share-status" role="status" aria-live="polite"></p>
                           </div>
                         </div>
                       </details>
@@ -402,7 +403,7 @@
                 <table class="film-ledger-table">
                   <caption class="sr-only">Films in the current catalogue view</caption>
                   <thead>
-                    <tr><th scope="col">Catalogue</th><th scope="col">Film</th><th scope="col">Director</th><th scope="col">Production</th><th scope="col">List appearances</th></tr>
+                    <tr><th scope="col" aria-label="Catalogue number">No.</th><th scope="col">Film</th><th scope="col">Director</th><th scope="col">Production</th><th scope="col">List appearances</th></tr>
                   </thead>
                   <tbody id="film-ledger-rows"></tbody>
                 </table>

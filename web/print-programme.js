@@ -1,19 +1,53 @@
 import { sourceListLabel } from './source-list-label.js';
 import { graphemePrefix } from './display-text.js';
 
+const printConfirmationThreshold = 1000;
+const maxPrintProgrammeFilms = 10000;
+
 export function createProgrammePrinter(dependencies) {
   const {
     printFormatSelect, printProgrammeContainer, printProgrammeTitle,
     printProgrammeUsername, printProgrammeDate, printProgrammeContext,
-    printProgrammeFilms, profileUsername, searchInput,
+    printProgrammeFilms, printProgrammeStatus, profileUsername, searchInput,
     getSelection, rankForFilm, getState, getAvailableSourceLists,
     getSnapshotRefreshedAt, compareFilms, formatEditionDate, languageNameFor,
   } = dependencies;
 
-  function buildPrintProgramme() {
+  function showPrintGuidance(count, message) {
+    printProgrammeTitle.textContent = 'Print preview not built';
+    printProgrammeContext.textContent = `${count.toLocaleString()} films · ${message}`;
+    printProgrammeFilms.replaceChildren();
+    const guidance = document.createElement('p');
+    guidance.className = 'print-programme-empty';
+    guidance.textContent = message;
+    printProgrammeFilms.append(guidance);
+  }
+
+  function buildPrintProgramme({ confirmLarge = false } = {}) {
     const state = getState();
     const query = searchInput.value.trim();
     const { matching, title: programmeTitle, loadedCount, rankedCount } = getSelection(query);
+    if (matching.length > maxPrintProgrammeFilms) {
+      const message = `Print preview is limited to ${maxPrintProgrammeFilms.toLocaleString()} films. Narrow your selection or download the catalogue CSV.`;
+      printProgrammeStatus.textContent = message;
+      showPrintGuidance(matching.length, message);
+      return false;
+    }
+    if (matching.length > printConfirmationThreshold) {
+      if (!confirmLarge) {
+        const message = `Use Print selection to confirm a ${matching.length.toLocaleString()}-film print preview.`;
+        printProgrammeStatus.textContent = message;
+        showPrintGuidance(matching.length, message);
+        return false;
+      }
+      const count = matching.length.toLocaleString();
+      if (!window.confirm(`Build a print preview for ${count} films? Large print previews can use a lot of memory. Choose Cancel to narrow the selection or download the full catalogue CSV.`)) {
+        printProgrammeStatus.textContent = `Print cancelled. Narrow the selection or download the catalogue CSV.`;
+        showPrintGuidance(matching.length, printProgrammeStatus.textContent);
+        return false;
+      }
+    }
+    printProgrammeStatus.textContent = '';
     const availableSourceLists = getAvailableSourceLists();
     const snapshotRefreshedAt = getSnapshotRefreshedAt();
     const readerEdition = printFormatSelect.value === 'reader';
@@ -49,7 +83,7 @@ export function createProgrammePrinter(dependencies) {
       empty.className = 'print-programme-empty';
       empty.textContent = 'No films match this selection.';
       printProgrammeFilms.append(empty);
-      return;
+      return true;
     }
 
     let currentYear = null;
@@ -115,15 +149,16 @@ export function createProgrammePrinter(dependencies) {
       }
       yearList.append(entry);
     });
+    return true;
   }
 
   let builtForPrintButton = false;
-  window.addEventListener('beforeprint', () => {
-    if (!builtForPrintButton) buildPrintProgramme();
+  window.addEventListener('beforeprint', (event) => {
+    if (!builtForPrintButton && !buildPrintProgramme()) event.preventDefault();
   });
 
   return function printProgramme() {
-    buildPrintProgramme();
+    if (!buildPrintProgramme({ confirmLarge: true })) return;
     builtForPrintButton = true;
     try { window.print(); }
     finally { builtForPrintButton = false; }

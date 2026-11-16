@@ -1,4 +1,4 @@
-import { urlForState } from './url-state.js';
+import { fitStateUrlBudget, maxStateUrlLength, parseUrlState, urlForState } from './url-state.js';
 
 function languageLabel(code) {
   if (code === 'unknown') return 'Unknown language';
@@ -6,6 +6,22 @@ function languageLabel(code) {
     const name = new Intl.DisplayNames(['en'], { type: 'language' }).of(code);
     return name && name.toLocaleLowerCase() !== code.toLocaleLowerCase() ? name : `Unknown (${code})`;
   } catch { return `Unknown (${code})`; }
+}
+
+export function programmeStateIsPreserved(href, state, query) {
+  const restored = parseUrlState(new URL(href).search);
+  const sameValues = (left = [], right = []) => JSON.stringify([...new Set(left || [])]) === JSON.stringify(right);
+  return restored.query === query.trim()
+    && restored.filter === state.filter
+    && restored.sort === state.sort
+    && sameValues(state.genres, restored.genres)
+    && sameValues(state.directors, restored.directors)
+    && sameValues(state.sourceLists, restored.sourceLists)
+    && restored.country === state.country
+    && restored.language === state.language
+    && restored.decade === state.decade
+    && restored.runtime === state.runtime
+    && restored.view === (state.view === 'ledger' ? 'ledger' : 'posters');
 }
 
 export function programmeShare(href, state, query, sourceLists = [], publicSiteUrl = '') {
@@ -36,6 +52,10 @@ export function programmeShare(href, state, query, sourceLists = [], publicSiteU
   // Shared links describe an explicit layout, including the default Poster Wall,
   // so the recipient's saved local layout cannot override the programme.
   sharedUrl.searchParams.set('view', state.view === 'ledger' ? 'ledger' : 'posters');
+  fitStateUrlBudget(sharedUrl);
   const url = sharedUrl.href;
-  return { description, url };
+  const shareable = url.length <= maxStateUrlLength
+    && programmeStateIsPreserved(url, state, query)
+    && sharedUrl.pathname === path;
+  return { description, url: shareable ? url : '', reducedUrl: url, shareable };
 }

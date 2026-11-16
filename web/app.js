@@ -1,10 +1,10 @@
 import { sourceListLabel } from './source-list-label.js';
 import { graphemePrefix } from './display-text.js';
-import { programmeShare } from './programme-share.js';
+import { programmeShare, programmeStateIsPreserved } from './programme-share.js';
 import { buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, createCatalogueSelection, filmDecade, matchesFilm } from './catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from './snapshot.js';
 import { cardFor as createFilmCard, updateFilmCard, setGenreLabel } from './film-components.js';
-import { parseUrlState, urlForState } from './url-state.js';
+import { fitStateUrlBudget, parseUrlState, urlForState } from './url-state.js';
 import { createFilterControls } from './filter-controls.js';
 import { createFilmViews } from './film-views.js';
 import { createDirectorFilmography } from './director-filmography.js';
@@ -38,6 +38,7 @@ document.addEventListener('click', (event) => {
 
 const programmeShareDetails = document.querySelector('#programme-share');
 const programmeShareDescription = document.querySelector('#programme-share-description');
+const programmeShareHelp = document.querySelector('#programme-share-help');
 const programmeShareUrl = document.querySelector('#programme-share-url');
 const programmeShareCopy = document.querySelector('#programme-share-copy');
 const programmeShareStatus = document.querySelector('#programme-share-status');
@@ -72,6 +73,7 @@ const posterDisplayButton = document.querySelector('#poster-display-button');
 const ledgerDisplayButton = document.querySelector('#ledger-display-button');
 const printProgrammeButton = document.querySelector('#print-programme-button');
 const printFormatSelect = document.querySelector('#print-format-select');
+const printProgrammeStatus = document.querySelector('#print-programme-status');
 const countryIndexToggle = document.querySelector('#country-index-toggle');
 const countryIndex = document.querySelector('.country-index');
 const countryIndexHeading = document.querySelector('.country-index-heading');
@@ -360,11 +362,16 @@ function largeCatalogueMatchKey(query) {
 }
 
 function updateSearchScopeCount(count) {
+  searchInput.dataset.searchScopeCount = String(count);
   const formatted = count.toLocaleString();
   const noun = count === 1 ? 'film' : 'films';
   const label = `Search these ${formatted} ${noun}`;
   const placeholder = `Search ${formatted} ${noun}`;
-  const help = `Search within ${formatted} ${noun} matching the active filters. Results follow the selected sort. Press slash to focus search; Escape to clear it.`;
+  const urlNotes = [];
+  if (searchInput.dataset.queryMissingFromUrl === 'true') urlNotes.push('This search is too long to keep in a link and will reset if you reload.');
+  if (searchInput.dataset.filtersMissingFromUrl === 'true') urlNotes.push('Some active filters or the selected order will reset if you reload because the link is too long.');
+  const urlNote = urlNotes.length ? ` ${urlNotes.join(' ')}` : '';
+  const help = `Search within ${formatted} ${noun} matching the active filters. Results follow the selected sort. Press slash to focus search; Escape to clear it.${urlNote}`;
   if (searchScopeLabel.textContent !== label) searchScopeLabel.textContent = label;
   if (searchInput.placeholder !== placeholder) searchInput.placeholder = placeholder;
   if (searchHelp.textContent !== help) searchHelp.textContent = help;
@@ -818,6 +825,14 @@ function updateUrlState({ replace = false } = {}) {
     filter: state.filter, sort: state.sort, genres: state.genres, directors: state.directors,
     sourceLists: state.sourceLists, country: state.country, language: state.language, decade: state.decade, runtime: state.runtime, view: state.view,
   }, query);
+  searchInput.dataset.queryMissingFromUrl = String(Boolean(query && !url.searchParams.has('q')));
+  const urlFacets = parseUrlState(url.search);
+  const repeatedFacetsDiffer = ['genres', 'directors', 'sourceLists'].some((key) =>
+    JSON.stringify(urlFacets[key]) !== JSON.stringify(state[key]));
+  const singleFacetsDiffer = ['filter', 'country', 'language', 'decade', 'runtime', 'view'].some((key) =>
+    urlFacets[key] !== state[key]);
+  searchInput.dataset.filtersMissingFromUrl = String(repeatedFacetsDiffer || singleFacetsDiffer || urlFacets.sort !== state.sort);
+  updateSearchScopeCount(Number(searchInput.dataset.searchScopeCount) || 0);
   if (url.href === window.location.href) return;
   const method = replace ? 'replaceState' : 'pushState';
   if (method === 'pushState') filmNavigation?.rememberPosition();
@@ -1579,9 +1594,14 @@ const filmViews = createFilmViews({
     filmNavigation.updateFilmUrl(film);
   },
   getFilmShareUrl: (film) => {
-    const shared = new URL(programmeShare(window.location.href, state, searchInput.value, availableSourceLists, publicSiteUrl).url);
+    const share = programmeShare(window.location.href, state, searchInput.value, availableSourceLists, publicSiteUrl);
+    const shared = new URL(share.shareable ? share.url : share.reducedUrl);
     shared.searchParams.set('film', filmIdentifier(film));
-    return shared.href;
+    const bounded = fitStateUrlBudget(shared, { preserve: ['film'] });
+    return {
+      url: bounded.href,
+      selectionIncluded: programmeStateIsPreserved(bounded.href, state, searchInput.value) && share.shareable,
+    };
   },
   getCurrentMatchingFilms: () => currentMatchingFilms,
 });
@@ -1620,15 +1640,17 @@ function filmDetailButtonFor(film) {
 
 function filmAppearanceCountFor(film, className = 'film-count') {
   const likedListCount = Number(film.liked_in) || 0;
+  const appearanceLabel = `${likedListCount.toLocaleString()} ${likedListCount === 1 ? 'list appearance' : 'list appearances'}`;
   const sourceLists = filmSourceListUrls(film);
   const count = document.createElement(sourceLists.length ? 'button' : 'p');
   if (count instanceof HTMLButtonElement) {
     count.type = 'button';
     count.dataset.filmOpener = filmIdentifier(film);
-    count.setAttribute('aria-label', `View ${sourceLists.length.toLocaleString()} linked source lists for ${film.title}; appears in ${likedListCount.toLocaleString()} liked lists`);
+    const sourceListLabel = sourceLists.length === 1 ? 'linked source list' : 'linked source lists';
+    count.setAttribute('aria-label', `View ${sourceLists.length.toLocaleString()} ${sourceListLabel} for ${film.title}; ${appearanceLabel}`);
     count.addEventListener('click', () => openFilmDetailsFromUi(film, { focusProvenance: true }));
   } else {
-    count.setAttribute('aria-label', `Appears in ${likedListCount.toLocaleString()} source lists`);
+    count.setAttribute('aria-label', appearanceLabel);
   }
   count.className = className;
   const countValue = document.createElement('strong');
@@ -1746,6 +1768,7 @@ const printProgramme = createProgrammePrinter({
   printProgrammeDate,
   printProgrammeContext,
   printProgrammeFilms,
+  printProgrammeStatus,
   profileUsername: document.querySelector('#profile-username'),
   searchInput,
   getSelection: (query) => {
@@ -1776,6 +1799,11 @@ function updateProgrammeShare() {
   currentShare = next;
   programmeShareDescription.textContent = next.description;
   programmeShareUrl.value = next.url;
+  programmeShareCopy.disabled = !next.shareable;
+  programmeShareHelp.textContent = next.shareable
+    ? 'Opens this selection with the same filters, sorting, and layout. Results follow the current catalogue.'
+    : 'This selection is too large to share faithfully. Shorten the search or remove filters to enable copying.';
+  programmeShareStatus.textContent = next.shareable ? '' : 'Copy is disabled because the link would show a different selection.';
 }
 
 programmeShareDetails.addEventListener('toggle', () => {
@@ -1784,6 +1812,7 @@ programmeShareDetails.addEventListener('toggle', () => {
 programmeShareUrl.addEventListener('focus', () => programmeShareUrl.select());
 programmeShareCopy.addEventListener('click', async () => {
   updateProgrammeShare();
+  if (!currentShare?.shareable) return;
   const attempt = ++shareAttempt;
   const text = currentShare.url;
   try {
