@@ -7,7 +7,7 @@ export function createFilterControls({ state, sources, elements, actions }) {
       onRemove();
       if (index < 0 || chip.isConnected) return;
       const remaining = container.querySelectorAll('button');
-      (remaining[Math.min(index, remaining.length - 1)] || fallback())?.focus({ preventScroll: true });
+      (remaining[Math.min(index, remaining.length - 1)] || fallback())?.focus();
     });
   }
 

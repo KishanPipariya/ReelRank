@@ -962,7 +962,7 @@ function editionColophonFor(catalogue) {
   };
 }
 
-function programmeNoteFor(catalogue) {
+function programmeNoteFor(catalogue, selectedGenres = []) {
   const decadeCounts = new Map();
   const countryCounts = new Map();
   const genreCounts = new Map();
@@ -980,7 +980,7 @@ function programmeNoteFor(catalogue) {
   const leadingCountry = [...countryCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0];
   const leadingGenre = [...genreCounts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0];
   const details = [
-    leadingGenre ? `Most common genre: ${leadingGenre[0]}` : '',
+    leadingGenre && !selectedGenres.includes(leadingGenre[0]) ? `Most common genre: ${leadingGenre[0]}` : '',
     leadingDecade ? `Most represented decade: ${leadingDecade[0]}s` : '',
     leadingCountry ? `Most common country: ${leadingCountry[0]}` : '',
   ].filter(Boolean);
@@ -1111,10 +1111,25 @@ function compareFilms(left, right, sort = state.sort) {
 function updateBackToFiltersVisibility() {
   const controls = document.querySelector('#collection-controls');
   const bounds = controls.getBoundingClientRect();
-  const controlsHavePassed = bounds.bottom <= 0;
+  const actionsBounds = document.querySelector('.catalogue-actions').getBoundingClientRect();
+  const controlsHavePassed = bounds.bottom <= 0 && actionsBounds.bottom <= 0;
   const inLedger = !filmLedgerView.hidden;
   const hidden = currentShownCount === 0 || !controlsHavePassed;
-  const floatingHidden = hidden || inLedger;
+  let floatingHidden = hidden || inLedger;
+  if (!floatingHidden) {
+    backToFiltersButton.hidden = false;
+    if (document.activeElement !== backToFiltersButton) {
+      const shortcut = backToFiltersButton.getBoundingClientRect();
+      floatingHidden = [...document.querySelectorAll('#main-content a[href], #main-content button:not([disabled]), #main-content summary, #main-content input, #main-content select, #main-content textarea, #main-content [tabindex="0"]')]
+        .some((element) => {
+          if (element === backToFiltersButton || element === ledgerBackToFiltersButton || element.closest('.film-detail-dialog, .poster-viewer-dialog')) return false;
+          const style = getComputedStyle(element);
+          if (style.visibility === 'hidden' || style.pointerEvents === 'none' || !element.getClientRects().length) return false;
+          const bounds = element.getBoundingClientRect();
+          return bounds.left < shortcut.right && bounds.right > shortcut.left && bounds.top < shortcut.bottom && bounds.bottom > shortcut.top;
+        });
+    }
+  }
   if (backToFiltersButton.hidden !== floatingHidden) backToFiltersButton.hidden = floatingHidden;
   const ledgerShortcutHidden = hidden || !inLedger;
   if (ledgerBackToFiltersButton.hidden !== ledgerShortcutHidden) ledgerBackToFiltersButton.hidden = ledgerShortcutHidden;
@@ -1875,7 +1890,7 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
   updateSearchScopeCount(selection.searchScopeCount);
   const hasActiveSelection = Boolean(query) || state.filter !== 'all' || state.genres.length > 0 || state.directors.length > 0 || state.sourceLists.length > 0 || Boolean(state.country) || Boolean(state.language) || state.decade !== '' || Boolean(state.runtime);
   programmeNote.hidden = matching.length === 0 || !hasActiveSelection;
-  programmeNoteCopy.textContent = programmeNoteFor(matching);
+  programmeNoteCopy.textContent = programmeNoteFor(matching, state.genres);
   currentHighestScore = selection.highestScore;
   const ledgerView = state.view === 'ledger';
   const rankedPosterView = !ledgerView && state.sort === 'rank';
@@ -2070,7 +2085,9 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
     : `Search title, year, director, genre, synopsis, and source lists in ${searchableCount} detailed ${searchableFilmNoun}.`;
   metadataFilterScope.textContent = fullRankingFilms
     ? `Genre, director, country, language, and running-time filters only include films with matching details. This edition has details for the top ${detailedCount.toLocaleString()} ${detailedFilmNoun}; title, year, and source-list search covers all ${searchableCount}.`
-    : `These filters use the ${searchableCount} detailed ${searchableFilmNoun} available in this edition. Search and filters do not include the remaining ${remainingFilmCount.toLocaleString()} ranked ${remainingFilmCount === 1 ? 'film' : 'films'}.`;
+    : remainingFilmCount > 0
+      ? `These filters use the ${searchableCount} detailed ${searchableFilmNoun} available in this edition. Search and filters do not include the remaining ${remainingFilmCount.toLocaleString()} ranked ${remainingFilmCount === 1 ? 'film' : 'films'}.`
+      : `These filters use all ${searchableCount} detailed ${searchableFilmNoun} available in this edition.`;
   catalogueDataStatus.textContent = fullRankingFilms
     ? ''
     : rankingLoadFailed
@@ -2389,6 +2406,8 @@ window.addEventListener('resize', () => {
   updateBackToFiltersVisibility();
   updateLedgerOverflowHint();
 });
+document.addEventListener('focusin', updateBackToFiltersVisibility);
+document.querySelector('#main-content').addEventListener('click', () => requestAnimationFrame(updateBackToFiltersVisibility), true);
 document.addEventListener('click', (event) => {
   const eventPath = event.composedPath();
   if (genreFilter.open && !eventPath.includes(genreFilter)) genreFilter.open = false;

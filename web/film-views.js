@@ -1,5 +1,6 @@
 import { genresWithSelectedFirst, posterFallbackFor, responsivePosterAttrs, setGenreLabel } from './film-components.js';
 import { filmIdentifier, findFilmByIdentifier } from './film-navigation.js';
+import { graphemeMiddleExcerpt } from './display-text.js';
 
 const filmMetadataBatchSize = 8;
 
@@ -81,6 +82,20 @@ let activePosterFilm = null;
 let posterViewerOpener = null;
 let retryPosterPreview = null;
 const featuredFilmByFilm = new WeakMap();
+
+function updatePosterGallerySelection(selectedButton) {
+  posterViewerGallery.querySelectorAll('.poster-viewer-option').forEach((option) => {
+    const selected = option === selectedButton;
+    const language = option.dataset.posterLanguage || 'No language tag';
+    const position = option.dataset.posterPosition || '';
+    const unavailable = option.dataset.posterUnavailable === 'true';
+    option.setAttribute('aria-pressed', String(selected));
+    option.setAttribute('aria-label', `${unavailable ? 'Retry loading' : selected ? 'Current poster' : 'Select poster'}, ${language}, ${position}`);
+    const label = option.querySelector('.poster-viewer-option-label');
+    if (label && !unavailable) label.textContent = selected ? 'Current' : language;
+  });
+}
+
 function posterVariant(url, size) {
   const parsed = new URL(url);
   if (parsed.hostname !== 'image.tmdb.org') return url;
@@ -100,6 +115,8 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
     posterViewerRetry.textContent = 'Retry poster';
     posterViewerRetry.removeAttribute('aria-disabled');
   }
+  posterViewerZoom.setAttribute('aria-disabled', 'true');
+  posterViewerZoom.textContent = 'Loading poster…';
   posterViewerFeedback.textContent = 'Loading poster…';
   const stage = posterViewerImage.parentElement;
   if (posterViewerImage.hidden) stage.classList.add('is-fit');
@@ -116,6 +133,9 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
       posterViewerRetry.hidden = false;
       posterViewerRetry.textContent = 'Retry poster';
       posterViewerRetry.removeAttribute('aria-disabled');
+      posterViewerZoom.disabled = posterViewerImage.hidden;
+      posterViewerZoom.removeAttribute('aria-disabled');
+      posterViewerZoom.textContent = posterViewerZoom.getAttribute('aria-pressed') === 'true' ? 'Fit to screen' : 'View at actual size';
       if (retryHadFocus && document.activeElement === document.body) posterViewerRetry.focus({ preventScroll: true });
     }
     return false;
@@ -140,6 +160,7 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
   posterViewerRetry.removeAttribute('aria-disabled');
   posterViewerZoom.setAttribute('aria-pressed', String(zoomed));
   posterViewerZoom.textContent = zoomed ? 'Fit to screen' : 'View at actual size';
+  posterViewerZoom.removeAttribute('aria-disabled');
   posterViewerFeedback.textContent = '';
   if (save && Number.isSafeInteger(film.tmdb_id)) {
     const saved = rememberPosterChoice(film, canonicalUrl);
@@ -147,10 +168,8 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
       ? 'Could not save this poster choice in this browser.'
       : 'Poster choice saved on this device.';
   }
-  if (selectedButton) posterViewerGallery.querySelectorAll('.poster-viewer-option').forEach((option) => {
-    option.setAttribute('aria-pressed', String(option === selectedButton));
-  });
   onReady?.();
+  if (selectedButton) updatePosterGallerySelection(selectedButton);
   return true;
 }
 
@@ -215,7 +234,10 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
   }
 
   const records = payload.galleries?.[String(film.tmdb_id)];
-  const posters = currentPosterUrl ? [{ url: currentPosterUrl, language: '', current: true }] : [];
+  const currentRecord = Array.isArray(records) && currentPosterUrl
+    ? records.find((record) => typeof record?.path === 'string' && record.path.startsWith('/') && currentPosterUrl.endsWith(record.path))
+    : null;
+  const posters = currentPosterUrl ? [{ url: currentPosterUrl, language: currentRecord?.language || '', current: true }] : [];
   if (Array.isArray(records)) {
     records.forEach((record) => {
       if (typeof record?.path !== 'string' || !record.path.startsWith('/')) return;
@@ -235,9 +257,10 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
     button.type = 'button';
     button.className = 'poster-viewer-option';
     button.setAttribute('aria-pressed', String(poster.current));
-    const language = poster.current ? 'Current' : poster.language ? poster.language.toUpperCase() : 'No language tag';
-    const accessibleLabel = `${poster.current ? 'Current poster' : 'Select poster'}, ${language}, ${index + 1} of ${posters.length}`;
-    button.setAttribute('aria-label', accessibleLabel);
+    const language = poster.language ? poster.language.toUpperCase() : 'No language tag';
+    button.dataset.posterLanguage = language;
+    button.dataset.posterPosition = `${index + 1} of ${posters.length}`;
+    button.setAttribute('aria-label', `${poster.current ? 'Current poster' : 'Select poster'}, ${language}, ${index + 1} of ${posters.length}`);
     const image = document.createElement('img');
     image.alt = '';
     image.loading = 'lazy';
@@ -248,10 +271,12 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
     unavailable.setAttribute('aria-hidden', 'true');
     unavailable.hidden = true;
     const label = document.createElement('span');
-    label.textContent = language;
+    label.className = 'poster-viewer-option-label';
+    label.textContent = poster.current ? 'Current' : language;
     image.addEventListener('error', () => {
       image.hidden = true;
       unavailable.hidden = false;
+      button.dataset.posterUnavailable = 'true';
       label.textContent = `${language} · unavailable`;
       button.title = 'Could not load this poster. Select to retry.';
       button.setAttribute('aria-label', `Retry loading ${language} poster, ${index + 1} of ${posters.length}`);
@@ -268,9 +293,8 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
           image.src = poster.url;
           image.hidden = false;
           unavailable.hidden = true;
-          label.textContent = language;
+          delete button.dataset.posterUnavailable;
           button.removeAttribute('title');
-          button.setAttribute('aria-label', accessibleLabel);
         },
       });
     });
@@ -280,6 +304,7 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
 }
 
 posterViewerZoom.addEventListener('click', () => {
+  if (posterViewerZoom.getAttribute('aria-disabled') === 'true') return;
   const selected = posterViewerCaption.dataset.posterUrl;
   if (!selected || !activePosterFilm) return;
   const zoomed = posterViewerZoom.getAttribute('aria-pressed') !== 'true';
@@ -288,6 +313,10 @@ posterViewerZoom.addEventListener('click', () => {
     caption: posterViewerCaption.textContent,
     zoomed,
   });
+});
+posterViewerGallery.addEventListener('focusin', (event) => {
+  const option = event.target.closest('.poster-viewer-option');
+  option?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
 });
 posterViewerRetry.addEventListener('click', () => {
   if (posterViewerRetry.getAttribute('aria-disabled') === 'true') return;
@@ -384,8 +413,9 @@ function openFilmDetails(film, { focusProvenance = false } = {}) {
   renderFilmDetails(film);
   lockModalScroll(filmDetailDialog);
   if (!filmDetailDialog.open) filmDetailDialog.showModal();
-  filmDetailDialog.scrollTop = 0;
-  filmDetailDialog.scrollLeft = 0;
+  filmDetailContent.scrollTop = 0;
+  filmDetailContent.scrollLeft = 0;
+  filmDetailContent.focus({ preventScroll: true });
   if (focusProvenance) requestAnimationFrame(() => {
     const provenance = filmDetailContent.querySelector('.film-note-sources');
     if (provenance) {
@@ -403,7 +433,7 @@ function closeFilmDetailsForFilter() {
 function detailNavigationFor(film) {
   const currentFilms = getCurrentMatchingFilms();
   const currentIndex = currentFilms.indexOf(film);
-  if (currentIndex >= 0) {
+  if (currentIndex >= 0 && currentFilms.length > 1) {
     const navigation = document.createElement('nav');
     navigation.className = 'film-detail-navigation';
     navigation.setAttribute('aria-label', 'Browse films in the current results');
@@ -426,8 +456,9 @@ function detailNavigationFor(film) {
       label.textContent = isPrevious ? '← Previous' : 'Next →';
       const title = document.createElement('span');
       title.className = 'film-detail-step-title';
-      title.textContent = destination?.title || boundaryLabel;
-      title.title = destination?.title || boundaryLabel;
+      const fullTitle = destination?.title || boundaryLabel;
+      title.textContent = graphemeMiddleExcerpt(fullTitle, 9, 13);
+      title.title = fullTitle;
       button.append(label, title);
       button.setAttribute('aria-label', destination
         ? `${isPrevious ? 'Previous' : 'Next'}: ${destination.title}`
@@ -435,8 +466,8 @@ function detailNavigationFor(film) {
       if (destination) button.addEventListener('click', () => renderFilmDetails(destination, direction));
       return button;
     };
-    const previous = stepButtonFor('previous', currentFilms[currentIndex - 1], 'First film in the current results');
-    const next = stepButtonFor('next', currentFilms[currentIndex + 1], 'Last film in the current results');
+    const previous = stepButtonFor('previous', currentFilms[currentIndex - 1], 'First result');
+    const next = stepButtonFor('next', currentFilms[currentIndex + 1], 'Last result');
     const keyboardHint = document.createElement('span');
     keyboardHint.className = 'film-detail-keyboard-hint';
     keyboardHint.append('Use ', Object.assign(document.createElement('kbd'), { textContent: '←' }), ' and ', Object.assign(document.createElement('kbd'), { textContent: '→' }), ' to browse');
@@ -558,7 +589,10 @@ function renderFilmDetails(film, retainFocus = false) {
   titleToggle.setAttribute('aria-controls', fullTitle.id);
   titleToggle.setAttribute('aria-expanded', 'false');
   const hasLongTitle = film.title.length > 180;
-  if (hasLongTitle) title.classList.add('is-clamped');
+  if (hasLongTitle) {
+    title.classList.add('is-clamped');
+    title.tabIndex = -1;
+  }
   titleToggle.hidden = !hasLongTitle;
   titleToggle.addEventListener('click', () => {
     const expanded = fullTitle.hidden;
@@ -585,9 +619,10 @@ function renderFilmDetails(film, retainFocus = false) {
   score.append(scoreValue, ` ${Number(film.liked_in) === 1 ? 'list appearance' : 'list appearances'}`);
   const supporting = document.createElement('div');
   supporting.className = 'film-detail-supporting';
-  copy.append(kicker, title, year);
-  if (navigation) copy.append(navigation);
+  copy.append(kicker, title);
   if (hasLongTitle) copy.append(titleToggle, fullTitle);
+  copy.append(year);
+  if (navigation) copy.append(navigation);
   const originalFacts = originalFilmFactsFor(film);
   if (originalFacts) {
     const originalTitle = originalFacts.querySelector('dd[lang]');
@@ -669,10 +704,12 @@ function renderFilmDetails(film, retainFocus = false) {
   filmDetailDialog.style.removeProperty('--poster-accent');
   samplePosterAccent(posterUrl, accentRequest);
   if (retainFocus) {
-    filmDetailDialog.scrollTop = 0;
+    filmDetailContent.scrollTop = 0;
     const preferredFocus = filmDetailContent.querySelector(`#film-detail-${retainFocus}`);
     const fallbackFocus = filmDetailContent.querySelector(retainFocus === 'next' ? '#film-detail-previous' : '#film-detail-next');
-    (preferredFocus?.disabled ? fallbackFocus : preferredFocus)?.focus();
+    const focusTarget = hasLongTitle ? title : preferredFocus?.disabled ? fallbackFocus : preferredFocus;
+    if (hasLongTitle) focusTarget?.focus({ preventScroll: true });
+    else focusTarget?.focus();
   }
 }
 

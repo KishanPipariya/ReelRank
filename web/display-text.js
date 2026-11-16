@@ -10,3 +10,9 @@ export function graphemePrefix(value, maximum) {
   }
   return prefix;
 }
+
+export function graphemeMiddleExcerpt(value, prefixCount, suffixCount) {
+  const graphemes = [...graphemeSegmenter.segment(value)].map(({ segment }) => segment);
+  if (graphemes.length <= prefixCount + suffixCount) return value;
+  return `${graphemes.slice(0, prefixCount).join('')}…${graphemes.slice(-suffixCount).join('')}`;
+}
