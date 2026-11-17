@@ -10,6 +10,7 @@ import { snapshotLoadErrorMessage, validateSnapshot } from '../web/snapshot.js';
 import { parseUrlState, urlForState } from '../web/url-state.js';
 import { maxSearchLength, truncateSearch } from '../web/url-state.js';
 import { runtimeLabelFor } from '../web/runtime-label.js';
+import { duplicateFilmographyLabels } from '../web/director-filmography.js';
 import { createLocalPreferences, parsePresetImport } from '../web/local-preferences.js';
 import { catalogueCsv } from '../web/catalogue-download.js';
 import { editionFreshness, formatUpdatedAt } from '../web/edition-freshness.js';
@@ -173,9 +174,12 @@ test('worst-case fixtures keep counts coherent and clear inherited optional TMDB
   assert.equal(Math.max(...worst.films.map((film) => film.liked_in)), worst.list_count);
   assert.equal(validateSnapshot(worst), worst);
   assert.equal(worst.films[0].list_ids.length, 12);
-  const longestRuntime = worst.films.find((film) => film.title === 'Beijing 2003');
-  assert.equal(longestRuntime.runtime_minutes, 9000);
-  assert.equal(longestRuntime.year, '2004');
+  const longestRuntime = worst.films.find((film) => film.title === 'Logistics');
+  assert.equal(longestRuntime.runtime_minutes, 51420);
+  assert.equal(runtimeLabelFor(longestRuntime.runtime_minutes), '35d 17h');
+  const longCatalogueRuntime = worst.films.find((film) => film.title === 'Beijing 2003');
+  assert.equal(longCatalogueRuntime.runtime_minutes, 9000);
+  assert.equal(longCatalogueRuntime.year, '2004');
   assert.equal(worst.films.at(-1).title, 'Schema boundary: archive compilation');
   const sparseFilm = worst.films.find((film) => film.title === '🦊 Fox');
   assert.deepEqual(sparseFilm.directors, []);
@@ -268,6 +272,32 @@ test('Letterboxd display-title aliases are searchable and rank as title matches'
   assert.equal(matchesFilm(film, { query: 'Three Colours: Red' }, [], [], searchText), true);
   assert.equal(relevanceScore(film, 'Three Colours: Red'), 0);
   assert.equal(bestRelevanceFilm([film], 'Three Colours: Red', new Map([[film, 1]])), film);
+});
+
+test('catalogue search and relevance accept either TMDB or Letterboxd release year', () => {
+  const casablanca = {
+    title: 'Casablanca', letterboxd_title: 'Casablanca', year: '1943', letterboxd_year: '1942', original_title: 'Casablanca',
+  };
+  const searchText = buildSearchText(casablanca);
+  assert.equal(matchesFilm(casablanca, { query: 'Casablanca 1942' }, [], [], searchText), true);
+  assert.equal(relevanceScore(casablanca, 'Casablanca 1942'), 0);
+});
+
+test('search preserves voiced kana while continuing to fold Latin accents', () => {
+  const whisperOfTheHeart = { title: 'Whisper of the Heart', original_title: '耳をすませば', year: '1995' };
+  assert.equal(matchesFilm(whisperOfTheHeart, { query: '耳をすませば' }), true);
+  assert.equal(matchesFilm(whisperOfTheHeart, { query: '耳をすませは' }), false);
+  const amelie = { title: 'Amélie', original_title: 'Amélie', year: '2001' };
+  assert.equal(matchesFilm(amelie, { query: 'amelie' }), true);
+});
+
+test('director timeline gives duplicate title and year entries distinct labels', () => {
+  const english = { title: 'The Message', year: '1976', original_language: 'en', runtime_minutes: 178 };
+  const arabic = { title: 'The Message', year: '1976 (restoration metadata)', original_language: 'ar', runtime_minutes: 206 };
+  const labels = duplicateFilmographyLabels([english, arabic]);
+  assert.match(labels.get(english), /English/);
+  assert.match(labels.get(arabic), /Arabic/);
+  assert.notEqual(labels.get(english), labels.get(arabic));
 });
 
 test('catalog search folds Latin accents and punctuation and matches words in any order', () => {

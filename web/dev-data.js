@@ -90,8 +90,8 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
       syntheticFilm(base, 1, {
         title: 'Logistics', original_title: 'Logistics', original_language: 'xx', year: '2012',
         directors: ['Erika Magnusson', 'Daniel Andersson'], genres: ['Documentary'],
-        countries: ['Sweden', 'China', 'Germany', 'Netherlands', 'Spain'], runtime_minutes: 999,
-        overview: 'An experimental art film following a pedometer through a 35-day journey. TMDB movie 421017 reports a runtime of 999 minutes.',
+        countries: ['Sweden', 'China', 'Germany', 'Netherlands', 'Spain'], runtime_minutes: 51420,
+        overview: 'An experimental art film following a pedometer through a 35-day journey. This stress row uses its commonly reported 51,420-minute runtime.',
         tmdb_id: 421017, tmdb_url: 'https://www.themoviedb.org/movie/421017',
         poster_url: 'https://image.tmdb.org/t/p/w500/reelrank-missing-poster.jpg', liked_in: 1284, watched: true,
       }),

@@ -131,10 +131,10 @@ export function createProgrammePrinter(dependencies) {
       if (Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0) facts.push(runtimeLabelFor(film.runtime_minutes));
       const language = typeof film.original_language === 'string' ? film.original_language.trim() : '';
       const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
-      const isNonEnglish = language && language.toLocaleLowerCase().split('-')[0] !== 'en';
+      const hasNonEnglishLanguage = language && language.toLocaleLowerCase().split('-')[0] !== 'en';
       const hasDistinctOriginalTitle = originalTitle && originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0;
-      if (isNonEnglish && hasDistinctOriginalTitle) facts.push(`Original title: ${originalTitle}`);
-      if (isNonEnglish) facts.push(`Original language: ${languageNameFor(language)}`);
+      if (hasDistinctOriginalTitle) facts.push(`Original title: ${originalTitle}`);
+      if (hasNonEnglishLanguage) facts.push(`Original language: ${languageNameFor(language)}`);
       if (film.watched) facts.push('Watched');
       credits.textContent = facts.join(' · ');
       details.append(title, credits);

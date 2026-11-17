@@ -1,4 +1,38 @@
 import { filmIdentifier, findFilmByIdentifier } from './film-navigation.js';
+import { languageLabel } from './language-label.js';
+import { runtimeLabelFor } from './runtime-label.js';
+
+export function duplicateFilmographyLabels(films) {
+  const groups = new Map();
+  for (const film of films) {
+    // Callers pass films from one rendered year group.
+    const key = film.title || '';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(film);
+  }
+
+  const labels = new Map();
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      labels.set(group[0], group[0].title);
+      continue;
+    }
+    const languages = group.map((film) => languageLabel(film.original_language, 'en'));
+    const uniqueLanguages = new Set(languages).size === group.length;
+    const runtimes = group.map((film) => runtimeLabelFor(film.runtime_minutes));
+    const uniqueRuntimes = runtimes.every(Boolean) && new Set(runtimes).size === group.length;
+    const letterboxdTitles = group.map((film) => String(film.letterboxd_title || '').trim());
+    const uniqueLetterboxdTitles = letterboxdTitles.every(Boolean) && new Set(letterboxdTitles).size === group.length;
+    group.forEach((film, index) => {
+      const distinction = uniqueLanguages
+        ? languages[index]
+        : uniqueRuntimes ? runtimes[index]
+          : uniqueLetterboxdTitles ? letterboxdTitles[index] : `catalogue entry ${index + 1}`;
+      labels.set(film, `${film.title} · ${distinction}`);
+    });
+  }
+  return labels;
+}
 
 function summaryFor(films, matchingCount) {
   const years = films.map((film) => Number.parseInt(film.year, 10)).filter(Number.isFinite).sort((a, b) => a - b);
@@ -59,6 +93,7 @@ export function createDirectorFilmography({ container, compareByTitle, openFilm 
       section.append(heading);
 
       for (const [year, films] of years) {
+        const displayLabels = duplicateFilmographyLabels(films);
         const yearGroup = document.createElement('section');
         yearGroup.className = 'director-filmography-year-group';
         const yearHeading = document.createElement('h5');
@@ -72,8 +107,19 @@ export function createDirectorFilmography({ container, compareByTitle, openFilm 
           button.type = 'button';
           button.className = 'director-filmography-title';
           button.dataset.filmOpener = filmIdentifier(film);
-          button.textContent = film.title;
-          button.setAttribute('aria-label', `Open details for ${film.title}, ${film.year || 'year unknown'}`);
+          const displayLabel = displayLabels.get(film) || film.title;
+          const titleText = document.createElement('span');
+          titleText.className = 'director-filmography-title-text';
+          titleText.textContent = film.title;
+          button.append(titleText);
+          if (displayLabel !== film.title) {
+            const distinction = document.createElement('span');
+            distinction.className = 'director-filmography-disambiguator';
+            distinction.textContent = displayLabel.slice(film.title.length + 3);
+            button.append(distinction);
+          }
+          button.title = displayLabel;
+          button.setAttribute('aria-label', `Open details for ${displayLabel}, ${film.year || 'year unknown'}`);
           button.addEventListener('click', () => openFilm(film));
           const matchLabel = document.createElement('span');
           matchLabel.className = 'director-filmography-match';

@@ -360,6 +360,10 @@ function yieldToBrowser() {
   return new Promise((resolve) => window.setTimeout(resolve, 0));
 }
 
+function catalogueTaskDeadline() {
+  return performance.now() + 8;
+}
+
 function largeCatalogueMatchKey(query) {
   return JSON.stringify([
     query, state.filter, state.genres, state.directors, state.sourceLists,
@@ -394,10 +398,14 @@ function setFilterCountsUpdating(updating) {
 async function findLargeCatalogueMatches(query, requestId) {
   const catalogue = films;
   const { selection, addFilm } = createCatalogueSelectionFor(query);
-  for (let start = 0; start < catalogue.length; start += 500) {
-    const end = Math.min(start + 500, catalogue.length);
-    for (let index = start; index < end; index += 1) addFilm(catalogue[index]);
-    if (end < catalogue.length) {
+  let index = 0;
+  while (index < catalogue.length) {
+    const deadline = catalogueTaskDeadline();
+    do {
+      addFilm(catalogue[index]);
+      index += 1;
+    } while (index < catalogue.length && performance.now() < deadline);
+    if (index < catalogue.length) {
       await yieldToBrowser();
       if (requestId !== catalogueRenderRequest) return null;
     }
@@ -408,10 +416,14 @@ async function findLargeCatalogueMatches(query, requestId) {
 async function updateLargeFacetCounts(query, requestId) {
   const catalogue = films;
   const { counts, addFilm } = createCatalogueFacetCounter(query);
-  for (let start = 0; start < catalogue.length; start += 500) {
-    const end = Math.min(start + 500, catalogue.length);
-    for (let index = start; index < end; index += 1) addFilm(catalogue[index]);
-    if (end < catalogue.length) {
+  let index = 0;
+  while (index < catalogue.length) {
+    const deadline = catalogueTaskDeadline();
+    do {
+      addFilm(catalogue[index]);
+      index += 1;
+    } while (index < catalogue.length && performance.now() < deadline);
+    if (index < catalogue.length) {
       await yieldToBrowser();
       if (requestId !== catalogueRenderRequest) return false;
     }
@@ -1307,8 +1319,8 @@ function originalFilmFactsFor(film) {
   const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
   const languageCode = typeof film.original_language === 'string' ? film.original_language.trim() : '';
   const hasDistinctTitle = originalTitle && originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0;
-  if (languageCode.toLocaleLowerCase().split('-')[0] === 'en') return null;
-  if (!hasDistinctTitle && !languageCode) return null;
+  const hasNonEnglishLanguage = languageCode && languageCode.toLocaleLowerCase().split('-')[0] !== 'en';
+  if (!hasDistinctTitle && !hasNonEnglishLanguage) return null;
   const languageName = languageNameFor(languageCode);
   const facts = document.createElement('dl');
   facts.className = 'original-film-facts';
@@ -1316,11 +1328,11 @@ function originalFilmFactsFor(film) {
     const titleLabel = document.createElement('dt');
     titleLabel.textContent = 'Original title';
     const titleValue = document.createElement('dd');
-    titleValue.lang = languageCode || '';
+    if (hasNonEnglishLanguage) titleValue.lang = languageCode;
     titleValue.textContent = originalTitle;
     facts.append(titleLabel, titleValue);
   }
-  if (languageCode) {
+  if (hasNonEnglishLanguage) {
     const languageLabel = document.createElement('dt');
     languageLabel.textContent = 'Original language';
     const languageValue = document.createElement('dd');
@@ -1487,7 +1499,13 @@ function filmProgrammeNotesFor(film, { includeOriginalFacts = true } = {}) {
     const section = document.createElement('section');
     section.className = 'film-note-section';
     const heading = document.createElement('h4');
-    heading.textContent = 'Original title & language';
+    const hasOriginalTitle = [...originalFacts.querySelectorAll('dt')]
+      .some((label) => label.textContent === 'Original title');
+    const hasOriginalLanguage = [...originalFacts.querySelectorAll('dt')]
+      .some((label) => label.textContent === 'Original language');
+    heading.textContent = hasOriginalTitle && hasOriginalLanguage
+      ? 'Original title & language'
+      : hasOriginalTitle ? 'Original title' : 'Original language';
     section.append(heading, originalFacts);
     body.append(section);
   }

@@ -5,7 +5,7 @@ export function filmDecade(film) {
 
 export function buildSearchText(film, sourceListLabels = []) {
   return [
-    film.title, film.letterboxd_title, film.year, film.original_title,
+    film.title, film.letterboxd_title, film.year, film.letterboxd_year, film.original_title,
     ...(Array.isArray(film.genres) ? film.genres : []),
     ...(Array.isArray(film.directors) ? film.directors : []),
     ...sourceListLabels,
@@ -17,7 +17,7 @@ export function normalizeSearchText(value) {
     .replace(/\p{Variation_Selector}/gu, '')
     .replace(/(\p{Script=Latin})\p{M}+/gu, '$1')
     .replace(/[Đđ]/g, (letter) => letter === 'Đ' ? 'D' : 'd')
-    .toLocaleLowerCase().replace(/[^\p{L}\p{N}\p{M}]+/gu, ' ').trim().replace(/\s+/g, ' ');
+    .toLocaleLowerCase().replace(/[^\p{L}\p{N}\p{M}]+/gu, ' ').trim().replace(/\s+/g, ' ').normalize('NFC');
 }
 
 function literalSearchText(value) {
@@ -29,19 +29,21 @@ function yieldToCatalogueTask() {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+const graphemeSegmenter = typeof Intl.Segmenter === 'function'
+  ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+  : null;
+
 function emojiSearchTermsFor(value) {
   const literal = literalSearchText(value).toLocaleLowerCase();
-  if (typeof Intl.Segmenter !== 'function') return [];
-  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-  return [...segmenter.segment(literal)]
+  if (!graphemeSegmenter) return [];
+  return [...graphemeSegmenter.segment(literal)]
     .map(({ segment }) => segment)
     .filter((segment) => /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u.test(segment));
 }
 
 function emojiGraphemesFor(value) {
-  if (typeof Intl.Segmenter !== 'function') return [];
-  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-  return [...segmenter.segment(literalSearchText(value).toLocaleLowerCase())]
+  if (!graphemeSegmenter) return [];
+  return [...graphemeSegmenter.segment(literalSearchText(value).toLocaleLowerCase())]
     .map(({ segment }) => segment)
     .filter((segment) => /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u.test(segment));
 }
@@ -91,6 +93,7 @@ export function matchesFilm(film, filters, sourceListUrls = film._sourceListUrls
     };
     normalizedSearchCache.set(film, cached);
   }
+  if (emojiTerms.some((term) => !cached.literal.includes(term))) return false;
   if (emojiTerms.length && !cached.emojiGraphemes) cached.emojiGraphemes = new Set(emojiGraphemesFor(searchText));
   if (!terms.length) {
     const otherLiteral = emojiTerms.reduce((remaining, term) => remaining.replaceAll(term, ''), literal.toLocaleLowerCase()).trim();
@@ -167,12 +170,13 @@ function relevanceScoreForContext(film, { normalizedQuery, terms, literal }) {
   const directors = (Array.isArray(film.directors) ? film.directors : []).map(normalizeSearchText);
   if ([title, letterboxdTitle, originalTitle].includes(normalizedQuery)) return 0;
   const withoutYear = terms.filter((term) => !/^\d{4}$/.test(term)).join(' ');
-  const yearsMatch = terms.filter((term) => /^\d{4}$/.test(term)).every((term) => term === String(film.year || '').trim());
+  const yearTerms = terms.filter((term) => /^\d{4}$/.test(term));
+  const knownYears = [film.year, film.letterboxd_year].map((year) => String(year || '').trim()).filter(Boolean);
+  const yearsMatch = yearTerms.length > 0 && yearTerms.every((term) => knownYears.includes(term));
   if (yearsMatch && [title, letterboxdTitle, originalTitle].includes(withoutYear)) return 0;
   const meaningfulTerms = terms.filter((term) => term.length >= 3);
   if ([title, letterboxdTitle, originalTitle].some((value) => value && withoutYear && value === withoutYear)) return 1;
   if ([title, letterboxdTitle, originalTitle].some((value) => value && meaningfulTerms.some((term) => value.includes(term)))) return 1;
-  const yearTerms = terms.filter((term) => /^\d{4}$/.test(term));
   const directorTerms = terms.filter((term) => !yearTerms.includes(term) && term.length >= 3);
   if (directorTerms.length && directors.some((value) => directorTerms.every((term) => value.includes(term)))) return 2;
   return 3;

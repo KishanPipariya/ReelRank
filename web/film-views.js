@@ -1003,13 +1003,17 @@ function renderFilmDetails(film, retainFocus = false) {
   if (navigation) copy.append(navigation);
   const originalFacts = originalFilmFactsFor(film);
   if (originalFacts) {
-    const originalTitle = originalFacts.querySelector('dd[lang]');
+    const originalTitleTerm = [...originalFacts.querySelectorAll('dt')]
+      .find((term) => term.textContent === 'Original title');
+    const originalTitle = originalTitleTerm?.nextElementSibling;
     const languageTerm = [...originalFacts.querySelectorAll('dt')].find((term) => term.textContent === 'Original language');
     const languageValue = languageTerm?.nextElementSibling;
     const originalCredit = document.createElement('div');
     originalCredit.className = 'film-detail-original';
     originalCredit.setAttribute('role', 'group');
-    originalCredit.setAttribute('aria-label', 'Original title and language');
+    originalCredit.setAttribute('aria-label', originalTitle && languageValue
+      ? 'Original title and language'
+      : originalTitle ? 'Original title' : 'Original language');
     if (originalTitle) {
       const originalLabel = document.createElement('span');
       originalLabel.className = 'film-detail-original-label';
