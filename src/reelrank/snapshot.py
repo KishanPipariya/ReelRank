@@ -7,6 +7,7 @@ import io
 import json
 import math
 import re
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
@@ -29,6 +30,7 @@ from .tmdb import (
 )
 
 METADATA_CACHE_DAYS = 30
+CATALOGUE_DETAIL_SHARD_COUNT = 128
 
 
 def validate_snapshot(snapshot: object) -> dict:
@@ -121,6 +123,23 @@ def _is_letterboxd_film_url(value: str) -> bool:
         )
     except ValueError:
         return False
+
+
+def _canonical_letterboxd_film_url(value: str) -> str | None:
+    """Return the stable Letterboxd film URL used as the catalogue record key."""
+    if not isinstance(value, str) or not _is_letterboxd_film_url(value):
+        return None
+    parsed = urlparse(value)
+    return f"https://letterboxd.com{parsed.path.rstrip('/')}/"
+
+
+def _catalogue_shard_bucket(film_url: str) -> int:
+    digest = hashlib.sha256(film_url.encode("utf-8")).hexdigest()
+    return int(digest[:8], 16) % CATALOGUE_DETAIL_SHARD_COUNT
+
+
+def _compact_json_bytes(payload: dict) -> bytes:
+    return (json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
 
 
 @lru_cache(maxsize=1)
@@ -464,6 +483,8 @@ def create_snapshot(
 def public_snapshot_from_full(snapshot: dict, featured_limit: int = 500) -> dict:
     """Return the deployable top-film edition from a fully enriched local snapshot."""
     public_snapshot = {key: value for key, value in snapshot.items()}
+    public_snapshot["_catalogue_index_films"] = [dict(film) for film in snapshot["films"]]
+    public_snapshot["_catalogue_index_source_lists"] = list(snapshot["source_lists"])
     films = [dict(film) for film in snapshot["films"][:featured_limit]]
     source_lists = snapshot["source_lists"]
     public_source_lists: list[str] = []
@@ -496,21 +517,198 @@ def local_snapshot_paths(snapshot: dict) -> dict:
     """Point a localhost edition at sidecars within the ignored local data directory."""
     local_snapshot = {key: value for key, value in snapshot.items()}
     local_snapshot["local_metadata_edition"] = True
-    for key in ("poster_gallery_url", "ranking_csv_url", "ranking_gzip_url"):
+    for key in ("catalogue_index_url", "poster_gallery_url", "ranking_csv_url", "ranking_gzip_url"):
         value = local_snapshot.get(key)
         if isinstance(value, str) and value.startswith("/data/"):
             local_snapshot[key] = value.replace("/data/", "/data/local/", 1)
     return validate_snapshot(local_snapshot)
 
+
+def _catalogue_index_assets(snapshot: dict, output: Path) -> tuple[str, bytes, dict[str, bytes]] | None:
+    """Build a compact all-film index and lazy synopsis shards for one snapshot."""
+    full_ranking = snapshot.get("_full_ranking")
+    if not isinstance(full_ranking, list):
+        return None
+    if len(full_ranking) != snapshot["film_count"]:
+        raise ValueError("Snapshot catalogue index does not contain the declared full ranking")
+
+    metadata_films = snapshot.get("_catalogue_index_films", snapshot["films"])
+    if not isinstance(metadata_films, list):
+        raise ValueError("Snapshot catalogue index metadata is invalid")
+    metadata_by_url: dict[str, dict] = {}
+    for film in metadata_films:
+        if not isinstance(film, dict):
+            continue
+        canonical_url = _canonical_letterboxd_film_url(film.get("letterboxd_url", ""))
+        if not canonical_url:
+            continue
+        if canonical_url in metadata_by_url:
+            raise ValueError(f"Catalogue metadata has duplicate Letterboxd URL {canonical_url}")
+        metadata_by_url[canonical_url] = film
+
+    bootstrap_urls = {
+        canonical_url
+        for film in snapshot["films"]
+        if (canonical_url := _canonical_letterboxd_film_url(film.get("letterboxd_url", "")))
+    }
+    source_lists = snapshot.get("_catalogue_index_source_lists")
+    if not isinstance(source_lists, list):
+        source_lists = list(dict.fromkeys(url for result in full_ranking for url in result.lists))
+    source_list_index = {url: index for index, url in enumerate(source_lists)}
+    if len(source_list_index) != len(source_lists):
+        raise ValueError("Catalogue index source lists cannot contain duplicates")
+
+    poster_galleries = snapshot.get("_poster_galleries", {})
+    if not isinstance(poster_galleries, dict):
+        poster_galleries = {}
+    watched = snapshot.get("_watched", set())
+    local_output = output.parent.name == "local"
+    data_prefix = "/data/local" if local_output else "/data"
+    bucket_records: dict[int, list[dict[str, str]]] = defaultdict(list)
+    detail_id_by_film: dict[str, int] = {}
+    unique_urls: set[str] = set()
+    rows: list[tuple] = []
+
+    for rank, result in enumerate(full_ranking, start=1):
+        canonical_url = _canonical_letterboxd_film_url(result.movie.uri)
+        if not canonical_url:
+            raise ValueError(f"Ranked film {rank} has no canonical Letterboxd film URL")
+        if canonical_url in unique_urls:
+            raise ValueError(f"Catalogue ranking has duplicate Letterboxd URL {canonical_url}")
+        unique_urls.add(canonical_url)
+
+        metadata = metadata_by_url.get(canonical_url, {})
+        title = metadata.get("title") or result.movie.title
+        tmdb_id = metadata.get("tmdb_id")
+        has_gallery = _is_schema_integer(tmdb_id) and str(int(tmdb_id)) in poster_galleries
+        lists = list(dict.fromkeys(result.lists))
+        if any(url not in source_list_index for url in lists):
+            raise ValueError(f"Catalogue index film {rank} references an unavailable source list")
+        genres = metadata.get("genres", [])
+        directors = metadata.get("directors", [])
+        countries = metadata.get("countries", [])
+        if not all(isinstance(values, list) and all(isinstance(value, str) for value in values) for values in (genres, directors, countries)):
+            raise ValueError(f"Catalogue index film {rank} has invalid metadata arrays")
+
+        row = {
+            "letterboxd_url": canonical_url,
+            "title": title,
+            "original_title": metadata.get("original_title") or title,
+            "year": metadata.get("year") or result.movie.year,
+            "letterboxd_title": result.movie.title,
+            "letterboxd_year": result.movie.year,
+            "poster_url": metadata.get("poster_url") or result.movie.poster_url,
+            "tmdb_id": tmdb_id,
+            "tmdb_url": metadata.get("tmdb_url", ""),
+            "tmdb_rating": metadata.get("tmdb_rating"),
+            "genres": genres,
+            "directors": directors,
+            "countries": countries,
+            "original_language": metadata.get("original_language", ""),
+            "runtime_minutes": metadata.get("runtime_minutes"),
+            "metadata_source": metadata.get("metadata_source", ""),
+            "metadata_fetched_at": metadata.get("metadata_fetched_at", ""),
+            "metadata_status": metadata.get("metadata_status", "unavailable"),
+            "liked_in": result.liked_in,
+            "watched": movie_is_watched(result.movie, watched),
+            "list_ids": [source_list_index[url] for url in lists],
+            "has_poster_gallery": has_gallery,
+        }
+        if canonical_url not in bootstrap_urls:
+            overview = metadata.get("overview")
+            if isinstance(overview, str) and overview.strip():
+                bucket = _catalogue_shard_bucket(canonical_url)
+                bucket_records[bucket].append({"letterboxd_url": canonical_url, "overview": overview})
+                detail_id_by_film[canonical_url] = bucket
+        rows.append((row, detail_id_by_film.get(canonical_url)))
+
+    detail_files: dict[str, bytes] = {}
+    detail_shards: list[str | None] = [None] * CATALOGUE_DETAIL_SHARD_COUNT
+    for bucket, records in bucket_records.items():
+        records.sort(key=lambda record: record["letterboxd_url"])
+        payload = {"schema_version": 1, "username": snapshot["username"], "records": records}
+        body = _compact_json_bytes(payload)
+        digest = hashlib.sha256(body).hexdigest()[:12]
+        filename = f"film-details-{bucket:03d}-{digest}.json"
+        detail_shards[bucket] = f"{data_prefix}/{filename}"
+        detail_files[filename] = body
+
+    strings = [""]
+    string_index = {"": 0}
+
+    def string_id(value: object, field: str) -> int:
+        if not isinstance(value, str):
+            raise ValueError(f"Catalogue index {field} must be a string")
+        existing = string_index.get(value)
+        if existing is not None:
+            return existing
+        index = len(strings)
+        strings.append(value)
+        string_index[value] = index
+        return index
+
+    encoded_films = []
+    for row, detail_shard_id in rows:
+        encoded_films.append([
+            row["letterboxd_url"],
+            string_id(row["title"], "title"),
+            string_id(row["original_title"], "original_title"),
+            string_id(row["year"], "year"),
+            string_id(row["letterboxd_title"], "letterboxd_title"),
+            string_id(row["letterboxd_year"], "letterboxd_year"),
+            string_id(row["poster_url"], "poster_url"),
+            row["tmdb_id"],
+            string_id(row["tmdb_url"], "tmdb_url"),
+            row["tmdb_rating"],
+            [string_id(value, "genre") for value in row["genres"]],
+            [string_id(value, "director") for value in row["directors"]],
+            [string_id(value, "country") for value in row["countries"]],
+            string_id(row["original_language"], "original_language"),
+            row["runtime_minutes"],
+            string_id(row["metadata_source"], "metadata_source"),
+            string_id(row["metadata_fetched_at"], "metadata_fetched_at"),
+            string_id(row["metadata_status"], "metadata_status"),
+            row["liked_in"],
+            row["watched"],
+            row["list_ids"],
+            detail_shard_id,
+            row["has_poster_gallery"],
+        ])
+
+    index = {
+        "schema_version": 1,
+        "username": snapshot["username"],
+        "refreshed_at": snapshot["refreshed_at"],
+        "film_count": len(encoded_films),
+        "strings": strings,
+        "source_lists": source_lists,
+        "detail_shards": detail_shards,
+        "films": encoded_films,
+    }
+    index_body = _compact_json_bytes(index)
+    index_digest = hashlib.sha256(index_body).hexdigest()[:12]
+    index_url = f"{data_prefix}/catalogue-index-{index_digest}.json"
+    return index_url, index_body, detail_files
+
 def write_snapshot(snapshot: dict, output: Path) -> None:
     """Write the snapshot and sidecar files using atomic file replacements."""
     validate_snapshot(snapshot)
+    catalogue_assets = _catalogue_index_assets(snapshot, output)
+    if catalogue_assets:
+        snapshot["catalogue_index_url"] = catalogue_assets[0]
+        validate_snapshot(snapshot)
     gallery_url = snapshot.get("poster_gallery_url")
     ranking_name = Path(snapshot.get("ranking_csv_url", "")).name
     ranking_output = output.parent / ranking_name if ranking_name else None
     ranking_gzip_name = Path(snapshot.get("ranking_gzip_url", "")).name
     ranking_gzip_output = output.parent / ranking_gzip_name if ranking_gzip_name else None
-    private_fields = {"_poster_galleries", "_full_ranking", "_watched"}
+    private_fields = {
+        "_poster_galleries",
+        "_full_ranking",
+        "_watched",
+        "_catalogue_index_films",
+        "_catalogue_index_source_lists",
+    }
     public_snapshot = {key: value for key, value in snapshot.items() if key not in private_fields}
     full_ranking = snapshot.get("_full_ranking")
     watched = snapshot.get("_watched", set())
@@ -545,6 +743,11 @@ def write_snapshot(snapshot: dict, output: Path) -> None:
             output.parent / Path(gallery_url).name,
             json.dumps(gallery_payload, ensure_ascii=False, separators=(",", ":")) + "\n",
         )
+    if catalogue_assets:
+        _index_url, index_body, detail_files = catalogue_assets
+        for filename, body in detail_files.items():
+            atomic_write_bytes(output.parent / filename, body)
+        atomic_write_bytes(output.parent / Path(snapshot["catalogue_index_url"]).name, index_body)
     if ranking_output is not None and ranking_csv is not None:
         atomic_write_text(ranking_output, ranking_csv)
         if ranking_gzip_output is not None:

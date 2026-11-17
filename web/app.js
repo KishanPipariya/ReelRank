@@ -17,6 +17,7 @@ import { updateEditionFreshness, formatUpdatedAt } from './edition-freshness.js'
 import { downloadCatalogueCsv } from './catalogue-download.js';
 import { bindSavedViewControls } from './saved-views.js';
 import { loadFullRanking } from './ranking-csv.js';
+import { createFilmDetailLoader, loadCatalogueIndex, mergeCatalogueIndex } from './catalogue-index.js';
 import { isLocalDevHost, selectedDevDataMode, snapshotForDevMode } from './dev-data.js';
 
 const clearQueryButton = document.querySelector('#clear-query');
@@ -47,6 +48,7 @@ let publicSiteUrl = '';
 let shareAttempt = 0;
 let activeSnapshot = null;
 let rankingLoadAttempt = 0;
+const loadFilmDetailShard = createFilmDetailLoader();
 
 const grid = document.querySelector('#film-grid');
 const filmLedgerView = document.querySelector('#film-ledger-view');
@@ -198,7 +200,6 @@ let searchPreviewFilm = null;
 searchResultPreviewFilm.addEventListener('click', () => {
   if (searchPreviewFilm) openFilmDetailsFromUi(searchPreviewFilm);
 });
-const searchFieldsCopy = 'title, year, director, genre, synopsis, and source list';
 searchHelp.textContent = 'Results follow the selected sort. Press slash to focus search; Escape to clear it.';
 const loadMoreButton = document.querySelector('#load-more');
 const sortSelect = document.querySelector('#sort-select');
@@ -1475,14 +1476,15 @@ function filmProgrammeNotesFor(film, { includeOriginalFacts = true } = {}) {
   notes.setAttribute('aria-label', 'Film details');
   const body = document.createElement('div');
   body.className = 'film-notes-body';
-  if (film.overview) {
+  const synopsisText = film.detail_overview ?? film.overview;
+  if (synopsisText) {
     const section = document.createElement('section');
     section.className = 'film-note-section';
     const heading = document.createElement('h4');
     heading.textContent = 'Synopsis';
     const synopsis = document.createElement('p');
     synopsis.className = 'film-note-synopsis';
-    synopsis.textContent = film.overview;
+    synopsis.textContent = synopsisText;
     section.append(heading, synopsis);
     body.append(section);
   }
@@ -1581,6 +1583,7 @@ const filmViews = createFilmViews({
   posterViewerGallery,
   getSnapshotRefreshedAt: () => snapshotRefreshedAt,
   getPosterGalleryUrl: () => posterGalleryUrl,
+  loadFilmDetails: (film, options = {}) => loadFilmDetailShard(film, activeSnapshot, options),
   rememberPosterChoice: (film, url) => {
     const current = currentFilmFor(film);
     if (!Number.isSafeInteger(current.tmdb_id)) return false;
@@ -2031,10 +2034,19 @@ function showDemoState(configuredUsername, snapshotUsername) {
   return true;
 }
 
-function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed = false) {
+function initializeSnapshot(snapshot, fullCatalogueData = null, catalogueLoadFailed = false) {
+  const catalogueIndex = fullCatalogueData && !Array.isArray(fullCatalogueData)
+    && fullCatalogueData.schema_version === 1 && Array.isArray(fullCatalogueData.films)
+    ? fullCatalogueData
+    : null;
+  const fullCatalogueFilms = catalogueIndex
+    ? mergeCatalogueIndex(snapshot, catalogueIndex, { validated: true })
+    : Array.isArray(fullCatalogueData) ? fullCatalogueData : null;
+  const hasFullCatalogue = Boolean(fullCatalogueFilms);
+  const catalogueSourceLists = catalogueIndex?.source_lists || snapshot.source_lists;
   activeSnapshot = snapshot;
   const snapshotUsername = snapshot.username.trim();
-  films = prepareFilmsWithSourceLists(fullRankingFilms || snapshot.films, snapshot.source_lists);
+  films = prepareFilmsWithSourceLists(fullCatalogueFilms || snapshot.films, catalogueSourceLists);
   registerFilmIdentifiers(films);
   currentLargeMatch = null;
   currentLargeFacetKey = '';
@@ -2051,7 +2063,7 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   rankByFilm.clear();
   films.forEach((film, index) => rankByFilm.set(film, index));
   snapshotRefreshedAt = snapshot.refreshed_at;
-  sourceListsForDownload = Array.isArray(snapshot.source_lists) ? snapshot.source_lists : [];
+  sourceListsForDownload = Array.isArray(catalogueSourceLists) ? catalogueSourceLists : [];
   const rankingDownload = document.querySelector('#ranking-download');
   rankingDownload.hidden = false;
   if (snapshot.ranking_csv_url) {
@@ -2117,23 +2129,27 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
   const detailedFilmNoun = detailedCount === 1 ? 'film' : 'films';
   const remainingFilmCount = Math.max(0, rankedTotal - films.length);
   updateSearchScopeCount(films.length);
-  collectionScope.textContent = fullRankingFilms
-    ? `Search all ${searchableCount} ranked ${searchableFilmNoun} by title, year, and list. The first ${detailedCount.toLocaleString()} ${detailedCount === 1 ? 'has' : 'have'} richer details, so searches also match original title, director, genre, and synopsis. Use Relevance to see closest matches first.`
-    : `Search title, year, director, genre, synopsis, and source lists in ${searchableCount} detailed ${searchableFilmNoun}.`;
-  metadataFilterScope.textContent = fullRankingFilms
+  collectionScope.textContent = catalogueIndex
+    ? `Search all ${searchableCount} ranked ${searchableFilmNoun} by title, year, original title, director, genre, and source list.`
+    : hasFullCatalogue
+    ? `Search all ${searchableCount} ranked ${searchableFilmNoun} by title, year, and list. The first ${detailedCount.toLocaleString()} ${detailedCount === 1 ? 'has' : 'have'} richer details, so searches also match original title, director, and genre. Use Relevance to see closest matches first.`
+    : `Search title, year, director, genre, and source lists in ${searchableCount} detailed ${searchableFilmNoun}.`;
+  metadataFilterScope.textContent = catalogueIndex
+    ? 'Genre, director, country, language, and running-time filters use all metadata available in this catalogue. Some films have incomplete provider data.'
+    : hasFullCatalogue
     ? `Genre, director, country, language, and running-time filters only include films with matching details. This edition has details for the top ${detailedCount.toLocaleString()} ${detailedFilmNoun}; title, year, and source-list search covers all ${searchableCount}.`
     : remainingFilmCount > 0
       ? `These filters use the ${searchableCount} detailed ${searchableFilmNoun} available in this edition. Search and filters do not include the remaining ${remainingFilmCount.toLocaleString()} ranked ${remainingFilmCount === 1 ? 'film' : 'films'}.`
       : `These filters use all ${searchableCount} detailed ${searchableFilmNoun} available in this edition.`;
-  catalogueDataStatus.textContent = fullRankingFilms
+  catalogueDataStatus.textContent = hasFullCatalogue
     ? ''
-    : rankingLoadFailed
-      ? `The full ranking could not load, so this view is using ${searchableCount} detailed ${searchableFilmNoun}. Your search and filters are still here; check your connection and retry to load all ${rankedTotal.toLocaleString()}.`
-      : snapshot.ranking_csv_url
+    : catalogueLoadFailed
+      ? `The full catalogue could not load, so this view is using ${searchableCount} detailed ${searchableFilmNoun}. Your search and filters are still here; check your connection and retry to load all ${rankedTotal.toLocaleString()}.`
+      : snapshot.catalogue_index_url || snapshot.ranking_csv_url
         ? `The detailed films are ready. Loading all ${rankedTotal.toLocaleString()} ranked films in the background.`
-      : `Full-ranking data is not included in this saved edition. Search covers ${searchableCount} detailed ${searchableFilmNoun}; refresh the snapshot to include all ${rankedTotal.toLocaleString()}.`;
-  catalogueDataStatus.dataset.state = fullRankingFilms ? 'complete' : rankingLoadFailed ? 'partial' : snapshot.ranking_csv_url ? 'loading' : 'partial';
-  retryRankingLoadButton.hidden = !rankingLoadFailed;
+      : `Full-catalogue data is not included in this saved edition. Search covers ${searchableCount} detailed ${searchableFilmNoun}; refresh the snapshot to include all ${rankedTotal.toLocaleString()}.`;
+  catalogueDataStatus.dataset.state = hasFullCatalogue ? 'complete' : catalogueLoadFailed ? 'partial' : (snapshot.catalogue_index_url || snapshot.ranking_csv_url) ? 'loading' : 'partial';
+  retryRankingLoadButton.hidden = !catalogueLoadFailed;
   retryRankingLoadButton.disabled = false;
   retryRankingLoadButton.textContent = 'Retry full-catalogue load';
   if (isLocalDevHost() && ['empty', 'one', 'worst'].includes(selectedDevDataMode())) {
@@ -2154,7 +2170,7 @@ function initializeSnapshot(snapshot, fullRankingFilms = null, rankingLoadFailed
     catalogueDataStatus.dataset.state = 'complete';
   }
   if (snapshot.local_metadata_edition === true) {
-    metadataFilterScope.textContent = `Local-only edition: filters use available film details across all ${searchableCount} ranked films. The deployable edition keeps metadata for its top 500.`;
+    metadataFilterScope.textContent = `Local-only edition: full film details are loaded for all ${searchableCount} ranked films. The deployable index filters by available metadata and loads synopses on demand.`;
     catalogueDataStatus.textContent = `Local full-metadata edition loaded for ${searchableCount} films.`;
     catalogueDataStatus.dataset.state = 'complete';
   }
@@ -2239,7 +2255,7 @@ async function loadSnapshot() {
     snapshotFailureKind = 'initialization';
     if (!showDemoState(configuredUsername, snapshot.username.trim())) return;
     initializeSnapshot(snapshot);
-    if (snapshot.ranking_csv_url) void loadFullRankingForSnapshot(snapshot);
+    if (snapshot.catalogue_index_url || snapshot.ranking_csv_url) void loadFullRankingForSnapshot(snapshot);
   } catch (error) {
     siteShell.hidden = true;
     setupState.hidden = false;
@@ -2256,18 +2272,29 @@ async function loadFullRankingForSnapshot(snapshot, { retry = false } = {}) {
   const attempt = ++rankingLoadAttempt;
   const isCurrentAttempt = () => activeSnapshot === snapshot && attempt === rankingLoadAttempt;
   try {
-    const fullRankingFilms = await loadFullRanking(snapshot, retry ? 'no-store' : 'default');
-    if (isCurrentAttempt()) initializeSnapshot(snapshot, fullRankingFilms);
+    let fullCatalogueData;
+    if (snapshot.catalogue_index_url) {
+      try {
+        fullCatalogueData = await loadCatalogueIndex(snapshot, retry ? 'no-store' : 'default');
+      } catch (indexError) {
+        if (!snapshot.ranking_csv_url) throw indexError;
+        console.warn('The catalogue index could not be loaded; using the ranking CSV fallback.', indexError);
+        fullCatalogueData = await loadFullRanking(snapshot, retry ? 'no-store' : 'default');
+      }
+    } else {
+      fullCatalogueData = await loadFullRanking(snapshot, retry ? 'no-store' : 'default');
+    }
+    if (isCurrentAttempt()) initializeSnapshot(snapshot, fullCatalogueData);
   } catch (error) {
     if (!isCurrentAttempt()) return;
     if (!retry) {
-      console.warn('The full ranking file could not be loaded; showing the detailed snapshot films.', error);
+      console.warn('The full catalogue could not be loaded; showing the detailed snapshot films.', error);
       initializeSnapshot(snapshot, null, true);
       catalogueDataStatus.dataset.state = 'partial';
       return;
     }
-    console.warn('The full ranking could not be loaded; keeping the detailed snapshot films available.', error);
-    catalogueDataStatus.textContent = `The full ranking could not load, so this view is still using ${films.length.toLocaleString()} detailed films. Your search and filters are unchanged; check your connection and retry to load all ${rankedTotal.toLocaleString()}.`;
+    console.warn('The full catalogue could not be loaded; keeping the detailed snapshot films available.', error);
+    catalogueDataStatus.textContent = `The full catalogue could not load, so this view is still using ${films.length.toLocaleString()} detailed films. Your search and filters are unchanged; check your connection and retry to load all ${rankedTotal.toLocaleString()}.`;
     retryRankingLoadButton.disabled = false;
     retryRankingLoadButton.textContent = 'Retry full-catalogue load';
     retryRankingLoadButton.hidden = false;
@@ -2276,7 +2303,7 @@ async function loadFullRankingForSnapshot(snapshot, { retry = false } = {}) {
 
 function retryFullRanking() {
   const snapshot = activeSnapshot;
-  if (!snapshot?.ranking_csv_url || retryRankingLoadButton.disabled) return;
+  if (!(snapshot?.catalogue_index_url || snapshot?.ranking_csv_url) || retryRankingLoadButton.disabled) return;
   retryRankingLoadButton.disabled = true;
   retryRankingLoadButton.textContent = 'Loading full catalogue…';
   catalogueDataStatus.textContent = `Loading all ${rankedTotal.toLocaleString()} ranked films. Your current results remain available while this loads.`;

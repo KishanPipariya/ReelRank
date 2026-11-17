@@ -67,6 +67,7 @@ export function createFilmViews(dependencies) {
     posterViewerZoom, posterViewerClose, posterViewerStatus, posterViewerFeedback, posterViewerRetry, posterViewerGallery,
     getSnapshotRefreshedAt,
     getPosterGalleryUrl,
+    loadFilmDetails,
     rememberPosterChoice,
     resetPosterChoice,
     onFilmDetailChange,
@@ -680,6 +681,64 @@ function refreshFilmNavigation() {
   }
 }
 
+function updateFilmDetailSynopsis(film) {
+  const status = filmDetailContent.querySelector('.film-detail-metadata-status');
+  const hadRetryFocus = status?.querySelector('button') === document.activeElement;
+  const body = filmDetailContent.querySelector('.film-notes-body');
+  const synopsisText = film.detail_overview;
+  let synopsis = body?.querySelector('.film-note-synopsis');
+  if (body && synopsisText && !synopsis) {
+    const section = document.createElement('section');
+    section.className = 'film-note-section';
+    const heading = document.createElement('h4');
+    heading.textContent = 'Synopsis';
+    heading.tabIndex = -1;
+    synopsis = document.createElement('p');
+    synopsis.className = 'film-note-synopsis';
+    section.append(heading, synopsis);
+    body.prepend(section);
+  }
+  if (synopsis && synopsisText) synopsis.textContent = synopsisText;
+  if (film.detail_load_status === 'loaded') {
+    status?.remove();
+    if (hadRetryFocus) {
+      const heading = body?.querySelector('.film-note-synopsis')?.previousElementSibling;
+      (heading || filmDetailContent).focus({ preventScroll: true });
+    }
+    return;
+  }
+  const statusText = status?.querySelector('.film-detail-metadata-copy');
+  const retry = status?.querySelector('button');
+  if (film.detail_load_status === 'error') {
+    if (statusText) statusText.textContent = 'Film synopsis could not load. ';
+    if (retry) {
+      retry.disabled = false;
+      retry.textContent = 'Retry';
+    }
+  } else {
+    if (statusText) statusText.textContent = 'Loading synopsis…';
+    if (retry) {
+      retry.textContent = 'Loading…';
+    }
+  }
+}
+
+function loadDetailsForFilm(film, { retry = false } = {}) {
+  if (!film.detail_shard_url || !loadFilmDetails || film.detail_load_status === 'loading') return;
+  if (!retry && film.detail_load_status === 'loaded') return;
+  film.detail_load_status = 'loading';
+  if (detailFilm === film && filmDetailDialog.open) updateFilmDetailSynopsis(film);
+  Promise.resolve(loadFilmDetails(film, { retry })).then((overview) => {
+    film.detail_overview = overview;
+    film.detail_load_status = 'loaded';
+    if (detailFilm === film && filmDetailDialog.open) updateFilmDetailSynopsis(film);
+  }).catch((error) => {
+    console.warn('Film details could not be loaded.', error);
+    film.detail_load_status = 'error';
+    if (detailFilm === film && filmDetailDialog.open) updateFilmDetailSynopsis(film);
+  });
+}
+
 function detailPosterFor(film, posterUrl) {
   const poster = document.createElement(posterUrl ? 'button' : 'div');
   poster.className = `film-detail-poster${posterUrl ? ' film-detail-poster-trigger' : ''}`;
@@ -718,6 +777,7 @@ function renderFilmDetails(film, retainFocus = false) {
   detailFilm = film;
   detailNavigationFilms = getCurrentMatchingFilms();
   onFilmDetailChange(film);
+  if (film.detail_shard_url && !film.detail_load_status) loadDetailsForFilm(film);
   const films = getFilms();
   filmDetailContent.replaceChildren();
   const layout = document.createElement('div');
@@ -727,7 +787,8 @@ function renderFilmDetails(film, retainFocus = false) {
   posterColumn.className = 'film-detail-poster-column';
   const poster = detailPosterFor(film, posterUrl);
   posterColumn.append(poster);
-  if (Number.isSafeInteger(film.tmdb_id) && getPosterGalleryUrl()) {
+  if ((film.has_poster_gallery === true || (film.has_poster_gallery === undefined && Number.isSafeInteger(film.tmdb_id)))
+      && Number.isSafeInteger(film.tmdb_id) && getPosterGalleryUrl()) {
     const galleryButton = document.createElement('button');
     galleryButton.type = 'button';
     galleryButton.className = 'film-detail-gallery-button film-detail-browse-posters';
@@ -873,6 +934,29 @@ function renderFilmDetails(film, retainFocus = false) {
   }
   const notes = filmProgrammeNotesFor(film, { includeOriginalFacts: false });
   if (notes) supporting.append(notes);
+  if (film.detail_shard_url && film.detail_load_status !== 'loaded') {
+    const detailStatus = document.createElement('div');
+    detailStatus.className = 'film-detail-action-status film-detail-metadata-status';
+    detailStatus.setAttribute('role', 'status');
+    detailStatus.setAttribute('aria-live', 'polite');
+    const detailStatusCopy = document.createElement('span');
+    detailStatusCopy.className = 'film-detail-metadata-copy';
+    if (film.detail_load_status === 'error') {
+      detailStatusCopy.textContent = 'Film synopsis could not load. ';
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'film-detail-external-link';
+      retry.textContent = 'Retry';
+      retry.addEventListener('click', () => {
+        loadDetailsForFilm(film, { retry: true });
+      });
+      detailStatus.append(detailStatusCopy, retry);
+    } else {
+      detailStatusCopy.textContent = 'Loading synopsis…';
+      detailStatus.append(detailStatusCopy);
+    }
+    supporting.append(detailStatus);
+  }
   const links = document.createElement('div');
   links.className = 'film-detail-links';
   const tmdbUrl = safeUrl(film.tmdb_url, ['themoviedb.org']);

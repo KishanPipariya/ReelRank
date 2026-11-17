@@ -7,7 +7,8 @@ export async function checkUnicodeExcerptRegressions({ openFixture, baseUrl, fix
   const measurements = [];
   for (const width of [320, 1440]) {
     const snapshot = structuredClone(fixture);
-    snapshot.films[0].overview = `Reference: ${query}.`;
+    snapshot.films[0].title = query;
+    snapshot.films[0].letterboxd_title = query;
     snapshot.films[1].overview = prefix + '🎬' + '新たな旅が続く。'.repeat(20);
     const { context, page, errors } = await openFixture({ viewport: { width, height: 900 } });
     try {

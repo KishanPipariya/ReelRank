@@ -317,6 +317,105 @@ def test_snapshot_writer_exports_full_ranking_without_private_payload(tmp_path):
     assert "1,\"'=SUM(1,1)\",2016,yes,3," in csv_text
 
 
+def test_catalogue_index_writer_uses_url_keys_and_lazy_synopsis_shards(tmp_path):
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    source_list = fixture["source_lists"][0]
+    ranking = [
+        MovieResult(
+            Movie(f"Film {rank}", "2010", f"https://letterboxd.com/film/film-{rank}/"),
+            1,
+            [source_list],
+        )
+        for rank in range(1, 501)
+    ]
+    tail_movie = Movie("Tail Film", "2011", "https://www.letterboxd.com/film/tail-film")
+    ranking.append(MovieResult(tail_movie, 2, [source_list]))
+    fixture.update({
+        "film_count": 501,
+        "unwatched_count": 501,
+        "_full_ranking": ranking,
+        "_watched": set(),
+        "_poster_galleries": {"123": [{"path": "/poster.jpg", "language": "en"}]},
+        "_catalogue_index_films": [{
+            "title": "Tail Film",
+            "original_title": "Tail Film Original",
+            "original_language": "en",
+            "year": "2011",
+            "letterboxd_title": "Tail Film",
+            "letterboxd_year": "2011",
+            "letterboxd_url": tail_movie.uri,
+            "poster_url": "https://image.tmdb.org/t/p/w500/poster.jpg",
+            "tmdb_id": 123,
+            "tmdb_url": "https://www.themoviedb.org/movie/123",
+            "tmdb_rating": 7.5,
+            "genres": ["Drama"],
+            "directors": ["A Director"],
+            "countries": ["France"],
+            "runtime_minutes": 100,
+            "metadata_source": "letterboxd",
+            "metadata_fetched_at": "2026-10-25T00:00:00Z",
+            "metadata_status": "complete",
+            "overview": "Synopsis for the tail film.",
+        }],
+    })
+
+    index_url, index_body, detail_files = snapshot._catalogue_index_assets(
+        fixture,
+        tmp_path / "data" / "snapshot.json",
+    )
+    index = json.loads(index_body)
+    strings = index["strings"]
+    tail = index["films"][-1]
+    tail_shard_id = tail[21]
+
+    assert index_url.startswith("/data/catalogue-index-")
+    assert len(index["films"]) == 501
+    assert index["films"][0][0] == "https://letterboxd.com/film/film-1/"
+    assert tail[0] == "https://letterboxd.com/film/tail-film/"
+    assert strings[tail[1]] == "Tail Film"
+    assert strings[tail[2]] == "Tail Film Original"
+    assert strings[tail[10][0]] == "Drama"
+    assert strings[tail[11][0]] == "A Director"
+    assert tail[20] == [0]
+    assert tail[21] == snapshot._catalogue_shard_bucket(tail[0])
+    assert tail[22] is True
+    assert len(index["detail_shards"]) == 128
+    detail_url = index["detail_shards"][tail_shard_id]
+    assert detail_url.startswith("/data/film-details-")
+    assert Path(detail_url).name in detail_files
+    assert len(detail_files) == 1
+    detail = json.loads(next(iter(detail_files.values())))
+    assert "refreshed_at" not in detail
+    assert detail["records"] == [{
+        "letterboxd_url": "https://letterboxd.com/film/tail-film/",
+        "overview": "Synopsis for the tail film.",
+    }]
+
+    refreshed = {**fixture, "refreshed_at": "2026-10-26T00:00:00Z"}
+    refreshed_url, _refreshed_body, refreshed_details = snapshot._catalogue_index_assets(
+        refreshed,
+        tmp_path / "data" / "snapshot.json",
+    )
+    assert refreshed_url != index_url
+    assert set(refreshed_details) == set(detail_files)
+    assert refreshed_details == detail_files
+
+    duplicate = {
+        **fixture,
+        "film_count": 502,
+        "_full_ranking": [*ranking, ranking[0]],
+    }
+    with pytest.raises(ValueError, match="duplicate Letterboxd URL"):
+        snapshot._catalogue_index_assets(duplicate, tmp_path / "data" / "snapshot.json")
+
+    full_local = {**fixture, "films": [*fixture["films"], fixture["_catalogue_index_films"][0]]}
+    _local_url, _local_body, local_details = snapshot._catalogue_index_assets(
+        full_local,
+        tmp_path / "data" / "local" / "snapshot.json",
+    )
+    assert local_details == {}
+
+
 @pytest.mark.parametrize("title,expected", [
     ("  + One", "'  + One"),
     ("'=Installation", "''=Installation"),

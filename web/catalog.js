@@ -5,7 +5,7 @@ export function filmDecade(film) {
 
 export function buildSearchText(film, sourceListLabels = []) {
   return [
-    film.title, film.year, film.original_title, film.overview,
+    film.title, film.year, film.original_title,
     ...(Array.isArray(film.genres) ? film.genres : []),
     ...(Array.isArray(film.directors) ? film.directors : []),
     ...sourceListLabels,

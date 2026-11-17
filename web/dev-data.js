@@ -170,6 +170,7 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
   };
   delete stressSnapshot.ranking_csv_url;
   delete stressSnapshot.ranking_gzip_url;
+  delete stressSnapshot.catalogue_index_url;
   if (mode !== 'worst' && mode !== '100000') delete stressSnapshot.poster_gallery_url;
   delete stressSnapshot.local_metadata_edition;
   return stressSnapshot;

@@ -68,7 +68,7 @@ Git ignores `.env`. You can also set `TMDB_API_KEY` in your shell. Use `--env-fi
 
 If the snapshot username differs from the configured username, the site shows a setup screen. You can open the labelled demo from that screen. Select **Retry loading** if the configuration or catalogue fails to load.
 
-The site shows the detailed films first. It loads the compressed full ranking in the background. The ranking makes all ranked films available for search and browsing. If the full ranking is unavailable, the site shows the smaller set that you can search. The detailed snapshot contains metadata for up to 500 films. The site shows a notice when the snapshot is at least 30 days old.
+The site shows the detailed films first. It loads the compact catalogue index in the background. The index makes all ranked films available for search and browsing. If the index is unavailable, older snapshots can still use the compressed full ranking. The bootstrap snapshot contains metadata for up to 500 films. Longer synopses for other films load in small static files when you open a film. The site shows a notice when the snapshot is at least 30 days old.
 
 Set `public_site_url` in `web/site-config.json` if you want links copied from a local preview to use the public site address.
 
@@ -92,11 +92,11 @@ The command reads the username from `web/site-config.json`. Use `--username YOUR
 
 The command reads TMDB IDs from Letterboxd film pages. If you set a TMDB API key, it uses those IDs to get film metadata. If a film page has no TMDB link, the command can search TMDB by title and year. Metadata includes genres, directors, production countries, runtime, original title, and original language. The command also saves up to 24 alternate poster paths per matched film in the detailed set. The site requests this data when you open a poster gallery.
 
-Use `--include-local-full` to add metadata for every ranked film. This option requires `TMDB_API_KEY` and can take longer. It creates `web/data/local/snapshot.json` and its data files. Git and Vercel ignore the local edition. On localhost, the site uses the public snapshot if the local edition is missing or invalid. If local enrichment fails, the command still updates the public snapshot and reports an error.
+Use `--include-local-full` to add metadata for every ranked film. This option requires `TMDB_API_KEY` and can take longer. It creates `web/data/local/snapshot.json` for localhost and uses the full enrichment to build the deployable catalogue index. Git and Vercel ignore the local edition; commit the public index and its detail shards with the snapshot. On localhost, the site uses the public snapshot if the local edition is missing or invalid. If local enrichment fails, the command still updates the public snapshot and reports an error.
 
 Version 2 snapshots require a `source_lists` URL table and integer `list_ids` on each film. Regenerate earlier snapshots with the current command. The command validates the snapshot before it replaces the current file.
 
-To publish an update, commit the snapshot and the files named in `poster_gallery_url`, `ranking_csv_url`, and `ranking_gzip_url` together. Then deploy the site. GitHub Actions runs quality checks. Snapshot generation is manual.
+To publish an update, commit the snapshot, the catalogue index it names, the detail shards named by that index, and any updated files named in `poster_gallery_url`, `ranking_csv_url`, and `ranking_gzip_url` together. The snapshot command leaves older ranking sidecars in place. Then deploy the site. GitHub Actions runs quality checks. Snapshot generation is manual.
 
 ### Data and privacy
 

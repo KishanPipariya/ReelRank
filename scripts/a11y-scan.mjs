@@ -80,7 +80,7 @@ async function checkCatalogueSectionFlow(page, label) {
   check(layout.summaryInContext && layout.summaryOutsideSavedViews, `${label} keeps the selection summary with catalogue context and outside the saved-views disclosure.`);
   check(layout.posterWallInResults && layout.posterToggleInViewTools, `${label} separates poster results from display controls.`);
   check(layout.featuredBeforePosterWall, `${label} keeps the featured-film section clear of the poster wall.`);
-  check(layout.collectionScope.includes('Search title, year, director, genre, synopsis, and source lists in')
+  check(layout.collectionScope.includes('Search title, year, director, genre, and source lists in')
     && layout.searchHelp.includes('Results follow the selected sort')
     && layout.searchHelp.includes('Press slash to focus search')
     && layout.searchHelp.includes('Escape to clear it')

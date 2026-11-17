@@ -7,6 +7,7 @@
     "username": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
     "profile_url": { "type": "string", "minLength": 1, "maxLength": 2048, "pattern": "\\S" },
     "refreshed_at": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
+    "catalogue_index_url": { "type": "string", "pattern": "^/data/(?:local/)?catalogue-index-[a-f0-9]{12}\\.json$" },
     "poster_gallery_url": { "type": "string", "pattern": "^/data/(?:local/)?poster-galleries-[A-Za-z0-9T_Z.-]+\\.json$" },
     "ranking_csv_url": { "type": "string", "pattern": "^/data/(?:local/)?ranking-[A-Za-z0-9T_Z.-]+\\.csv$" },
     "ranking_gzip_url": { "type": "string", "pattern": "^/data/(?:local/)?ranking-[A-Za-z0-9T_Z.-]+\\.csv\\.gz$" },

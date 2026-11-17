@@ -1,5 +1,6 @@
 import { filmDetailUrl, filmIdentifier, registerFilmIdentifiers, findFilmByIdentifier } from '../web/film-navigation.js';
 import { expandSnapshotWithRanking } from '../web/ranking-csv.js';
+import { createFilmDetailLoader, mergeCatalogueIndex, validateCatalogueIndex } from '../web/catalogue-index.js';
 import { graphemePrefix } from '../web/display-text.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,11 +14,11 @@ import { editionFreshness, formatUpdatedAt } from '../web/edition-freshness.js';
 import { snapshotForDevMode } from '../web/dev-data.js';
 
 test('symbol-only searches match literal symbols and ignore emoji presentation selectors', () => {
-  const fox = { title: '🦊 Fox', overview: 'A <restoration> with a ❤.' };
+  const fox = { title: '🦊 Fox ❤️', overview: 'A <restoration> with a different heart ❤.' };
   assert.equal(matchesFilm(fox, { query: '🦊' }), true);
   assert.equal(matchesFilm(fox, { query: '🐺' }), false);
   assert.equal(matchesFilm(fox, { query: '❤️' }), true);
-  assert.equal(matchesFilm(fox, { query: '<' }), true);
+  assert.equal(matchesFilm(fox, { query: '<' }), false);
   assert.equal(matchesFilm(fox, { query: ' ' }), true);
   assert.equal(relevanceScore({ title: '🦊' }, '🦊'), 0);
   assert.equal(relevanceScore(fox, '🦊'), 1);
@@ -208,11 +209,13 @@ test('runtime filters use clear boundaries and exclude unknown runtimes', () => 
   assert.equal(matchesFilm({ ...film, runtime_minutes: null }, { runtime: 'under-90' }), false);
 });
 
-test('catalog search index includes metadata and source list labels', () => {
+test('catalog search index includes searchable metadata and source list labels, but not synopsis', () => {
   const film = { title: 'Arrival', year: '2016', overview: 'A linguist arrives', genres: ['Drama'], directors: ['Denis Villeneuve'] };
   const searchable = buildSearchText(film, ['Evening programme']);
   assert.equal(searchable.includes('evening programme'), true);
+  assert.equal(searchable.includes('a linguist arrives'), false);
   assert.equal(matchesFilm(film, { query: 'villeneuve' }, [], [], searchable), true);
+  assert.equal(matchesFilm(film, { query: 'linguist' }, [], [], searchable), false);
 });
 
 test('catalog search folds Latin accents and punctuation and matches words in any order', () => {
@@ -241,6 +244,96 @@ test('snapshots require compact source list IDs', () => {
   assert.throws(() => validateSnapshot(duplicateIds), /list_ids cannot contain duplicates/);
 });
 
+function catalogueIndexFixture() {
+  const snapshot = {
+    username: 'fixture-viewer',
+    refreshed_at: '2026-10-25T00:00:00Z',
+    film_count: 2,
+    list_count: 1,
+    source_lists: ['https://letterboxd.com/user/list/favorites/'],
+    films: [{
+      title: 'Bootstrap Film', original_title: 'Bootstrap Film', year: '2000',
+      letterboxd_title: 'Bootstrap Film', letterboxd_year: '2000',
+      letterboxd_url: 'https://letterboxd.com/film/bootstrap-film/', poster_url: '',
+      backdrop_url: 'https://image.tmdb.org/t/p/w1280/backdrop.jpg', overview: 'Bootstrap synopsis.',
+      tmdb_url: '', watched: false, liked_in: 1, genres: ['Drama'], list_ids: [0],
+    }],
+  };
+  const strings = ['', 'Bootstrap Film', '2000', 'Drama', 'Director', 'United States of America', 'en', 'Tail Film', 'unavailable'];
+  const film = (slug, titleId, detailShardId = null) => [
+    `https://letterboxd.com/film/${slug}/`, titleId, titleId, 2, titleId, 2,
+    0, null, 0, null, [3], [4], [5], 6, 90, 0, 0, 8, 1, false, [0], detailShardId, false,
+  ];
+  const detailShards = Array(128).fill(null);
+  detailShards[42] = '/data/film-details-042-012345abcdef.json';
+  const index = {
+    schema_version: 1, username: snapshot.username, refreshed_at: snapshot.refreshed_at,
+    film_count: 2, strings, source_lists: snapshot.source_lists, detail_shards: detailShards,
+    films: [film('bootstrap-film', 1), film('tail-film', 7, 42)],
+  };
+  return { snapshot, index };
+}
+
+test('catalogue index decodes compact rows and validates edition, URL, and shard identities', () => {
+  const { snapshot, index } = catalogueIndexFixture();
+  const decoded = validateCatalogueIndex(index, snapshot);
+  assert.equal(decoded.films[1].title, 'Tail Film');
+  assert.equal(decoded.films[1].detail_shard_url, '/data/film-details-042-012345abcdef.json');
+  assert.throws(() => validateCatalogueIndex({ ...index, refreshed_at: '2026-10-26T00:00:00Z' }, snapshot), /does not match this snapshot edition/);
+  const unsafe = structuredClone(index);
+  unsafe.films[1][0] = 'https://example.com/film/tail-film/';
+  assert.throws(() => validateCatalogueIndex(unsafe, snapshot), /invalid Letterboxd URL/);
+  const wrongShard = structuredClone(index);
+  wrongShard.detail_shards[42] = '/data/film-details-041-012345abcdef.json';
+  assert.throws(() => validateCatalogueIndex(wrongShard, snapshot), /detail shard 42 has an invalid URL/);
+  const invalidStringId = structuredClone(index);
+  invalidStringId.films[1][1] = 1000;
+  assert.throws(() => validateCatalogueIndex(invalidStringId, snapshot), /invalid title string ID/);
+});
+
+test('catalogue index merge keeps bootstrap synopsis for print and creates detail-only fields for other films', () => {
+  const { snapshot, index } = catalogueIndexFixture();
+  const merged = mergeCatalogueIndex(snapshot, validateCatalogueIndex(index, snapshot), { validated: true });
+  assert.equal(merged.length, 2);
+  assert.equal(merged[0].overview, 'Bootstrap synopsis.');
+  assert.equal(merged[0].detail_overview, 'Bootstrap synopsis.');
+  assert.equal(merged[0].backdrop_url, 'https://image.tmdb.org/t/p/w1280/backdrop.jpg');
+  assert.equal(merged[1].overview, '');
+  assert.equal(merged[1].detail_overview, '');
+  assert.equal(merged[1].detail_shard_url, '/data/film-details-042-012345abcdef.json');
+});
+
+test('lazy film detail loader caches by content-addressed shard and checks username identity', async () => {
+  const { snapshot, index } = catalogueIndexFixture();
+  const decodedIndex = validateCatalogueIndex(index, snapshot);
+  const film = decodedIndex.films[1];
+  const anotherFilm = {
+    ...film,
+    letterboxd_url: 'https://letterboxd.com/film/another-tail-film/',
+  };
+  let requests = 0;
+  const loader = createFilmDetailLoader(async () => {
+    requests += 1;
+    return {
+      ok: true,
+      json: async () => ({
+        schema_version: 1, username: snapshot.username,
+        records: [
+          { letterboxd_url: film.letterboxd_url, overview: 'Loaded synopsis.' },
+          { letterboxd_url: anotherFilm.letterboxd_url, overview: 'Another loaded synopsis.' },
+        ],
+      }),
+    };
+  });
+  assert.deepEqual(await Promise.all([loader(film, snapshot), loader(anotherFilm, snapshot)]), [
+    'Loaded synopsis.',
+    'Another loaded synopsis.',
+  ]);
+  assert.equal(await loader(anotherFilm, snapshot), 'Another loaded synopsis.');
+  assert.equal(requests, 1);
+  await assert.rejects(loader(film, { ...snapshot, username: 'another-viewer' }, { retry: true }), /does not match this snapshot edition/);
+});
+
 test('catalog sorting uses stable rank as its tie breaker and puts unknown years last', () => {
   const first = { title: 'Zebra', year: '2000' };
   const second = { title: 'Alpha', year: '2000' };
@@ -257,7 +350,8 @@ test('relevance prioritizes exact and title hits, then director hits, with stabl
   const director = { title: 'Another Film', directors: ['Jean-Pierre Jeunet'], year: '2001' };
   const synopsis = { title: 'A Different Film', overview: 'Amelie appears in the story', year: '2001' };
   const rank = new Map([[exact, 4], [title, 3], [director, 2], [synopsis, 1]]);
-  assert.deepEqual([exact, title, director, synopsis].sort((a,b) => compareRelevance(a,b,'amelie',rank)), [exact,title,synopsis,director]);
+  assert.equal(matchesFilm(synopsis, { query: 'amelie' }), false);
+  assert.deepEqual([exact, title, director].sort((a,b) => compareRelevance(a,b,'amelie',rank)), [exact,title,director]);
   assert.equal(relevanceScore(director, 'jean 2001'), 2);
   assert.equal(relevanceScore({ title: 'Amélie' }, 'amelie'), 0);
   assert.equal(relevanceScore({ title: 'Pi', year: '1998' }, 'pi 1998'), 0, 'short exact titles remain exact when paired with their year');

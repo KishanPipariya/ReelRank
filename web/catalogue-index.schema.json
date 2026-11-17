@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "username", "refreshed_at", "film_count", "strings", "source_lists", "detail_shards", "films"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "username": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
+    "refreshed_at": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
+    "film_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "strings": { "type": "array", "items": { "type": "string", "maxLength": 20000 } },
+    "source_lists": { "type": "array", "items": { "type": "string", "maxLength": 512 } },
+    "detail_shards": {
+      "type": "array",
+      "minItems": 128,
+      "maxItems": 128,
+      "items": {
+        "anyOf": [
+          { "type": "null" },
+          { "type": "string", "maxLength": 2048, "pattern": "^/data/(?:local/)?film-details-\\d{3}-[a-f0-9]{12}\\.json$" }
+        ]
+      }
+    },
+    "films": { "type": "array", "items": { "type": "array", "minItems": 23, "maxItems": 23 } }
+  },
+  "additionalProperties": false
+}
