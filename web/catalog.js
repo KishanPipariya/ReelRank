@@ -24,6 +24,11 @@ function literalSearchText(value) {
   return String(value || '').normalize('NFKC').replace(/\p{Variation_Selector}/gu, '').trim();
 }
 
+function yieldToCatalogueTask() {
+  if (typeof globalThis.scheduler?.yield === 'function') return globalThis.scheduler.yield();
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 function emojiSearchTermsFor(value) {
   const literal = literalSearchText(value).toLocaleLowerCase();
   if (typeof Intl.Segmenter !== 'function') return [];
@@ -213,12 +218,73 @@ export async function bestRelevanceFilmInChunks(films, query, rankByFilm, isCanc
       bestScore = score;
       bestRank = rank;
     }
-    if (index > 0 && index % 2000 === 0) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+    if (index > 0 && index % 500 === 0) {
+      await yieldToCatalogueTask();
       if (isCancelled()) return undefined;
     }
   }
   return best;
+}
+
+export async function sortFilmsInChunks(films, compare, isCancelled = () => false) {
+  if (isCancelled()) return undefined;
+  if (films.length < 2) return films.slice();
+  let source = films.slice();
+  let target = new Array(films.length);
+  let nextYieldAt = (globalThis.performance?.now?.() ?? Date.now()) + 8;
+
+  for (let width = 1; width < films.length; width *= 2) {
+    let work = 0;
+    for (let start = 0; start < films.length; start += width * 2) {
+      const middle = Math.min(start + width, films.length);
+      const end = Math.min(start + width * 2, films.length);
+      let left = start;
+      let right = middle;
+      let output = start;
+      while (left < middle && right < end) {
+        target[output++] = compare(source[left], source[right]) <= 0 ? source[left++] : source[right++];
+        work += 1;
+        if (work >= 500) {
+          work = 0;
+          if ((globalThis.performance?.now?.() ?? Date.now()) >= nextYieldAt) {
+            await yieldToCatalogueTask();
+            if (isCancelled()) return undefined;
+            nextYieldAt = (globalThis.performance?.now?.() ?? Date.now()) + 8;
+          }
+        }
+      }
+      while (left < middle) {
+        target[output++] = source[left++];
+        work += 1;
+        if (work >= 500) {
+          work = 0;
+          if ((globalThis.performance?.now?.() ?? Date.now()) >= nextYieldAt) {
+            await yieldToCatalogueTask();
+            if (isCancelled()) return undefined;
+            nextYieldAt = (globalThis.performance?.now?.() ?? Date.now()) + 8;
+          }
+        }
+      }
+      while (right < end) {
+        target[output++] = source[right++];
+        work += 1;
+        if (work >= 500) {
+          work = 0;
+          if ((globalThis.performance?.now?.() ?? Date.now()) >= nextYieldAt) {
+            await yieldToCatalogueTask();
+            if (isCancelled()) return undefined;
+            nextYieldAt = (globalThis.performance?.now?.() ?? Date.now()) + 8;
+          }
+        }
+      }
+    }
+    if ((globalThis.performance?.now?.() ?? Date.now()) >= nextYieldAt) {
+      await yieldToCatalogueTask();
+      if (isCancelled()) return undefined;
+    }
+    [source, target] = [target, source];
+  }
+  return source;
 }
 
 export async function sortFilmsByRelevanceInChunks(films, query, rankByFilm, isCancelled = () => false) {
@@ -227,11 +293,11 @@ export async function sortFilmsByRelevanceInChunks(films, query, rankByFilm, isC
   for (let index = 0; index < films.length; index += 1) {
     const film = films[index];
     scored.push({ film, score: relevanceScoreForContext(film, context), rank: rankByFilm.get(film) ?? 0 });
-    if (index > 0 && index % 2000 === 0) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+    if (index > 0 && index % 500 === 0) {
+      await yieldToCatalogueTask();
       if (isCancelled()) return undefined;
     }
   }
-  scored.sort((left, right) => left.score - right.score || left.rank - right.rank);
-  return scored.map(({ film }) => film);
+  const sorted = await sortFilmsInChunks(scored, (left, right) => left.score - right.score || left.rank - right.rank, isCancelled);
+  return sorted?.map(({ film }) => film);
 }

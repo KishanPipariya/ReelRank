@@ -2,7 +2,7 @@ import { sourceListLabel } from './source-list-label.js';
 import { graphemePrefix } from './display-text.js';
 import { runtimeLabelFor } from './runtime-label.js';
 import { programmeShare, programmeStateOmissions } from './programme-share.js';
-import { bestRelevanceFilmInChunks, buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, createCatalogueSelection, filmDecade, matchesFilm, sortFilmsByRelevanceInChunks } from './catalog.js';
+import { bestRelevanceFilmInChunks, buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, createCatalogueSelection, filmDecade, matchesFilm, sortFilmsByRelevanceInChunks, sortFilmsInChunks } from './catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from './snapshot.js';
 import { cardFor as createFilmCard, updateFilmCard, setGenreLabel } from './film-components.js';
 import { fitStateUrlBudget, maxSearchLength, parseUrlState, truncateSearch, urlForState } from './url-state.js';
@@ -356,6 +356,7 @@ let devFixtureRankedFilmCount = 0;
 const largeCatalogueThreshold = 5000;
 
 function yieldToBrowser() {
+  if (typeof globalThis.scheduler?.yield === 'function') return globalThis.scheduler.yield();
   return new Promise((resolve) => window.setTimeout(resolve, 0));
 }
 
@@ -393,8 +394,8 @@ function setFilterCountsUpdating(updating) {
 async function findLargeCatalogueMatches(query, requestId) {
   const catalogue = films;
   const { selection, addFilm } = createCatalogueSelectionFor(query);
-  for (let start = 0; start < catalogue.length; start += 2000) {
-    const end = Math.min(start + 2000, catalogue.length);
+  for (let start = 0; start < catalogue.length; start += 500) {
+    const end = Math.min(start + 500, catalogue.length);
     for (let index = start; index < end; index += 1) addFilm(catalogue[index]);
     if (end < catalogue.length) {
       await yieldToBrowser();
@@ -407,8 +408,8 @@ async function findLargeCatalogueMatches(query, requestId) {
 async function updateLargeFacetCounts(query, requestId) {
   const catalogue = films;
   const { counts, addFilm } = createCatalogueFacetCounter(query);
-  for (let start = 0; start < catalogue.length; start += 2000) {
-    const end = Math.min(start + 2000, catalogue.length);
+  for (let start = 0; start < catalogue.length; start += 500) {
+    const end = Math.min(start + 500, catalogue.length);
     for (let index = start; index < end; index += 1) addFilm(catalogue[index]);
     if (end < catalogue.length) {
       await yieldToBrowser();
@@ -1914,7 +1915,10 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
       matching = await sortFilmsByRelevanceInChunks(matching, query, rankByFilm, () => requestId !== catalogueRenderRequest);
       if (!matching || requestId !== catalogueRenderRequest) return;
     }
-    else matching.sort((left, right) => compareFilms(left, right));
+    else if (largeCatalogue && state.sort !== 'rank') {
+      matching = await sortFilmsInChunks(matching, (left, right) => compareFilms(left, right), () => requestId !== catalogueRenderRequest);
+      if (!matching || requestId !== catalogueRenderRequest) return;
+    } else matching.sort((left, right) => compareFilms(left, right));
     if (largeCatalogue) {
       currentLargeSortedFilms = matching;
       currentLargeSortedKey = sortKey;
@@ -2184,9 +2188,9 @@ function initializeSnapshot(snapshot, fullCatalogueData = null, catalogueLoadFai
   if (isLocalDevHost() && selectedDevDataMode() === '100000') {
     const sourceCount = devFixtureRankedFilmCount.toLocaleString();
     const generatedCount = Math.max(0, films.length - devFixtureRankedFilmCount).toLocaleString();
-    collectionScope.textContent = `Search all ${searchableCount} stress rows by title, year, and list. ${sourceCount} rows use local ranking data; ${generatedCount} generated rows have no enriched metadata.`;
+    collectionScope.textContent = `Search all ${searchableCount} stress rows by title, year, and list. ${sourceCount} rows come from the public ranking; ${generatedCount} are generated test rows.`;
     metadataFilterScope.textContent = `Director, genre, country, language, and running-time filters only match rows with available metadata. ${generatedCount} generated rows have no enriched metadata.`;
-    catalogueDataStatus.textContent = `Development stress fixture: ${sourceCount} local ranking rows padded with ${generatedCount} sparse generated rows.`;
+    catalogueDataStatus.textContent = `Development stress fixture: ${sourceCount} public ranking rows padded with ${generatedCount} generated test rows.`;
     catalogueDataStatus.dataset.state = 'complete';
   }
   if (snapshot.local_metadata_edition === true) {
@@ -2194,7 +2198,14 @@ function initializeSnapshot(snapshot, fullCatalogueData = null, catalogueLoadFai
     catalogueDataStatus.textContent = `Local full-metadata edition loaded for ${searchableCount} films.`;
     catalogueDataStatus.dataset.state = 'complete';
   }
-  document.querySelector('#collection-footnote').textContent = `Browsing ${searchableCount} ranked ${searchableFilmNoun}. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
+  const collectionFootnote = document.querySelector('#collection-footnote');
+  if (isLocalDevHost() && selectedDevDataMode() === '100000') {
+    collectionFootnote.textContent = `Browsing ${searchableCount} ranked ${searchableFilmNoun} in this development view. It combines public ranking data with generated test rows.`;
+  } else if (isLocalDevHost() && ['worst', 'empty', 'one'].includes(selectedDevDataMode())) {
+    collectionFootnote.textContent = `Browsing ${searchableCount} ranked ${searchableFilmNoun}. This development fixture uses local test data; film links may open public Letterboxd pages.`;
+  } else {
+    collectionFootnote.textContent = `Browsing ${searchableCount} ranked ${searchableFilmNoun}. Your public liked lists, watched status, and source-list links appear here; this site is public.`;
+  }
   siteShell.hidden = false;
   snapshotFilmRestorePending = true;
   render();
@@ -2240,7 +2251,7 @@ async function loadSnapshot() {
     setupCopy.textContent = 'Loading the configured profile and its catalogue edition…';
     let rawSnapshotData = null;
     let rawSnapshotValidated = false;
-    if (isLocalDevHost() && ['', 'demo', '100000'].includes(devMode)) {
+    if (isLocalDevHost() && ['', 'demo'].includes(devMode)) {
       try {
         const localResponse = await fetch('/data/local/snapshot.json', { cache: 'default' });
         if (localResponse.ok) {
@@ -2261,8 +2272,18 @@ async function loadSnapshot() {
     }
     let rankingFilms = null;
     if (devMode === '100000') {
-      try { rankingFilms = await loadFullRanking(rawSnapshotData); }
-      catch (error) { console.warn('The real ranking could not be loaded for the 100,000-row development view.', error); }
+      if (rawSnapshotData.catalogue_index_url) {
+        try {
+          const index = await loadCatalogueIndex(rawSnapshotData);
+          rankingFilms = mergeCatalogueIndex(rawSnapshotData, index, { validated: true });
+        } catch (error) {
+          console.warn('The full catalogue index could not be loaded for the 100,000-row development view; using the ranking CSV.', error);
+        }
+      }
+      if (!rankingFilms) {
+        try { rankingFilms = await loadFullRanking(rawSnapshotData); }
+        catch (error) { console.warn('The real ranking could not be loaded for the 100,000-row development view.', error); }
+      }
     }
     devFixtureRankedFilmCount = devMode === '100000' ? Math.min(rankingFilms?.length || 0, 100000) : 0;
     const snapshotData = await snapshotForDevModeInChunks(rawSnapshotData, devMode, rankingFilms);

@@ -5,6 +5,11 @@ const schemaMaximumOverview = ('The travelers continue across changing landscape
 const longSourceList = 'https://letterboxd.com/reelrankdemo/list/the-complete-international-cinema-restoration-and-preservation-programme-2026-including-alternate-cuts-and-newly-rediscovered-films/';
 const sourceLists = Array.from({ length: 12 }, (_, index) => index === 0 ? longSourceList : index === 1 ? longSourceList.replace(/\/$/, '-directors-cuts-and-extended-editions/') : `https://letterboxd.com/reelrankdemo/list/world-cinema-programme-volume-${index + 1}/`);
 
+function yieldToMainThread() {
+  if (typeof globalThis.scheduler?.yield === 'function') return globalThis.scheduler.yield();
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 function canonicalStressListUrl(value) {
   try {
     const url = new URL(value);
@@ -144,11 +149,18 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
         overview: 'Imported catalogue entry with a long tag, mixed writing systems, and short and long credit names.',
       }),
       syntheticFilm(base, 12, {
+        title: 'Beijing 2003', original_title: 'Beijing 2003', year: '2004',
+        letterboxd_title: 'Beijing 2003', letterboxd_year: '2004',
+        tmdb_id: 197299, tmdb_url: 'https://www.themoviedb.org/movie/197299',
+        runtime_minutes: 9000, liked_in: 1, watched: false,
+        overview: 'The longest running time in the local snapshot for a TMDB-linked film: 9,000 minutes.',
+      }),
+      syntheticFilm(base, 13, {
         title: 'Schema boundary: archive compilation',
         year: '2026 (restoration; original release date remains unconfirmed)'.padEnd(64, ' '),
         genres: ['International cinema preservation and restoration programme — '.repeat(10).slice(0, 512)],
         directors: ['Archive collective — '.repeat(30).slice(0, 512)],
-        runtime_minutes: Number.MAX_SAFE_INTEGER, liked_in: Number.MAX_SAFE_INTEGER,
+        liked_in: Number.MAX_SAFE_INTEGER,
         overview: 'The snapshot schema accepts these exact numeric and text limits. This row checks that contract rather than a typical film.',
       }),
     ];
@@ -197,7 +209,7 @@ export async function snapshotForDevModeInChunks(snapshot, mode, rankingFilms = 
     films[index] = film
       ? { ...film, _sourceListUrls: film._sourceListUrls ?? film.list_ids.map((id) => snapshot.source_lists[id]) }
       : syntheticFilm(base, index);
-    if (index > 0 && index % 2000 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
+    if (index > 0 && index % 500 === 0) await yieldToMainThread();
   }
   const listIndex = new Map();
   const canonicalListCache = new Map();
@@ -214,7 +226,7 @@ export async function snapshotForDevModeInChunks(snapshot, mode, rankingFilms = 
       return listIndex.get(url);
     });
     if (!film.watched) unwatchedCount += 1;
-    if (index > 0 && index % 2000 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
+    if (index > 0 && index % 500 === 0) await yieldToMainThread();
   }
   const stressSnapshot = {
     ...snapshot,

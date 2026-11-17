@@ -5,7 +5,7 @@ import { graphemePrefix } from '../web/display-text.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { bestRelevanceFilm, bestRelevanceFilmInChunks, buildSearchText, compareFilms, compareRelevance, filmDecade, matchesFilm, relevanceScore, sortFilmsByRelevanceInChunks } from '../web/catalog.js';
+import { bestRelevanceFilm, bestRelevanceFilmInChunks, buildSearchText, compareFilms, compareRelevance, filmDecade, matchesFilm, relevanceScore, sortFilmsByRelevanceInChunks, sortFilmsInChunks } from '../web/catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from '../web/snapshot.js';
 import { parseUrlState, urlForState } from '../web/url-state.js';
 import { maxSearchLength, truncateSearch } from '../web/url-state.js';
@@ -173,6 +173,10 @@ test('worst-case fixtures keep counts coherent and clear inherited optional TMDB
   assert.equal(Math.max(...worst.films.map((film) => film.liked_in)), worst.list_count);
   assert.equal(validateSnapshot(worst), worst);
   assert.equal(worst.films[0].list_ids.length, 12);
+  const longestRuntime = worst.films.find((film) => film.title === 'Beijing 2003');
+  assert.equal(longestRuntime.runtime_minutes, 9000);
+  assert.equal(longestRuntime.year, '2004');
+  assert.equal(worst.films.at(-1).title, 'Schema boundary: archive compilation');
   const sparseFilm = worst.films.find((film) => film.title === '🦊 Fox');
   assert.deepEqual(sparseFilm.directors, []);
   assert.deepEqual(sparseFilm.genres, []);
@@ -364,6 +368,7 @@ test('runtime labels format long durations as grouped days, hours, and minutes',
   assert.equal(runtimeLabelFor(1500), '1d 1h');
   assert.equal(runtimeLabelFor(5220), '3d 15h');
   assert.equal(runtimeLabelFor(1440 * 1234 + 61), '1,234d 1h 1m');
+  assert.equal(runtimeLabelFor(Number.MAX_SAFE_INTEGER), '6,254,999,482,459d 31m');
 });
 
 test('catalogue index merge keeps bootstrap synopsis for print and creates detail-only fields for other films', () => {
@@ -453,6 +458,17 @@ test('chunked relevance work keeps rank order and can cancel between batches', a
   const large = Array.from({ length: 4001 }, (_, index) => ({ title: `Film ${index}` }));
   assert.equal(await bestRelevanceFilmInChunks(large, 'missing', new Map(), () => true), undefined);
   assert.equal(await sortFilmsByRelevanceInChunks(large, 'missing', new Map(), () => true), undefined);
+});
+
+test('chunked catalogue sort is stable and can cancel between batches', async () => {
+  const films = [
+    { title: 'B', rank: 1 },
+    { title: 'A', rank: 2 },
+    { title: 'A', rank: 3 },
+  ];
+  assert.deepEqual(await sortFilmsInChunks(films, (left, right) => left.title.localeCompare(right.title)), [films[1], films[2], films[0]]);
+  const large = Array.from({ length: 4001 }, (_, rank) => ({ title: `Film ${4000 - rank}`, rank }));
+  assert.equal(await sortFilmsInChunks(large, (left, right) => left.title.localeCompare(right.title), () => true), undefined);
 });
 
 test('original language filter supports known and unknown language codes', () => {

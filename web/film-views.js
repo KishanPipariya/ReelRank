@@ -347,6 +347,7 @@ async function updateFailedPosterGalleryAction(film, failedPosterUrl) {
 }
 
 function restoreDetailPosterAfterRetry(film, posterUrl) {
+  rememberResponsivePosterFailure(film, posterUrl);
   failedPosterUrlsByFilm.get(film)?.delete(posterUrl);
   if (posterViewerDialog.open && activePosterFilm === film) {
     const option = [...posterViewerGallery.querySelectorAll('.poster-viewer-option')]
