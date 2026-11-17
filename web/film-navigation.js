@@ -3,6 +3,8 @@ import { fitStateUrlBudget } from './url-state.js';
 
 const localIds = new WeakMap();
 const localFingerprints = new WeakMap();
+const filmLookups = new WeakMap();
+const ambiguousFilm = Symbol('ambiguous film identifier');
 
 function localFingerprint(film) {
   if (localFingerprints.has(film)) return localFingerprints.get(film);
@@ -52,7 +54,8 @@ function letterboxdIdentifier(url) {
   return hashLetterboxdUrl(stableUrl);
 }
 
-export function registerFilmIdentifiers(films) {
+export function registerFilmIdentifiers(films, { buildLookup = true } = {}) {
+  if (filmLookups.has(films)) return;
   const tmdbOccurrences = new Map();
   for (const film of films) {
     if (film.letterboxd_url || !Number.isSafeInteger(film.tmdb_id)) continue;
@@ -68,6 +71,45 @@ export function registerFilmIdentifiers(films) {
     occurrences.set(key, occurrence);
     localIds.set(film, `${key}:${occurrence}`);
   }
+  if (!buildLookup) return;
+  const lookup = new Map();
+  const add = (key, film) => {
+    if (!key) return;
+    if (lookup.has(key) && lookup.get(key) !== film) lookup.set(key, ambiguousFilm);
+    else lookup.set(key, film);
+  };
+  for (const film of films) {
+    const url = film.letterboxd_url;
+    if (typeof url === 'string' && url) {
+      add(url, film);
+      // Canonical URLs are already the stable ID. Normalize only legacy aliases.
+      if (!/^https:\/\/letterboxd\.com\/film\/[^/?#]+\/$/.test(url)) add(canonicalLetterboxdFilmUrl(url), film);
+      if (new URLSearchParams({ film: url }).toString().length > 4000) add(filmIdentifier(film), film);
+    } else add(filmIdentifier(film), film);
+  }
+  filmLookups.set(films, lookup);
+}
+
+export async function registerFilmIdentifiersInChunks(films) {
+  registerFilmIdentifiers(films, { buildLookup: false });
+  if (filmLookups.has(films)) return;
+  const lookup = new Map();
+  const add = (key, film) => {
+    if (!key) return;
+    if (lookup.has(key) && lookup.get(key) !== film) lookup.set(key, ambiguousFilm);
+    else lookup.set(key, film);
+  };
+  for (let index = 0; index < films.length; index += 1) {
+    const film = films[index];
+    const url = film.letterboxd_url;
+    if (typeof url === 'string' && url) {
+      add(url, film);
+      if (!/^https:\/\/letterboxd\.com\/film\/[^/?#]+\/$/.test(url)) add(canonicalLetterboxdFilmUrl(url), film);
+      if (new URLSearchParams({ film: url }).toString().length > 4000) add(filmIdentifier(film), film);
+    } else add(filmIdentifier(film), film);
+    if (index > 0 && index % 2000 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  filmLookups.set(films, lookup);
 }
 
 function tmdbIdentifier(film) {
@@ -83,6 +125,11 @@ export function filmIdentifier(film) {
 }
 
 export function findFilmByIdentifier(films, key) {
+  const lookup = filmLookups.get(films);
+  if (lookup?.has(key)) {
+    const indexed = lookup.get(key);
+    return indexed === ambiguousFilm ? undefined : indexed;
+  }
   const exact = films.filter((film) => filmIdentifier(film) === key || film.letterboxd_url === key);
   if (exact.length) return exact.length === 1 ? exact[0] : undefined;
   if (/^letterboxd:[0-9a-f]{16}$/i.test(key)) {

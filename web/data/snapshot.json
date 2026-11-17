@@ -3,9 +3,9 @@
   "username": "intelkishan",
   "profile_url": "https://letterboxd.com/intelkishan/",
   "refreshed_at": "2026-11-13T16:32:20Z",
-  "poster_gallery_url": "/data/local/poster-galleries-20261113T163220Z-c7ccdffc20e0.json",
-  "ranking_csv_url": "/data/local/ranking-20261113T163220Z-5c7aac085816.csv",
-  "ranking_gzip_url": "/data/local/ranking-20261113T163220Z-5c7aac085816.csv.gz",
+  "poster_gallery_url": "/data/poster-galleries-20261113T163220Z-c7ccdffc20e0.json",
+  "ranking_csv_url": "/data/ranking-20261113T163220Z-5c7aac085816.csv",
+  "ranking_gzip_url": "/data/ranking-20261113T163220Z-5c7aac085816.csv.gz",
   "list_count": 234,
   "film_count": 35855,
   "displayed_film_count": 500,
@@ -39579,6 +39579,5 @@
     "https://letterboxd.com/official/list/top-50-austrian-films/",
     "https://letterboxd.com/official/list/top-50-heroic-bloodshed-films/"
   ],
-  "local_metadata_edition": true,
   "catalogue_index_url": "/data/catalogue-index-27d3b70d47e6.json"
 }

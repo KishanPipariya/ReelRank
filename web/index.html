@@ -82,7 +82,7 @@
           </div>
         </section>
 
-        <section class="summary" aria-label="Snapshot summary">
+        <section class="summary" aria-label="Snapshot summary" dir="ltr">
           <div class="summary-item"><strong id="film-total"></strong><span id="film-total-label">films found</span></div>
           <div class="summary-divider"></div>
           <div class="summary-item"><strong id="list-total"></strong><span id="list-total-label">liked lists scanned</span></div>
@@ -132,7 +132,8 @@
                 </div>
                 <details id="catalog-filters" class="catalog-filters">
                   <summary class="catalog-filters-toggle" aria-label="Refine results">
-                    <span>Refine results</span>
+                    <span class="catalogue-tools-full-label">Refine results</span>
+                    <span class="catalogue-tools-short-label" aria-hidden="true">Refine</span>
                     <span id="catalog-filter-count" class="catalog-filter-count" hidden></span>
                   </summary>
                   <div class="catalog-filters-panel">
@@ -257,8 +258,9 @@
                   </div>
                 </details>
                 <details id="catalogue-tools" class="catalogue-tools-disclosure">
-                  <summary class="catalog-filters-toggle">
-                    <span>Catalogue tools</span>
+                  <summary class="catalog-filters-toggle" aria-label="Catalogue tools">
+                    <span class="catalogue-tools-full-label">Catalogue tools</span>
+                    <span class="catalogue-tools-short-label" aria-hidden="true">Tools</span>
                   </summary>
                   <div class="catalogue-tools-panel">
                     <p class="catalogue-tools-intro">Save views, share or print a selection, download the catalogue, and change display settings.</p>
@@ -449,6 +451,7 @@
         </figure>
         <p id="poster-viewer-feedback" class="poster-viewer-status" role="status" aria-live="polite"></p>
         <button id="poster-viewer-retry" class="poster-viewer-zoom" type="button" hidden>Retry poster</button>
+        <button id="poster-viewer-gallery-retry" class="poster-viewer-zoom" type="button" hidden>Retry poster list</button>
         <p id="poster-viewer-status" class="poster-viewer-status" role="status" aria-live="polite"></p>
         <div id="poster-viewer-gallery" class="poster-viewer-gallery" role="group" aria-label="Choose a poster" hidden></div>
       </div>

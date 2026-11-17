@@ -220,6 +220,11 @@ def _validate_schema(value: object, schema: dict, root: dict | None = None, path
         for field, child_schema in schema.get("properties", {}).items():
             if field in value:
                 _validate_schema(value[field], child_schema, root, f"{path}.{field}")
+    if isinstance(value, list):
+        if len(value) < schema.get("minItems", 0):
+            raise ValueError(f"{path} has too few items")
+        if len(value) > schema.get("maxItems", float("inf")):
+            raise ValueError(f"{path} has too many items")
     if isinstance(value, list) and "items" in schema:
         for index, item in enumerate(value):
             _validate_schema(item, schema["items"], root, f"{path}[{index}]")
@@ -483,6 +488,11 @@ def create_snapshot(
 def public_snapshot_from_full(snapshot: dict, featured_limit: int = 500) -> dict:
     """Return the deployable top-film edition from a fully enriched local snapshot."""
     public_snapshot = {key: value for key, value in snapshot.items()}
+    public_snapshot.pop("local_metadata_edition", None)
+    for key in ("catalogue_index_url", "poster_gallery_url", "ranking_csv_url", "ranking_gzip_url"):
+        value = public_snapshot.get(key)
+        if isinstance(value, str) and value.startswith("/data/local/"):
+            public_snapshot[key] = value.replace("/data/local/", "/data/", 1)
     public_snapshot["_catalogue_index_films"] = [dict(film) for film in snapshot["films"]]
     public_snapshot["_catalogue_index_source_lists"] = list(snapshot["source_lists"])
     films = [dict(film) for film in snapshot["films"][:featured_limit]]
@@ -531,6 +541,8 @@ def _catalogue_index_assets(snapshot: dict, output: Path) -> tuple[str, bytes, d
         return None
     if len(full_ranking) != snapshot["film_count"]:
         raise ValueError("Snapshot catalogue index does not contain the declared full ranking")
+    if len(full_ranking) > 100_000:
+        raise ValueError("Catalogue index cannot contain more than 100,000 films")
 
     metadata_films = snapshot.get("_catalogue_index_films", snapshot["films"])
     if not isinstance(metadata_films, list):
@@ -554,6 +566,10 @@ def _catalogue_index_assets(snapshot: dict, output: Path) -> tuple[str, bytes, d
     source_lists = snapshot.get("_catalogue_index_source_lists")
     if not isinstance(source_lists, list):
         source_lists = list(dict.fromkeys(url for result in full_ranking for url in result.lists))
+    if len(source_lists) > 100_000:
+        raise ValueError("Catalogue index cannot contain more than 100,000 source lists")
+    if any(not isinstance(url, str) or len(url) > 512 for url in source_lists):
+        raise ValueError("Catalogue index source list URLs exceed the supported text length")
     source_list_index = {url: index for index, url in enumerate(source_lists)}
     if len(source_list_index) != len(source_lists):
         raise ValueError("Catalogue index source lists cannot contain duplicates")
@@ -589,6 +605,11 @@ def _catalogue_index_assets(snapshot: dict, output: Path) -> tuple[str, bytes, d
         countries = metadata.get("countries", [])
         if not all(isinstance(values, list) and all(isinstance(value, str) for value in values) for values in (genres, directors, countries)):
             raise ValueError(f"Catalogue index film {rank} has invalid metadata arrays")
+        for field, values in (("genres", genres), ("directors", directors), ("countries", countries)):
+            if len(values) > 1_000 or any(len(value) > 512 for value in values):
+                raise ValueError(f"Catalogue index film {rank} has unsupported {field} values")
+        if len(lists) > 100_000:
+            raise ValueError(f"Catalogue index film {rank} has too many source lists")
 
         row = {
             "letterboxd_url": canonical_url,
@@ -614,6 +635,17 @@ def _catalogue_index_assets(snapshot: dict, output: Path) -> tuple[str, bytes, d
             "list_ids": [source_list_index[url] for url in lists],
             "has_poster_gallery": has_gallery,
         }
+        string_limits = {
+            "title": 1024, "original_title": 1024, "letterboxd_title": 1024,
+            "year": 64, "letterboxd_year": 64, "original_language": 64,
+            "poster_url": 2048, "tmdb_url": 2048, "metadata_fetched_at": 128,
+        }
+        for field, maximum in string_limits.items():
+            value = row[field]
+            if not isinstance(value, str) or len(value) > maximum:
+                raise ValueError(f"Catalogue index film {rank} has unsupported {field}")
+        if len(canonical_url) > 2048:
+            raise ValueError(f"Catalogue index film {rank} has an overlong Letterboxd URL")
         if canonical_url not in bootstrap_urls:
             overview = metadata.get("overview")
             if isinstance(overview, str) and overview.strip():
@@ -642,6 +674,10 @@ def _catalogue_index_assets(snapshot: dict, output: Path) -> tuple[str, bytes, d
         existing = string_index.get(value)
         if existing is not None:
             return existing
+        if len(strings) >= 1_000_000:
+            raise ValueError("Catalogue index string table cannot contain more than 1,000,000 values")
+        if len(value) > 2048:
+            raise ValueError(f"Catalogue index {field} exceeds the supported text length")
         index = len(strings)
         strings.append(value)
         string_index[value] = index

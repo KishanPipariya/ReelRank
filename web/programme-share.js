@@ -1,13 +1,6 @@
 import { fitStateUrlBudget, maxStateUrlLength, parseUrlState, urlForState } from './url-state.js';
 import { graphemePrefix } from './display-text.js';
-
-function languageLabel(code) {
-  if (code === 'unknown') return 'Unknown language';
-  try {
-    const name = new Intl.DisplayNames(['en'], { type: 'language' }).of(code);
-    return name && name.toLocaleLowerCase() !== code.toLocaleLowerCase() ? name : `Unknown (${code})`;
-  } catch { return `Unknown (${code})`; }
-}
+import { languageLabel } from './language-label.js';
 
 export function programmeStateOmissions(href, state, query) {
   const restored = parseUrlState(new URL(href).search);
@@ -48,6 +41,8 @@ export function programmeShare(href, state, query, sourceLists = [], publicSiteU
   const descriptionExcerpt = graphemePrefix(fullDescription, 120);
   const description = descriptionExcerpt === fullDescription ? fullDescription : `${descriptionExcerpt}…`;
   const current = new URL(href);
+  const localFixture = ['localhost', '127.0.0.1', '[::1]'].includes(current.hostname)
+    && ['worst', 'empty', 'one', '100000'].includes(current.searchParams.get('data'));
   let base = current;
   if (typeof publicSiteUrl === 'string' && publicSiteUrl.trim()) {
     try {
@@ -66,6 +61,7 @@ export function programmeShare(href, state, query, sourceLists = [], publicSiteU
   const url = sharedUrl.href;
   const shareable = url.length <= maxStateUrlLength
     && programmeStateIsPreserved(url, state, query)
-    && sharedUrl.pathname === path;
-  return { description, url: shareable ? url : '', reducedUrl: url, shareable };
+    && sharedUrl.pathname === path
+    && !localFixture;
+  return { description, url: shareable ? url : '', reducedUrl: url, shareable, localFixture };
 }

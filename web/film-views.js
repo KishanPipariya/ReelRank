@@ -64,12 +64,13 @@ export function createFilmViews(dependencies) {
     originalFilmFactsFor, sourceListNotesFor, filmProgrammeNotesFor,
     filmDetailContent, filmDetailDialog, lockModalScroll, unlockModalScroll, registerBackdropDismiss, getCurrentMatchingFilms,
     posterViewerDialog, posterViewerImage, posterViewerTitle, posterViewerCaption,
-    posterViewerZoom, posterViewerClose, posterViewerStatus, posterViewerFeedback, posterViewerRetry, posterViewerGallery,
+    posterViewerZoom, posterViewerClose, posterViewerStatus, posterViewerFeedback, posterViewerRetry, posterViewerGalleryRetry, posterViewerGallery,
     getSnapshotRefreshedAt,
     getPosterGalleryUrl,
     loadFilmDetails,
     rememberPosterChoice,
     resetPosterChoice,
+    hasPosterChoice,
     onFilmDetailChange,
     getFilmShareUrl,
   } = dependencies;
@@ -82,8 +83,10 @@ let posterPreviewRequest = 0;
 let activePosterFilm = null;
 let posterViewerOpener = null;
 let retryPosterPreview = null;
+let retryPosterGallery = null;
 const featuredFilmByFilm = new WeakMap();
 const failedPosterUrlsByFilm = new WeakMap();
+const posterUrlsWithoutResponsiveCandidatesByFilm = new WeakMap();
 
 function posterUrlFailed(film, url) {
   return Boolean(url && failedPosterUrlsByFilm.get(film)?.has(url));
@@ -95,6 +98,16 @@ function rememberFailedPosterUrl(film, url) {
   if (!failedUrls) {
     failedUrls = new Set();
     failedPosterUrlsByFilm.set(film, failedUrls);
+  }
+  failedUrls.add(url);
+}
+
+function rememberResponsivePosterFailure(film, url) {
+  if (!url) return;
+  let failedUrls = posterUrlsWithoutResponsiveCandidatesByFilm.get(film);
+  if (!failedUrls) {
+    failedUrls = new Set();
+    posterUrlsWithoutResponsiveCandidatesByFilm.set(film, failedUrls);
   }
   failedUrls.add(url);
 }
@@ -200,16 +213,20 @@ async function previewPoster(film, url, { save = false, caption = '', canonicalU
   return true;
 }
 
-function openPosterViewer(film, showGallery = false, retryUrl = '') {
+function openPosterViewer(film, showGallery = false, retryUrl = '', { retryGallery = false } = {}) {
   const posterUrl = safeUrl(retryUrl || film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
   const request = ++posterGalleryRequest;
   posterPreviewRequest += 1;
   activePosterFilm = film;
   posterViewerOpener = document.activeElement;
   retryPosterPreview = null;
+  retryPosterGallery = null;
   posterViewerRetry.hidden = true;
+  posterViewerGalleryRetry.hidden = true;
   posterViewerRetry.textContent = 'Retry poster';
   posterViewerRetry.removeAttribute('aria-disabled');
+  posterViewerGalleryRetry.textContent = 'Retry poster list';
+  posterViewerGalleryRetry.removeAttribute('aria-disabled');
   posterViewerFeedback.textContent = '';
   posterViewerTitle.textContent = `${film.title} poster`;
   posterViewerDialog.classList.toggle('has-gallery', showGallery);
@@ -242,14 +259,14 @@ function openPosterViewer(film, showGallery = false, retryUrl = '') {
       void updateFailedPosterGalleryAction(film, posterUrl);
     });
   }
-  if (showGallery) void loadPosterGallery(film, posterUrl, request);
+  if (showGallery) void loadPosterGallery(film, posterUrl, request, { retry: retryGallery });
 }
 
-async function loadPosterGalleryData() {
+async function loadPosterGalleryData({ retry = false } = {}) {
   const galleryUrl = getPosterGalleryUrl();
   if (!galleryUrl) return null;
   if (!posterGalleryDataPromise) {
-    posterGalleryDataPromise = fetch(galleryUrl, { cache: 'force-cache' })
+    posterGalleryDataPromise = fetch(galleryUrl, { cache: retry ? 'no-store' : 'force-cache' })
       .then((response) => response.ok ? response.json() : null)
       .catch(() => null);
   }
@@ -286,32 +303,30 @@ function posterOptionsForFilm(film, currentPosterUrl, records) {
 async function updateFailedPosterGalleryAction(film, failedPosterUrl) {
   const button = filmDetailContent.querySelector('.film-detail-browse-posters');
   if (!button || detailFilm !== film || !Number.isSafeInteger(film.tmdb_id)) return;
-  button.disabled = true;
+  button.setAttribute('aria-disabled', 'true');
   button.setAttribute('aria-busy', 'true');
   button.textContent = 'Checking poster options…';
   const payload = await loadPosterGalleryData();
   if (!button.isConnected || detailFilm !== film) return;
+  const currentPosterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
+  if (currentPosterUrl !== failedPosterUrl) {
+    button.removeAttribute('aria-busy');
+    button.removeAttribute('aria-disabled');
+    return;
+  }
   button.removeAttribute('aria-busy');
-  button.disabled = false;
+  button.removeAttribute('aria-disabled');
   const status = filmDetailContent.querySelector('.film-detail-gallery-status');
   if (!payload) {
-    if (posterUrlFailed(film, failedPosterUrl)) {
-      delete button.dataset.retryGallery;
-      button.dataset.retryPosterUrl = failedPosterUrl;
-      button.textContent = 'Retry poster';
-      button.setAttribute('aria-label', `Retry the poster for ${film.title}`);
-      enablePosterViewerRetry(film, failedPosterUrl);
-    } else {
-      delete button.dataset.retryPosterUrl;
-      button.dataset.retryGallery = 'true';
-      button.textContent = 'Retry poster list';
-      button.setAttribute('aria-label', `Retry loading alternate posters for ${film.title}`);
-    }
+    delete button.dataset.retryPosterUrl;
+    button.dataset.retryGallery = 'true';
+    button.textContent = 'Retry poster list';
+    button.setAttribute('aria-label', `Retry loading alternate posters for ${film.title}`);
     if (status) status.textContent = 'Alternate posters could not be checked.';
     if (posterViewerDialog.open && activePosterFilm === film) {
       posterViewerStatus.textContent = posterUrlFailed(film, failedPosterUrl)
-        ? 'Alternate posters could not be loaded. Retry the original poster above.'
-        : 'Alternate posters could not be loaded.';
+        ? 'Alternate posters could not be loaded. Retry the poster list below.'
+        : 'Alternate posters could not be loaded. Retry the poster list below.';
     }
     return;
   }
@@ -320,14 +335,10 @@ async function updateFailedPosterGalleryAction(film, failedPosterUrl) {
   const records = payload.galleries?.[String(film.tmdb_id)];
   const alternatives = posterOptionsForFilm(film, failedPosterUrl, records).some((poster) => !poster.current);
   if (!alternatives) {
-    if (!posterUrlFailed(film, failedPosterUrl)) {
-      button.remove();
-      return;
-    }
-    delete button.dataset.retryGallery;
-    button.dataset.retryPosterUrl = failedPosterUrl;
-    button.textContent = 'Retry poster';
-    button.setAttribute('aria-label', `Retry the poster for ${film.title}`);
+    button.setAttribute('aria-disabled', 'true');
+    button.textContent = 'No alternate posters available';
+    button.setAttribute('aria-label', `No alternate posters are available for ${film.title}`);
+    if (status) status.textContent = 'No alternate posters are available.';
     return;
   }
   delete button.dataset.retryPosterUrl;
@@ -357,7 +368,7 @@ function restoreDetailPosterAfterRetry(film, posterUrl) {
     retryPosterPreview = null;
   }
   if (detailFilm !== film) return;
-  filmDetailContent.querySelector('.film-detail-poster')?.replaceWith(detailPosterFor(film, posterUrl));
+  filmDetailContent.querySelector('.film-detail-poster')?.replaceWith(detailPosterFor(film, posterUrl, '', { responsive: false }));
   void updateFailedPosterGalleryAction(film, posterUrl);
 }
 
@@ -378,21 +389,50 @@ function enablePosterViewerRetry(film, posterUrl) {
   };
 }
 
-async function loadPosterGallery(film, currentPosterUrl, request) {
+function enablePosterGalleryRetry(film, currentPosterUrl) {
+  posterViewerGalleryRetry.hidden = false;
+  posterViewerGalleryRetry.textContent = 'Retry poster list';
+  posterViewerGalleryRetry.removeAttribute('aria-disabled');
+  retryPosterGallery = async () => {
+    if (!posterViewerDialog.open || activePosterFilm !== film) return;
+    const retryHadFocus = document.activeElement === posterViewerGalleryRetry;
+    posterGalleryDataPromise = undefined;
+    const request = ++posterGalleryRequest;
+    posterViewerGallery.replaceChildren();
+    posterViewerGallery.hidden = true;
+    posterViewerGalleryRetry.setAttribute('aria-disabled', 'true');
+    posterViewerGalleryRetry.textContent = 'Loading poster list…';
+    posterViewerStatus.textContent = 'Loading alternate posters…';
+    await loadPosterGallery(film, currentPosterUrl, request, { retry: true });
+    if (!posterViewerDialog.open || activePosterFilm !== film) return;
+    if (posterViewerGalleryRetry.getAttribute('aria-disabled') === 'true') {
+      posterViewerGalleryRetry.removeAttribute('aria-disabled');
+      posterViewerGalleryRetry.textContent = 'Retry poster list';
+    }
+    if (retryHadFocus && document.activeElement === document.body) {
+      const firstOption = posterViewerGallery.querySelector('.poster-viewer-option');
+      if (firstOption) firstOption.focus();
+      else posterViewerClose.focus();
+    }
+  };
+}
+
+async function loadPosterGallery(film, currentPosterUrl, request, { retry = false } = {}) {
   const galleryUrl = getPosterGalleryUrl();
   if (!galleryUrl || !Number.isSafeInteger(film.tmdb_id)) {
     posterViewerStatus.textContent = 'Alternate posters are not available for this film.';
     return;
   }
-  const payload = await loadPosterGalleryData();
+  const payload = await loadPosterGalleryData({ retry });
   if (request !== posterGalleryRequest) return;
   if (!payload) {
     posterViewerStatus.textContent = posterUrlFailed(film, currentPosterUrl)
-      ? 'Alternate posters could not be loaded. Retry the original poster above.'
-      : 'Alternate posters could not be loaded.';
-    if (posterUrlFailed(film, currentPosterUrl)) enablePosterViewerRetry(film, currentPosterUrl);
+      ? 'Alternate posters could not be loaded. Retry the poster list below.'
+      : 'Alternate posters could not be loaded. Retry the poster list below.';
+    enablePosterGalleryRetry(film, currentPosterUrl);
     return;
   }
+  if (detailFilm === film) void updateFailedPosterGalleryAction(film, currentPosterUrl);
 
   const records = payload.galleries?.[String(film.tmdb_id)];
   const posters = posterOptionsForFilm(film, currentPosterUrl, records);
@@ -400,6 +440,8 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
   const hasAlternatePoster = posters.some((poster) => !poster.current);
   if (!posters.length || (hasCurrentPoster && !hasAlternatePoster)) {
     posterViewerStatus.textContent = 'No alternate posters are available for this film.';
+    posterViewerGalleryRetry.hidden = true;
+    retryPosterGallery = null;
     return;
   }
 
@@ -469,6 +511,8 @@ async function loadPosterGallery(film, currentPosterUrl, request) {
   });
   posterViewerGallery.hidden = false;
   posterViewerGallery.scrollLeft = 0;
+  posterViewerGalleryRetry.hidden = true;
+  retryPosterGallery = null;
 }
 
 posterViewerZoom.addEventListener('click', () => {
@@ -490,6 +534,10 @@ posterViewerRetry.addEventListener('click', () => {
   if (posterViewerRetry.getAttribute('aria-disabled') === 'true') return;
   void retryPosterPreview?.();
 });
+posterViewerGalleryRetry.addEventListener('click', () => {
+  if (posterViewerGalleryRetry.getAttribute('aria-disabled') === 'true') return;
+  void retryPosterGallery?.();
+});
 function dismissPosterViewer() {
   if (!posterViewerDialog.open) return;
   posterViewerOpener = null;
@@ -503,7 +551,9 @@ posterViewerDialog.addEventListener('close', () => {
   posterGalleryRequest += 1;
   activePosterFilm = null;
   retryPosterPreview = null;
+  retryPosterGallery = null;
   posterViewerRetry.hidden = true;
+  posterViewerGalleryRetry.hidden = true;
   posterViewerRetry.textContent = 'Retry poster';
   posterViewerRetry.removeAttribute('aria-disabled');
   posterViewerImage.parentElement.removeAttribute('aria-busy');
@@ -681,11 +731,40 @@ function refreshFilmNavigation() {
   }
 }
 
+function filmNotesBodyForDetails() {
+  let body = filmDetailContent.querySelector('.film-notes-body');
+  if (body) return body;
+  const supporting = filmDetailContent.querySelector('.film-detail-supporting');
+  if (!supporting) return null;
+  const notes = document.createElement('section');
+  notes.className = 'film-notes';
+  notes.setAttribute('aria-label', 'Film details');
+  const heading = document.createElement('h3');
+  heading.className = 'film-notes-heading';
+  heading.textContent = 'Film details';
+  body = document.createElement('div');
+  body.className = 'film-notes-body';
+  notes.append(heading, body);
+  supporting.prepend(notes);
+  return body;
+}
+
+function filmDetailsRetryButton(film) {
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.className = 'film-detail-external-link';
+  retry.textContent = 'Retry';
+  retry.addEventListener('click', () => {
+    if (film.detail_load_status !== 'loading') loadDetailsForFilm(film, { retry: true });
+  });
+  return retry;
+}
+
 function updateFilmDetailSynopsis(film) {
   const status = filmDetailContent.querySelector('.film-detail-metadata-status');
   const hadRetryFocus = status?.querySelector('button') === document.activeElement;
-  const body = filmDetailContent.querySelector('.film-notes-body');
   const synopsisText = film.detail_overview;
+  const body = synopsisText ? filmNotesBodyForDetails() : filmDetailContent.querySelector('.film-notes-body');
   let synopsis = body?.querySelector('.film-note-synopsis');
   if (body && synopsisText && !synopsis) {
     const section = document.createElement('section');
@@ -711,13 +790,16 @@ function updateFilmDetailSynopsis(film) {
   const retry = status?.querySelector('button');
   if (film.detail_load_status === 'error') {
     if (statusText) statusText.textContent = 'Film synopsis could not load. ';
-    if (retry) {
-      retry.disabled = false;
-      retry.textContent = 'Retry';
+    const retryButton = retry || (status && filmDetailsRetryButton(film));
+    if (retryButton) {
+      retryButton.removeAttribute('aria-disabled');
+      retryButton.textContent = 'Retry';
+      if (!retry) status.append(retryButton);
     }
   } else {
     if (statusText) statusText.textContent = 'Loading synopsis…';
     if (retry) {
+      retry.setAttribute('aria-disabled', 'true');
       retry.textContent = 'Loading…';
     }
   }
@@ -739,7 +821,7 @@ function loadDetailsForFilm(film, { retry = false } = {}) {
   });
 }
 
-function detailPosterFor(film, posterUrl) {
+function detailPosterFor(film, posterUrl, retryUrl = '', { responsive = true } = {}) {
   const poster = document.createElement(posterUrl ? 'button' : 'div');
   poster.className = `film-detail-poster${posterUrl ? ' film-detail-poster-trigger' : ''}`;
   if (posterUrl) {
@@ -748,7 +830,7 @@ function detailPosterFor(film, posterUrl) {
     poster.addEventListener('click', () => openPosterViewer(film));
     const image = document.createElement('img');
     image.src = posterUrl;
-    responsivePosterAttrs(image, posterUrl, '(max-width: 640px) 30vw, 180px');
+    if (responsive) responsivePosterAttrs(image, posterUrl, '(max-width: 640px) 30vw, 180px');
     image.alt = '';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {
@@ -756,7 +838,7 @@ function detailPosterFor(film, posterUrl) {
       // from the detached original so it cannot offer a retry for stale art.
       if (!poster.isConnected || detailFilm !== film || poster.querySelector('img') !== image || image.src !== posterUrl) return;
       rememberFailedPosterUrl(film, posterUrl);
-      poster.replaceWith(detailPosterFor(film, ''));
+      poster.replaceWith(detailPosterFor(film, '', posterUrl));
       void updateFailedPosterGalleryAction(film, posterUrl);
       enablePosterViewerRetry(film, posterUrl);
     }, { once: true });
@@ -769,6 +851,39 @@ function detailPosterFor(film, posterUrl) {
     poster.append(cue);
   } else {
     poster.append(posterFallbackFor(film, 'poster-fallback film-detail-poster-fallback'));
+    if (retryUrl) {
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'film-detail-poster-retry';
+      retry.textContent = 'Retry poster';
+      retry.setAttribute('aria-label', `Retry loading the poster for ${film.title}`);
+      retry.addEventListener('click', () => {
+        if (retry.getAttribute('aria-disabled') === 'true') return;
+        retry.setAttribute('aria-disabled', 'true');
+        retry.textContent = 'Loading poster…';
+        const probe = new Image();
+        probe.referrerPolicy = 'no-referrer';
+        probe.onload = () => {
+          if (!poster.isConnected || detailFilm !== film || safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']) !== retryUrl) return;
+          const retryHadFocus = document.activeElement === retry;
+          failedPosterUrlsByFilm.get(film)?.delete(retryUrl);
+          rememberResponsivePosterFailure(film, retryUrl);
+          updatePosterForFilm(film, retryUrl, { restoreFocus: retryHadFocus, responsive: false });
+        };
+        probe.onerror = () => {
+          retry.removeAttribute('aria-disabled');
+          retry.textContent = 'Retry poster';
+          const status = poster.querySelector('.film-detail-poster-retry-status');
+          if (status) status.textContent = 'The poster could not load. Try again.';
+        };
+        probe.src = retryUrl;
+      });
+      const status = document.createElement('span');
+      status.className = 'film-detail-poster-retry-status';
+      status.setAttribute('role', 'status');
+      status.setAttribute('aria-live', 'polite');
+      poster.querySelector('.film-detail-poster-fallback')?.append(retry, status);
+    }
   }
   return poster;
 }
@@ -785,7 +900,9 @@ function renderFilmDetails(film, retainFocus = false) {
   const posterUrl = safeUrl(film.poster_url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
   const posterColumn = document.createElement('div');
   posterColumn.className = 'film-detail-poster-column';
-  const poster = detailPosterFor(film, posterUrl);
+  const poster = detailPosterFor(film, posterUrl, '', {
+    responsive: !posterUrlsWithoutResponsiveCandidatesByFilm.get(film)?.has(posterUrl),
+  });
   posterColumn.append(poster);
   if ((film.has_poster_gallery === true || (film.has_poster_gallery === undefined && Number.isSafeInteger(film.tmdb_id)))
       && Number.isSafeInteger(film.tmdb_id) && getPosterGalleryUrl()) {
@@ -795,13 +912,14 @@ function renderFilmDetails(film, retainFocus = false) {
     galleryButton.textContent = posterUrl ? 'View other posters' : 'Browse posters';
     galleryButton.setAttribute('aria-label', `${posterUrl ? 'View other posters for' : 'Browse posters for'} ${film.title}`);
     galleryButton.addEventListener('click', () => {
+      if (galleryButton.getAttribute('aria-disabled') === 'true') return;
       const retryUrl = galleryButton.dataset.retryPosterUrl;
       if (retryUrl) {
         failedPosterUrlsByFilm.get(film)?.delete(retryUrl);
         openPosterViewer(film, false, retryUrl);
         return;
       }
-      openPosterViewer(film, true);
+      openPosterViewer(film, true, '', { retryGallery: galleryButton.dataset.retryGallery === 'true' });
     });
     const galleryStatus = document.createElement('span');
     galleryStatus.className = 'film-detail-action-status film-detail-gallery-status';
@@ -813,9 +931,12 @@ function renderFilmDetails(film, retainFocus = false) {
   resetPosterButton.type = 'button'; resetPosterButton.className = 'film-detail-gallery-button';
   resetPosterButton.textContent = 'Reset poster';
   resetPosterButton.setAttribute('aria-label', `Reset poster for ${film.title} to the catalogue original`);
+  resetPosterButton.hidden = !hasPosterChoice(film);
   const resetStatus = document.createElement('span'); resetStatus.className = 'film-detail-action-status'; resetStatus.setAttribute('role', 'status'); resetStatus.setAttribute('aria-live', 'polite');
   resetPosterButton.addEventListener('click', () => {
-    resetStatus.textContent = resetPosterChoice(film)
+    const reset = resetPosterChoice(film);
+    resetPosterButton.hidden = !hasPosterChoice(film);
+    resetStatus.textContent = reset
       ? 'Poster reset to the catalogue original.'
       : 'Could not save the poster reset in this browser.';
   });
@@ -943,14 +1064,7 @@ function renderFilmDetails(film, retainFocus = false) {
     detailStatusCopy.className = 'film-detail-metadata-copy';
     if (film.detail_load_status === 'error') {
       detailStatusCopy.textContent = 'Film synopsis could not load. ';
-      const retry = document.createElement('button');
-      retry.type = 'button';
-      retry.className = 'film-detail-external-link';
-      retry.textContent = 'Retry';
-      retry.addEventListener('click', () => {
-        loadDetailsForFilm(film, { retry: true });
-      });
-      detailStatus.append(detailStatusCopy, retry);
+      detailStatus.append(detailStatusCopy, filmDetailsRetryButton(film));
     } else {
       detailStatusCopy.textContent = 'Loading synopsis…';
       detailStatus.append(detailStatusCopy);
@@ -967,6 +1081,7 @@ function renderFilmDetails(film, retainFocus = false) {
   const shareUrl = typeof filmShare === 'string' ? filmShare : filmShare.url;
   const shareDetails = document.createElement('details');
   shareDetails.className = 'film-detail-share';
+  shareDetails.hidden = Boolean(filmShare?.localFixture);
   const shareSummary = document.createElement('summary');
   const shareLabel = document.createElement('span');
   shareLabel.textContent = 'Share film link';
@@ -1087,6 +1202,7 @@ function ledgerRowFor(film) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'director-filter';
+      button.dir = 'auto';
       button.textContent = director;
       button.title = director;
       button.setAttribute('aria-pressed', String(state.directors.includes(director)));
@@ -1101,6 +1217,7 @@ function ledgerRowFor(film) {
       const more = document.createElement('button');
       more.type = 'button';
       more.className = 'director-more-button';
+      more.dir = 'ltr';
       more.textContent = `+${hiddenDirectors.length}`;
       more.setAttribute('aria-expanded', 'false');
       more.setAttribute('aria-label', `Show ${hiddenDirectors.length} more ${hiddenDirectors.length === 1 ? 'director' : 'directors'} for ${film.title}`);
@@ -1305,7 +1422,7 @@ function featuredFilmFor(film) {
   return feature;
 }
 
-function updatePosterForFilm(film, url) {
+function updatePosterForFilm(film, url, { restoreFocus = false, responsive = true } = {}) {
   const posterUrl = safeUrl(url, ['image.tmdb.org', 'ltrbxd.com', 'letterboxd.com']);
   // A newly chosen poster makes any failure state for the old choice stale.
   failedPosterUrlsByFilm.delete(film);
@@ -1315,12 +1432,23 @@ function updatePosterForFilm(film, url) {
     poster.prepend(featuredPosterMediaFor(film, posterUrl));
   }
   if (detailFilm !== film) return;
-  filmDetailContent.querySelector('.film-detail-poster')?.replaceWith(detailPosterFor(film, posterUrl));
+  filmDetailContent.querySelector('.film-detail-poster')?.replaceWith(detailPosterFor(film, posterUrl, '', { responsive }));
+  const resetButton = filmDetailContent.querySelector('.film-detail-gallery-button:not(.film-detail-browse-posters)');
+  const resetHadFocus = resetButton && document.activeElement === resetButton && !hasPosterChoice(film);
+  if (resetButton) resetButton.hidden = !hasPosterChoice(film);
   const galleryButton = filmDetailContent.querySelector('.film-detail-browse-posters');
   if (galleryButton) {
     delete galleryButton.dataset.retryPosterUrl;
+    galleryButton.removeAttribute('aria-disabled');
+    galleryButton.removeAttribute('aria-busy');
     galleryButton.textContent = posterUrl ? 'View other posters' : 'Browse posters';
     galleryButton.setAttribute('aria-label', `${posterUrl ? 'View other posters for' : 'Browse posters for'} ${film.title}`);
+    const galleryStatus = filmDetailContent.querySelector('.film-detail-gallery-status');
+    if (galleryStatus?.textContent === 'No alternate posters are available.') galleryStatus.textContent = '';
+  }
+  if (restoreFocus || resetHadFocus) {
+    const focusTarget = galleryButton || filmDetailDialog.querySelector('#film-detail-close');
+    focusTarget?.focus({ preventScroll: true });
   }
 }
 

@@ -5,13 +5,15 @@ import { graphemePrefix } from '../web/display-text.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildSearchText, compareFilms, compareRelevance, filmDecade, matchesFilm, relevanceScore } from '../web/catalog.js';
+import { bestRelevanceFilm, bestRelevanceFilmInChunks, buildSearchText, compareFilms, compareRelevance, filmDecade, matchesFilm, relevanceScore, sortFilmsByRelevanceInChunks } from '../web/catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from '../web/snapshot.js';
 import { parseUrlState, urlForState } from '../web/url-state.js';
+import { maxSearchLength, truncateSearch } from '../web/url-state.js';
+import { runtimeLabelFor } from '../web/runtime-label.js';
 import { createLocalPreferences, parsePresetImport } from '../web/local-preferences.js';
 import { catalogueCsv } from '../web/catalogue-download.js';
 import { editionFreshness, formatUpdatedAt } from '../web/edition-freshness.js';
-import { snapshotForDevMode } from '../web/dev-data.js';
+import { snapshotForDevMode, snapshotForDevModeInChunks } from '../web/dev-data.js';
 
 test('symbol-only searches match literal symbols and ignore emoji presentation selectors', () => {
   const fox = { title: '🦊 Fox ❤️', overview: 'A <restoration> with a different heart ❤.' };
@@ -22,6 +24,29 @@ test('symbol-only searches match literal symbols and ignore emoji presentation s
   assert.equal(matchesFilm(fox, { query: ' ' }), true);
   assert.equal(relevanceScore({ title: '🦊' }, '🦊'), 0);
   assert.equal(relevanceScore(fox, '🦊'), 1);
+});
+
+test('search query state is bounded for direct URLs by the input limit', () => {
+  const query = '🦊'.repeat(maxSearchLength + 25);
+  const parsed = parseUrlState(`?q=${encodeURIComponent(query)}`);
+  assert.equal(parsed.query.length, maxSearchLength);
+  assert.equal(Array.from(parsed.query).length, maxSearchLength / 2);
+  const roundTrip = urlForState('https://example.test/', { ...parseUrlState(''), genres: [], directors: [], sourceLists: [] }, 'a'.repeat(600));
+  assert.equal(new URL(roundTrip).searchParams.get('q'), 'a'.repeat(maxSearchLength));
+  const boundary = urlForState('https://example.test/', { ...parseUrlState(''), genres: [], directors: [], sourceLists: [] }, `${'x'.repeat(511)} y`);
+  const boundaryQuery = new URL(boundary).searchParams.get('q');
+  assert.equal(boundaryQuery, 'x'.repeat(511));
+  assert.equal(parseUrlState(`?q=${encodeURIComponent(boundaryQuery)}`).query, boundaryQuery);
+  const emojiBoundary = 'x'.repeat(510) + '👩🏽‍💻';
+  const safelyBounded = urlForState('https://example.test/', { ...parseUrlState(''), genres: [], directors: [], sourceLists: [] }, emojiBoundary);
+  const boundedEmojiQuery = new URL(safelyBounded).searchParams.get('q');
+  assert.equal(boundedEmojiQuery, 'x'.repeat(510));
+  assert.equal([...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(boundedEmojiQuery)].length, 510);
+});
+
+test('live search truncation keeps joined emoji graphemes whole', () => {
+  assert.equal(truncateSearch(`${'x'.repeat(500)}👩🏽‍💻`), `${'x'.repeat(500)}👩🏽‍💻`);
+  assert.equal(truncateSearch(`${'x'.repeat(511)}👩🏽‍💻`), 'x'.repeat(511));
 });
 
 test('emoji search matches whole graphemes and does not match parts of joined emoji', () => {
@@ -156,6 +181,20 @@ test('worst-case fixtures keep counts coherent and clear inherited optional TMDB
   assert.equal(sparseFilm.overview, '');
 });
 
+test('100,000-row stress data is built in chunks with coherent counts', async () => {
+  const rankingRows = fixture.films.map((film, index) => index === 0
+    ? { ...film, _sourceListUrls: ['https://www.letterboxd.com/test/list/old-links/?source=ranking'] }
+    : film);
+  const stress = await snapshotForDevModeInChunks(fixture, '100000', rankingRows);
+  assert.equal(stress.films.length, 100000);
+  assert.equal(stress.films[0].title, fixture.films[0].title);
+  assert.equal(stress.films.at(-1).title, 'Stress case film 100000');
+  assert.equal(stress.unwatched_count, stress.films.filter((film) => !film.watched).length);
+  assert.equal(stress.displayed_unwatched_count, stress.unwatched_count);
+  assert.deepEqual(stress.films[0]._sourceListUrls, ['https://letterboxd.com/test/list/old-links/']);
+  assert.ok(stress.source_lists.includes('https://letterboxd.com/test/list/old-links/'));
+});
+
 test('snapshot validation rejects unsafe profile, film, and list URLs and invalid edition times', () => {
   const externalProfile = structuredClone(fixture);
   externalProfile.profile_url = 'https://example.com/viewer/';
@@ -216,6 +255,15 @@ test('catalog search index includes searchable metadata and source list labels, 
   assert.equal(searchable.includes('a linguist arrives'), false);
   assert.equal(matchesFilm(film, { query: 'villeneuve' }, [], [], searchable), true);
   assert.equal(matchesFilm(film, { query: 'linguist' }, [], [], searchable), false);
+});
+
+test('Letterboxd display-title aliases are searchable and rank as title matches', () => {
+  const film = { title: 'Three Colors: Red', letterboxd_title: 'Three Colours: Red', year: '1994', original_title: 'Trois couleurs: Rouge' };
+  const searchText = buildSearchText(film);
+  assert.match(searchText, /three colours: red/);
+  assert.equal(matchesFilm(film, { query: 'Three Colours: Red' }, [], [], searchText), true);
+  assert.equal(relevanceScore(film, 'Three Colours: Red'), 0);
+  assert.equal(bestRelevanceFilm([film], 'Three Colours: Red', new Map([[film, 1]])), film);
 });
 
 test('catalog search folds Latin accents and punctuation and matches words in any order', () => {
@@ -291,6 +339,33 @@ test('catalogue index decodes compact rows and validates edition, URL, and shard
   assert.throws(() => validateCatalogueIndex(invalidStringId, snapshot), /invalid title string ID/);
 });
 
+test('catalogue index enforces field and metadata array limits', () => {
+  const { snapshot, index } = catalogueIndexFixture();
+  const longTitle = structuredClone(index);
+  longTitle.strings[1] = 'x'.repeat(1025);
+  assert.throws(() => validateCatalogueIndex(longTitle, snapshot), /overlong title/);
+  const manyGenres = structuredClone(index);
+  manyGenres.films[0][10] = Array(1001).fill(3);
+  assert.throws(() => validateCatalogueIndex(manyGenres, snapshot), /invalid genre IDs/);
+  const manyFilms = structuredClone(index);
+  manyFilms.films = Array(100001).fill(manyFilms.films[0]);
+  manyFilms.film_count = 100001;
+  assert.throws(() => validateCatalogueIndex(manyFilms, { ...snapshot, film_count: 100001 }), /too many items/);
+});
+
+test('snapshot validation enforces the 100,000 film collection limit', () => {
+  const snapshot = structuredClone(fixture);
+  const tooMany = { ...snapshot, films: Array(100001).fill(snapshot.films[0]), displayed_film_count: 100001 };
+  assert.throws(() => validateSnapshot(tooMany), /too many items/);
+});
+
+test('runtime labels format long durations as grouped days, hours, and minutes', () => {
+  assert.equal(runtimeLabelFor(90), '90 min');
+  assert.equal(runtimeLabelFor(1500), '1d 1h');
+  assert.equal(runtimeLabelFor(5220), '3d 15h');
+  assert.equal(runtimeLabelFor(1440 * 1234 + 61), '1,234d 1h 1m');
+});
+
 test('catalogue index merge keeps bootstrap synopsis for print and creates detail-only fields for other films', () => {
   const { snapshot, index } = catalogueIndexFixture();
   const merged = mergeCatalogueIndex(snapshot, validateCatalogueIndex(index, snapshot), { validated: true });
@@ -362,6 +437,24 @@ test('relevance prioritizes exact and title hits, then director hits, with stabl
   assert.deepEqual([tiedA, tiedB].sort((a,b) => compareRelevance(a,b,'amelie',tieRank)), [tiedB, tiedA]);
 });
 
+test('best relevance scan keeps the best rank and handles large arrays in one pass', () => {
+  const films = Array.from({ length: 100000 }, (_, index) => ({ title: `Movie ${index}` }));
+  const exact = { title: 'Target' };
+  films[50000] = exact;
+  const rank = new Map([[exact, 50000]]);
+  assert.equal(bestRelevanceFilm(films, 'Target', rank), exact);
+});
+
+test('chunked relevance work keeps rank order and can cancel between batches', async () => {
+  const films = [{ title: 'Other' }, { title: 'Target' }, { title: 'Target story' }];
+  const rank = new Map([[films[0], 0], [films[1], 2], [films[2], 1]]);
+  assert.equal(await bestRelevanceFilmInChunks(films, 'Target', rank), films[1]);
+  assert.deepEqual(await sortFilmsByRelevanceInChunks(films, 'Target', rank), [films[1], films[2], films[0]]);
+  const large = Array.from({ length: 4001 }, (_, index) => ({ title: `Film ${index}` }));
+  assert.equal(await bestRelevanceFilmInChunks(large, 'missing', new Map(), () => true), undefined);
+  assert.equal(await sortFilmsByRelevanceInChunks(large, 'missing', new Map(), () => true), undefined);
+});
+
 test('original language filter supports known and unknown language codes', () => {
   const known = { original_language: 'fr' };
   const unknown = {};
@@ -403,13 +496,13 @@ test('URL state serialization preserves unrelated parameters and supports repeat
   assert.equal(parseUrlState(url.search).runtime, '90-120');
 });
 
-test('URL state serialization keeps oversized searches out of the URL', () => {
+test('URL state serialization bounds oversized searches before writing the URL', () => {
   const state = {
     filter: 'all', sort: 'rank', genres: [], directors: [], sourceLists: [],
     country: '', language: '', decade: '', runtime: '', view: 'posters',
   };
   const url = urlForState('https://example.test/', state, 'archive note '.repeat(10000));
-  assert.equal(url.searchParams.has('q'), false);
+  assert.equal(url.searchParams.get('q'), 'archive note '.repeat(40).slice(0, maxSearchLength));
   assert.ok(url.href.length <= 7800);
   const incoming = urlForState(`https://example.test/?tracking=${'x'.repeat(9000)}`, state, 'short');
   assert.ok(incoming.href.length <= 7800);
@@ -469,6 +562,21 @@ test('shared programme language labels tolerate invalid codes in incoming URLs',
   const result = programmeShare('https://example.test/?language=!!!', state, '');
   assert.match(result.description, /Unknown \(!!!\)/);
   assert.equal(new URL(result.url).searchParams.get('language'), '!!!');
+});
+
+test('local synthetic fixtures cannot generate public programme links', async () => {
+  const { programmeShare } = await import('../web/programme-share.js');
+  const result = programmeShare('http://localhost:4173/?data=worst', parseUrlState(''), '');
+  assert.equal(result.shareable, false);
+  assert.equal(result.localFixture, true);
+  assert.equal(result.url, '');
+});
+
+test('TMDB language aliases and unknown codes use stable labels', async () => {
+  const { languageLabel } = await import('../web/language-label.js');
+  assert.equal(languageLabel('cn'), 'Cantonese');
+  assert.equal(languageLabel('xx'), 'No language');
+  assert.equal(languageLabel('!!!'), 'Unknown (!!!)');
 });
 
 

@@ -7,8 +7,8 @@
     "username": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
     "refreshed_at": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "\\S" },
     "film_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
-    "strings": { "type": "array", "items": { "type": "string", "maxLength": 20000 } },
-    "source_lists": { "type": "array", "items": { "type": "string", "maxLength": 512 } },
+    "strings": { "type": "array", "maxItems": 1000000, "items": { "type": "string", "maxLength": 2048 } },
+    "source_lists": { "type": "array", "maxItems": 100000, "items": { "type": "string", "maxLength": 512 } },
     "detail_shards": {
       "type": "array",
       "minItems": 128,
@@ -20,7 +20,7 @@
         ]
       }
     },
-    "films": { "type": "array", "items": { "type": "array", "minItems": 23, "maxItems": 23 } }
+    "films": { "type": "array", "maxItems": 100000, "items": { "type": "array", "minItems": 23, "maxItems": 23 } }
   },
   "additionalProperties": false
 }

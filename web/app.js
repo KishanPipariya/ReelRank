@@ -1,10 +1,11 @@
 import { sourceListLabel } from './source-list-label.js';
 import { graphemePrefix } from './display-text.js';
+import { runtimeLabelFor } from './runtime-label.js';
 import { programmeShare, programmeStateOmissions } from './programme-share.js';
-import { buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, createCatalogueSelection, filmDecade, matchesFilm } from './catalog.js';
+import { bestRelevanceFilmInChunks, buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, createCatalogueSelection, filmDecade, matchesFilm, sortFilmsByRelevanceInChunks } from './catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from './snapshot.js';
 import { cardFor as createFilmCard, updateFilmCard, setGenreLabel } from './film-components.js';
-import { fitStateUrlBudget, parseUrlState, urlForState } from './url-state.js';
+import { fitStateUrlBudget, maxSearchLength, parseUrlState, truncateSearch, urlForState } from './url-state.js';
 import { createFilterControls } from './filter-controls.js';
 import { createFilmViews } from './film-views.js';
 import { createDirectorFilmography } from './director-filmography.js';
@@ -12,13 +13,14 @@ import { countLanguages, createContextualFacetCounter } from './facet-counts.js'
 import { createProgrammePrinter } from './print-programme.js';
 import { createLocalPreferences } from './local-preferences.js';
 import { compareRelevance } from './catalog.js';
-import { createFilmNavigation, entryMetadata, filmDetailUrl, filmIdentifier, registerFilmIdentifiers, findFilmByIdentifier } from './film-navigation.js';
+import { createFilmNavigation, entryMetadata, filmDetailUrl, filmIdentifier, registerFilmIdentifiers, registerFilmIdentifiersInChunks, findFilmByIdentifier } from './film-navigation.js';
 import { updateEditionFreshness, formatUpdatedAt } from './edition-freshness.js';
 import { downloadCatalogueCsv } from './catalogue-download.js';
 import { bindSavedViewControls } from './saved-views.js';
 import { loadFullRanking } from './ranking-csv.js';
 import { createFilmDetailLoader, loadCatalogueIndex, mergeCatalogueIndex } from './catalogue-index.js';
-import { isLocalDevHost, selectedDevDataMode, snapshotForDevMode } from './dev-data.js';
+import { isLocalDevHost, selectedDevDataMode, snapshotForDevModeInChunks } from './dev-data.js';
+import { languageLabel as formatLanguageLabel } from './language-label.js';
 
 const clearQueryButton = document.querySelector('#clear-query');
 const emptyResultActions = document.querySelector('#empty-result-actions');
@@ -113,6 +115,7 @@ const posterViewerClose = document.querySelector('#poster-viewer-close');
 const posterViewerStatus = document.querySelector('#poster-viewer-status');
 const posterViewerFeedback = document.querySelector('#poster-viewer-feedback');
 const posterViewerRetry = document.querySelector('#poster-viewer-retry');
+const posterViewerGalleryRetry = document.querySelector('#poster-viewer-gallery-retry');
 const posterViewerGallery = document.querySelector('#poster-viewer-gallery');
 const lockedDialogs = new Set();
 let lockedPageScrollY = 0;
@@ -197,6 +200,7 @@ const searchResultPreview = document.querySelector('#search-result-preview');
 const searchResultPreviewFilm = document.querySelector('#search-result-preview-film');
 const searchResultPreviewCount = document.querySelector('#search-result-preview-count');
 let searchPreviewFilm = null;
+let lastSearchPreview = null;
 searchResultPreviewFilm.addEventListener('click', () => {
   if (searchPreviewFilm) openFilmDetailsFromUi(searchPreviewFilm);
 });
@@ -939,6 +943,7 @@ function canonicalSourceLists(values, normalize = sourceListUrl) {
 }
 
 function prepareFilmsWithSourceLists(records, sourceLists) {
+  if (isLocalDevHost() && selectedDevDataMode() === '100000' && records.every((film) => Array.isArray(film._sourceListUrls))) return records;
   const canonicalListUrls = new Map();
   const normalize = (url) => {
     if (!canonicalListUrls.has(url)) canonicalListUrls.set(url, sourceListUrl(url));
@@ -1050,9 +1055,7 @@ function matchesCatalogueFilm(film, filters) {
 }
 
 function languageLabel(code) {
-  if (!code || code === 'unknown') return 'Unknown language';
-  try { const name = new Intl.DisplayNames(['en'], { type: 'language' }).of(code); return name && name.toLocaleLowerCase() !== code.toLocaleLowerCase() ? name : `Unknown (${code})`; }
-  catch { return `Unknown (${code})`; }
+  return formatLanguageLabel(code, 'en');
 }
 
 function renderLanguageOptions(contextCounts) {
@@ -1229,6 +1232,7 @@ function directorCreditFor(directors, className, beforeFilter) {
   if (!directors.length) return null;
   const credit = document.createElement('p');
   credit.className = className;
+  credit.dir = 'ltr';
   credit.append(document.createTextNode('Directed by '));
   const initialCount = Math.min(2, directors.length);
   let visibleCount = initialCount;
@@ -1240,6 +1244,7 @@ function directorCreditFor(directors, className, beforeFilter) {
     button.className = 'director-filter';
     button.dataset.director = director;
     button.textContent = director;
+    button.dir = 'auto';
     button.title = director;
     button.setAttribute('aria-pressed', String(state.directors.includes(director)));
     button.setAttribute('aria-label', `Filter by director ${director}`);
@@ -1294,12 +1299,7 @@ function directorCreditFor(directors, className, beforeFilter) {
 }
 
 function languageNameFor(languageCode) {
-  if (!languageCode) return '';
-  try {
-    return new Intl.DisplayNames(undefined, { type: 'language' }).of(languageCode) || languageCode;
-  } catch {
-    return languageCode;
-  }
+  return languageCode ? formatLanguageLabel(languageCode) : '';
 }
 
 function originalFilmFactsFor(film) {
@@ -1327,14 +1327,6 @@ function originalFilmFactsFor(film) {
     facts.append(languageLabel, languageValue);
   }
   return facts;
-}
-
-function runtimeLabelFor(minutes) {
-  if (minutes < 1440) return `${minutes.toLocaleString()} min`;
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  const remainingMinutes = minutes % 60;
-  return [days ? `${days}d` : '', hours ? `${hours}h` : '', remainingMinutes ? `${remainingMinutes}m` : ''].filter(Boolean).join(' ');
 }
 
 function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
@@ -1377,6 +1369,7 @@ function countryRuntimeMetaFor(film, className, { beforeFilter } = {}) {
       extraCountries.inert = true;
       const toggle = document.createElement('button');
       toggle.className = 'country-more-button';
+      toggle.dir = 'ltr';
       toggle.type = 'button';
       toggle.setAttribute('aria-expanded', 'false');
       let visibleCount = 1;
@@ -1525,6 +1518,7 @@ function applyPosterUrl(film, url) {
 function resetPosterChoice(film) {
   const current = currentFilmFor(film);
   const choices = { ...(readPreferences().posterChoices || {}) };
+  if (!Number.isSafeInteger(current.tmdb_id) || !Object.hasOwn(choices, String(current.tmdb_id))) return false;
   delete choices[String(current.tmdb_id)];
   if (!savePreferences({ posterChoices: choices })) return false;
   applyPosterUrl(film, originalPosterByFilm.get(current));
@@ -1580,6 +1574,7 @@ const filmViews = createFilmViews({
   posterViewerStatus,
   posterViewerFeedback,
   posterViewerRetry,
+  posterViewerGalleryRetry,
   posterViewerGallery,
   getSnapshotRefreshedAt: () => snapshotRefreshedAt,
   getPosterGalleryUrl: () => posterGalleryUrl,
@@ -1593,10 +1588,18 @@ const filmViews = createFilmViews({
     return true;
   },
   resetPosterChoice,
+  hasPosterChoice: (film) => {
+    const current = currentFilmFor(film);
+    return Number.isSafeInteger(current.tmdb_id)
+      && Object.hasOwn(readPreferences().posterChoices || {}, String(current.tmdb_id));
+  },
   onFilmDetailChange: (film) => {
     filmNavigation.updateFilmUrl(film);
   },
   getFilmShareUrl: (film) => {
+    if (isLocalDevHost() && selectedDevDataMode() && selectedDevDataMode() !== 'demo') {
+      return { url: '', shareable: false, localFixture: true, omitted: [] };
+    }
     const share = programmeShare(window.location.href, state, searchInput.value, availableSourceLists, publicSiteUrl);
     const shared = new URL(share.shareable ? share.url : share.reducedUrl);
     shared.searchParams.set('film', filmIdentifier(film));
@@ -1808,8 +1811,10 @@ function updateProgrammeShare() {
   programmeShareCopy.disabled = !next.shareable;
   programmeShareHelp.textContent = next.shareable
     ? 'Opens this selection with the same filters, sorting, and layout. Results follow the current catalogue.'
-    : 'This selection is too large to share faithfully. Shorten the search or remove filters to enable copying.';
-  programmeShareStatus.textContent = next.shareable ? '' : 'Copy is disabled because the link would show a different selection.';
+    : next.localFixture
+      ? 'Local test data cannot be shared. Switch to Demo data to create a public link.'
+      : 'This selection is too large to share faithfully. Shorten the search or remove filters to enable copying.';
+  programmeShareStatus.textContent = next.shareable || next.localFixture ? '' : 'Copy is disabled because the link would show a different selection.';
 }
 
 programmeShareDetails.addEventListener('toggle', () => {
@@ -1905,16 +1910,30 @@ async function render({ sortGenresOnOpen = false, appendResults = false } = {}) 
   let { matching } = selection;
   if (largeCatalogue && sortKey === currentLargeSortedKey) matching = currentLargeSortedFilms;
   else {
-    matching.sort((left, right) => compareFilms(left, right));
+    if (state.sort === 'relevance' && query) {
+      matching = await sortFilmsByRelevanceInChunks(matching, query, rankByFilm, () => requestId !== catalogueRenderRequest);
+      if (!matching || requestId !== catalogueRenderRequest) return;
+    }
+    else matching.sort((left, right) => compareFilms(left, right));
     if (largeCatalogue) {
       currentLargeSortedFilms = matching;
       currentLargeSortedKey = sortKey;
     }
   }
   currentMatchingFilms = matching;
-  searchPreviewFilm = query
-    ? matching.reduce((best, film) => !best || compareRelevance(film, best, searchInput.value, rankByFilm) < 0 ? film : best, null)
-    : null;
+  if (!query) {
+    searchPreviewFilm = null;
+    lastSearchPreview = null;
+  } else if (state.sort === 'relevance') {
+    searchPreviewFilm = matching[0] || null;
+    lastSearchPreview = { matching, query, film: searchPreviewFilm };
+  } else if (lastSearchPreview?.matching === matching && lastSearchPreview.query === query) {
+    searchPreviewFilm = lastSearchPreview.film;
+  } else {
+    searchPreviewFilm = await bestRelevanceFilmInChunks(matching, query, rankByFilm, () => requestId !== catalogueRenderRequest);
+    if (requestId !== catalogueRenderRequest) return;
+    lastSearchPreview = { matching, query, film: searchPreviewFilm };
+  }
   searchResultPreview.hidden = !searchPreviewFilm;
   if (searchPreviewFilm) {
     const title = [searchPreviewFilm.title, searchPreviewFilm.year].filter(Boolean).join(' · ');
@@ -2122,6 +2141,7 @@ function initializeSnapshot(snapshot, fullCatalogueData = null, catalogueLoadFai
   progress.setAttribute('aria-label', `${watchedCount.toLocaleString()} of ${rankedTotal.toLocaleString()} films watched (${progressPercent} percent)`);
   const editionDate = document.querySelector('#refreshed-label');
   editionDate.textContent = formatEditionDate(snapshot.refreshed_at);
+  editionDate.dir = 'ltr';
   editionDate.title = formatUpdatedAt(snapshot.refreshed_at);
   const detailedCount = snapshot.displayed_film_count ?? snapshot.films.length;
   const searchableCount = films.length.toLocaleString();
@@ -2191,11 +2211,15 @@ async function loadSnapshot() {
     if (!configResponse.ok) throw new Error(`Site configuration request failed: ${configResponse.status}`);
     const config = await configResponse.json();
     const devDataSwitch = document.querySelector('#dev-data-switch');
+    const devMode = selectedDevDataMode();
     if (isLocalDevHost()) {
       devDataSwitch.hidden = false;
       const devParams = new URLSearchParams(window.location.search);
       if (devParams.get('dir') === 'rtl') document.documentElement.dir = 'rtl';
-      if (devParams.get('text') === '200') document.documentElement.style.fontSize = '200%';
+      if (devParams.get('text') === '200') {
+        document.documentElement.style.fontSize = '200%';
+        document.documentElement.dataset.largeText = 'true';
+      }
       const activeMode = selectedDevDataMode() || 'demo';
       devDataSwitch.querySelectorAll('[data-dev-data]').forEach((button) => {
         button.setAttribute('aria-pressed', String(button.dataset.devData === activeMode));
@@ -2216,7 +2240,7 @@ async function loadSnapshot() {
     setupCopy.textContent = 'Loading the configured profile and its catalogue edition…';
     let rawSnapshotData = null;
     let rawSnapshotValidated = false;
-    if (isLocalDevHost()) {
+    if (isLocalDevHost() && ['', 'demo', '100000'].includes(devMode)) {
       try {
         const localResponse = await fetch('/data/local/snapshot.json', { cache: 'default' });
         if (localResponse.ok) {
@@ -2235,14 +2259,13 @@ async function loadSnapshot() {
       snapshotFailureKind = 'json';
       rawSnapshotData = await response.json();
     }
-    const devMode = selectedDevDataMode();
     let rankingFilms = null;
     if (devMode === '100000') {
       try { rankingFilms = await loadFullRanking(rawSnapshotData); }
       catch (error) { console.warn('The real ranking could not be loaded for the 100,000-row development view.', error); }
     }
     devFixtureRankedFilmCount = devMode === '100000' ? Math.min(rankingFilms?.length || 0, 100000) : 0;
-    const snapshotData = snapshotForDevMode(rawSnapshotData, devMode, rankingFilms);
+    const snapshotData = await snapshotForDevModeInChunks(rawSnapshotData, devMode, rankingFilms);
     snapshotFailureKind = 'schema';
     let snapshot;
     if (devMode === '100000') {
@@ -2254,6 +2277,7 @@ async function loadSnapshot() {
     }
     snapshotFailureKind = 'initialization';
     if (!showDemoState(configuredUsername, snapshot.username.trim())) return;
+    if (devMode === '100000') await registerFilmIdentifiersInChunks(snapshot.films);
     initializeSnapshot(snapshot);
     if (snapshot.catalogue_index_url || snapshot.ranking_csv_url) void loadFullRankingForSnapshot(snapshot);
   } catch (error) {
@@ -2360,13 +2384,45 @@ emptyEditGenres.addEventListener('click', (event) => {
   else genreFilter.querySelector('summary')?.focus({ preventScroll: true });
 });
 
-searchInput.addEventListener('input', () => {
+function enforceSearchLength() {
+  const value = searchInput.value;
+  const bounded = truncateSearch(value);
+  if (bounded === value) return false;
+  const start = truncateSearch(value.slice(0, searchInput.selectionStart)).length;
+  const end = truncateSearch(value.slice(0, searchInput.selectionEnd)).length;
+  searchInput.value = bounded;
+  searchInput.setSelectionRange(start, end);
+  return true;
+}
+
+searchInput.addEventListener('beforeinput', (event) => {
+  if (event.isComposing || !event.inputType.startsWith('insert')) return;
+  const inserted = typeof event.data === 'string'
+    ? event.data
+    : event.dataTransfer?.getData('text/plain');
+  if (typeof inserted !== 'string') return;
+  const start = searchInput.selectionStart;
+  const end = searchInput.selectionEnd;
+  const retainedLength = searchInput.value.length - (end - start);
+  const accepted = truncateSearch(inserted, Math.max(0, maxSearchLength - retainedLength));
+  if (accepted === inserted && searchInput.value.length <= maxSearchLength) return;
+  event.preventDefault();
+  if (!accepted && inserted) return;
+  searchInput.setRangeText(accepted, start, end, 'end');
+  searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+});
+
+searchInput.addEventListener('input', (event) => {
+  if (!event.isComposing) enforceSearchLength();
   beginSearchEdit();
   if (!searchInput.value.trim() && state.sort === 'relevance') state.sort = 'rank';
   state.visibleLimit = 40;
   queueSearchUrlUpdate();
   window.clearTimeout(searchRenderTimer);
   searchRenderTimer = window.setTimeout(() => { void render(); }, 120);
+});
+searchInput.addEventListener('compositionend', () => {
+  if (enforceSearchLength()) searchInput.dispatchEvent(new Event('input', { bubbles: true }));
 });
 searchInput.addEventListener('blur', commitSearchEdit);
 sortSelect.addEventListener('change', () => {

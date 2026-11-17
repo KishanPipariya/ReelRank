@@ -275,6 +275,35 @@ def test_snapshot_schema_accepts_shared_fixture_without_optional_tmdb_fields():
     assert snapshot.validate_snapshot(fixture) == fixture
 
 
+def test_snapshot_schema_enforces_metadata_array_item_limit():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture["films"][0]["genres"] = ["Drama"] * 1001
+    with pytest.raises(ValueError, match="genres has too many items"):
+        snapshot.validate_snapshot(fixture)
+
+
+def test_catalogue_index_rejects_overlong_title_from_full_ranking(tmp_path):
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    list_url = fixture["source_lists"][0]
+    fixture["film_count"] = 2
+    fixture["_full_ranking"] = [
+        MovieResult(Movie("Arrival", "2016", "https://letterboxd.com/film/arrival/"), 1, [list_url]),
+        MovieResult(Movie("A" * 1025, "2000", "https://letterboxd.com/film/long-title/"), 1, [list_url]),
+    ]
+    with pytest.raises(ValueError, match="unsupported title"):
+        snapshot._catalogue_index_assets(fixture, tmp_path / "data" / "snapshot.json")
+
+
+def test_catalogue_index_rejects_overlong_source_list_url(tmp_path):
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    long_list_url = "https://letterboxd.com/user/list/" + "a" * 520 + "/"
+    fixture["_full_ranking"] = [MovieResult(
+        Movie("Arrival", "2016", "https://letterboxd.com/film/arrival/"), 1, [long_list_url],
+    )]
+    with pytest.raises(ValueError, match="source list URLs exceed"):
+        snapshot._catalogue_index_assets(fixture, tmp_path / "data" / "snapshot.json")
+
+
 @pytest.mark.parametrize("field,limit", [("title", 1024), ("overview", 20000), ("directors", 512)])
 def test_snapshot_text_limits_reject_overflow_before_replacing_output(tmp_path, field, limit):
     fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
@@ -632,6 +661,25 @@ def test_public_snapshot_remaps_compact_source_lists():
     compact["source_lists"] = ["https://letterboxd.com/viewer/list/unused/", original_url]
     compact["films"][0]["list_ids"] = [1]
     assert snapshot.public_snapshot_from_full(compact)["source_lists"] == [original_url]
+
+
+def test_public_snapshot_uses_deployable_assets_when_input_is_local():
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "snapshot-minimal.json").read_text())
+    fixture.update({
+        "local_metadata_edition": True,
+        "catalogue_index_url": "/data/local/catalogue-index-a1b2c3d4e5f6.json",
+        "poster_gallery_url": "/data/local/poster-galleries-20261117T000000Z.json",
+        "ranking_csv_url": "/data/local/ranking-20261117T000000Z-0123456789ab.csv",
+        "ranking_gzip_url": "/data/local/ranking-20261117T000000Z-0123456789ab.csv.gz",
+    })
+
+    public = snapshot.public_snapshot_from_full(fixture)
+
+    assert "local_metadata_edition" not in public
+    assert public["catalogue_index_url"] == "/data/catalogue-index-a1b2c3d4e5f6.json"
+    assert public["poster_gallery_url"] == "/data/poster-galleries-20261117T000000Z.json"
+    assert public["ranking_csv_url"] == "/data/ranking-20261117T000000Z-0123456789ab.csv"
+    assert public["ranking_gzip_url"] == "/data/ranking-20261117T000000Z-0123456789ab.csv.gz"
 
 
 @pytest.mark.parametrize("metadata,expected", [

@@ -5,6 +5,18 @@ const schemaMaximumOverview = ('The travelers continue across changing landscape
 const longSourceList = 'https://letterboxd.com/reelrankdemo/list/the-complete-international-cinema-restoration-and-preservation-programme-2026-including-alternate-cuts-and-newly-rediscovered-films/';
 const sourceLists = Array.from({ length: 12 }, (_, index) => index === 0 ? longSourceList : index === 1 ? longSourceList.replace(/\/$/, '-directors-cuts-and-extended-editions/') : `https://letterboxd.com/reelrankdemo/list/world-cinema-programme-volume-${index + 1}/`);
 
+function canonicalStressListUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || !['letterboxd.com', 'www.letterboxd.com'].includes(url.hostname)) return '';
+    const pathname = `${url.pathname.replace(/\/+$/, '')}/`;
+    if (!/^\/[^/]+\/list\/[^/]+\/$/.test(pathname)) return '';
+    return `https://letterboxd.com${pathname}`;
+  } catch {
+    return '';
+  }
+}
+
 function syntheticFilm(base, index, overrides = {}) {
   const generatedTitle = `Stress case film ${String(index + 1).padStart(4, '0')}`;
   return {
@@ -172,6 +184,50 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
   delete stressSnapshot.ranking_gzip_url;
   delete stressSnapshot.catalogue_index_url;
   if (mode !== 'worst' && mode !== '100000') delete stressSnapshot.poster_gallery_url;
+  delete stressSnapshot.local_metadata_edition;
+  return stressSnapshot;
+}
+
+export async function snapshotForDevModeInChunks(snapshot, mode, rankingFilms = null) {
+  if (mode !== '100000') return snapshotForDevMode(snapshot, mode, rankingFilms);
+  const films = new Array(100000);
+  const base = snapshot.films[0];
+  for (let index = 0; index < films.length; index += 1) {
+    const film = rankingFilms?.[index];
+    films[index] = film
+      ? { ...film, _sourceListUrls: film._sourceListUrls ?? film.list_ids.map((id) => snapshot.source_lists[id]) }
+      : syntheticFilm(base, index);
+    if (index > 0 && index % 2000 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  const listIndex = new Map();
+  const canonicalListCache = new Map();
+  const canonicalizeList = (url) => {
+    if (!canonicalListCache.has(url)) canonicalListCache.set(url, canonicalStressListUrl(url));
+    return canonicalListCache.get(url);
+  };
+  let unwatchedCount = 0;
+  for (let index = 0; index < films.length; index += 1) {
+    const film = films[index];
+    film._sourceListUrls = [...new Set(film._sourceListUrls.map(canonicalizeList).filter(Boolean))];
+    film.list_ids = film._sourceListUrls.map((url) => {
+      if (!listIndex.has(url)) listIndex.set(url, listIndex.size);
+      return listIndex.get(url);
+    });
+    if (!film.watched) unwatchedCount += 1;
+    if (index > 0 && index % 2000 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  const stressSnapshot = {
+    ...snapshot,
+    film_count: films.length,
+    displayed_film_count: films.length,
+    unwatched_count: unwatchedCount,
+    displayed_unwatched_count: unwatchedCount,
+    films,
+    source_lists: [...listIndex.keys()],
+  };
+  delete stressSnapshot.ranking_csv_url;
+  delete stressSnapshot.ranking_gzip_url;
+  delete stressSnapshot.catalogue_index_url;
   delete stressSnapshot.local_metadata_edition;
   return stressSnapshot;
 }

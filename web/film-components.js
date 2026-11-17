@@ -45,6 +45,7 @@ function genreTagsFor(film, state, genreChipFor, initialVisibleCount = 2) {
   const more = document.createElement('button');
   more.type = 'button';
   more.className = 'genre-tag genre-tag-more';
+  more.dir = 'ltr';
   const updateMoreLabel = () => {
     const remaining = orderedGenres.length - visibleCount;
     more.textContent = remaining ? `+${remaining}` : '−';

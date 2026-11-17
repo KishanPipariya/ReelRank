@@ -1,5 +1,6 @@
 import { sourceListLabel } from './source-list-label.js';
 import { graphemePrefix } from './display-text.js';
+import { runtimeLabelFor } from './runtime-label.js';
 
 const printConfirmationThreshold = 1000;
 const maxPrintProgrammeFilms = 10000;
@@ -53,6 +54,14 @@ export function createProgrammePrinter(dependencies) {
     const readerEdition = printFormatSelect.value === 'reader';
     printProgrammeContainer.classList.toggle('print-programme-reader', readerEdition);
     const filmsForProgramme = matching.sort((left, right) => compareFilms(left, right, 'year-oldest'));
+    const synopsesNotLoaded = readerEdition ? filmsForProgramme.filter((film) =>
+      film.detail_shard_url
+      && film.detail_load_status !== 'loaded'
+      && !(typeof film.overview === 'string' && film.overview.trim())
+      && !(typeof film.detail_overview === 'string' && film.detail_overview.trim())).length : 0;
+    const synopsisScope = synopsesNotLoaded
+      ? `${synopsesNotLoaded.toLocaleString()} ${synopsesNotLoaded === 1 ? 'synopsis is' : 'synopses are'} not loaded. Open film details to include them.`
+      : '';
     printProgrammeTitle.textContent = programmeTitle;
     printProgrammeUsername.textContent = profileUsername.textContent;
     printProgrammeDate.textContent = formatEditionDate(snapshotRefreshedAt);
@@ -75,6 +84,7 @@ export function createProgrammePrinter(dependencies) {
     printProgrammeContext.textContent = [
       `${filmsForProgramme.length} ${filmsForProgramme.length === 1 ? 'film' : 'films'}`,
       'Arranged by release year', selectedView, partialScope,
+      synopsisScope,
     ].filter(Boolean).join(' · ');
     printProgrammeFilms.replaceChildren();
 
@@ -118,7 +128,7 @@ export function createProgrammePrinter(dependencies) {
       if (directors.length) facts.push(`Directed by ${directors.join(', ')}`);
       const countries = [...new Set(Array.isArray(film.countries) ? film.countries : [])];
       if (countries.length) facts.push(countries.join(', '));
-      if (Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0) facts.push(`${film.runtime_minutes} min`);
+      if (Number.isInteger(film.runtime_minutes) && film.runtime_minutes > 0) facts.push(runtimeLabelFor(film.runtime_minutes));
       const language = typeof film.original_language === 'string' ? film.original_language.trim() : '';
       const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
       const isNonEnglish = language && language.toLocaleLowerCase().split('-')[0] !== 'en';
@@ -135,12 +145,15 @@ export function createProgrammePrinter(dependencies) {
       scoreValue.textContent = likedIn.toLocaleString();
       score.append(scoreValue, ` ${likedIn === 1 ? 'list appearance' : 'list appearances'}`);
       entry.append(catalogueNumber, details, score);
-      if (readerEdition && typeof film.overview === 'string' && film.overview.trim()) {
+      const overview = typeof film.detail_overview === 'string' && film.detail_overview.trim()
+        ? film.detail_overview
+        : film.overview;
+      if (readerEdition && typeof overview === 'string' && overview.trim()) {
         const synopsis = document.createElement('p');
         synopsis.className = 'print-film-synopsis';
-        const overview = film.overview.trim();
-        const excerpt = graphemePrefix(overview, 260);
-        if (excerpt === overview) synopsis.textContent = overview;
+        const fullOverview = overview.trim();
+        const excerpt = graphemePrefix(fullOverview, 260);
+        if (excerpt === fullOverview) synopsis.textContent = fullOverview;
         else {
           const lastSpace = excerpt.lastIndexOf(' ');
           synopsis.textContent = `${(lastSpace > 180 ? excerpt.slice(0, lastSpace) : excerpt).replace(/[.,;:!?]$/, '')}…`;

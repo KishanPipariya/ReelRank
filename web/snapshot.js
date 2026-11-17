@@ -47,6 +47,8 @@ function validateAgainstSchema(value, schema, path = 'snapshot') {
     }
   }
   if (schema.type === 'array' && schema.items) {
+    if (value.length < (schema.minItems ?? 0)) throw new Error(`${path} has too few items`);
+    if (value.length > (schema.maxItems ?? Infinity)) throw new Error(`${path} has too many items`);
     value.forEach((item, index) => validateAgainstSchema(item, schema.items, `${path}[${index}]`));
   }
 }

@@ -4,10 +4,28 @@ const validViews = new Set(['posters', 'ledger']);
 const validRuntimes = new Set(['under-90', '90-120', 'over-120']);
 // Leave room for a film-detail identifier or an explicit shared-view value.
 export const maxStateUrlLength = 7800;
+export const maxSearchLength = 512;
+
+export function truncateSearch(query, limit = maxSearchLength) {
+  const text = typeof query === 'string' ? query : '';
+  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  let units = 0;
+  let bounded = '';
+  for (const { segment } of segmenter.segment(text)) {
+    if (units + segment.length > limit) break;
+    bounded += segment;
+    units += segment.length;
+  }
+  return bounded;
+}
+
+function boundedSearch(query) {
+  return truncateSearch(query).trim();
+}
 
 export function normalizeViewFacets({ query = '', sort = 'rank', genres = [], directors = [], country = '', language = '', decade = '' }) {
   const nonblank = (values) => [...new Set(values.filter((value) => value.trim()))];
-  const search = query.trim();
+  const search = boundedSearch(query);
   return {
     query: search,
     sort: validSorts.has(sort) && (sort !== 'relevance' || search) ? sort : 'rank',
@@ -83,7 +101,8 @@ export function fitStateUrlBudget(url, { preserve = [] } = {}) {
 
 export function urlForState(href, state, query) {
   const url = new URL(href);
-  if (query.trim()) url.searchParams.set('q', query.trim());
+  const search = boundedSearch(query);
+  if (search) url.searchParams.set('q', search);
   else url.searchParams.delete('q');
   if (state.filter === 'all') url.searchParams.delete('filter');
   else url.searchParams.set('filter', state.filter);

@@ -51,6 +51,8 @@ function validateAgainstSchema(value, schema, path = 'catalogue index') {
     }
   }
   if (schema.type === 'array' && schema.items) {
+    if (value.length < (schema.minItems ?? 0)) throw new Error(`${path} has too few items`);
+    if (value.length > (schema.maxItems ?? Infinity)) throw new Error(`${path} has too many items`);
     value.forEach((item, index) => validateAgainstSchema(item, schema.items, `${path}[${index}]`));
   }
 }
@@ -103,22 +105,29 @@ export function validateCatalogueIndex(index, snapshot) {
   });
 
   const seenFilms = new Set();
-  const stringAt = (id, field, position) => {
+  const fieldMaxLengths = {
+    title: 1024, original_title: 1024, letterboxd_title: 1024,
+    year: 64, letterboxd_year: 64, original_language: 64,
+    poster_url: 2048, tmdb_url: 2048, metadata_fetched_at: 128,
+  };
+  const stringAt = (id, field, position, maxLength = fieldMaxLengths[field] ?? Infinity) => {
     if (!Number.isSafeInteger(id) || id < 0 || id >= index.strings.length) {
       throw new Error(`Catalogue index film ${position} has an invalid ${field} string ID`);
     }
-    return index.strings[id];
+    const value = index.strings[id];
+    if (Array.from(value).length > maxLength) throw new Error(`Catalogue index film ${position} has an overlong ${field}`);
+    return value;
   };
-  const stringsAt = (ids, field, position) => {
-    if (!Array.isArray(ids)) throw new Error(`Catalogue index film ${position} has invalid ${field} IDs`);
-    return ids.map((id) => stringAt(id, field, position));
+  const stringsAt = (ids, field, position, maxLength = 512) => {
+    if (!Array.isArray(ids) || ids.length > 1000) throw new Error(`Catalogue index film ${position} has invalid ${field} IDs`);
+    return ids.map((id) => stringAt(id, field, position, maxLength));
   };
   const decodedFilms = [];
   index.films.forEach((film, position) => {
     const rank = position + 1;
     if (!Array.isArray(film) || film.length !== 23) throw new Error(`Catalogue index film ${rank} must have 23 fields`);
     const canonicalUrl = canonicalLetterboxdFilmUrl(film[0]);
-    if (!canonicalUrl || canonicalUrl !== film[0]) {
+    if (!canonicalUrl || canonicalUrl !== film[0] || Array.from(film[0]).length > 2048) {
       throw new Error(`Catalogue index film ${position + 1} has an invalid Letterboxd URL`);
     }
     if (seenFilms.has(canonicalUrl)) throw new Error('Catalogue index cannot contain duplicate Letterboxd URLs');
@@ -128,7 +137,7 @@ export function validateCatalogueIndex(index, snapshot) {
     if (film[14] !== null && (!Number.isSafeInteger(film[14]) || film[14] < 1)) throw new Error(`Catalogue index film ${rank} has an invalid runtime`);
     if (!Number.isSafeInteger(film[18]) || film[18] < 0 || film[18] > snapshot.list_count) throw new Error(`Catalogue index film ${rank} has an invalid list count`);
     if (typeof film[19] !== 'boolean') throw new Error(`Catalogue index film ${rank} has an invalid watched value`);
-    if (!Array.isArray(film[20]) || film[20].some((id) => !Number.isSafeInteger(id) || id < 0 || id >= index.source_lists.length)
+    if (!Array.isArray(film[20]) || film[20].length > 100000 || film[20].some((id) => !Number.isSafeInteger(id) || id < 0 || id >= index.source_lists.length)
         || new Set(film[20]).size !== film[20].length) {
       throw new Error(`Catalogue index film ${rank} has invalid source list IDs`);
     }

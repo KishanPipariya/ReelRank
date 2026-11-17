@@ -5,7 +5,7 @@ export function filmDecade(film) {
 
 export function buildSearchText(film, sourceListLabels = []) {
   return [
-    film.title, film.year, film.original_title,
+    film.title, film.letterboxd_title, film.year, film.original_title,
     ...(Array.isArray(film.genres) ? film.genres : []),
     ...(Array.isArray(film.directors) ? film.directors : []),
     ...sourceListLabels,
@@ -144,33 +144,94 @@ export function compareFilms(left, right, sort, rankByFilm) {
   return leftRank - rightRank;
 }
 
-export function relevanceScore(film, query) {
+function relevanceContext(query) {
   const normalizedQuery = normalizeSearchText(query);
+  return { normalizedQuery, terms: normalizedQuery ? normalizedQuery.split(' ') : [], literal: normalizedQuery ? '' : literalSearchText(query) };
+}
+
+function relevanceScoreForContext(film, { normalizedQuery, terms, literal }) {
   if (!normalizedQuery) {
-    const literal = literalSearchText(query);
     if (!literal) return 99;
-    const titles = [film.title, film.original_title].map(literalSearchText);
+    const titles = [film.title, film.letterboxd_title, film.original_title].map(literalSearchText);
     if (titles.includes(literal)) return 0;
     return titles.some((value) => value.includes(literal)) ? 1 : 3;
   }
-  const terms = normalizedQuery.split(' ');
   const title = normalizeSearchText(film.title);
+  const letterboxdTitle = normalizeSearchText(film.letterboxd_title);
   const originalTitle = normalizeSearchText(film.original_title);
   const directors = (Array.isArray(film.directors) ? film.directors : []).map(normalizeSearchText);
-  if (title === normalizedQuery || originalTitle === normalizedQuery) return 0;
+  if ([title, letterboxdTitle, originalTitle].includes(normalizedQuery)) return 0;
   const withoutYear = terms.filter((term) => !/^\d{4}$/.test(term)).join(' ');
   const yearsMatch = terms.filter((term) => /^\d{4}$/.test(term)).every((term) => term === String(film.year || '').trim());
-  if (yearsMatch && (title === withoutYear || originalTitle === withoutYear)) return 0;
+  if (yearsMatch && [title, letterboxdTitle, originalTitle].includes(withoutYear)) return 0;
   const meaningfulTerms = terms.filter((term) => term.length >= 3);
-  if ([title, originalTitle].some((value) => value && withoutYear && value === withoutYear)) return 1;
-  if ([title, originalTitle].some((value) => value && meaningfulTerms.some((term) => value.includes(term)))) return 1;
+  if ([title, letterboxdTitle, originalTitle].some((value) => value && withoutYear && value === withoutYear)) return 1;
+  if ([title, letterboxdTitle, originalTitle].some((value) => value && meaningfulTerms.some((term) => value.includes(term)))) return 1;
   const yearTerms = terms.filter((term) => /^\d{4}$/.test(term));
   const directorTerms = terms.filter((term) => !yearTerms.includes(term) && term.length >= 3);
   if (directorTerms.length && directors.some((value) => directorTerms.every((term) => value.includes(term)))) return 2;
   return 3;
 }
 
+export function relevanceScore(film, query) {
+  return relevanceScoreForContext(film, relevanceContext(query));
+}
+
 export function compareRelevance(left, right, query, rankByFilm) {
   return relevanceScore(left, query) - relevanceScore(right, query)
     || compareFilms(left, right, 'rank', rankByFilm);
+}
+
+export function bestRelevanceFilm(films, query, rankByFilm) {
+  const context = relevanceContext(query);
+  let best = null;
+  let bestScore = Infinity;
+  let bestRank = Infinity;
+  for (const film of films) {
+    const score = relevanceScoreForContext(film, context);
+    const rank = rankByFilm.get(film) ?? 0;
+    if (score < bestScore || (score === bestScore && rank < bestRank)) {
+      best = film;
+      bestScore = score;
+      bestRank = rank;
+    }
+  }
+  return best;
+}
+
+export async function bestRelevanceFilmInChunks(films, query, rankByFilm, isCancelled = () => false) {
+  const context = relevanceContext(query);
+  let best = null;
+  let bestScore = Infinity;
+  let bestRank = Infinity;
+  for (let index = 0; index < films.length; index += 1) {
+    const film = films[index];
+    const score = relevanceScoreForContext(film, context);
+    const rank = rankByFilm.get(film) ?? 0;
+    if (score < bestScore || (score === bestScore && rank < bestRank)) {
+      best = film;
+      bestScore = score;
+      bestRank = rank;
+    }
+    if (index > 0 && index % 2000 === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      if (isCancelled()) return undefined;
+    }
+  }
+  return best;
+}
+
+export async function sortFilmsByRelevanceInChunks(films, query, rankByFilm, isCancelled = () => false) {
+  const context = relevanceContext(query);
+  const scored = [];
+  for (let index = 0; index < films.length; index += 1) {
+    const film = films[index];
+    scored.push({ film, score: relevanceScoreForContext(film, context), rank: rankByFilm.get(film) ?? 0 });
+    if (index > 0 && index % 2000 === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      if (isCancelled()) return undefined;
+    }
+  }
+  scored.sort((left, right) => left.score - right.score || left.rank - right.rank);
+  return scored.map(({ film }) => film);
 }
