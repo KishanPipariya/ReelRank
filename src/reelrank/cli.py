@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -56,6 +57,7 @@ def refresh_snapshot_cli() -> None:
                     public_snapshot = create_snapshot(username, progress=progress)
                     write_task = progress.add_task("Writing deployable snapshot", total=1)
                     write_snapshot(public_snapshot, args.output)
+                    _sync_public_ranking_gitignore(args.output)
                     progress.update(write_task, description=f"Wrote deployable snapshot to {args.output}", completed=1)
                     raise ValueError(
                         f"Local full-metadata generation failed ({local_error}); updated the deployable snapshot at {args.output}"
@@ -63,6 +65,7 @@ def refresh_snapshot_cli() -> None:
                 snapshot = public_snapshot_from_full(local_snapshot)
                 write_task = progress.add_task("Writing deployable snapshot", total=1)
                 write_snapshot(snapshot, args.output)
+                _sync_public_ranking_gitignore(args.output)
                 progress.update(write_task, description=f"Wrote deployable snapshot to {args.output}", completed=1)
                 local_write_task = progress.add_task("Writing localhost-only snapshot and sidecars", total=1)
                 write_snapshot(local_snapshot_paths(local_snapshot), args.local_output)
@@ -71,6 +74,7 @@ def refresh_snapshot_cli() -> None:
                 snapshot = create_snapshot(username, progress=progress)
                 write_task = progress.add_task("Writing snapshot and sidecars", total=1)
                 write_snapshot(snapshot, args.output)
+                _sync_public_ranking_gitignore(args.output)
                 progress.update(write_task, description=f"Wrote snapshot to {args.output}", completed=1)
     except (RequestsError, ValueError, OSError) as error:
         parser.exit(1, f"Error: {error}\n")
@@ -96,6 +100,57 @@ def _configured_site_username(config_path: Path = Path("web/site-config.json")) 
     if not isinstance(username, str) or not username.strip():
         raise ValueError(f"Set --username or a non-empty letterboxd_username in {config_path}")
     return username.strip()
+
+
+def _sync_public_ranking_gitignore(snapshot_path: Path) -> None:
+    """Keep only the ranking sidecars named by the deployable snapshot in Git."""
+    repo_root = Path(__file__).resolve().parents[2]
+    public_snapshot = repo_root / "web/data/snapshot.json"
+    if snapshot_path.resolve() != public_snapshot:
+        return
+
+    snapshot = json.loads(public_snapshot.read_text(encoding="utf-8"))
+    active_names = {
+        Path(snapshot[key]).name
+        for key in ("ranking_csv_url", "ranking_gzip_url")
+        if isinstance(snapshot.get(key), str) and snapshot[key]
+    }
+    if any(not name.startswith("ranking-") for name in active_names):
+        raise ValueError("Public ranking sidecar URLs must use ranking-* filenames")
+
+    begin = "# BEGIN generated public ranking sidecars"
+    end = "# END generated public ranking sidecars"
+    ignore_path = repo_root / ".gitignore"
+    ignore_text = ignore_path.read_text(encoding="utf-8")
+    lines = [begin, "web/data/*.csv.gz"]
+    lines.extend(f"!web/data/{name}" for name in sorted(active_names))
+    lines.append(end)
+    block = "\n".join(lines)
+
+    if begin in ignore_text and end in ignore_text:
+        before, tail = ignore_text.split(begin, 1)
+        _, after = tail.split(end, 1)
+        ignore_text = before.rstrip() + "\n" + block + after
+    elif "!web/data/ranking-*.csv" in ignore_text:
+        ignore_text = ignore_text.replace("!web/data/ranking-*.csv", block)
+    else:
+        raise ValueError("Could not find the ranking sidecar rules in .gitignore")
+    ignore_path.write_text(ignore_text.rstrip() + "\n", encoding="utf-8")
+
+    tracked = subprocess.run(
+        ["git", "ls-files", "-z", "--", "web/data/ranking-*.csv", "web/data/ranking-*.csv.gz"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+    ).stdout.decode("utf-8").split("\0")
+    stale_paths = [path for path in tracked if path and Path(path).name not in active_names]
+    if stale_paths:
+        subprocess.run(
+            ["git", "rm", "--cached", "--ignore-unmatch", "--quiet", "--", *stale_paths],
+            cwd=repo_root,
+            check=True,
+        )
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Rank movies by how many of your liked Letterboxd lists contain them.")

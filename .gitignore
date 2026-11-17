@@ -13,8 +13,13 @@ node_modules/
 !.env.example
 .reelrank-cache/
 /web/data/local/
+/web/.hallmark/capture-retry/
 # Local agent skill bundles are workstation tooling, not site assets.
 /.agents/
 *.csv
-!web/data/ranking-*.csv
+# BEGIN generated public ranking sidecars
+web/data/*.csv.gz
+!web/data/ranking-20261113T163220Z-5c7aac085816.csv
+!web/data/ranking-20261113T163220Z-5c7aac085816.csv.gz
+# END generated public ranking sidecars
 .DS_Store

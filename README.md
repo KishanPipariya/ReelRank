@@ -96,7 +96,7 @@ Use `--include-local-full` to add metadata for every ranked film. This option re
 
 Version 2 snapshots require a `source_lists` URL table and integer `list_ids` on each film. Regenerate earlier snapshots with the current command. The command validates the snapshot before it replaces the current file.
 
-To publish an update, commit the snapshot, the catalogue index it names, the detail shards named by that index, and any updated files named in `poster_gallery_url`, `ranking_csv_url`, and `ranking_gzip_url` together. The snapshot command leaves older ranking sidecars in place. Then deploy the site. GitHub Actions runs quality checks. Snapshot generation is manual.
+To publish an update, commit the snapshot, the catalogue index it names, the detail shards named by that index, and any updated files named in `poster_gallery_url`, `ranking_csv_url`, and `ranking_gzip_url` together. The snapshot command updates `.gitignore` to keep only the current public ranking sidecars in Git. It removes older ranking sidecars from the Git index but leaves the local files in place. Then deploy the site. GitHub Actions runs quality checks. Snapshot generation is manual.
 
 ### Data and privacy
 
