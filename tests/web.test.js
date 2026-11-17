@@ -355,13 +355,18 @@ test('shared programmes describe facets and restore the full view without unrela
 });
 
 test('shared programmes block links that cannot preserve the active selection', async () => {
-  const { programmeShare } = await import('../web/programme-share.js');
+  const { programmeShare, programmeStateOmissions } = await import('../web/programme-share.js');
   const state = parseUrlState('?filter=unwatched&genre=Drama');
   const query = 'archive note '.repeat(1000);
   const share = programmeShare('https://example.test/', state, query);
   assert.equal(share.shareable, false);
   assert.equal(share.url, '');
   assert.match(share.description, /Search:/);
+  const longEmojiShare = programmeShare('https://example.test/', parseUrlState(''), '🦊'.repeat(660));
+  assert.ok([...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(longEmojiShare.description)].length <= 121);
+  assert.match(longEmojiShare.description, /Search:/);
+  const reduced = programmeShare('https://example.test/', state, query).reducedUrl;
+  assert.deepEqual(programmeStateOmissions(reduced, state, query), ['search']);
 });
 
 test('shared programme language labels tolerate invalid codes in incoming URLs', async () => {
@@ -488,6 +493,20 @@ test('local film links distinguish same-title records and identical occurrences 
   assert.equal(findFilmByIdentifier([unicodeFilm], compactIdentifier), unicodeFilm);
   assert.equal(findFilmByIdentifier([unicodeFilm], maximumUnicodeUrl), unicodeFilm, 'legacy raw URL links still resolve');
   assert.ok(filmDetailUrl('https://example.test/', unicodeFilm).href.length <= 7800);
+  const cjkSlug = '王'.repeat(1120);
+  const oldAliasUrl = `https://letterboxd.com/film/${cjkSlug}`;
+  const newAliasFilm = { title: 'Archive', year: '2026', letterboxd_url: `https://www.letterboxd.com/film/${cjkSlug}/` };
+  const oldAliasFilm = { ...newAliasFilm, letterboxd_url: oldAliasUrl };
+  assert.equal(filmIdentifier(oldAliasFilm), filmIdentifier(newAliasFilm), 'canonical URL aliases keep the same compact ID');
+  let legacyFirst = 0x811c9dc5;
+  let legacySecond = 0x9e3779b9;
+  for (let index = 0; index < oldAliasUrl.length; index += 1) {
+    const code = oldAliasUrl.charCodeAt(index);
+    legacyFirst = Math.imul(legacyFirst ^ code, 16777619);
+    legacySecond = Math.imul(legacySecond ^ code, 2246822519);
+  }
+  const legacyAliasId = `letterboxd:${(legacyFirst >>> 0).toString(16).padStart(8, '0')}${(legacySecond >>> 0).toString(16).padStart(8, '0')}`;
+  assert.equal(findFilmByIdentifier([newAliasFilm], legacyAliasId), newAliasFilm, 'previous compact IDs survive host and slash aliases');
   const sameTmdb = [{ ...first, tmdb_id: 0 }, { ...second, tmdb_id: 0 }];
   registerFilmIdentifiers(sameTmdb);
   const editionKey = filmIdentifier(sameTmdb[1]);

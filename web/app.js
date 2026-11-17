@@ -1,6 +1,6 @@
 import { sourceListLabel } from './source-list-label.js';
 import { graphemePrefix } from './display-text.js';
-import { programmeShare, programmeStateIsPreserved } from './programme-share.js';
+import { programmeShare, programmeStateOmissions } from './programme-share.js';
 import { buildSearchText, compareAlphabeticallyIgnoringThe, compareFilms as compareCatalogFilms, createCatalogueSelection, filmDecade, matchesFilm } from './catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from './snapshot.js';
 import { cardFor as createFilmCard, updateFilmCard, setGenreLabel } from './film-components.js';
@@ -1598,9 +1598,12 @@ const filmViews = createFilmViews({
     const shared = new URL(share.shareable ? share.url : share.reducedUrl);
     shared.searchParams.set('film', filmIdentifier(film));
     const bounded = fitStateUrlBudget(shared, { preserve: ['film'] });
+    const omitted = programmeStateOmissions(bounded.href, state, searchInput.value);
+    if (!share.shareable && omitted.length === 0) omitted.push('catalogue');
     return {
       url: bounded.href,
-      selectionIncluded: programmeStateIsPreserved(bounded.href, state, searchInput.value) && share.shareable,
+      selectionIncluded: omitted.length === 0 && share.shareable,
+      omitted,
     };
   },
   getCurrentMatchingFilms: () => currentMatchingFilms,
@@ -1820,7 +1823,7 @@ programmeShareCopy.addEventListener('click', async () => {
     if (attempt === shareAttempt) programmeShareStatus.textContent = 'View link copied.';
   } catch {
     if (attempt !== shareAttempt) return;
-    programmeShareStatus.textContent = 'Select and copy the view link below the description.';
+    programmeShareStatus.textContent = 'Select and copy the view link above.';
     programmeShareUrl.focus();
     programmeShareUrl.select();
   }

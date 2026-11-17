@@ -19,8 +19,7 @@ function localFingerprint(film) {
   return key;
 }
 
-function letterboxdIdentifier(url) {
-  if (new URLSearchParams({ film: url }).toString().length <= 4000) return url;
+function hashLetterboxdUrl(url) {
   let first = 0x811c9dc5;
   let second = 0x9e3779b9;
   for (let index = 0; index < url.length; index += 1) {
@@ -29,6 +28,28 @@ function letterboxdIdentifier(url) {
     second = Math.imul(second ^ code, 2246822519);
   }
   return `letterboxd:${(first >>> 0).toString(16).padStart(8, '0')}${(second >>> 0).toString(16).padStart(8, '0')}`;
+}
+
+function letterboxdUrlAliases(url) {
+  const canonical = canonicalLetterboxdFilmUrl(url);
+  if (!canonical) return [url];
+  const canonicalNoSlash = canonical.replace(/\/$/, '');
+  const canonicalWww = canonical.replace('https://letterboxd.com/', 'https://www.letterboxd.com/');
+  const rawMatch = /^https:\/\/(?:www\.)?letterboxd\.com(\/film\/[^/?#]+)\/?$/.exec(url);
+  const rawPath = rawMatch?.[1];
+  const rawAliases = rawPath ? [
+    `https://letterboxd.com${rawPath}`,
+    `https://letterboxd.com${rawPath}/`,
+    `https://www.letterboxd.com${rawPath}`,
+    `https://www.letterboxd.com${rawPath}/`,
+  ] : [];
+  return [...new Set([url, canonical, canonicalNoSlash, canonicalWww, canonicalWww.replace(/\/$/, ''), ...rawAliases])];
+}
+
+function letterboxdIdentifier(url) {
+  const stableUrl = canonicalLetterboxdFilmUrl(url) || url;
+  if (new URLSearchParams({ film: stableUrl }).toString().length <= 4000) return stableUrl;
+  return hashLetterboxdUrl(stableUrl);
 }
 
 export function registerFilmIdentifiers(films) {
@@ -64,6 +85,11 @@ export function filmIdentifier(film) {
 export function findFilmByIdentifier(films, key) {
   const exact = films.filter((film) => filmIdentifier(film) === key || film.letterboxd_url === key);
   if (exact.length) return exact.length === 1 ? exact[0] : undefined;
+  if (/^letterboxd:[0-9a-f]{16}$/i.test(key)) {
+    const legacyHashed = films.filter((film) =>
+      letterboxdUrlAliases(film.letterboxd_url).some((url) => hashLetterboxdUrl(url) === key));
+    if (legacyHashed.length) return legacyHashed.length === 1 ? legacyHashed[0] : undefined;
+  }
   const canonical = canonicalLetterboxdFilmUrl(key);
   if (canonical) {
     const aliases = films.filter((film) => canonicalLetterboxdFilmUrl(film.letterboxd_url) === canonical);

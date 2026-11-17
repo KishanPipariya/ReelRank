@@ -1020,6 +1020,7 @@ html[data-input-modality='keyboard'] a:active { transform: none; outline: 1px so
 .film-detail-share[open] > summary .film-detail-share-indicator { transform: rotate(0); }
 .film-detail-share summary:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 .film-detail-share .film-detail-share-url { margin: var(--space-2) var(--space-2) 0 0; }
+.film-detail-share .film-detail-action-status:not(:empty) { display: block; margin-block: var(--space-2); }
 .film-detail-external-link { color: var(--forest); font-family: var(--mono); font-size: var(--type-caption); text-underline-offset: 3px; }
 .original-film-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-1) var(--space-2); margin: var(--space-1) 0 0; color: var(--muted); font-size: var(--type-caption); line-height: 1.45; }
 .original-film-facts dt { font-family: var(--mono); }

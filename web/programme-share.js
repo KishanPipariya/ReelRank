@@ -1,4 +1,5 @@
 import { fitStateUrlBudget, maxStateUrlLength, parseUrlState, urlForState } from './url-state.js';
+import { graphemePrefix } from './display-text.js';
 
 function languageLabel(code) {
   if (code === 'unknown') return 'Unknown language';
@@ -8,20 +9,27 @@ function languageLabel(code) {
   } catch { return `Unknown (${code})`; }
 }
 
-export function programmeStateIsPreserved(href, state, query) {
+export function programmeStateOmissions(href, state, query) {
   const restored = parseUrlState(new URL(href).search);
   const sameValues = (left = [], right = []) => JSON.stringify([...new Set(left || [])]) === JSON.stringify(right);
-  return restored.query === query.trim()
-    && restored.filter === state.filter
-    && restored.sort === state.sort
+  const omissions = [];
+  if (restored.query !== query.trim()) omissions.push('search');
+  const filtersMatch = restored.filter === state.filter
     && sameValues(state.genres, restored.genres)
     && sameValues(state.directors, restored.directors)
     && sameValues(state.sourceLists, restored.sourceLists)
     && restored.country === state.country
     && restored.language === state.language
     && restored.decade === state.decade
-    && restored.runtime === state.runtime
-    && restored.view === (state.view === 'ledger' ? 'ledger' : 'posters');
+    && restored.runtime === state.runtime;
+  if (!filtersMatch) omissions.push('filters');
+  if (restored.sort !== state.sort) omissions.push('sort');
+  if (restored.view !== (state.view === 'ledger' ? 'ledger' : 'posters')) omissions.push('layout');
+  return omissions;
+}
+
+export function programmeStateIsPreserved(href, state, query) {
+  return programmeStateOmissions(href, state, query).length === 0;
 }
 
 export function programmeShare(href, state, query, sourceLists = [], publicSiteUrl = '') {
@@ -36,7 +44,9 @@ export function programmeShare(href, state, query, sourceLists = [], publicSiteU
     state.filter === 'watched' ? 'Watched' : state.filter === 'unwatched' ? 'Unwatched' : '',
     query.trim() ? `Search: “${query.trim()}”` : '',
   ].filter(Boolean);
-  const description = parts.join(' · ') || 'All films';
+  const fullDescription = parts.join(' · ') || 'All films';
+  const descriptionExcerpt = graphemePrefix(fullDescription, 120);
+  const description = descriptionExcerpt === fullDescription ? fullDescription : `${descriptionExcerpt}…`;
   const current = new URL(href);
   let base = current;
   if (typeof publicSiteUrl === 'string' && publicSiteUrl.trim()) {

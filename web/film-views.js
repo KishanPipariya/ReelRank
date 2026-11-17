@@ -897,10 +897,16 @@ function renderFilmDetails(film, retainFocus = false) {
   shareInput.setAttribute('aria-label', `Share link for ${film.title}`);
   const copyLink = document.createElement('button');
   copyLink.type = 'button'; copyLink.className = 'film-detail-external-link'; copyLink.textContent = 'Copy film link';
-  const copyStatus = document.createElement('span'); copyStatus.className = 'film-detail-action-status'; copyStatus.setAttribute('role', 'status'); copyStatus.setAttribute('aria-live', 'polite');
-  if (typeof filmShare !== 'string' && !filmShare.selectionIncluded) {
-    copyStatus.textContent = 'This link opens the film, but some active filters are omitted because the full selection is too large.';
+  const shareNotice = document.createElement('span');
+  shareNotice.className = 'film-detail-action-status';
+  shareNotice.setAttribute('role', 'note');
+  const omissionLabels = { search: 'the current search', filters: 'the current filters', sort: 'the current sort order', layout: 'the current layout', catalogue: 'the current catalogue path' };
+  const omitted = typeof filmShare === 'string' ? [] : (filmShare.omitted || []);
+  if (omitted.length) {
+    const labels = omitted.map((item) => omissionLabels[item] || 'part of the current view');
+    shareNotice.textContent = `This link opens the film but omits ${labels.join(', ')} because the full view is too large.`;
   }
+  const copyStatus = document.createElement('span'); copyStatus.className = 'film-detail-action-status'; copyStatus.setAttribute('role', 'status'); copyStatus.setAttribute('aria-live', 'polite');
   copyLink.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(shareInput.value); copyStatus.textContent = 'Film link copied.'; }
     catch {
@@ -910,7 +916,7 @@ function renderFilmDetails(film, retainFocus = false) {
       copyStatus.textContent = 'Select and copy the film link above.';
     }
   });
-  shareDetails.append(shareSummary, shareInput, copyLink, copyStatus);
+  shareDetails.append(shareSummary, shareInput, shareNotice, copyLink, copyStatus);
   links.append(shareDetails);
   copy.append(links);
   layout.append(copy, posterColumn, supporting);
