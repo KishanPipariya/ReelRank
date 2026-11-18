@@ -44,7 +44,8 @@ async function fits(locator, label) {
 }
 
 async function checkWorstCase(page, name) {
-  const card = page.locator('#film-grid > .film-card').last();
+  const card = page.locator('#film-grid > .film-card').filter({ hasText: 'Schema boundary: archive compilation' });
+  assert.equal(await card.count(), 1, `${name}: locate the schema-boundary film`);
   await card.scrollIntoViewIfNeeded();
   const titleWidth = await card.locator('.film-title').evaluate((element) => element.getBoundingClientRect().width);
   assert.ok(titleWidth >= 100, `${name}: long year leaves the film title readable`);
@@ -81,7 +82,11 @@ async function checkWorstCase(page, name) {
   await page.locator('#film-detail-close').click();
 
   await page.locator('#ledger-display-button').click();
-  await fits(page.locator('#film-ledger-rows .ledger-film-year').last(), `${name}: table year`);
+  const ledgerYear = page.locator('#film-ledger-rows tr')
+    .filter({ hasText: 'Schema boundary: archive compilation' })
+    .locator('.ledger-film-year');
+  assert.equal(await ledgerYear.count(), 1, `${name}: locate the schema-boundary year in the table`);
+  await fits(ledgerYear, `${name}: table year`);
   await fits(page.locator('.ledger-film-count.has-long-count'), `${name}: table count`);
   await page.locator('#poster-display-button').click();
 }

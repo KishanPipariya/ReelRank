@@ -8,9 +8,13 @@ import { readFile } from 'node:fs/promises';
 import { bestRelevanceFilm, bestRelevanceFilmInChunks, buildSearchText, compareFilms, compareRelevance, filmDecade, matchesFilm, relevanceScore, sortFilmsByRelevanceInChunks, sortFilmsInChunks } from '../web/catalog.js';
 import { snapshotLoadErrorMessage, validateSnapshot } from '../web/snapshot.js';
 import { parseUrlState, urlForState } from '../web/url-state.js';
-import { maxSearchLength, truncateSearch } from '../web/url-state.js';
+import { maxSearchLength, normalizeViewFacets, truncateSearch } from '../web/url-state.js';
 import { runtimeLabelFor } from '../web/runtime-label.js';
 import { duplicateFilmographyLabels } from '../web/director-filmography.js';
+import { filmYearDetailsFor } from '../web/film-views.js';
+import { sourceListLabelForUrl, sourceListLabelsForUrls } from '../web/source-list-label.js';
+import { canonicalLanguageCode, languageLabel } from '../web/language-label.js';
+import { countLanguages } from '../web/facet-counts.js';
 import { createLocalPreferences, parsePresetImport } from '../web/local-preferences.js';
 import { catalogueCsv } from '../web/catalogue-download.js';
 import { editionFreshness, formatUpdatedAt } from '../web/edition-freshness.js';
@@ -180,7 +184,7 @@ test('worst-case fixtures keep counts coherent and clear inherited optional TMDB
   const longCatalogueRuntime = worst.films.find((film) => film.title === 'Beijing 2003');
   assert.equal(longCatalogueRuntime.runtime_minutes, 9000);
   assert.equal(longCatalogueRuntime.year, '2004');
-  assert.equal(worst.films.at(-1).title, 'Schema boundary: archive compilation');
+  assert.ok(worst.films.some((film) => film.title === 'Schema boundary: archive compilation'));
   const sparseFilm = worst.films.find((film) => film.title === '🦊 Fox');
   assert.deepEqual(sparseFilm.directors, []);
   assert.deepEqual(sparseFilm.genres, []);
@@ -201,6 +205,9 @@ test('100,000-row stress data is built in chunks with coherent counts', async ()
   assert.equal(stress.displayed_unwatched_count, stress.unwatched_count);
   assert.deepEqual(stress.films[0]._sourceListUrls, ['https://letterboxd.com/test/list/old-links/']);
   assert.ok(stress.source_lists.includes('https://letterboxd.com/test/list/old-links/'));
+  const fallbackStress = await snapshotForDevModeInChunks(fixture, '100000');
+  assert.ok(fallbackStress.films.every((film) => film.liked_in <= fallbackStress.list_count));
+  assert.equal(validateSnapshot(fallbackStress), fallbackStress);
 });
 
 test('snapshot validation rejects unsafe profile, film, and list URLs and invalid edition times', () => {
@@ -289,6 +296,99 @@ test('search preserves voiced kana while continuing to fold Latin accents', () =
   assert.equal(matchesFilm(whisperOfTheHeart, { query: '耳をすませは' }), false);
   const amelie = { title: 'Amélie', original_title: 'Amélie', year: '2001' };
   assert.equal(matchesFilm(amelie, { query: 'amelie' }), true);
+});
+
+test('Greek search folds accents and case but preserves diaeresis', () => {
+  const landscape = { title: 'Landscape in the Mist', original_title: 'Τοπίο στην ομίχλη' };
+  assert.equal(matchesFilm(landscape, { query: 'ΤΟΠΙΟ ΣΤΗΝ ΟΜΙΧΛΗ' }), true);
+  assert.equal(matchesFilm(landscape, { query: 'τοπιο στην ομιχλη' }), true);
+  assert.equal(matchesFilm(landscape, { query: 'τοπιο στην ομιχλή' }), true);
+  const diaeresis = { title: 'Greek title', original_title: 'Μαΐου' };
+  assert.equal(matchesFilm(diaeresis, { query: 'Μαϊου' }), true);
+  assert.equal(matchesFilm(diaeresis, { query: 'Μαιου' }), false);
+});
+
+test('keycap searches match the same keycap grapheme only', () => {
+  const hash = { title: '#️⃣ Festival selection' };
+  const star = { title: '*️⃣ Festival selection' };
+  const one = { title: '1️⃣ Festival selection' };
+  assert.equal(matchesFilm(hash, { query: '#️⃣' }), true);
+  assert.equal(matchesFilm(hash, { query: '*️⃣' }), false);
+  assert.equal(matchesFilm(hash, { query: '1️⃣' }), false);
+  assert.equal(matchesFilm(star, { query: '*️⃣' }), true);
+  assert.equal(matchesFilm(one, { query: '1️⃣' }), true);
+  assert.equal(matchesFilm(one, { query: '#️⃣ festival' }), false);
+});
+
+test('language aliases share one filter bucket and unknown includes undetermined codes', () => {
+  const romanian = { original_language: 'ro' };
+  const moldavian = { original_language: 'mo' };
+  const blank = {};
+  const unknown = { original_language: 'unknown' };
+  const undetermined = { original_language: 'und' };
+  const counts = countLanguages([romanian, moldavian, blank, unknown, undetermined]);
+  assert.equal(normalizeViewFacets({ language: 'mo' }).language, 'ro');
+  assert.equal(counts.get('ro'), 2);
+  assert.equal(counts.get('unknown'), 3);
+  assert.equal(matchesFilm(moldavian, { language: 'ro' }), true);
+  assert.equal(matchesFilm(romanian, { language: 'mo' }), true);
+  for (const film of [blank, unknown, undetermined]) assert.equal(matchesFilm(film, { language: 'unknown' }), true);
+  assert.equal(canonicalLanguageCode('CN'), 'yue');
+  assert.equal(canonicalLanguageCode('tl'), 'fil');
+  assert.equal(languageLabel('mo'), languageLabel('ro'));
+  assert.equal(canonicalLanguageCode('iw'), 'he');
+  assert.equal(canonicalLanguageCode('he'), 'he');
+  assert.equal(languageLabel('iw'), languageLabel('he'));
+  const hebrewCounts = countLanguages([{ original_language: 'iw' }, { original_language: 'he' }]);
+  assert.equal(hebrewCounts.get('he'), 2);
+  assert.equal(matchesFilm({ original_language: 'iw' }, { language: 'he' }), true);
+  assert.equal(matchesFilm({ original_language: 'he' }, { language: 'iw' }), true);
+  assert.equal(languageLabel('und'), 'Unknown language');
+});
+
+test('source-list labels use path segments, decode slugs, and distinguish owners', () => {
+  const fromListAccount = 'https://letterboxd.com/list/list/festival-favorites/';
+  const fromOtherAccount = 'https://letterboxd.com/cinephile/list/festival-favorites/';
+  const encoded = 'https://letterboxd.com/cineaste/list/%C3%89t%C3%A9-au-cin%C3%A9ma/';
+  const labels = sourceListLabelsForUrls([fromListAccount, fromOtherAccount, encoded]);
+  assert.equal(labels.get(fromListAccount), 'Festival Favorites · @list');
+  assert.equal(labels.get(fromOtherAccount), 'Festival Favorites · @cinephile');
+  assert.equal(labels.get(encoded), 'Été Au Cinéma');
+  assert.equal(sourceListLabelForUrl(fromListAccount), 'Festival Favorites');
+});
+
+test('film detail year labels identify differing TMDB and Letterboxd years', () => {
+  assert.deepEqual(filmYearDetailsFor({ year: '1990', letterboxd_year: '1971' }), {
+    primary: 'TMDB 1990', letterboxd: '1971',
+  });
+  assert.deepEqual(filmYearDetailsFor({ year: '1976 (restoration metadata)', letterboxd_year: '1976' }), {
+    primary: '1976 (restoration metadata)', letterboxd: '',
+  });
+  assert.deepEqual(filmYearDetailsFor({ year: '1969', letterboxd_year: '1969' }), {
+    primary: '1969', letterboxd: '',
+  });
+  assert.deepEqual(filmYearDetailsFor({ year: '1969' }), {
+    primary: '1969', letterboxd: '',
+  });
+  assert.deepEqual(filmYearDetailsFor({ letterboxd_year: '1942' }), {
+    primary: 'Letterboxd 1942', letterboxd: '',
+  });
+  assert.deepEqual(filmYearDetailsFor({
+    year: '2026FestivalthéâtreInternationalRestorationPremiereArchiveMaster',
+    letterboxd_year: '1926',
+  }), {
+    primary: 'TMDB 2026FestivalthéâtreInternationalRestorationPremiereArchiveMaster',
+    letterboxd: '1926',
+  });
+  assert.deepEqual(sourceListLabelsForUrls([
+    'https://letterboxd.com/one/list/festival-favorites/',
+    'https://letterboxd.com/one/list/festival_favorites/',
+    'https://letterboxd.com/one/list/festival--favorites/',
+  ]), new Map([
+    ['https://letterboxd.com/one/list/festival-favorites/', 'Festival Favorites · @one · festival-favorites'],
+    ['https://letterboxd.com/one/list/festival_favorites/', 'Festival Favorites · @one · festival_favorites'],
+    ['https://letterboxd.com/one/list/festival--favorites/', 'Festival Favorites · @one · festival--favorites'],
+  ]));
 });
 
 test('director timeline gives duplicate title and year entries distinct labels', () => {
@@ -571,6 +671,16 @@ test('URL state round trips language and relevance sort without losing other fac
   assert.equal(url.searchParams.get('demo'), '1');
 });
 
+test('legacy language codes normalize in shared URLs', () => {
+  assert.equal(parseUrlState('?language=iw').language, 'he');
+  assert.equal(parseUrlState('?language=sh').language, 'sr-latn');
+  const url = urlForState('https://example.test/', {
+    filter: 'all', sort: 'rank', genres: [], directors: [], sourceLists: [],
+    country: '', language: 'iw', decade: '', runtime: '', view: 'posters',
+  });
+  assert.equal(url.searchParams.get('language'), 'he');
+});
+
 test('shared programmes describe facets and restore the full view without unrelated URL state', async () => {
   const { programmeShare } = await import('../web/programme-share.js');
   const state = parseUrlState('?country=Japan&decade=1960&filter=unwatched&genre=Drama&director=Akira+Kurosawa&list=https%3A%2F%2Fletterboxd.com%2Flist%2Fexample%2F&runtime=under-90&sort=year-oldest&view=ledger');
@@ -686,11 +796,11 @@ test('ranking sidecars preserve whitespace and literal apostrophes in spreadshee
 
 
 test('URL filters retain unavailable values but ignore blank facets and invalid decade syntax', () => {
-  const value = parseUrlState('?genre=Archive+restoration&director=Former+director&country=Switzerland&language=tl&decade=1920');
+  const value = parseUrlState('?genre=Archive+restoration&director=Former+director&country=Switzerland&language=zz&decade=1920');
   assert.deepEqual(value.genres, ['Archive restoration']);
   assert.deepEqual(value.directors, ['Former director']);
   assert.equal(value.country, 'Switzerland');
-  assert.equal(value.language, 'tl');
+  assert.equal(value.language, 'zz');
   assert.equal(value.decade, 1920);
   const blank = parseUrlState('?genre=&director=%20%20&country=%20&language=%20&decade=0000');
   assert.deepEqual(blank.genres, []);

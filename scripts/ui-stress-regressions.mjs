@@ -11,7 +11,11 @@ export async function checkRetestRegressions({ openFixture, baseUrl, fixture, ou
   ]) {
     const { context, page, errors } = await openFixture({ viewport: { width: profile.width, height: 900 }, colorScheme: profile.colorScheme || 'light' });
     const suffix = profile.suffix || '';
-    await page.goto(`${baseUrl}/?data=worst${suffix}&film=${encodeURIComponent('https://letterboxd.com/film/reelrank-stress-13/')}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${baseUrl}/?data=worst${suffix}`, { waitUntil: 'domcontentloaded' });
+    await page.locator('#film-grid > .film-card')
+      .filter({ hasText: 'Schema boundary: archive compilation' })
+      .locator('.film-detail-trigger')
+      .click();
     await page.locator('#film-detail-dialog[open]').waitFor();
     const fallback = await page.locator('.film-detail-poster .poster-fallback-title').evaluate((element) => {
       const title = element.getBoundingClientRect();

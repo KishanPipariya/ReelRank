@@ -1,4 +1,5 @@
 import { filmDecade } from './catalog.js';
+import { canonicalLanguageCode } from './language-label.js';
 
 function increment(counts, value) {
   counts.set(value, (counts.get(value) || 0) + 1);
@@ -12,7 +13,7 @@ function incrementNamedValues(counts, values) {
 }
 
 function languageFor(film) {
-  return String(film.original_language || '').trim() || 'unknown';
+  return canonicalLanguageCode(film.original_language) || 'unknown';
 }
 
 export function countLanguages(films) {

@@ -4,6 +4,17 @@ import { graphemeMiddleExcerpt } from './display-text.js';
 
 const filmMetadataBatchSize = 8;
 
+export function filmYearDetailsFor(film) {
+  const tmdbYear = String(film.year || '').trim();
+  const letterboxdYear = String(film.letterboxd_year || '').trim();
+  const comparableYear = (value) => value.match(/^\d{4}/)?.[0] || value;
+  const yearsDiffer = tmdbYear && letterboxdYear && comparableYear(letterboxdYear) !== comparableYear(tmdbYear);
+  return {
+    primary: yearsDiffer ? `TMDB ${tmdbYear}` : tmdbYear ? tmdbYear : letterboxdYear ? `Letterboxd ${letterboxdYear}` : 'Year unknown',
+    letterboxd: yearsDiffer ? letterboxdYear : '',
+  };
+}
+
 function appendProgressiveGenreTags(container, genres, genreChipFor, { initialCount = 2, expandedCount = initialCount, selectedGenres = [] } = {}) {
   genres = genresWithSelectedFirst(genres, selectedGenres);
   container.dataset.activeGenreFilters = JSON.stringify(selectedGenres);
@@ -981,7 +992,15 @@ function renderFilmDetails(film, retainFocus = false) {
   });
   const year = document.createElement('span');
   year.className = 'film-detail-year';
-  year.textContent = film.year || 'Year unknown';
+  const yearDetails = filmYearDetailsFor(film);
+  year.textContent = yearDetails.primary;
+  if (yearDetails.letterboxd) {
+    const letterboxdYear = document.createElement('span');
+    letterboxdYear.className = 'film-detail-year-source';
+    letterboxdYear.textContent = ` · Letterboxd ${yearDetails.letterboxd}`;
+    year.append(letterboxdYear);
+    year.setAttribute('aria-label', `TMDB year ${yearDetails.primary.slice('TMDB '.length)}; Letterboxd year ${yearDetails.letterboxd}`);
+  }
   const directors = [...new Set(Array.isArray(film.directors) ? film.directors.filter((name) => typeof name === 'string' && name.trim()) : [])];
   const director = directors.length
     ? directorCreditFor(directors, 'film-detail-director', closeFilmDetailsForFilter)

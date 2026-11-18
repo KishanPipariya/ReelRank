@@ -1,3 +1,5 @@
+import { canonicalLanguageCode } from './language-label.js';
+
 export function filmDecade(film) {
   const year = Number.parseInt(film.year, 10);
   return Number.isFinite(year) && year >= 1000 ? Math.floor(year / 10) * 10 : null;
@@ -15,9 +17,11 @@ export function buildSearchText(film, sourceListLabels = []) {
 export function normalizeSearchText(value) {
   return String(value || '').normalize('NFKD')
     .replace(/\p{Variation_Selector}/gu, '')
+    .replace(/[#*0-9]\u20E3/gu, ' ')
     .replace(/(\p{Script=Latin})\p{M}+/gu, '$1')
+    .replace(/(\p{Script=Greek})(\p{M}+)/gu, (_, letter, marks) => `${letter}${[...marks].filter((mark) => mark === '\u0308' || mark === '\u0344').join('')}`)
     .replace(/[Đđ]/g, (letter) => letter === 'Đ' ? 'D' : 'd')
-    .toLocaleLowerCase().replace(/[^\p{L}\p{N}\p{M}]+/gu, ' ').trim().replace(/\s+/g, ' ').normalize('NFC');
+    .toLocaleLowerCase().replace(/ς/g, 'σ').replace(/[^\p{L}\p{N}\p{M}]+/gu, ' ').trim().replace(/\s+/g, ' ').normalize('NFC');
 }
 
 function literalSearchText(value) {
@@ -38,14 +42,19 @@ function emojiSearchTermsFor(value) {
   if (!graphemeSegmenter) return [];
   return [...graphemeSegmenter.segment(literal)]
     .map(({ segment }) => segment)
-    .filter((segment) => /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u.test(segment));
+    .filter(isEmojiSearchGrapheme);
 }
 
 function emojiGraphemesFor(value) {
   if (!graphemeSegmenter) return [];
   return [...graphemeSegmenter.segment(literalSearchText(value).toLocaleLowerCase())]
     .map(({ segment }) => segment)
-    .filter((segment) => /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u.test(segment));
+    .filter(isEmojiSearchGrapheme);
+}
+
+function isEmojiSearchGrapheme(segment) {
+  return /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u.test(segment)
+    || /^[#*0-9]\u20E3$/u.test(segment);
 }
 
 const normalizedSearchCache = new WeakMap();
@@ -71,8 +80,8 @@ export function matchesFilm(film, filters, sourceListUrls = film._sourceListUrls
   if (filters.sourceLists?.length && !filters.sourceLists.some((url) => sourceListUrls.includes(url))) return false;
   if (filters.country && !(Array.isArray(film.countries) && film.countries.includes(filters.country))) return false;
   if (filters.language) {
-    const code = String(film.original_language || '').trim();
-    if (filters.language === 'unknown' ? Boolean(code) : code !== filters.language) return false;
+    const code = canonicalLanguageCode(film.original_language) || 'unknown';
+    if (code !== canonicalLanguageCode(filters.language)) return false;
   }
   if (filters.decade !== undefined && filters.decade !== '' && filmDecade(film) !== filters.decade) return false;
   if (filters.runtime) {

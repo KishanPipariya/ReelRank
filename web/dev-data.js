@@ -54,6 +54,12 @@ function syntheticFilm(base, index, overrides = {}) {
   };
 }
 
+function syntheticFilmWithinListCount(snapshot, index) {
+  const availableLists = Number.isSafeInteger(snapshot.list_count) ? Math.max(0, snapshot.list_count) : 0;
+  const likedIn = Math.min(availableLists, Math.max(1, 1000 - index));
+  return syntheticFilm(snapshot.films[0], index, { liked_in: likedIn });
+}
+
 export function isLocalDevHost(host = window.location.hostname) {
   return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
 }
@@ -76,7 +82,7 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
   } else if (mode === '100000') {
     films = Array.from({ length: 100000 }, (_, index) => {
       const film = rankingFilms?.[index];
-      if (!film) return syntheticFilm(base, index);
+      if (!film) return syntheticFilmWithinListCount(snapshot, index);
       return { ...film, _sourceListUrls: film._sourceListUrls ?? film.list_ids.map((id) => snapshot.source_lists[id]) };
     });
   } else {
@@ -157,11 +163,39 @@ export function snapshotForDevMode(snapshot, mode, rankingFilms = null) {
       }),
       syntheticFilm(base, 13, {
         title: 'Schema boundary: archive compilation',
-        year: '2026 (restoration; original release date remains unconfirmed)'.padEnd(64, ' '),
+        year: '2026FestivalthéâtreInternationalRestorationPremiereArchiveMaster', letterboxd_year: '1926',
         genres: ['International cinema preservation and restoration programme — '.repeat(10).slice(0, 512)],
         directors: ['Archive collective — '.repeat(30).slice(0, 512)],
         liked_in: Number.MAX_SAFE_INTEGER,
         overview: 'The snapshot schema accepts these exact numeric and text limits. This row checks that contract rather than a typical film.',
+      }),
+      syntheticFilm(base, 14, {
+        title: '#️⃣ Festival selection', original_language: 'el',
+        lists: ['https://letterboxd.com/list/list/festival-favorites/'],
+      }),
+      syntheticFilm(base, 15, {
+        title: '*️⃣ Festival selection', original_language: 'ro',
+        lists: ['https://letterboxd.com/cinephile/list/festival-favorites/'],
+      }),
+      syntheticFilm(base, 16, {
+        title: '1️⃣ Festival selection', original_language: 'mo',
+        year: '1990', letterboxd_year: '1971', tmdb_id: 1,
+        lists: ['https://letterboxd.com/cineaste/list/%C3%89t%C3%A9-au-cin%C3%A9ma/'],
+      }),
+      syntheticFilm(base, 17, {
+        title: 'Landscape in the Mist', original_title: 'Τοπίο στην ομίχλη', original_language: 'el',
+      }),
+      syntheticFilm(base, 18, {
+        title: 'Greek diaeresis search case', original_title: 'Μαΐου', original_language: 'el',
+      }),
+      syntheticFilm(base, 19, {
+        title: 'Undetermined-language film', original_title: 'Titre inconnu', original_language: 'und',
+      }),
+      syntheticFilm(base, 20, {
+        title: 'Hebrew legacy-code film', original_title: 'הסרט הישן', original_language: 'iw',
+      }),
+      syntheticFilm(base, 21, {
+        title: 'Hebrew modern-code film', original_title: 'הסרט החדש', original_language: 'he',
       }),
     ];
   }
@@ -208,7 +242,7 @@ export async function snapshotForDevModeInChunks(snapshot, mode, rankingFilms = 
     const film = rankingFilms?.[index];
     films[index] = film
       ? { ...film, _sourceListUrls: film._sourceListUrls ?? film.list_ids.map((id) => snapshot.source_lists[id]) }
-      : syntheticFilm(base, index);
+      : syntheticFilmWithinListCount(snapshot, index);
     if (index > 0 && index % 500 === 0) await yieldToMainThread();
   }
   const listIndex = new Map();

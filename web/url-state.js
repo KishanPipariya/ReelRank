@@ -1,3 +1,5 @@
+import { canonicalLanguageCode } from './language-label.js';
+
 const validFilters = new Set(['all', 'unwatched', 'watched']);
 const validSorts = new Set(['rank', 'title', 'year-newest', 'year-oldest', 'relevance']);
 const validViews = new Set(['posters', 'ledger']);
@@ -18,7 +20,6 @@ export function truncateSearch(query, limit = maxSearchLength) {
   }
   return bounded;
 }
-
 function boundedSearch(query) {
   return truncateSearch(query).trim();
 }
@@ -32,7 +33,7 @@ export function normalizeViewFacets({ query = '', sort = 'rank', genres = [], di
     genres: nonblank(genres),
     directors: nonblank(directors),
     country: country.trim() ? country : '',
-    language: language.trim(),
+    language: canonicalLanguageCode(language),
     decade: Number.isInteger(decade) && decade >= 1000 && decade <= 9999 ? decade : '',
   };
 }
@@ -114,7 +115,8 @@ export function urlForState(href, state, query) {
   }
   if (state.country) url.searchParams.set('country', state.country);
   else url.searchParams.delete('country');
-  if (state.language) url.searchParams.set('language', state.language);
+  const language = canonicalLanguageCode(state.language);
+  if (language) url.searchParams.set('language', language);
   else url.searchParams.delete('language');
   if (state.decade !== '') url.searchParams.set('decade', String(state.decade));
   else url.searchParams.delete('decade');

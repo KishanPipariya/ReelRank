@@ -3,7 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { validateSnapshot } from '../web/snapshot.js';
 
 const snapshot = validateSnapshot(JSON.parse(await readFile(new URL('../tests/fixtures/print-boundaries.json', import.meta.url), 'utf8')));
-const query = 'InternationalCinemaPreservationAndRestorationProgramme2026OriginalLanguageRestoredUncutVersionWithEnglishSubtitlesAndCommentaryTrack.mov';
+const query = 'ArchiveRestorationReference'.repeat(12);
 
 export async function checkPrintTextRegressions({ openFixture, baseUrl, outputDirectory }) {
   const { context, page, errors } = await openFixture({ viewport: { width: 696, height: 1000 } });
@@ -71,7 +71,7 @@ export async function checkPrintTextRegressions({ openFixture, baseUrl, outputDi
       await prepare(format);
       const contextText = page.locator('#print-programme-context');
       assert.ok((await contextText.textContent()).endsWith(`search: ${query}`));
-      const geometry = await textFits(contextText, '#print-programme', `${format}: full archive filename query`);
+      const geometry = await textFits(contextText, '#print-programme', `${format}: long archive title query`);
       assert.ok(geometry.scroll <= geometry.client + 1);
       measurements.push({ format, queryCharacters: query.length, queryGeometry: geometry });
       await page.locator('.print-programme-header').screenshot({ path: `${outputDirectory}/print-text-query-${format}-fixed.png`, animations: 'disabled' });
@@ -79,7 +79,7 @@ export async function checkPrintTextRegressions({ openFixture, baseUrl, outputDi
     }
     assert.deepEqual(errors, []);
     await writeFile(`${outputDirectory}/print-text-fixed-measurements.json`, JSON.stringify(measurements, null, 2));
-    console.log('Compact and Reader: full unbroken titles, original titles, credits, synopsis excerpt and search context fit');
+    console.log('Compact and Reader: long titles, original titles, credits, synopsis excerpt and search context fit');
   } finally {
     await context.close();
   }

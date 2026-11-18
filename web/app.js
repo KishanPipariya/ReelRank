@@ -1,4 +1,4 @@
-import { sourceListLabel } from './source-list-label.js';
+import { sourceListLabel, sourceListLabelForUrl, sourceListLabelsForUrls } from './source-list-label.js';
 import { graphemePrefix } from './display-text.js';
 import { runtimeLabelFor } from './runtime-label.js';
 import { programmeShare, programmeStateOmissions } from './programme-share.js';
@@ -20,7 +20,7 @@ import { bindSavedViewControls } from './saved-views.js';
 import { loadFullRanking } from './ranking-csv.js';
 import { createFilmDetailLoader, loadCatalogueIndex, mergeCatalogueIndex } from './catalogue-index.js';
 import { isLocalDevHost, selectedDevDataMode, snapshotForDevModeInChunks } from './dev-data.js';
-import { languageLabel as formatLanguageLabel } from './language-label.js';
+import { canonicalLanguageCode, languageLabel as formatLanguageLabel } from './language-label.js';
 
 const clearQueryButton = document.querySelector('#clear-query');
 const emptyResultActions = document.querySelector('#empty-result-actions');
@@ -327,6 +327,7 @@ let availableDirectors = [];
 let availableDecades = [];
 let availableCountries = [];
 let availableSourceLists = [];
+let sourceListLabelByUrl = new Map();
 const searchTextByFilm = new WeakMap();
 const searchListLabels = new Map();
 const filmCardByFilm = new WeakMap();
@@ -602,8 +603,9 @@ function buildCatalogFilters() {
       sourceListCounts.set(url, (sourceListCounts.get(url) || 0) + 1);
     }
   }
+  sourceListLabelByUrl = sourceListLabelsForUrls([...sourceListCounts.keys()]);
   availableSourceLists = [...sourceListCounts]
-    .map(([url, count]) => ({ url, count, label: listLabel(url) }))
+    .map(([url, count]) => ({ url, count, label: sourceListLabelByUrl.get(url) }))
     .sort((left, right) => right.count - left.count || compareAlphabeticallyIgnoringThe(left.label, right.label));
   sourceListOptionsToggle.setAttribute('aria-expanded', 'false');
   sourceListOptionsToggle.hidden = availableSourceLists.length <= facetQuickPickLimit;
@@ -807,7 +809,7 @@ function setWatchFilter(filter) {
 }
 
 function setLanguage(language) {
-  state.language = language;
+  state.language = canonicalLanguageCode(language);
   commitCatalogueChange();
 }
 
@@ -926,13 +928,8 @@ function safeUrl(value, allowedHosts) {
 }
 
 function listLabel(value) {
-  try {
-    const parts = new URL(value).pathname.split('/').filter(Boolean);
-    const slug = parts[parts.indexOf('list') + 1] || 'Letterboxd list';
-    return slug.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-  } catch {
-    return 'Letterboxd list';
-  }
+  return sourceListLabelByUrl.get(value)
+    || sourceListLabelForUrl(value);
 }
 
 function compareSourceListUrls(left, right) {
@@ -1317,11 +1314,12 @@ function languageNameFor(languageCode) {
 
 function originalFilmFactsFor(film) {
   const originalTitle = typeof film.original_title === 'string' ? film.original_title.trim() : '';
-  const languageCode = typeof film.original_language === 'string' ? film.original_language.trim() : '';
+  const canonicalCode = canonicalLanguageCode(film.original_language);
+  const languageCode = canonicalCode === 'unknown' ? '' : canonicalCode;
   const hasDistinctTitle = originalTitle && originalTitle.localeCompare(film.title || '', undefined, { sensitivity: 'accent' }) !== 0;
   const hasNonEnglishLanguage = languageCode && languageCode.toLocaleLowerCase().split('-')[0] !== 'en';
   if (!hasDistinctTitle && !hasNonEnglishLanguage) return null;
-  const languageName = languageNameFor(languageCode);
+  const languageName = languageNameFor(canonicalCode);
   const facts = document.createElement('dl');
   facts.className = 'original-film-facts';
   if (hasDistinctTitle) {
